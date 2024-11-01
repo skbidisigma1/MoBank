@@ -1,2 +1,2 @@
 # MoBank
-online mobuck tracker
+online **mobuck** tracker
