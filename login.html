@@ -10,7 +10,8 @@
 <body>
 
 <header>
-    <h1>Mo Bank Login</h1>
+    <h1>Mo Bank</h1>
+    <div id="mobileMenuToggle">&#9776;</div>
     <nav>
         <ul>
             <li><a href="index.html">Home</a></li>
@@ -37,7 +38,16 @@
 
 <footer>
     <p>&copy; 2024 Mo Bank. All rights reserved.</p>
+    <p><a href="https://github.com/skibidisigma1/mobank" target="_blank">View on GitHub</a></p>
 </footer>
+
+<script>
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const nav = document.querySelector('nav ul');
+    mobileMenuToggle.addEventListener('click', () => {
+        nav.classList.toggle('active');
+    });
+</script>
 
 </body>
 </html>
