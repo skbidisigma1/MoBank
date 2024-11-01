@@ -9,37 +9,28 @@
 </head>
 <body>
 
-<header>
-    <h1>Mo Bank</h1>
-    <div id="mobileMenuToggle">&#9776;</div>
-    <nav>
-        <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="login.html">Login</a></li>
-            <li><a href="dashboard.html">Dashboard</a></li>
-            <li><a href="admin.html">Admin Panel</a></li>
-        </ul>
-    </nav>
-</header>
+<div id="header-placeholder"></div>
 
 <main>
     <h2>Manage Your Currency with Ease</h2>
     <p>Mo Bank is designed for seamless currency management. One designated user can easily control the funds, adding and removing currency as needed.</p>
     <p>Each user can log in to view their current balance and transaction history, providing transparency and ease of access.</p>
-    <button onclick="window.location.href='login.html'">Get Started</button>
+    <button onclick="window.location.href='pages/login.html'">Get Started</button>
 </main>
 
-<footer>
-    <p>&copy; 2024 Mo Bank. All rights reserved.</p>
-    <p><a href="https://github.com/skibidisigma1/MoBank" target="_blank">View on GitHub</a></p>
-</footer>
+<div id="footer-placeholder"></div>
 
 <script>
-    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-    const nav = document.querySelector('nav ul');
-    mobileMenuToggle.addEventListener('click', () => {
-        nav.classList.toggle('active');
-    });
+    document.getElementById('header-placeholder').innerHTML = '<object type="text/html" data="header.html"></object>';
+    document.getElementById('footer-placeholder').innerHTML = '<object type="text/html" data="footer.html"></object>';
+
+    setTimeout(() => {
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const nav = document.querySelector('nav ul');
+        mobileMenuToggle.addEventListener('click', () => {
+            nav.classList.toggle('active');
+        });
+    }, 100);
 </script>
 
 </body>
