@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Mo Bank</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Mo Bank Dashboard</h1>
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="admin.html">Admin Panel</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <h2>Welcome, [User's Name]!</h2>
+    <p>Your current balance: <strong>$[Balance]</strong></p>
+
+    <h3>Manage Your Money</h3>
+    <button onclick="window.location.href='add_money.html'">Add Money</button>
+    <button onclick="window.location.href='withdraw_money.html'">Withdraw Money</button>
+
+    <h3>Recent Transactions</h3>
+    <button id="toggleTransactions">Show Recent Transactions</button>
+    <div id="transactions" class="hidden">
+        <ul>
+            <li>Transaction 1: $XX on [Date]</li>
+            <li>Transaction 2: $YY on [Date]</li>
+            <li>Transaction 3: $ZZ on [Date]</li>
+            <!-- More transactions can be added here, will be replaced with real data -->
+        </ul>
+    </div>
+</main>
+
+<footer>
+    <p>&copy; 2024 Mo Bank. All rights reserved.</p>
+</footer>
+
+<script>
+    const toggleButton = document.getElementById('toggleTransactions');
+    const transactionsDiv = document.getElementById('transactions');
+
+    toggleButton.addEventListener('click', function() {
+        transactionsDiv.classList.toggle('hidden');
+        toggleButton.textContent = transactionsDiv.classList.contains('hidden') ? 'Show Recent Transactions' : 'Hide Recent Transactions';
+    });
+</script>
+
+</body>
+</html>
