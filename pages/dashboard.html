@@ -3,59 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Mo Bank</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Dashboard - Mo Bank</title>
+    <link rel="stylesheet" href="../style.css">
     <link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<header>
-    <h1>Mo Bank</h1>
-    <div id="mobileMenuToggle">&#9776;</div>
-    <nav>
-        <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="login.html">Login</a></li>
-            <li><a href="dashboard.html">Dashboard</a></li>
-            <li><a href="admin.html">Admin Panel</a></li>
-        </ul>
-    </nav>
-</header>
+<div id="header-placeholder"></div>
 
 <main>
-    <h2>Manage Users and Funds</h2>
+    <h2>Welcome, [User's Name]!</h2>
+    <p>Your current balance: <strong>$[Balance]</strong></p>
 
-    <section>
-        <h3>Add Funds</h3>
-        <form id="addFundsForm">
-            <label for="userEmail">User Email:</label>
-            <input type="email" id="userEmail" name="userEmail" required>
-            
-            <label for="amountToAdd">Amount to Add:</label>
-            <input type="number" id="amountToAdd" name="amountToAdd" required>
-            
-            <button type="submit">Add Funds</button>
-        </form>
-    </section>
+    <h3>Manage Your Money</h3>
+    <button onclick="window.location.href='add_money.html'">Add Money</button>
+    <button onclick="window.location.href='withdraw_money.html'">Withdraw Money</button>
 
-    <section>
-        <h3>Remove Funds</h3>
-        <form id="removeFundsForm">
-            <label for="userEmailRemove">User Email:</label>
-            <input type="email" id="userEmailRemove" name="userEmailRemove" required>
-            
-            <label for="amountToRemove">Amount to Remove:</label>
-            <input type="number" id="amountToRemove" name="amountToRemove" required>
-            
-            <button type="submit">Remove Funds</button>
-        </form>
-    </section>
-
-    <section>
-        <h3>Current Users</h3>
-        <ul id="userList">
-            <li>User 1: $[Balance]</li>
-            <li>User 2: $[Balance]</li>
-            <li>User 3: $[Balance]</li>
+    <h3>Recent Transactions</h3>
+    <button id="toggleTransactions">Show Recent Transactions</button>
+    <div id="transactions" class="hidden">
+        <ul>
+            <li>Transaction 1: $XX on [Date]</li>
+            <li>Transaction 2: $YY on [Date]</li>
+            <li>Transaction 3: $ZZ on [Date]</li>
         </ul>
-   
+    </div>
+</main>
+
+<div id="footer-placeholder"></div>
+
+<script>
+    document.getElementById('header-placeholder').innerHTML = '<object type="text/html" data="../header.html"></object>';
+    document.getElementById('footer-placeholder').innerHTML = '<object type="text/html" data="../footer.html"></object>';
+
+    setTimeout(() => {
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const nav = document.querySelector('nav ul');
+        mobileMenuToggle.addEventListener('click', () => {
+            nav.classList.toggle('active');
+        });
+
+        const toggleButton = document.getElementById('toggleTransactions');
+        const transactionsDiv = document.getElementById('transactions');
+        toggleButton.addEventListener('click', function() {
+            transactionsDiv.classList.toggle('hidden');
+            toggleButton.textContent = transactionsDiv.classList.contains('hidden') ? 'Show Recent Transactions' : 'Hide Recent Transactions';
+        });
+    }, 100);
+</script>
+
+</body>
+</html>
