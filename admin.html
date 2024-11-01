@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Mo Bank</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header>
+    <h1>Admin Panel - Mo Bank</h1>
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="admin.html">Admin Panel</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <h2>Manage Users and Funds</h2>
+
+    <section>
+        <h3>Add Funds</h3>
+        <form id="addFundsForm">
+            <label for="userEmail">User Email:</label>
+            <input type="email" id="userEmail" name="userEmail" required>
+            
+            <label for="amountToAdd">Amount to Add:</label>
+            <input type="number" id="amountToAdd" name="amountToAdd" required>
+            
+            <button type="submit">Add Funds</button>
+        </form>
+    </section>
+
+    <section>
+        <h3>Remove Funds</h3>
+        <form id="removeFundsForm">
+            <label for="userEmailRemove">User Email:</label>
+            <input type="email" id="userEmailRemove" name="userEmailRemove" required>
+            
+            <label for="amountToRemove">Amount to Remove:</label>
+            <input type="number" id="amountToRemove" name="amountToRemove" required>
+            
+            <button type="submit">Remove Funds</button>
+        </form>
+    </section>
+
+    <section>
+        <h3>Current Users</h3>
+        <ul id="userList">
+            <li>User 1: $[Balance]</li>
+            <li>User 2: $[Balance]</li>
+            <li>User 3: $[Balance]</li>
+            <!-- More users can be listed here, will be replaced with real data -->
+        </ul>
+    </section>
+</main>
+
+<footer>
+    <p>&copy; 2024 Mo Bank. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
