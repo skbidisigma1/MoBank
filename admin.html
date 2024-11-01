@@ -10,7 +10,8 @@
 <body>
 
 <header>
-    <h1>Admin Panel - Mo Bank</h1>
+    <h1>Mo Bank</h1>
+    <div id="mobileMenuToggle">&#9776;</div>
     <nav>
         <ul>
             <li><a href="index.html">Home</a></li>
@@ -56,14 +57,22 @@
             <li>User 1: $[Balance]</li>
             <li>User 2: $[Balance]</li>
             <li>User 3: $[Balance]</li>
-            <!-- More users can be listed here, will be replaced with real data -->
         </ul>
     </section>
 </main>
 
 <footer>
     <p>&copy; 2024 Mo Bank. All rights reserved.</p>
+    <p><a href="https://github.com/skibidisigma1/MoBank" target="_blank">View on GitHub</a></p>
 </footer>
+
+<script>
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const nav = document.querySelector('nav ul');
+    mobileMenuToggle.addEventListener('click', () => {
+        nav.classList.toggle('active');
+    });
+</script>
 
 </body>
 </html>
