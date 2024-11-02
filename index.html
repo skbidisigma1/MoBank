@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Mo Bank</title>
+    <title>Welcome to MoBank</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -13,7 +12,7 @@
 
 <main>
     <h2>Manage Your Currency with Ease</h2>
-    <p>Mo Bank is designed for seamless currency management. One designated user can easily control the funds, adding and removing currency as needed.</p>
+    <p>MoBank is designed for seamless currency management. One designated user can easily control the funds, adding and removing currency as needed.</p>
     <p>Each user can log in to view their current balance and transaction history, providing transparency and ease of access.</p>
     <button onclick="window.location.href='pages/login.html'">Get Started</button>
 </main>
@@ -29,6 +28,12 @@
 
         document.getElementById('header-placeholder').innerHTML = headerContent;
         document.getElementById('footer-placeholder').innerHTML = footerContent;
+
+        const isAdmin = true; // Replace with actual admin-checking logic
+        const adminLink = document.getElementById('admin-link');
+        if (adminLink && isAdmin) {
+            adminLink.style.display = 'block';
+        }
 
         const mobileMenuToggle = document.getElementById('mobileMenuToggle');
         const nav = document.querySelector('nav ul');
