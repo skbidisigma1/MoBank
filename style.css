@@ -60,7 +60,7 @@ header h1 {
 }
 
 #mobileMenuToggle.active .bar:nth-child(1) {
-    transform: rotate(45deg) translate(5px, 5px);
+    transform: rotate(45deg);
 }
 
 #mobileMenuToggle.active .bar:nth-child(2) {
@@ -68,7 +68,7 @@ header h1 {
 }
 
 #mobileMenuToggle.active .bar:nth-child(3) {
-    transform: rotate(-45deg) translate(5px, -5px);
+    transform: rotate(-45deg);
 }
 
 nav ul {
