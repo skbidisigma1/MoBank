@@ -157,15 +157,16 @@ ul#userList, ul#transactions {
         flex-direction: row;
         flex-wrap: wrap;
         gap: 10px;
+        text-align: center;
     }
 
     nav ul.active {
         display: flex;
+        justify-content: center;
     }
 
     nav ul li {
         width: 50%;
-        text-align: center;
     }
 
     header h1 {
