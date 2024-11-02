@@ -75,33 +75,48 @@ header h1 {
     transform: translateY(-100%);
 }
 
+@keyframes toXTop {
+    0% { top: 0; transform: translateY(0) rotate(0deg); }
+    40% { top: 50%; transform: translateY(-50%) rotate(0deg); }
+    100% { top: 50%; transform: translateY(-50%) rotate(45deg); }
+}
+
+@keyframes toXBottom {
+    0% { top: 100%; transform: translateY(-100%) rotate(0deg); }
+    40% { top: 50%; transform: translateY(-50%) rotate(0deg); }
+    100% { top: 50%; transform: translateY(-50%) rotate(-45deg); }
+}
+
+@keyframes toHamburgerTop {
+    0% { top: 50%; transform: translateY(-50%) rotate(45deg); }
+    40% { top: 50%; transform: translateY(-50%) rotate(0deg); }
+    100% { top: 0; transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes toHamburgerBottom {
+    0% { top: 50%; transform: translateY(-50%) rotate(-45deg); }
+    40% { top: 50%; transform: translateY(-50%) rotate(0deg); }
+    100% { top: 100%; transform: translateY(-100%) rotate(0deg); }
+}
+
 #mobileMenuToggle.active .bar:nth-child(1) {
-    top: 50%;
-    transform: rotate(45deg);
-    transition-delay: 0s, 0.3s;
+    animation: toXTop 0.3s forwards;
 }
 
 #mobileMenuToggle.active .bar:nth-child(3) {
-    top: 50%;
-    transform: rotate(-45deg);
-    transition-delay: 0s, 0.3s;
+    animation: toXBottom 0.3s forwards;
 }
 
 #mobileMenuToggle.active .bar:nth-child(2) {
     opacity: 0;
-    transition-delay: 0s;
 }
 
 #mobileMenuToggle:not(.active) .bar:nth-child(1) {
-    top: 0;
-    transform: rotate(0deg);
-    transition-delay: 0.3s, 0s;
+    animation: toHamburgerTop 0.3s forwards;
 }
 
 #mobileMenuToggle:not(.active) .bar:nth-child(3) {
-    top: 100%;
-    transform: rotate(0deg);
-    transition-delay: 0.3s, 0s;
+    animation: toHamburgerBottom 0.3s forwards;
 }
 
 nav ul {
@@ -109,14 +124,6 @@ nav ul {
     display: flex;
     justify-content: center;
     gap: 20px;
-    opacity: 0;
-    transform: translateY(-20px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-nav ul.active {
-    opacity: 1;
-    transform: translateY(0);
 }
 
 nav a {
