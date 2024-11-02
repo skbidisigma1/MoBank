@@ -57,7 +57,7 @@ header h1 {
     border-radius: 2px;
     position: absolute;
     left: 0;
-    transition: transform 0.3s ease, opacity 0.3s ease, top 0.3s ease;
+    transition: top 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
     transform-origin: center;
 }
 
@@ -77,21 +77,25 @@ header h1 {
 
 @keyframes toXTop {
     0% { top: 0; transform: translateY(0) rotate(0deg); }
+    50% { top: 50%; transform: translateY(-50%) rotate(0deg); }
     100% { top: 50%; transform: translateY(-50%) rotate(45deg); }
 }
 
 @keyframes toXBottom {
     0% { top: 100%; transform: translateY(-100%) rotate(0deg); }
+    50% { top: 50%; transform: translateY(-50%) rotate(0deg); }
     100% { top: 50%; transform: translateY(-50%) rotate(-45deg); }
 }
 
 @keyframes toHamburgerTop {
     0% { top: 50%; transform: translateY(-50%) rotate(45deg); }
+    50% { top: 50%; transform: translateY(-50%) rotate(0deg); }
     100% { top: 0; transform: translateY(0) rotate(0deg); }
 }
 
 @keyframes toHamburgerBottom {
     0% { top: 50%; transform: translateY(-50%) rotate(-45deg); }
+    50% { top: 50%; transform: translateY(-50%) rotate(0deg); }
     100% { top: 100%; transform: translateY(-100%) rotate(0deg); }
 }
 
