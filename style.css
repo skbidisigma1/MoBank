@@ -5,7 +5,7 @@
 }
 
 body {
-    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Poppins', Arial, sans-serif;
     background-color: #f4f6f8;
     color: #333;
     line-height: 1.6;
@@ -29,6 +29,7 @@ header {
 }
 
 header h1 {
+    font-family: 'Poppins', sans-serif;
     font-size: 1.5rem;
     margin-bottom: 10px;
 }
@@ -47,6 +48,7 @@ nav ul {
 }
 
 nav a {
+    font-family: 'Poppins', sans-serif;
     color: white;
     text-decoration: none;
     font-weight: 600;
@@ -82,6 +84,7 @@ form {
 }
 
 label {
+    font-family: 'Poppins', sans-serif;
     font-weight: bold;
     margin-bottom: 5px;
 }
@@ -99,6 +102,7 @@ input[type="number"] {
 }
 
 button {
+    font-family: 'Poppins', sans-serif;
     background-color: #0056b3;
     color: white;
     border: none;
@@ -124,6 +128,7 @@ footer {
 }
 
 footer a {
+    font-family: 'Poppins', sans-serif;
     color: #aad4ff;
     text-decoration: none;
 }
@@ -138,6 +143,7 @@ ul#userList, ul#transactions {
 }
 
 #userList li, #transactions li {
+    font-family: 'Poppins', sans-serif;
     background-color: #f4f6f8;
     margin: 10px 0;
     padding: 10px;
