@@ -158,22 +158,24 @@ ul#userList, ul#transactions {
         color: white;
     }
 
+    /* Animated mobile menu */
     nav ul {
-        display: none;
+        visibility: hidden; /* Hidden initially */
+        max-height: 0; /* Collapsed menu */
         flex-direction: row;
         flex-wrap: wrap;
         gap: 10px;
         text-align: center;
         opacity: 0;
-        transform: translateY(-10px); /* Animation start */
-        transition: opacity 0.3s ease, transform 0.3s ease;
+        transform: translateY(-10px); /* Slight upward offset for animation start */
+        transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease; /* Smooth transition */
     }
 
     nav ul.active {
-        display: flex;
-        justify-content: center;
+        visibility: visible; /* Visible when active */
+        max-height: 200px; /* Expand height based on menu content */
         opacity: 1;
-        transform: translateY(0); /* Animation end */
+        transform: translateY(0); /* Original position for animation end */
     }
 
     nav ul li {
