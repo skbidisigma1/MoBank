@@ -33,23 +33,25 @@
 <div id="footer-placeholder"></div>
 
 <script>
-    document.getElementById('header-placeholder').innerHTML = '<object type="text/html" data="../header.html"></object>';
-    document.getElementById('footer-placeholder').innerHTML = '<object type="text/html" data="../footer.html"></object>';
+    async function loadHeaderFooter() {
+        const headerResponse = await fetch('/header.html');
+        const footerResponse = await fetch('/footer.html');
+        const headerContent = await headerResponse.text();
+        const footerContent = await footerResponse.text();
 
-    setTimeout(() => {
+        document.getElementById('header-placeholder').innerHTML = headerContent;
+        document.getElementById('footer-placeholder').innerHTML = footerContent;
+
         const mobileMenuToggle = document.getElementById('mobileMenuToggle');
         const nav = document.querySelector('nav ul');
-        mobileMenuToggle.addEventListener('click', () => {
-            nav.classList.toggle('active');
-        });
+        if (mobileMenuToggle && nav) {
+            mobileMenuToggle.addEventListener('click', () => {
+                nav.classList.toggle('active');
+            });
+        }
+    }
 
-        const toggleButton = document.getElementById('toggleTransactions');
-        const transactionsDiv = document.getElementById('transactions');
-        toggleButton.addEventListener('click', function() {
-            transactionsDiv.classList.toggle('hidden');
-            toggleButton.textContent = transactionsDiv.classList.contains('hidden') ? 'Show Recent Transactions' : 'Hide Recent Transactions';
-        });
-    }, 100);
+    loadHeaderFooter();
 </script>
 
 </body>
