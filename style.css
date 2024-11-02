@@ -29,7 +29,6 @@ header {
 }
 
 header h1 {
-    font-family: 'Poppins', sans-serif;
     font-size: 1.5rem;
     margin-bottom: 10px;
 }
@@ -165,11 +164,16 @@ ul#userList, ul#transactions {
         flex-wrap: wrap;
         gap: 10px;
         text-align: center;
+        opacity: 0;
+        transform: translateY(-10px); /* Animation start */
+        transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
     nav ul.active {
         display: flex;
         justify-content: center;
+        opacity: 1;
+        transform: translateY(0); /* Animation end */
     }
 
     nav ul li {
