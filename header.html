@@ -1,6 +1,10 @@
 <header>
     <h1>MoBank</h1>
-    <div id="mobileMenuToggle">&#9776;</div>
+    <button id="mobileMenuToggle" aria-label="Toggle navigation">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+    </button>
     <nav>
         <ul>
             <li><a href="/index.html">Home</a></li>
@@ -10,13 +14,3 @@
         </ul>
     </nav>
 </header>
-
-<script>
-    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-    const nav = document.querySelector('nav ul');
-    if (mobileMenuToggle && nav) {
-        mobileMenuToggle.addEventListener('click', () => {
-            nav.classList.toggle('active');
-        });
-    }
-</script>
