@@ -4,20 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - Mo Bank</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
     <link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<header>
-    <h1>Create an Account</h1>
-    <nav>
-        <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="login.html">Login</a></li>
-        </ul>
-    </nav>
-</header>
+<div id="header-placeholder"></div>
 
 <main>
     <h2>Join Mo Bank Today!</h2>
@@ -36,9 +28,29 @@
     <p>Already have an account? <a href="login.html">Login here</a>.</p>
 </main>
 
-<footer>
-    <p>&copy; 2024 Mo Bank. All rights reserved.</p>
-</footer>
+<div id="footer-placeholder"></div>
+
+<script>
+    async function loadHeaderFooter() {
+        const headerResponse = await fetch('/header.html');
+        const footerResponse = await fetch('/footer.html');
+        const headerContent = await headerResponse.text();
+        const footerContent = await footerResponse.text();
+
+        document.getElementById('header-placeholder').innerHTML = headerContent;
+        document.getElementById('footer-placeholder').innerHTML = footerContent;
+
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const nav = document.querySelector('nav ul');
+        if (mobileMenuToggle && nav) {
+            mobileMenuToggle.addEventListener('click', () => {
+                nav.classList.toggle('active');
+            });
+        }
+    }
+
+    loadHeaderFooter();
+</script>
 
 </body>
 </html>
