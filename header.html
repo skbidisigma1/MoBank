@@ -10,3 +10,13 @@
         </ul>
     </nav>
 </header>
+
+<script>
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const nav = document.querySelector('nav ul');
+    if (mobileMenuToggle && nav) {
+        mobileMenuToggle.addEventListener('click', () => {
+            nav.classList.toggle('active');
+        });
+    }
+</script>
