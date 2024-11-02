@@ -37,7 +37,7 @@ header h1 {
     flex-direction: column;
     justify-content: space-between;
     width: 30px;
-    height: 21px;
+    height: 24px;
     background: transparent;
     border: none;
     cursor: pointer;
@@ -55,20 +55,33 @@ header h1 {
     height: 3px;
     background-color: white;
     border-radius: 2px;
-    transition: transform 0.3s ease, opacity 0.3s ease;
-    transform-origin: center;
+    transition: transform 0.3s ease, opacity 0.3s ease, top 0.3s ease;
     position: absolute;
     left: 0;
+}
+
+.bar:nth-child(1) {
+    top: 0;
+}
+
+.bar:nth-child(2) {
     top: 50%;
     transform: translateY(-50%);
 }
 
+.bar:nth-child(3) {
+    top: 100%;
+    transform: translateY(-100%);
+}
+
 #mobileMenuToggle.active .bar:nth-child(1) {
-    transform: rotate(45deg);
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
 }
 
 #mobileMenuToggle.active .bar:nth-child(3) {
-    transform: rotate(-45deg);
+    top: 50%;
+    transform: translateY(-50%) rotate(-45deg);
 }
 
 #mobileMenuToggle.active .bar:nth-child(2) {
