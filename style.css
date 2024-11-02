@@ -33,17 +33,19 @@ header h1 {
     margin: 0;
 }
 
+/* Hamburger Menu Styles */
 #mobileMenuToggle {
     display: none;
     flex-direction: column;
-    justify-content: space-around;
+    justify-content: space-between;
     width: 30px;
-    height: 25px;
+    height: 21px; /* Adjusted height for better alignment */
     background: transparent;
     border: none;
     cursor: pointer;
     padding: 0;
     z-index: 1100;
+    position: relative; /* Ensure proper stacking */
 }
 
 #mobileMenuToggle:focus {
@@ -55,10 +57,11 @@ header h1 {
     height: 3px;
     background-color: white;
     border-radius: 2px;
-    transition: all 0.3s ease;
-    position: relative;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    transform-origin: center;
 }
 
+/* Active State - Transform to X */
 #mobileMenuToggle.active .bar:nth-child(1) {
     transform: rotate(45deg);
 }
