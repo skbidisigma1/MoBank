@@ -79,13 +79,13 @@ header h1 {
 #mobileMenuToggle.active .bar:nth-child(1) {
     top: 50%;
     transform: rotate(45deg);
-    transition: top 0.3s ease, transform 0.3s ease 0s;
+    transition: top 0.3s ease, transform 0.3s ease 0s; /* No delay for transform */
 }
 
 #mobileMenuToggle.active .bar:nth-child(3) {
     top: 50%;
     transform: rotate(-45deg);
-    transition: top 0.3s ease, transform 0.3s ease 0s;
+    transition: top 0.3s ease, transform 0.3s ease 0s; /* No delay for transform */
 }
 
 #mobileMenuToggle.active .bar:nth-child(2) {
@@ -96,13 +96,13 @@ header h1 {
 #mobileMenuToggle:not(.active) .bar:nth-child(1) {
     top: 0;
     transform: rotate(0deg);
-    transition: top 0.3s ease 0s, transform 0.3s ease 0.3s;
+    transition: top 0.3s ease 0.3s, transform 0.3s ease 0s; /* Swap delays: transform first */
 }
 
 #mobileMenuToggle:not(.active) .bar:nth-child(3) {
     top: 100%;
     transform: rotate(0deg);
-    transition: top 0.3s ease 0s, transform 0.3s ease 0.3s;
+    transition: top 0.3s ease 0.3s, transform 0.3s ease 0s; /* Swap delays: transform first */
 }
 
 nav ul {
