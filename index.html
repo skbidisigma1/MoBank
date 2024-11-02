@@ -9,44 +9,18 @@
 </head>
 <body>
 
-<div id="header-placeholder"></div>
+    <div id="header-placeholder"></div>
 
-<main>
-    <h2>Manage Your Currency with Ease</h2>
-    <p>MoBank is designed for seamless currency management. One designated user can easily control the funds, adding and removing currency as needed.</p>
-    <p>Each user can log in to view their current balance and transaction history, providing transparency and ease of access.</p>
-    <button onclick="window.location.href='pages/login.html'">Get Started</button>
-</main>
+    <main>
+        <h2>Manage Your Currency with Ease</h2>
+        <p>MoBank is designed for seamless currency management. One designated user can easily control the funds, adding and removing currency as needed.</p>
+        <p>Each user can log in to view their current balance and transaction history, providing transparency and ease of access.</p>
+        <button onclick="window.location.href='pages/login.html'">Get Started</button>
+    </main>
 
-<div id="footer-placeholder"></div>
+    <div id="footer-placeholder"></div>
 
-<script>
-    async function loadHeaderFooter() {
-        const headerResponse = await fetch('/header.html');
-        const footerResponse = await fetch('/footer.html');
-        const headerContent = await headerResponse.text();
-        const footerContent = await footerResponse.text();
-
-        document.getElementById('header-placeholder').innerHTML = headerContent;
-        document.getElementById('footer-placeholder').innerHTML = footerContent;
-
-        const isAdmin = true;
-        const adminLink = document.getElementById('admin-link');
-        if (adminLink && isAdmin) {
-            adminLink.style.display = 'block';
-        }
-
-        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-        const nav = document.querySelector('nav ul');
-        if (mobileMenuToggle && nav) {
-            mobileMenuToggle.addEventListener('click', () => {
-                nav.classList.toggle('active');
-            });
-        }
-    }
-
-    loadHeaderFooter();
-</script>
+    <script src="js/headerFooter.js"></script>
 
 </body>
 </html>
