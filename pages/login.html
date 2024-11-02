@@ -9,51 +9,42 @@
 </head>
 <body>
 
-<div id="header-placeholder"></div>
+    <div id="header-placeholder"></div>
 
-<main>
-    <h2>Sign In to Your Account</h2>
-    <form id="loginForm">
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
-        
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
+    <main>
+        <h2>Sign In to Your Account</h2>
+        <form id="loginForm">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+            
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
 
-        <button type="submit">Login</button>
-        <p><a href="#">Forgot Password?</a></p>
-    </form>
-</main>
+            <button type="submit">Login</button>
+            <p><a href="#">Forgot Password?</a></p>
+        </form>
+    </main>
 
-<div id="footer-placeholder"></div>
+    <div id="footer-placeholder"></div>
 
-<script>
-    async function loadHeaderFooter() {
-        const headerResponse = await fetch('/header.html');
-        const footerResponse = await fetch('/footer.html');
-        const headerContent = await headerResponse.text();
-        const footerContent = await footerResponse.text();
+    <script src="../js/headerFooter.js"></script>
 
-        document.getElementById('header-placeholder').innerHTML = headerContent;
-        document.getElementById('footer-placeholder').innerHTML = footerContent;
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('loginForm');
 
-        const isAdmin = true;
-        const adminLink = document.getElementById('admin-link');
-        if (adminLink && isAdmin) {
-            adminLink.style.display = 'block';
-        }
+            if (loginForm) {
+                loginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
 
-        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-        const nav = document.querySelector('nav ul');
-        if (mobileMenuToggle && nav) {
-            mobileMenuToggle.addEventListener('click', () => {
-                nav.classList.toggle('active');
-            });
-        }
-    }
+                    const email = e.target.email.value;
+                    const password = e.target.password.value;
 
-    loadHeaderFooter();
-</script>
+                    alert(`Login submitted with Email: ${email} and Password: ${password}`);
+                });
+            }
+        });
+    </script>
 
 </body>
 </html>
