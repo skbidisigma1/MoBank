@@ -55,10 +55,10 @@ header h1 {
     height: 3px;
     background-color: white;
     border-radius: 2px;
-    transition: top 0.3s ease, transform 0.3s ease 0.3s, opacity 0.3s ease 0.3s;
-    transform-origin: center;
     position: absolute;
     left: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease, top 0.3s ease;
+    transform-origin: center;
 }
 
 .bar:nth-child(1) {
@@ -68,7 +68,6 @@ header h1 {
 .bar:nth-child(2) {
     top: 50%;
     transform: translateY(-50%);
-    transition: opacity 0.3s ease 0.3s;
 }
 
 .bar:nth-child(3) {
@@ -76,18 +75,44 @@ header h1 {
     transform: translateY(-100%);
 }
 
+@keyframes toXTop {
+    0% { top: 0; transform: translateY(0) rotate(0deg); }
+    100% { top: 50%; transform: translateY(-50%) rotate(45deg); }
+}
+
+@keyframes toXBottom {
+    0% { top: 100%; transform: translateY(-100%) rotate(0deg); }
+    100% { top: 50%; transform: translateY(-50%) rotate(-45deg); }
+}
+
+@keyframes toHamburgerTop {
+    0% { top: 50%; transform: translateY(-50%) rotate(45deg); }
+    100% { top: 0; transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes toHamburgerBottom {
+    0% { top: 50%; transform: translateY(-50%) rotate(-45deg); }
+    100% { top: 100%; transform: translateY(-100%) rotate(0deg); }
+}
+
 #mobileMenuToggle.active .bar:nth-child(1) {
-    top: 50%;
-    transform: rotate(45deg);
+    animation: toXTop 0.3s forwards;
 }
 
 #mobileMenuToggle.active .bar:nth-child(3) {
-    top: 50%;
-    transform: rotate(-45deg);
+    animation: toXBottom 0.3s forwards;
 }
 
 #mobileMenuToggle.active .bar:nth-child(2) {
     opacity: 0;
+}
+
+#mobileMenuToggle:not(.active) .bar:nth-child(1) {
+    animation: toHamburgerTop 0.3s forwards;
+}
+
+#mobileMenuToggle:not(.active) .bar:nth-child(3) {
+    animation: toHamburgerBottom 0.3s forwards;
 }
 
 nav ul {
