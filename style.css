@@ -55,7 +55,8 @@ header h1 {
     height: 3px;
     background-color: white;
     border-radius: 2px;
-    transition: transform 0.3s ease, opacity 0.3s ease, top 0.3s ease;
+    transition: top 0.3s ease, transform 0.3s ease 0.3s, opacity 0.3s ease 0.3s;
+    transform-origin: center;
     position: absolute;
     left: 0;
 }
@@ -67,6 +68,7 @@ header h1 {
 .bar:nth-child(2) {
     top: 50%;
     transform: translateY(-50%);
+    transition: opacity 0.3s ease 0.3s;
 }
 
 .bar:nth-child(3) {
@@ -76,12 +78,12 @@ header h1 {
 
 #mobileMenuToggle.active .bar:nth-child(1) {
     top: 50%;
-    transform: translateY(-50%) rotate(45deg);
+    transform: rotate(45deg);
 }
 
 #mobileMenuToggle.active .bar:nth-child(3) {
     top: 50%;
-    transform: translateY(-50%) rotate(-45deg);
+    transform: rotate(-45deg);
 }
 
 #mobileMenuToggle.active .bar:nth-child(2) {
