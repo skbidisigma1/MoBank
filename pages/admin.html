@@ -9,76 +9,79 @@
 </head>
 <body>
 
-<div id="header-placeholder"></div>
+    <div id="header-placeholder"></div>
 
-<main>
-    <h2>Manage Users and Funds</h2>
+    <main>
+        <h2>Manage Users and Funds</h2>
 
-    <section>
-        <h3>Add Funds</h3>
-        <form id="addFundsForm">
-            <label for="userEmail">User Email:</label>
-            <input type="email" id="userEmail" name="userEmail" required>
-            
-            <label for="amountToAdd">Amount to Add:</label>
-            <input type="number" id="amountToAdd" name="amountToAdd" required>
-            
-            <button type="submit">Add Funds</button>
-        </form>
-    </section>
+        <section>
+            <h3>Add Funds</h3>
+            <form id="addFundsForm">
+                <label for="userEmail">User Email:</label>
+                <input type="email" id="userEmail" name="userEmail" required>
+                
+                <label for="amountToAdd">Amount to Add:</label>
+                <input type="number" id="amountToAdd" name="amountToAdd" required>
+                
+                <button type="submit">Add Funds</button>
+            </form>
+        </section>
 
-    <section>
-        <h3>Remove Funds</h3>
-        <form id="removeFundsForm">
-            <label for="userEmailRemove">User Email:</label>
-            <input type="email" id="userEmailRemove" name="userEmailRemove" required>
-            
-            <label for="amountToRemove">Amount to Remove:</label>
-            <input type="number" id="amountToRemove" name="amountToRemove" required>
-            
-            <button type="submit">Remove Funds</button>
-        </form>
-    </section>
+        <section>
+            <h3>Remove Funds</h3>
+            <form id="removeFundsForm">
+                <label for="userEmailRemove">User Email:</label>
+                <input type="email" id="userEmailRemove" name="userEmailRemove" required>
+                
+                <label for="amountToRemove">Amount to Remove:</label>
+                <input type="number" id="amountToRemove" name="amountToRemove" required>
+                
+                <button type="submit">Remove Funds</button>
+            </form>
+        </section>
 
-    <section>
-        <h3>Current Users</h3>
-        <ul id="userList">
-            <li>User 1: $[Balance]</li>
-            <li>User 2: $[Balance]</li>
-            <li>User 3: $[Balance]</li>
-        </ul>
-    </section>
-</main>
+        <section>
+            <h3>Current Users</h3>
+            <ul id="userList">
+                <li>User 1: $[Balance]</li>
+                <li>User 2: $[Balance]</li>
+                <li>User 3: $[Balance]</li>
+            </ul>
+        </section>
+    </main>
 
-<div id="footer-placeholder"></div>
+    <div id="footer-placeholder"></div>
 
-<script>
-    async function loadHeaderFooter() {
-        const headerResponse = await fetch('/header.html');
-        const footerResponse = await fetch('/footer.html');
-        const headerContent = await headerResponse.text();
-        const footerContent = await footerResponse.text();
+    <script src="../js/headerFooter.js"></script>
 
-        document.getElementById('header-placeholder').innerHTML = headerContent;
-        document.getElementById('footer-placeholder').innerHTML = footerContent;
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const addFundsForm = document.getElementById('addFundsForm');
+            const removeFundsForm = document.getElementById('removeFundsForm');
 
-        const isAdmin = true;
-        const adminLink = document.getElementById('admin-link');
-        if (adminLink && isAdmin) {
-            adminLink.style.display = 'block';
-        }
+            if (addFundsForm) {
+                addFundsForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
 
-        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-        const nav = document.querySelector('nav ul');
-        if (mobileMenuToggle && nav) {
-            mobileMenuToggle.addEventListener('click', () => {
-                nav.classList.toggle('active');
-            });
-        }
-    }
+                    const userEmail = e.target.userEmail.value;
+                    const amountToAdd = e.target.amountToAdd.value;
 
-    loadHeaderFooter();
-</script>
+                    alert(`Add Funds submitted for Email: ${userEmail}, Amount: ${amountToAdd}`);
+                });
+            }
+
+            if (removeFundsForm) {
+                removeFundsForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const userEmailRemove = e.target.userEmailRemove.value;
+                    const amountToRemove = e.target.amountToRemove.value;
+
+                    alert(`Remove Funds submitted for Email: ${userEmailRemove}, Amount: ${amountToRemove}`);
+                });
+            }
+        });
+    </script>
 
 </body>
 </html>
