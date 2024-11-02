@@ -9,63 +9,44 @@
 </head>
 <body>
 
-<div id="header-placeholder"></div>
+    <div id="header-placeholder"></div>
 
-<main>
-    <h2>Welcome, [User's Name]!</h2>
-    <p>Your current balance: <strong>$[Balance]</strong></p>
+    <main>
+        <h2>Welcome, [User's Name]!</h2>
+        <p>Your current balance: <strong>$[Balance]</strong></p>
 
-    <h3>Manage Your Money</h3>
-    <button onclick="window.location.href='add_money.html'">Add Money</button>
-    <button onclick="window.location.href='withdraw_money.html'">Withdraw Money</button>
+        <h3>Manage Your Money</h3>
+        <button onclick="window.location.href='add_money.html'">Add Money</button>
+        <button onclick="window.location.href='withdraw_money.html'">Withdraw Money</button>
 
-    <h3>Recent Transactions</h3>
-    <button id="toggleTransactions">Show Recent Transactions</button>
-    <div id="transactions" class="hidden">
-        <ul>
-            <li>Transaction 1: $XX on [Date]</li>
-            <li>Transaction 2: $YY on [Date]</li>
-            <li>Transaction 3: $ZZ on [Date]</li>
-        </ul>
-    </div>
-</main>
+        <h3>Recent Transactions</h3>
+        <button id="toggleTransactions">Show Recent Transactions</button>
+        <div id="transactions" class="hidden">
+            <ul>
+                <li>Transaction 1: $XX on [Date]</li>
+                <li>Transaction 2: $YY on [Date]</li>
+                <li>Transaction 3: $ZZ on [Date]</li>
+            </ul>
+        </div>
+    </main>
 
-<div id="footer-placeholder"></div>
+    <div id="footer-placeholder"></div>
 
-<script>
-    async function loadHeaderFooter() {
-        const headerResponse = await fetch('/header.html');
-        const footerResponse = await fetch('/footer.html');
-        const headerContent = await headerResponse.text();
-        const footerContent = await footerResponse.text();
+    <script src="../js/headerFooter.js"></script>
 
-        document.getElementById('header-placeholder').innerHTML = headerContent;
-        document.getElementById('footer-placeholder').innerHTML = footerContent;
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleButton = document.getElementById('toggleTransactions');
+            const transactionsDiv = document.getElementById('transactions');
 
-        const isAdmin = true;
-        const adminLink = document.getElementById('admin-link');
-        if (adminLink && isAdmin) {
-            adminLink.style.display = 'block';
-        }
-
-        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-        const nav = document.querySelector('nav ul');
-        if (mobileMenuToggle && nav) {
-            mobileMenuToggle.addEventListener('click', () => {
-                nav.classList.toggle('active');
-            });
-        }
-
-        const toggleButton = document.getElementById('toggleTransactions');
-        const transactionsDiv = document.getElementById('transactions');
-        toggleButton.addEventListener('click', function() {
-            transactionsDiv.classList.toggle('hidden');
-            toggleButton.textContent = transactionsDiv.classList.contains('hidden') ? 'Show Recent Transactions' : 'Hide Recent Transactions';
+            if (toggleButton && transactionsDiv) {
+                toggleButton.addEventListener('click', function() {
+                    transactionsDiv.classList.toggle('hidden');
+                    toggleButton.textContent = transactionsDiv.classList.contains('hidden') ? 'Show Recent Transactions' : 'Hide Recent Transactions';
+                });
+            }
         });
-    }
-
-    loadHeaderFooter();
-</script>
+    </script>
 
 </body>
 </html>
