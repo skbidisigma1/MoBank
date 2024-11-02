@@ -24,19 +24,51 @@ header {
     top: 0;
     z-index: 1000;
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
 }
 
 header h1 {
     font-size: 1.5rem;
-    margin-bottom: 10px;
+    margin: 0;
 }
 
 #mobileMenuToggle {
     display: none;
-    font-size: 1.5rem;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 25px;
+    background: transparent;
+    border: none;
     cursor: pointer;
+    padding: 0;
+    z-index: 1100;
+}
+
+#mobileMenuToggle:focus {
+    outline: none;
+}
+
+.bar {
+    width: 100%;
+    height: 3px;
+    background-color: white;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+#mobileMenuToggle.active .bar:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+#mobileMenuToggle.active .bar:nth-child(2) {
+    opacity: 0;
+}
+
+#mobileMenuToggle.active .bar:nth-child(3) {
+    transform: rotate(-45deg) translate(5px, -5px);
 }
 
 nav ul {
@@ -100,6 +132,12 @@ input[type="number"] {
     width: calc(100% - 20px);
 }
 
+input:focus {
+    border-color: #0056b3;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 86, 179, 0.5);
+}
+
 button {
     font-family: 'Poppins', sans-serif;
     background-color: #0056b3;
@@ -110,11 +148,16 @@ button {
     cursor: pointer;
     width: 100%;
     font-size: 16px;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, transform 0.2s;
 }
 
 button:hover {
     background-color: #004494;
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
 }
 
 footer {
@@ -151,35 +194,43 @@ ul#userList, ul#transactions {
     font-size: 0.9rem;
 }
 
-/* Mobile styling for screens smaller than 600px */
+.hidden {
+    display: none;
+}
+
 @media (max-width: 600px) {
     #mobileMenuToggle {
-        display: block;
-        color: white;
+        display: flex;
+        position: absolute;
+        top: 15px;
+        right: 20px;
     }
 
-    /* Animated mobile menu */
     nav ul {
-        visibility: hidden; /* Hidden initially */
-        max-height: 0; /* Collapsed menu */
-        flex-direction: row;
-        flex-wrap: wrap;
+        flex-direction: column;
         gap: 10px;
-        text-align: center;
+        padding: 20px;
+        background-color: #0056b3;
+        position: absolute;
+        top: 60px;
+        right: 0;
+        width: 100%;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+        max-height: 0;
         opacity: 0;
-        transform: translateY(-10px); /* Slight upward offset for animation start */
-        transition: opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease; /* Smooth transition */
+        transform: translateY(-10px);
+        visibility: hidden;
     }
 
     nav ul.active {
-        visibility: visible; /* Visible when active */
-        max-height: 200px; /* Expand height based on menu content */
+        max-height: 500px;
         opacity: 1;
-        transform: translateY(0); /* Original position for animation end */
+        transform: translateY(0);
+        visibility: visible;
     }
 
     nav ul li {
-        flex-basis: 50%;
         text-align: center;
     }
 
