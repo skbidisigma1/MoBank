@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Mo Bank</title>
+    <title>Dashboard - MoBank</title>
     <link rel="stylesheet" href="../style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -42,6 +41,12 @@
         document.getElementById('header-placeholder').innerHTML = headerContent;
         document.getElementById('footer-placeholder').innerHTML = footerContent;
 
+        const isAdmin = true; // Replace with actual admin-checking logic
+        const adminLink = document.getElementById('admin-link');
+        if (adminLink && isAdmin) {
+            adminLink.style.display = 'block';
+        }
+
         const mobileMenuToggle = document.getElementById('mobileMenuToggle');
         const nav = document.querySelector('nav ul');
         if (mobileMenuToggle && nav) {
@@ -49,6 +54,13 @@
                 nav.classList.toggle('active');
             });
         }
+
+        const toggleButton = document.getElementById('toggleTransactions');
+        const transactionsDiv = document.getElementById('transactions');
+        toggleButton.addEventListener('click', function() {
+            transactionsDiv.classList.toggle('hidden');
+            toggleButton.textContent = transactionsDiv.classList.contains('hidden') ? 'Show Recent Transactions' : 'Hide Recent Transactions';
+        });
     }
 
     loadHeaderFooter();
