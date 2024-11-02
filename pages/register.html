@@ -3,54 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Mo Bank</title>
+    <title>Register - MoBank</title>
     <link rel="stylesheet" href="../style.css">
     <link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<div id="header-placeholder"></div>
+    <div id="header-placeholder"></div>
 
-<main>
-    <h2>Join MoBank Today!</h2>
-    <form id="registerForm" method="POST" action="register_backend.js">
-        <label for="name">Full Name:</label>
-        <input type="text" id="name" name="name" required>
-        
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
-        
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
-        
-        <button type="submit">Register</button>
-    </form>
-    <p>Already have an account? <a href="login.html">Login here</a>.</p>
-</main>
+    <main>
+        <h2>Join MoBank Today!</h2>
+        <form id="registerForm">
+            <label for="name">Full Name:</label>
+            <input type="text" id="name" name="name" required>
+            
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+            
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            
+            <button type="submit">Register</button>
+        </form>
+        <p>Already have an account? <a href="login.html">Login here</a>.</p>
+    </main>
 
-<div id="footer-placeholder"></div>
+    <div id="footer-placeholder"></div>
 
-<script>
-    async function loadHeaderFooter() {
-        const headerResponse = await fetch('/header.html');
-        const footerResponse = await fetch('/footer.html');
-        const headerContent = await headerResponse.text();
-        const footerContent = await footerResponse.text();
+    <script src="../js/headerFooter.js"></script>
 
-        document.getElementById('header-placeholder').innerHTML = headerContent;
-        document.getElementById('footer-placeholder').innerHTML = footerContent;
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const registerForm = document.getElementById('registerForm');
 
-        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-        const nav = document.querySelector('nav ul');
-        if (mobileMenuToggle && nav) {
-            mobileMenuToggle.addEventListener('click', () => {
-                nav.classList.toggle('active');
-            });
-        }
-    }
+            if (registerForm) {
+                registerForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
 
-    loadHeaderFooter();
-</script>
+                    const name = e.target.name.value;
+                    const email = e.target.email.value;
+                    const password = e.target.password.value;
+
+                    alert(`Registration submitted with Name: ${name}, Email: ${email}, Password: ${password}`);
+                });
+            }
+        });
+    </script>
 
 </body>
 </html>
