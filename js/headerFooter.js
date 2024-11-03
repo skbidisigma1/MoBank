@@ -25,7 +25,7 @@ async function loadHeaderFooter() {
         }
 
         const isAdmin = false;
-        const adminLink = document.getElementById('admin-link');Q
+        const adminLink = document.getElementById('admin-link');
         if (adminLink) {
             adminLink.style.display = isAdmin ? 'block' : 'none';
         }
