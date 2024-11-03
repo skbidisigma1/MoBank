@@ -19,7 +19,6 @@ async function loadHeaderFooter() {
 
         if (mobileMenuToggle && mobileNav) {
             mobileMenuToggle.addEventListener('click', () => {
-                console.log('Mobile menu toggle clicked');
                 mobileNav.classList.toggle('active');
                 mobileMenuToggle.classList.toggle('active');
             });
