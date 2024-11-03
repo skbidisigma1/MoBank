@@ -288,21 +288,20 @@ ul#userList, ul#transactions {
 
     nav ul {
         position: fixed;
-        top: 60px;
+        top: 60px; /* Adjust this if your header height is different */
         left: 0;
         width: 100%;
-        max-height: 0;
-        overflow: hidden;
         background-color: #0056b3;
         flex-direction: column;
         padding: 0;
         margin: 0;
-        transition: max-height 0.3s ease;
+        transition: transform 0.3s ease;
+        transform: translateY(-100%); /* Hide menu by moving it above viewport */
         z-index: 1100;
     }
 
     nav ul.active {
-        max-height: 300px;
+        transform: translateY(0); /* Slide down into view */
     }
 
     nav ul li {
