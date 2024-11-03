@@ -322,7 +322,7 @@ ul#userList, ul#transactions {
 
     .mobile-nav li a {
         display: block;
-        padding: 15px;
+        padding: 10px;
         color: white;
         text-decoration: none;
         background-color: rgba(0, 86, 179, 0.8);
