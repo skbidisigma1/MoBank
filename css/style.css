@@ -288,12 +288,12 @@ ul#userList, ul#transactions {
     nav ul {
         flex-direction: column;
         gap: 10px;
-        padding: 20px;
+        padding: 10px;
         background-color: #0056b3;
-        position: fixed;
+        position: absolute;
         top: 60px;
-        left: 0;
-        width: 100%;
+        left: 20px;
+        width: 150px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         transition: max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
         max-height: 0;
@@ -311,7 +311,7 @@ ul#userList, ul#transactions {
     }
 
     nav ul li {
-        text-align: center;
+        text-align: left;
     }
 
     header h1 {
