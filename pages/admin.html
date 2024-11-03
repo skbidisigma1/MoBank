@@ -12,42 +12,44 @@
     <div id="header-placeholder"></div>
 
     <main>
-        <h2>Manage Users and Funds</h2>
+        <div class="container">
+            <h2>Manage Users and Funds</h2>
 
-        <section>
-            <h3>Add Funds</h3>
-            <form id="addFundsForm">
-                <label for="userEmail">User Email:</label>
-                <input type="email" id="userEmail" name="userEmail" required>
-                
-                <label for="amountToAdd">Amount to Add:</label>
-                <input type="number" id="amountToAdd" name="amountToAdd" required>
-                
-                <button type="submit">Add Funds</button>
-            </form>
-        </section>
+            <section>
+                <h3>Add Funds</h3>
+                <form id="addFundsForm">
+                    <label for="userEmail">User Email:</label>
+                    <input type="email" id="userEmail" name="userEmail" required>
+                    
+                    <label for="amountToAdd">Amount to Add:</label>
+                    <input type="number" id="amountToAdd" name="amountToAdd" required>
+                    
+                    <button type="submit">Add Funds</button>
+                </form>
+            </section>
 
-        <section>
-            <h3>Remove Funds</h3>
-            <form id="removeFundsForm">
-                <label for="userEmailRemove">User Email:</label>
-                <input type="email" id="userEmailRemove" name="userEmailRemove" required>
-                
-                <label for="amountToRemove">Amount to Remove:</label>
-                <input type="number" id="amountToRemove" name="amountToRemove" required>
-                
-                <button type="submit">Remove Funds</button>
-            </form>
-        </section>
+            <section>
+                <h3>Remove Funds</h3>
+                <form id="removeFundsForm">
+                    <label for="userEmailRemove">User Email:</label>
+                    <input type="email" id="userEmailRemove" name="userEmailRemove" required>
+                    
+                    <label for="amountToRemove">Amount to Remove:</label>
+                    <input type="number" id="amountToRemove" name="amountToRemove" required>
+                    
+                    <button type="submit">Remove Funds</button>
+                </form>
+            </section>
 
-        <section>
-            <h3>Current Users</h3>
-            <ul id="userList">
-                <li>User 1: $[Balance]</li>
-                <li>User 2: $[Balance]</li>
-                <li>User 3: $[Balance]</li>
-            </ul>
-        </section>
+            <section>
+                <h3>Current Users</h3>
+                <ul id="userList">
+                    <li>User 1: $[Balance]</li>
+                    <li>User 2: $[Balance]</li>
+                    <li>User 3: $[Balance]</li>
+                </ul>
+            </section>
+        </div>
     </main>
 
     <div id="footer-placeholder"></div>
