@@ -293,16 +293,12 @@ nav ul {
         z-index: 1101;
     }
 
-    header nav {
-        display: none;
-    }
-
     .mobile-nav {
         position: fixed;
         top: 60px;
         left: 0;
         width: 100%;
-        background-color: #0056b3;
+        background-color: rgba(0, 86, 179, 0.9);
         display: none;
         flex-direction: column;
         z-index: 1100;
@@ -331,6 +327,6 @@ nav ul {
     }
 
     .mobile-nav li a:hover {
-        background-color: #004494;
+        background-color: rgba(0, 68, 148, 0.9);
     }
 }
