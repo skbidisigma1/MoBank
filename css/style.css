@@ -1,3 +1,4 @@
+/* Reset and Base Styles */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -14,6 +15,7 @@ body {
     min-height: 100vh;
 }
 
+/* Header Styles */
 header {
     background-color: #0056b3;
     color: #fff;
@@ -25,8 +27,8 @@ header {
     justify-content: center;
     align-items: center;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    position: relative;
     height: 60px;
+    position: relative;
 }
 
 header h1 {
@@ -52,6 +54,7 @@ header nav {
     left: 20px;
 }
 
+/* Hamburger Menu Styles */
 #mobileMenuToggle {
     display: none;
     flex-direction: column;
@@ -62,7 +65,7 @@ header nav {
     border: none;
     cursor: pointer;
     padding: 0;
-    z-index: 1100;
+    z-index: 1101; /* Ensure it appears above the mobile nav */
     position: relative;
 }
 
@@ -95,6 +98,7 @@ header nav {
     transform: translateY(-100%);
 }
 
+/* Hamburger Animations */
 @keyframes toXTop {
     0% { top: 0; transform: translateY(0) rotate(0deg); }
     40% { top: 50%; transform: translateY(-50%) rotate(0deg); }
@@ -139,6 +143,7 @@ header nav {
     animation: toHamburgerBottom 0.3s forwards;
 }
 
+/* Desktop Navigation */
 nav ul {
     list-style-type: none;
     display: flex;
@@ -158,6 +163,7 @@ nav a:hover {
     color: #aad4ff;
 }
 
+/* Main Content Styles */
 main {
     flex: 1;
     padding: 20px;
@@ -238,6 +244,7 @@ button:active {
     transform: translateY(0);
 }
 
+/* Footer Styles */
 footer {
     background-color: #333;
     color: white;
@@ -257,6 +264,7 @@ footer a:hover {
     text-decoration: underline;
 }
 
+/* User and Transaction Lists */
 ul#userList, ul#transactions {
     list-style-type: none;
     padding: 0;
@@ -276,14 +284,9 @@ ul#userList, ul#transactions {
     display: none;
 }
 
-nav ul {
-    list-style-type: none;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-}
-
+/* Mobile Styles */
 @media (max-width: 600px) {
+    /* Show the hamburger menu on mobile */
     #mobileMenuToggle {
         display: flex;
         position: absolute;
@@ -293,12 +296,18 @@ nav ul {
         z-index: 1101;
     }
 
+    /* Hide the desktop navigation on mobile */
+    header nav {
+        display: none;
+    }
+
+    /* Mobile Navigation Menu */
     .mobile-nav {
         position: fixed;
-        top: 60px;
+        top: 60px; /* Matches header height */
         left: 0;
         width: 100%;
-        background-color: rgba(0, 86, 179, 0.9);
+        background-color: rgba(0, 86, 179, 0.8); /* Semi-transparent background */
         display: none;
         flex-direction: column;
         z-index: 1100;
@@ -324,9 +333,24 @@ nav ul {
         padding: 15px;
         color: white;
         text-decoration: none;
+        background-color: rgba(0, 86, 179, 0.8);
     }
 
     .mobile-nav li a:hover {
-        background-color: rgba(0, 68, 148, 0.9);
+        background-color: rgba(0, 68, 148, 0.8);
+    }
+
+    header h1 {
+        font-size: 1.3rem;
+    }
+
+    main {
+        padding: 15px;
+        margin: 10px;
+    }
+
+    .container {
+        padding: 15px;
+        margin: 10px;
     }
 }
