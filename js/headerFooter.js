@@ -13,8 +13,9 @@ async function loadHeaderFooter() {
         document.getElementById('header-placeholder').innerHTML = headerContent;
         document.getElementById('footer-placeholder').innerHTML = footerContent;
 
-        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-        const nav = document.querySelector('nav ul');
+        const headerPlaceholder = document.getElementById('header-placeholder');
+        const mobileMenuToggle = headerPlaceholder.querySelector('#mobileMenuToggle');
+        const nav = headerPlaceholder.querySelector('nav ul');
 
         if (mobileMenuToggle && nav) {
             mobileMenuToggle.addEventListener('click', () => {
@@ -24,7 +25,7 @@ async function loadHeaderFooter() {
         }
 
         const isAdmin = false;
-        const adminLink = document.getElementById('admin-link');
+        const adminLink = headerPlaceholder.querySelector('#admin-link');
         if (adminLink) {
             adminLink.style.display = isAdmin ? 'block' : 'none';
         }
