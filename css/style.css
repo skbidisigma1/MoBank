@@ -276,6 +276,13 @@ ul#userList, ul#transactions {
     display: none;
 }
 
+nav ul {
+    list-style-type: none;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
 @media (max-width: 600px) {
     #mobileMenuToggle {
         display: flex;
@@ -286,50 +293,44 @@ ul#userList, ul#transactions {
         z-index: 1101;
     }
 
-    nav ul {
+    header nav {
+        display: none;
+    }
+
+    .mobile-nav {
         position: fixed;
-        top: 60px; /* Adjust this if your header height is different */
+        top: 60px;
         left: 0;
         width: 100%;
         background-color: #0056b3;
+        display: none;
         flex-direction: column;
-        padding: 0;
-        margin: 0;
-        transition: transform 0.3s ease;
-        transform: translateY(-100%); /* Hide menu by moving it above viewport */
         z-index: 1100;
     }
 
-    nav ul.active {
-        transform: translateY(0); /* Slide down into view */
+    .mobile-nav.active {
+        display: flex;
     }
 
-    nav ul li {
+    .mobile-nav ul {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+    }
+
+    .mobile-nav li {
         text-align: center;
     }
 
-    nav ul li a {
+    .mobile-nav li a {
         display: block;
         padding: 15px;
         color: white;
         text-decoration: none;
     }
 
-    nav ul li a:hover {
+    .mobile-nav li a:hover {
         background-color: #004494;
-    }
-
-    header h1 {
-        font-size: 1.3rem;
-    }
-
-    main {
-        padding: 15px;
-        margin: 10px;
-    }
-
-    .container {
-        padding: 15px;
-        margin: 10px;
     }
 }
