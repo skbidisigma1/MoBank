@@ -300,7 +300,7 @@ ul#userList, ul#transactions {
         opacity: 0;
         transform: translateY(-10px);
         visibility: hidden;
-        z-index: 999;
+        z-index: 1200;
         border-radius: 4px;
     }
 
