@@ -17,7 +17,7 @@ body {
 header {
     background-color: #0056b3;
     color: #fff;
-    padding: 15px 20px;
+    padding: 20px 20px;
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -26,6 +26,7 @@ header {
     align-items: center;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     position: relative;
+    height: 80px;
 }
 
 header h1 {
@@ -280,7 +281,7 @@ ul#userList, ul#transactions {
         display: flex;
         position: absolute;
         top: 15px;
-        right: 20px;
+        left: 20px;
     }
 
     nav ul {
@@ -290,7 +291,7 @@ ul#userList, ul#transactions {
         background-color: #0056b3;
         position: absolute;
         top: 60px;
-        right: 0;
+        left: 0;
         width: 100%;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         transition: max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
