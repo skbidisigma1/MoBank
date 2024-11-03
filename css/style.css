@@ -22,14 +22,33 @@ header {
     top: 0;
     z-index: 1000;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
 }
 
 header h1 {
     font-size: 1.5rem;
     margin: 0;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+header nav,
+#mobileMenuToggle {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+header nav {
+    right: 20px;
+}
+
+#mobileMenuToggle {
+    left: 20px;
 }
 
 #mobileMenuToggle {
@@ -147,6 +166,16 @@ main {
     background-color: #fff;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
 }
 
 form {
@@ -287,6 +316,11 @@ ul#userList, ul#transactions {
     }
 
     main {
+        padding: 15px;
+        margin: 10px;
+    }
+
+    .container {
         padding: 15px;
         margin: 10px;
     }
