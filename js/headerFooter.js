@@ -17,11 +17,17 @@ async function loadHeaderFooter() {
         const mobileMenuToggle = headerPlaceholder.querySelector('#mobileMenuToggle');
         const nav = headerPlaceholder.querySelector('nav ul');
 
+        console.log('mobileMenuToggle:', mobileMenuToggle);
+        console.log('nav:', nav);
+
         if (mobileMenuToggle && nav) {
             mobileMenuToggle.addEventListener('click', () => {
+                console.log('Mobile menu toggle clicked');
                 nav.classList.toggle('active');
                 mobileMenuToggle.classList.toggle('active');
             });
+        } else {
+            console.error('Elements not found:', { mobileMenuToggle, nav });
         }
 
         const isAdmin = false;
