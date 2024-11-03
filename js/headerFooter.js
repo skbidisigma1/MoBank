@@ -15,19 +15,16 @@ async function loadHeaderFooter() {
 
         const headerPlaceholder = document.getElementById('header-placeholder');
         const mobileMenuToggle = headerPlaceholder.querySelector('#mobileMenuToggle');
-        const nav = headerPlaceholder.querySelector('nav ul');
+        const mobileNav = headerPlaceholder.querySelector('.mobile-nav');
 
-        console.log('mobileMenuToggle:', mobileMenuToggle);
-        console.log('nav:', nav);
-
-        if (mobileMenuToggle && nav) {
+        if (mobileMenuToggle && mobileNav) {
             mobileMenuToggle.addEventListener('click', () => {
                 console.log('Mobile menu toggle clicked');
-                nav.classList.toggle('active');
+                mobileNav.classList.toggle('active');
                 mobileMenuToggle.classList.toggle('active');
             });
         } else {
-            console.error('Elements not found:', { mobileMenuToggle, nav });
+            console.error('Elements not found:', { mobileMenuToggle, mobileNav });
         }
 
         const isAdmin = false;
