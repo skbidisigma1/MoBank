@@ -22,14 +22,17 @@ async function loadHeaderFooter() {
                 mobileNav.classList.toggle('active');
                 mobileMenuToggle.classList.toggle('active');
             });
-        } else {
-            console.error('Elements not found:', { mobileMenuToggle, mobileNav });
         }
 
-        const isAdmin = false;
+        const isAdmin = true;
         const adminLink = headerPlaceholder.querySelector('#admin-link');
+        const adminLinkMobile = headerPlaceholder.querySelector('#admin-link-mobile');
+
         if (adminLink) {
             adminLink.style.display = isAdmin ? 'block' : 'none';
+        }
+        if (adminLinkMobile) {
+            adminLinkMobile.style.display = isAdmin ? 'block' : 'none';
         }
 
     } catch (error) {
