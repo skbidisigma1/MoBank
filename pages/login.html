@@ -12,12 +12,16 @@
   <main>
     <div class="container">
       <h2>Welcome to MoBank</h2>
-      <button onclick="signInWithGoogle()">Sign in with Google</button>
+      <button id="google-signin-btn">Sign in with Google</button>
     </div>
   </main>
 
   <div id="footer-placeholder"></div>
 
-  <script type="module" src="../js/auth.js"></script>
+  <script type="module">
+    import { signInWithGoogle } from "../js/auth.js";
+
+    document.getElementById('google-signin-btn').addEventListener('click', signInWithGoogle);
+  </script>
 </body>
 </html>
