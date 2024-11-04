@@ -1,26 +1,32 @@
+<!-- /pages/login.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MoBank - Login</title>
-  <link rel="stylesheet" href="../css/style.css">
+    <meta charset="UTF-8">
+    <title>MoBank - Login</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js" defer></script>
+    <script type="module" src="../js/auth.js" defer></script>
 </head>
 <body>
-  <div id="header-placeholder"></div>
+    <div id="header-placeholder"></div>
 
-  <main>
-    <div class="container">
-      <h2>Welcome to MoBank</h2>
-      <button id="google-signin-btn">Sign in with Google</button>
-    </div>
-  </main>
+    <main>
+        <div class="container">
+            <h2>Login to MoBank</h2>
+            <button id="google-signin-btn">Sign in with Google</button>
+            
+            <hr>
+            <form id="email-form">
+                <input type="email" id="email" placeholder="Enter your email" required>
+                <button type="submit">Send Sign-In Link</button>
+            </form>
+            <p>If Google Sign-In is blocked, use the email sign-in link above.</p>
+        </div>
+    </main>
 
-  <div id="footer-placeholder"></div>
-
-  <script type="module">
-    import { signInWithGoogle } from "../js/auth.js";
-    document.getElementById('google-signin-btn').addEventListener('click', signInWithGoogle);
-  </script>
+    <div id="footer-placeholder"></div>
 </body>
 </html>
