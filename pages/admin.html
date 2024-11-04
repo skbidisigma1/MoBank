@@ -1,90 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - MoBank</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
-    <script src="../js/auth.js" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MoBank - Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
+  <div id="header-placeholder"></div>
 
-    <div id="header-placeholder"></div>
+  <main>
+    <div class="container">
+      <h2>Admin Panel</h2>
+      <form id="add-student-form">
+        <input type="text" id="student-name" placeholder="Student Name" required>
+        <button type="submit">Add Student</button>
+      </form>
+    </div>
+  </main>
 
-    <main>
-        <div class="container">
-            <h2>Manage Users and Funds</h2>
+  <div id="footer-placeholder"></div>
 
-            <section>
-                <h3>Add Funds</h3>
-                <form id="addFundsForm">
-                    <label for="userEmail">User Email:</label>
-                    <input type="email" id="userEmail" name="userEmail" required>
-                    
-                    <label for="amountToAdd">Amount to Add:</label>
-                    <input type="number" id="amountToAdd" name="amountToAdd" required>
-                    
-                    <button type="submit">Add Funds</button>
-                </form>
-            </section>
+  <script type="module">
+    import { logoutUser } from "../js/auth.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, addDoc, collection } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-            <section>
-                <h3>Remove Funds</h3>
-                <form id="removeFundsForm">
-                    <label for="userEmailRemove">User Email:</label>
-                    <input type="email" id="userEmailRemove" name="userEmailRemove" required>
-                    
-                    <label for="amountToRemove">Amount to Remove:</label>
-                    <input type="number" id="amountToRemove" name="amountToRemove" required>
-                    
-                    <button type="submit">Remove Funds</button>
-                </form>
-            </section>
+    const auth = getAuth();
+    const db = getFirestore();
 
-            <section>
-                <h3>Current Users</h3>
-                <ul id="userList">
-                    <li>User 1: $1000.00</li>
-                    <li>User 2: $750.00</li>
-                    <li>User 3: $500.00</li>
-                </ul>
-            </section>
-        </div>
-    </main>
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = '/pages/login.html';
+      } else {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (!userDoc.exists() || !userDoc.data().isAdmin) {
+          alert("Access denied: Admins only.");
+          window.location.href = '/pages/dashboard.html';
+        }
+      }
+    });
 
-    <div id="footer-placeholder"></div>
+    document.getElementById('add-student-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const studentName = document.getElementById('student-name').value;
 
-    <script src="../js/headerFooter.js"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const addFundsForm = document.getElementById('addFundsForm');
-            const removeFundsForm = document.getElementById('removeFundsForm');
-
-            if (addFundsForm) {
-                addFundsForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-
-                    const userEmail = e.target.userEmail.value;
-                    const amountToAdd = e.target.amountToAdd.value;
-
-                    alert(`Add Funds submitted for Email: ${userEmail}, Amount: ${amountToAdd}`);
-                });
-            }
-
-            if (removeFundsForm) {
-                removeFundsForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-
-                    const userEmailRemove = e.target.userEmailRemove.value;
-                    const amountToRemove = e.target.amountToRemove.value;
-
-                    alert(`Remove Funds submitted for Email: ${userEmailRemove}, Amount: ${amountToRemove}`);
-                });
-            }
+      try {
+        await addDoc(collection(db, "students"), {
+          name: studentName,
+          balance: 0,
+          createdAt: new Date()
         });
-    </script>
-
+        alert("Student added successfully!");
+        document.getElementById('add-student-form').reset();
+      } catch (error) {
+        console.error("Error adding student:", error);
+        alert("Failed to add student. Please try again.");
+      }
+    });
+  </script>
 </body>
 </html>
