@@ -20,19 +20,7 @@
   <div id="footer-placeholder"></div>
 
   <script type="module">
-    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-
-    const auth = getAuth();
-
-    function logoutUser() {
-      signOut(auth).then(() => {
-        localStorage.removeItem('googleToken');
-        window.location.href = '/pages/login.html';
-      }).catch((error) => {
-        console.error("Sign-out error:", error);
-        alert("Sign-out failed. Please try again.");
-      });
-    }
+    import { logoutUser } from "../js/auth.js";
   </script>
 </body>
 </html>
