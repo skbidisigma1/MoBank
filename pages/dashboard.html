@@ -1,54 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - MoBank</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MoBank - Dashboard</title>
+  <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
+  <div id="header-placeholder"></div>
 
-    <div id="header-placeholder"></div>
+  <main>
+    <div class="container">
+      <h2>Dashboard</h2>
+      <p>Welcome to your dashboard!</p>
+      <button onclick="logoutUser()">Logout</button>
+    </div>
+  </main>
 
-    <main>
-        <div class="container">
-            <h2>Welcome, [User's Name]!</h2>
-            <p>Your current balance: <strong>$[Balance]</strong></p>
+  <div id="footer-placeholder"></div>
 
-            <h3>Manage Your Money</h3>
-            <button onclick="window.location.href='add_money.html'">Add Money</button>
-            <button onclick="window.location.href='withdraw_money.html'">Withdraw Money</button>
+  <script type="module">
+    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-            <h3>Recent Transactions</h3>
-            <button id="toggleTransactions">Show Recent Transactions</button>
-            <div id="transactions" class="hidden">
-                <ul>
-                    <li>Transaction 1: $XX on [Date]</li>
-                    <li>Transaction 2: $YY on [Date]</li>
-                    <li>Transaction 3: $ZZ on [Date]</li>
-                </ul>
-            </div>
-        </div>
-    </main>
+    const auth = getAuth();
 
-    <div id="footer-placeholder"></div>
-
-    <script src="../js/headerFooter.js"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const toggleButton = document.getElementById('toggleTransactions');
-            const transactionsDiv = document.getElementById('transactions');
-
-            if (toggleButton && transactionsDiv) {
-                toggleButton.addEventListener('click', function() {
-                    transactionsDiv.classList.toggle('hidden');
-                    toggleButton.textContent = transactionsDiv.classList.contains('hidden') ? 'Show Recent Transactions' : 'Hide Recent Transactions';
-                });
-            }
-        });
-    </script>
-
+    function logoutUser() {
+      signOut(auth).then(() => {
+        localStorage.removeItem('googleToken');
+        window.location.href = '/pages/login.html';
+      }).catch((error) => {
+        console.error("Sign-out error:", error);
+        alert("Sign-out failed. Please try again.");
+      });
+    }
+  </script>
 </body>
 </html>
