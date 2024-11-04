@@ -6,27 +6,56 @@
     <title>Login - MoBank</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="../js/auth.js" defer></script>
 </head>
 <body>
 
     <div id="header-placeholder"></div>
 
-    <main class="auth-container">
-        <div class="auth-card">
+    <main>
+        <div class="container">
             <h2>Sign In to Your Account</h2>
-            <p>Please sign in with your Google account to continue.</p>
-            <div id="g_id_onload"
-                 data-client_id="YOUR_GOOGLE_CLIENT_ID"
-                 data-callback="handleCredentialResponse"
-                 data-auto_prompt="false">
-            </div>
-            <div class="g_id_signin" data-type="standard"></div>
+            <!-- Google Sign-In Button -->
+            <button onclick="signInWithGoogle()">Sign in with Google</button>
         </div>
     </main>
 
     <div id="footer-placeholder"></div>
+
+    <!-- Firebase and Google Sign-In Script -->
+    <script type="module">
+        // Import the functions you need from the SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAky4ABvyPNn08BzOFfoE0v7NZk1iGGbXE",
+            authDomain: "mobank-1.firebaseapp.com",
+            projectId: "mobank-1",
+            storageBucket: "mobank-1.firebasestorage.app",
+            messagingSenderId: "195568698450",
+            appId: "1:195568698450:web:9a1429312112487399cb8b"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // Google Sign-In function
+        function signInWithGoogle() {
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    const user = result.user;
+                    console.log("User signed in:", user);
+                    window.location.href = '/pages/dashboard.html';
+                })
+                .catch((error) => {
+                    console.error("Sign-in error:", error);
+                    alert("Sign-in failed. Please try again.");
+                });
+        }
+    </script>
 
 </body>
 </html>
