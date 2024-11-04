@@ -13,7 +13,7 @@
     <div class="container">
       <h2>Dashboard</h2>
       <p>Welcome to your dashboard!</p>
-      <button onclick="logoutUser()">Logout</button>
+      <button id="logout-btn">Logout</button>
     </div>
   </main>
 
@@ -21,6 +21,19 @@
 
   <script type="module">
     import { logoutUser } from "../js/auth.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+    const auth = getAuth();
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = '/pages/login.html';
+      } else {
+        console.log("Authenticated user:", user);
+      }
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', logoutUser);
   </script>
 </body>
 </html>
