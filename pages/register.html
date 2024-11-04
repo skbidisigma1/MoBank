@@ -6,51 +6,28 @@
     <title>Register - MoBank</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/auth.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="../js/auth.js" defer></script>
 </head>
 <body>
 
     <div id="header-placeholder"></div>
 
-    <main>
-        <div class="container">
-            <h2>Join MoBank Today!</h2>
-            <form id="registerForm">
-                <label for="name">Full Name:</label>
-                <input type="text" id="name" name="name" required>
-                
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
-                
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
-                
-                <button type="submit">Register</button>
-            </form>
-            <p>Already have an account? <a href="login.html">Login here</a>.</p>
+    <main class="auth-container">
+        <div class="auth-card">
+            <h2>Create an Account</h2>
+            <p>Sign up with your Google account to get started.</p>
+            <div id="g_id_onload"
+                 data-client_id="YOUR_GOOGLE_CLIENT_ID"
+                 data-callback="handleCredentialResponse"
+                 data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin" data-type="standard"></div>
         </div>
     </main>
 
     <div id="footer-placeholder"></div>
-
-    <script src="../js/headerFooter.js"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const registerForm = document.getElementById('registerForm');
-
-            if (registerForm) {
-                registerForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-
-                    const name = e.target.name.value;
-                    const email = e.target.email.value;
-                    const password = e.target.password.value;
-
-                    alert(`Registration submitted with Name: ${name}, Email: ${email}, Password: ${password}`);
-                });
-            }
-        });
-    </script>
 
 </body>
 </html>
