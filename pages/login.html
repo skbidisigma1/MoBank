@@ -1,61 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - MoBank</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MoBank - Login</title>
+  <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
+  <div id="header-placeholder"></div>
 
-    <div id="header-placeholder"></div>
+  <main>
+    <div class="container">
+      <h2>Welcome to MoBank</h2>
+      <button onclick="signInWithGoogle()">Sign in with Google</button>
+    </div>
+  </main>
 
-    <main>
-        <div class="container">
-            <h2>Sign In to Your Account</h2>
-            <!-- Google Sign-In Button -->
-            <button onclick="signInWithGoogle()">Sign in with Google</button>
-        </div>
-    </main>
+  <div id="footer-placeholder"></div>
 
-    <div id="footer-placeholder"></div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-    <!-- Firebase and Google Sign-In Script -->
-    <script type="module">
-        // Import the functions you need from the SDKs
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    const firebaseConfig = {
+      apiKey: "YOUR_NEW_API_KEY",
+      authDomain: "mo-bank.firebaseapp.com",
+      projectId: "mo-bank",
+      storageBucket: "mo-bank.appspot.com",
+      messagingSenderId: "269537209156",
+      appId: "1:269537209156:web:c3b1917b8707183ca10511"
+    };
 
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAky4ABvyPNn08BzOFfoE0v7NZk1iGGbXE",
-            authDomain: "mobank-1.firebaseapp.com",
-            projectId: "mobank-1",
-            storageBucket: "mobank-1.firebasestorage.app",
-            messagingSenderId: "195568698450",
-            appId: "1:195568698450:web:9a1429312112487399cb8b"
-        };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
-
-        // Google Sign-In function
-        function signInWithGoogle() {
-            signInWithPopup(auth, provider)
-                .then((result) => {
-                    const user = result.user;
-                    console.log("User signed in:", user);
-                    window.location.href = '/pages/dashboard.html';
-                })
-                .catch((error) => {
-                    console.error("Sign-in error:", error);
-                    alert("Sign-in failed. Please try again.");
-                });
-        }
-    </script>
-
+    function signInWithGoogle() {
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          const user = result.user;
+          localStorage.setItem('googleToken', user.accessToken);
+          window.location.href = '/pages/dashboard.html';
+        })
+        .catch((error) => {
+          console.error("Sign-in error:", error);
+          alert("Sign-in failed. Please try again.");
+        });
+    }
+  </script>
 </body>
 </html>
