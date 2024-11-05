@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Email Verification</title>
+</head>
+<body>
+    <h1>Verifying your email...</h1>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getAuth, applyActionCode } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC8ZICdwkxoZXWHyfG9xMCkCsdKJVni2Rs",
+            authDomain: "mo-bank.firebaseapp.com",
+            projectId: "mo-bank",
+            storageBucket: "mo-bank.appspot.com",
+            messagingSenderId: "269537209156",
+            appId: "1:269537209156:web:c3b1917b8707183ca10511"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        async function verifyEmail() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const mode = urlParams.get('mode');
+            const oobCode = urlParams.get('oobCode');
+
+            if (mode === 'verifyEmail' && oobCode) {
+                try {
+                    await applyActionCode(auth, oobCode);
+                    document.body.innerHTML = '<h1>Email verified successfully!</h1><p>You can now log in.</p>';
+                } catch (error) {
+                    document.body.innerHTML = '<h1>Verification failed</h1><p>The link may have expired or is invalid.</p>';
+                    console.error("Verification Error:", error);
+                }
+            } else {
+                document.body.innerHTML = '<h1>Invalid request</h1>';
+            }
+        }
+
+        verifyEmail();
+    </script>
+</body>
+</html>
