@@ -17,8 +17,7 @@ const db = getFirestore(app);
 
 const actionCodeSettings = {
     url: 'https://mo-bank.vercel.app/pages/dashboard.html',
-    handleCodeInApp: true,
-    dynamicLinkDomain: 'mo-bank.page.link'
+    handleCodeInApp: true
 };
 
 export async function signInWithGoogle() {
