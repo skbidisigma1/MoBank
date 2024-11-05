@@ -4,6 +4,7 @@ import {
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
     signOut, 
+    sendEmailVerification,
     sendPasswordResetEmail, 
     confirmPasswordReset 
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
@@ -30,12 +31,14 @@ export async function registerWithEmail(email, password) {
     try {
         const result = await createUserWithEmailAndPassword(auth, email, password);
         const user = result.user;
+        await sendEmailVerification(user);
         await setDoc(doc(db, "users", user.uid), {
             email: user.email,
             displayName: user.displayName || "",
             isAdmin: false
         });
-        window.location.href = '/pages/dashboard.html';
+        alert("Registration successful! Please verify your email to continue.");
+        window.location.href = '/pages/login.html';
     } catch (error) {
         console.error("Registration Error:", error);
         alert("Registration failed. Please try again.");
@@ -44,8 +47,14 @@ export async function registerWithEmail(email, password) {
 
 export async function loginWithEmail(email, password) {
     try {
-        await signInWithEmailAndPassword(auth, email, password);
-        window.location.href = '/pages/dashboard.html';
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        if (!user.emailVerified) {
+            alert("Please verify your email before logging in.");
+            await signOut(auth);
+        } else {
+            window.location.href = '/pages/dashboard.html';
+        }
     } catch (error) {
         console.error("Login Error:", error);
         if (error.code === 'auth/user-not-found') {
@@ -98,7 +107,3 @@ export async function confirmPasswordResetAction(oobCode, newPassword) {
         window.location.href = '/pages/login.html';
     }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    // No actions needed here as event listeners are handled in HTML
-});
