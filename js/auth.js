@@ -31,12 +31,12 @@ export async function registerWithEmail(email, password) {
     try {
         const result = await createUserWithEmailAndPassword(auth, email, password);
         const user = result.user;
-        
+
         const actionCodeSettings = {
             url: 'https://mo-bank.vercel.app/pages/verify-email.html',
             handleCodeInApp: true
         };
-        
+
         await sendEmailVerification(user, actionCodeSettings);
         await setDoc(doc(db, "users", user.uid), {
             email: user.email,
@@ -113,7 +113,7 @@ export async function confirmPasswordResetAction(oobCode, newPassword) {
         window.location.href = '/pages/login.html';
     } catch (error) {
         console.error("Password Reset Confirmation Error:", error);
-        alert("Failed to reset password. The link may be invalid or expired.");
+        alert("Failed to reset password. The link may have expired or is invalid.");
         window.location.href = '/pages/login.html';
     }
 }
