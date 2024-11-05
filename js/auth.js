@@ -31,7 +31,13 @@ export async function registerWithEmail(email, password) {
     try {
         const result = await createUserWithEmailAndPassword(auth, email, password);
         const user = result.user;
-        await sendEmailVerification(user);
+        
+        const actionCodeSettings = {
+            url: 'https://mo-bank.vercel.app/pages/verify-email.html',
+            handleCodeInApp: true
+        };
+        
+        await sendEmailVerification(user, actionCodeSettings);
         await setDoc(doc(db, "users", user.uid), {
             email: user.email,
             displayName: user.displayName || "",
@@ -41,7 +47,11 @@ export async function registerWithEmail(email, password) {
         window.location.href = '/pages/login.html';
     } catch (error) {
         console.error("Registration Error:", error);
-        alert("Registration failed. Please try again.");
+        if (error.code === 'auth/email-already-in-use') {
+            alert("This email is already in use. Please try logging in or use a different email.");
+        } else {
+            alert("Registration failed. Please try again.");
+        }
     }
 }
 
@@ -107,3 +117,7 @@ export async function confirmPasswordResetAction(oobCode, newPassword) {
         window.location.href = '/pages/login.html';
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    // No actions needed here as event listeners are handled in HTML
+});
