@@ -33,7 +33,7 @@ export async function registerWithEmail(email, password) {
         const user = result.user;
 
         const actionCodeSettings = {
-            url: 'https://mo-bank.vercel.app/pages/verify-email.html',
+            url: 'https://mo-bank.vercel.app/pages/action.html',
             handleCodeInApp: true
         };
 
@@ -89,7 +89,7 @@ export async function logoutUser() {
 
 export async function sendPasswordReset(email) {
     const actionCodeSettings = {
-        url: 'https://mo-bank.vercel.app/pages/password-reset-confirm.html',
+        url: 'https://mo-bank.vercel.app/pages/action.html',
         handleCodeInApp: false
     };
 
@@ -113,11 +113,9 @@ export async function confirmPasswordResetAction(oobCode, newPassword) {
         window.location.href = '/pages/login.html';
     } catch (error) {
         console.error("Password Reset Confirmation Error:", error);
-        alert("Failed to reset password. The link may have expired or is invalid.");
+        alert("Failed to reset password. The link may be invalid or expired.");
         window.location.href = '/pages/login.html';
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    // No actions needed here as event listeners are handled in HTML
-});
+document.addEventListener('DOMContentLoaded', () => {});
