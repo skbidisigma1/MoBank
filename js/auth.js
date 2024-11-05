@@ -1,3 +1,5 @@
+// /js/auth.js
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { 
     getAuth, 
@@ -6,7 +8,9 @@ import {
     signOut, 
     sendEmailVerification,
     sendPasswordResetEmail, 
-    confirmPasswordReset 
+    confirmPasswordReset,
+    GoogleAuthProvider,
+    signInWithPopup
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import { 
     getFirestore, 
@@ -26,6 +30,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
 
 export async function registerWithEmail(email, password) {
     try {
@@ -41,6 +46,7 @@ export async function registerWithEmail(email, password) {
         await setDoc(doc(db, "users", user.uid), {
             email: user.email,
             displayName: user.displayName || "",
+            balance: 0,
             isAdmin: false
         });
         alert("Registration successful! Please verify your email to continue.");
@@ -118,4 +124,32 @@ export async function confirmPasswordResetAction(oobCode, newPassword) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {});
+export async function signInWithGoogle() {
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        if (!user.emailVerified) {
+            await sendEmailVerification(user, {
+                url: 'https://mo-bank.vercel.app/pages/action.html',
+                handleCodeInApp: true
+            });
+            alert("Please verify your email to continue.");
+            await signOut(auth);
+        } else {
+            // Check if user document exists
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (!userDoc.exists()) {
+                await setDoc(doc(db, "users", user.uid), {
+                    email: user.email,
+                    displayName: user.displayName || "",
+                    balance: 0,
+                    isAdmin: false
+                });
+            }
+            window.location.href = '/pages/dashboard.html';
+        }
+    } catch (error) {
+        console.error("Google Sign-In Error:", error);
+        alert("Google Sign-In failed. Please try again.");
+    }
+}
