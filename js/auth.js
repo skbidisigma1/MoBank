@@ -1,5 +1,3 @@
-// /js/auth.js
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { 
     getAuth, 
@@ -15,39 +13,28 @@ import {
     setDoc 
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-// Firebase configuration
 const firebaseConfig = {
-    apiKey: "YOUR_FIREBASE_API_KEY",
+    apiKey: "AIzaSyC8ZICdwkxoZXWHyfG9xMCkCsdKJVni2Rs",
     authDomain: "mo-bank.firebaseapp.com",
     projectId: "mo-bank",
-    storageBucket: "mo-bank.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    storageBucket: "mo-bank.firebasestorage.app",
+    messagingSenderId: "269537209156",
+    appId: "1:269537209156:web:c3b1917b8707183ca10511"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/**
- * Registers a new user with email and password.
- * @param {string} email - User's email address.
- * @param {string} password - User's chosen password.
- */
 export async function registerWithEmail(email, password) {
     try {
         const result = await createUserWithEmailAndPassword(auth, email, password);
         const user = result.user;
-        
-        // Store additional user information in Firestore
         await setDoc(doc(db, "users", user.uid), {
             email: user.email,
             displayName: user.displayName || "",
             isAdmin: false
         });
-        
-        // Redirect to dashboard after successful registration
         window.location.href = '/pages/dashboard.html';
     } catch (error) {
         console.error("Registration Error:", error);
@@ -55,15 +42,9 @@ export async function registerWithEmail(email, password) {
     }
 }
 
-/**
- * Logs in an existing user with email and password.
- * @param {string} email - User's email address.
- * @param {string} password - User's password.
- */
 export async function loginWithEmail(email, password) {
     try {
-        const result = await signInWithEmailAndPassword(auth, email, password);
-        // Redirect to dashboard after successful login
+        await signInWithEmailAndPassword(auth, email, password);
         window.location.href = '/pages/dashboard.html';
     } catch (error) {
         console.error("Login Error:", error);
@@ -77,13 +58,9 @@ export async function loginWithEmail(email, password) {
     }
 }
 
-/**
- * Logs out the currently signed-in user.
- */
 export async function logoutUser() {
     try {
         await signOut(auth);
-        // Redirect to login page after logout
         window.location.href = '/pages/login.html';
     } catch (error) {
         console.error("Logout Error:", error);
@@ -91,14 +68,10 @@ export async function logoutUser() {
     }
 }
 
-/**
- * Sends a password reset email to the specified email address.
- * @param {string} email - User's email address.
- */
 export async function sendPasswordReset(email) {
     const actionCodeSettings = {
         url: 'https://mo-bank.vercel.app/pages/password-reset-confirm.html',
-        handleCodeInApp: false // Use Firebase's default email flow
+        handleCodeInApp: false
     };
 
     try {
@@ -114,11 +87,6 @@ export async function sendPasswordReset(email) {
     }
 }
 
-/**
- * Confirms the password reset with the provided action code and new password.
- * @param {string} oobCode - The action code from the password reset email.
- * @param {string} newPassword - The new password entered by the user.
- */
 export async function confirmPasswordResetAction(oobCode, newPassword) {
     try {
         await confirmPasswordReset(auth, oobCode, newPassword);
@@ -131,6 +99,6 @@ export async function confirmPasswordResetAction(oobCode, newPassword) {
     }
 }
 
-// Initialize event listeners if needed (currently handled in HTML inline scripts)
 document.addEventListener('DOMContentLoaded', () => {
+    // No actions needed here as event listeners are handled in HTML
 });
