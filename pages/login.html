@@ -1,4 +1,3 @@
-<!-- /pages/login.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,28 +11,31 @@
 
     <main>
         <div class="container">
-            <h2>Login to MoBank</h2>
-            
+            <h2>Login</h2>
             <form id="login-form">
-                <input type="email" id="login-email" placeholder="Email" required>
-                <input type="password" id="login-password" placeholder="Password" required>
+                <input type="email" id="email" placeholder="Email" required>
+                <input type="password" id="password" placeholder="Password" required>
                 <button type="submit">Login</button>
             </form>
-            
-            <p>Don’t have an account? <a href="/pages/register.html">Register here</a>.</p>
-            <p>Forgot your password? <a href="/pages/password-reset.html">Reset it here</a>.</p>
+            <button id="google-signin">Sign in with Google</button>
+            <p><a href="/pages/password-reset.html">Forgot your password? Reset it here.</a></p>
         </div>
     </main>
 
     <div id="footer-placeholder"></div>
 
     <script type="module">
-        import { loginWithEmail } from "../js/auth.js";
+        import { loginWithEmail, signInWithGoogle } from "../js/auth.js";
+
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
             loginWithEmail(email, password);
+        });
+
+        document.getElementById('google-signin').addEventListener('click', () => {
+            signInWithGoogle();
         });
     </script>
 </body>
