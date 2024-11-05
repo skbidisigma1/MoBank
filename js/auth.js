@@ -1,4 +1,3 @@
-// /js/auth.js
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { 
@@ -15,7 +14,8 @@ import {
 import { 
     getFirestore, 
     doc, 
-    setDoc 
+    setDoc,
+    getDoc
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -136,7 +136,6 @@ export async function signInWithGoogle() {
             alert("Please verify your email to continue.");
             await signOut(auth);
         } else {
-            // Check if user document exists
             const userDoc = await getDoc(doc(db, "users", user.uid));
             if (!userDoc.exists()) {
                 await setDoc(doc(db, "users", user.uid), {
@@ -153,3 +152,5 @@ export async function signInWithGoogle() {
         alert("Google Sign-In failed. Please try again.");
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {});
