@@ -1,6 +1,22 @@
+// /js/auth.js
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, addDoc, collection } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import { 
+    getAuth, 
+    sendSignInLinkToEmail, 
+    isSignInWithEmailLink, 
+    signInWithEmailLink, 
+    GoogleAuthProvider, 
+    signInWithPopup, 
+    signOut 
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { 
+    getFirestore, 
+    doc, 
+    setDoc, 
+    addDoc, 
+    collection 
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyC8ZICdwkxoZXWHyfG9xMCkCsdKJVni2Rs",
@@ -20,7 +36,7 @@ const actionCodeSettings = {
     handleCodeInApp: true
 };
 
-export async function signInWithGoogle() {
+async function signInWithGoogle() {
     const provider = new GoogleAuthProvider();
     try {
         const result = await signInWithPopup(auth, provider);
@@ -37,7 +53,7 @@ export async function signInWithGoogle() {
     }
 }
 
-export async function sendSignInLink() {
+async function sendSignInLink() {
     const email = document.getElementById('email').value;
     try {
         await sendSignInLinkToEmail(auth, email, actionCodeSettings);
@@ -49,7 +65,7 @@ export async function sendSignInLink() {
     }
 }
 
-export async function logoutUser() {
+async function logoutUser() {
     try {
         await signOut(auth);
         window.location.href = '/pages/login.html';
@@ -59,7 +75,7 @@ export async function logoutUser() {
     }
 }
 
-export async function handleEmailLinkSignIn() {
+async function handleEmailLinkSignIn() {
     if (isSignInWithEmailLink(auth, window.location.href)) {
         let email = window.localStorage.getItem('emailForSignIn');
         if (!email) {
