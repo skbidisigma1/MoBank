@@ -12,28 +12,19 @@
     <main>
         <div class="container">
             <h2>Login to MoBank</h2>
+            <button id="google-signin-btn">Sign in with Google</button>
             
-            <form id="login-form">
-                <input type="email" id="login-email" placeholder="Email" required>
-                <input type="password" id="login-password" placeholder="Password" required>
-                <button type="submit">Login</button>
+            <hr>
+            
+            <form id="email-form">
+                <input type="email" id="email" placeholder="Enter your email" required>
+                <button type="submit">Send Sign-In Link</button>
             </form>
             
-            <p>Don’t have an account? <a href="/pages/register.html">Register here</a>.</p>
-            <p>Forgot your password? <a href="/pages/password-reset.html">Reset it here</a>.</p>
+            <p>If Google Sign-In is blocked, use the email sign-in link above.</p>
         </div>
     </main>
 
     <div id="footer-placeholder"></div>
-
-    <script type="module">
-        import { loginWithEmail } from "../js/auth.js";
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            loginWithEmail(email, password);
-        });
-    </script>
 </body>
 </html>
