@@ -18,5 +18,10 @@
     </main>
 
     <div id="footer-placeholder"></div>
+
+    <script type="module">
+        import { logoutUser } from "../js/auth.js";
+        document.getElementById('logout-btn').addEventListener('click', logoutUser);
+    </script>
 </body>
 </html>
