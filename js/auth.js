@@ -1,4 +1,3 @@
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { 
     getAuth, 
@@ -7,9 +6,7 @@ import {
     signOut, 
     sendEmailVerification,
     sendPasswordResetEmail, 
-    confirmPasswordReset,
-    GoogleAuthProvider,
-    signInWithPopup
+    confirmPasswordReset
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import { 
     getFirestore, 
@@ -18,6 +15,10 @@ import {
     getDoc
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
+// Import Auth0 SDK
+import createAuth0Client from '@auth0/auth0-spa-js';
+
+// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyC8ZICdwkxoZXWHyfG9xMCkCsdKJVni2Rs",
     authDomain: "mo-bank.firebaseapp.com",
@@ -30,7 +31,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+
+// Auth0 configuration
+const auth0 = await createAuth0Client({
+    domain: "YOUR_AUTH0_DOMAIN",
+    client_id: "YOUR_CLIENT_ID",
+    redirect_uri: window.location.origin,
+    cacheLocation: 'localstorage'
+});
 
 export async function registerWithEmail(email, password) {
     try {
@@ -86,6 +94,7 @@ export async function loginWithEmail(email, password) {
 export async function logoutUser() {
     try {
         await signOut(auth);
+        await auth0.logout({ returnTo: window.location.origin });
         window.location.href = '/pages/login.html';
     } catch (error) {
         console.error("Logout Error:", error);
@@ -124,23 +133,20 @@ export async function confirmPasswordResetAction(oobCode, newPassword) {
     }
 }
 
+// Auth0 Google sign-in
 export async function signInWithGoogle() {
     try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        if (!user.emailVerified) {
-            await sendEmailVerification(user, {
-                url: 'https://mo-bank.vercel.app/pages/action.html',
-                handleCodeInApp: true
-            });
-            alert("Please verify your email to continue.");
-            await signOut(auth);
-        } else {
-            const userDoc = await getDoc(doc(db, "users", user.uid));
+        await auth0.loginWithRedirect({
+            connection: 'google-oauth2'
+        });
+        // Handle after login
+        const user = await auth0.getUser();
+        if (user) {
+            const userDoc = await getDoc(doc(db, "users", user.sub));
             if (!userDoc.exists()) {
-                await setDoc(doc(db, "users", user.uid), {
+                await setDoc(doc(db, "users", user.sub), {
                     email: user.email,
-                    displayName: user.displayName || "",
+                    displayName: user.name,
                     balance: 0,
                     isAdmin: false
                 });
@@ -153,4 +159,19 @@ export async function signInWithGoogle() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {});
+// Handle redirection back from Auth0
+export async function handleRedirectCallback() {
+    try {
+        if (window.location.search.includes('code=')) {
+            await auth0.handleRedirectCallback();
+            window.location.replace(window.location.pathname);
+        }
+    } catch (error) {
+        console.error("Auth0 Redirection Error:", error);
+    }
+}
+
+// Initialize Auth0 client on page load
+document.addEventListener('DOMContentLoaded', async () => {
+    await handleRedirectCallback();
+});
