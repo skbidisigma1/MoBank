@@ -6,14 +6,13 @@ async function configureAuth0Client() {
     auth0Client = await createAuth0Client({
         domain: "dev-nqdfwemz14t8nf7w.us.auth0.com",
         client_id: "IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA",
-        redirect_uri: window.location.origin + "/callback"
+        redirect_uri: window.location.origin
     });
 }
 
 export async function signInWithAuth0() {
     try {
         await auth0Client.loginWithRedirect({
-            redirect_uri: window.location.origin + "/callback",
             connection: 'google-oauth2'
         });
     } catch (error) {
