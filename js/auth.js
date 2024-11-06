@@ -1,14 +1,5 @@
-import createAuth0Client from "../node_modules/@auth0/auth0-spa-js/dist/auth0-spa-js.production.js";
+import createAuth0Client from "@auth0/auth0-spa-js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { 
-    getAuth, 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword, 
-    signOut, 
-    sendEmailVerification,
-    sendPasswordResetEmail, 
-    confirmPasswordReset
-} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 import { 
     getFirestore, 
     doc, 
@@ -16,7 +7,7 @@ import {
     getDoc
 } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-// Firebase Configuration
+// Firebase Configuration (For Firestore usage)
 const firebaseConfig = {
     apiKey: "AIzaSyC8ZICdwkxoZXWHyfG9xMCkCsdKJVni2Rs",
     authDomain: "mo-bank.firebaseapp.com",
@@ -27,7 +18,6 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
 
 // Auth0 Configuration
@@ -41,15 +31,19 @@ async function configureAuth0Client() {
     });
 }
 
-// Auth0 Functions
+// Auth0 Login Functions
 export async function signInWithAuth0() {
-    await auth0.loginWithRedirect();
+    try {
+        await auth0.loginWithRedirect();
+    } catch (error) {
+        console.error("Auth0 Login Error:", error);
+    }
 }
 
 export async function handleAuthRedirect() {
-    if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
+    const isAuthenticated = await auth0.isAuthenticated();
+    if (!isAuthenticated) {
         await auth0.handleRedirectCallback();
-        window.history.replaceState({}, document.title, "/");
     }
 }
 
@@ -57,26 +51,37 @@ export async function logoutUser() {
     await auth0.logout({ returnTo: window.location.origin });
 }
 
-// Firebase Functions (Commented out Firebase Google Sign-In, using Auth0 for Google only)
-export async function loginWithEmail(email, password) {
+export async function isAuthenticated() {
+    return await auth0.isAuthenticated();
+}
+
+export async function getUser() {
+    return await auth0.getUser();
+}
+
+// Firestore Functions for User Data (kept Firebase Firestore for database usage)
+export async function saveUserData(user) {
     try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        if (!user.emailVerified) {
-            alert("Please verify your email before logging in.");
-            await signOut(auth);
-        } else {
-            window.location.href = '/pages/dashboard.html';
+        const userDoc = await getDoc(doc(db, "users", user.sub));
+        if (!userDoc.exists()) {
+            await setDoc(doc(db, "users", user.sub), {
+                email: user.email,
+                name: user.name || "",
+                balance: 0,
+                isAdmin: false
+            });
         }
     } catch (error) {
-        console.error("Login Error:", error);
-        alert("Login failed. Please try again.");
+        console.error("Error saving user data:", error);
     }
 }
 
+// Initialize Auth0 on page load
 document.addEventListener('DOMContentLoaded', async () => {
     await configureAuth0Client();
+
     if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
         await handleAuthRedirect();
+        window.history.replaceState({}, document.title, "/");
     }
 });
