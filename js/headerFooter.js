@@ -1,7 +1,10 @@
 async function loadHeaderFooter() {
     try {
-        const headerResponse = await fetch('/header.html');
-        const footerResponse = await fetch('/footer.html');
+        const headerPath = window.location.pathname.includes('/pages/') ? '../header.html' : 'header.html';
+        const footerPath = window.location.pathname.includes('/pages/') ? '../footer.html' : 'footer.html';
+
+        const headerResponse = await fetch(headerPath);
+        const footerResponse = await fetch(footerPath);
 
         if (!headerResponse.ok || !footerResponse.ok) {
             throw new Error('Failed to load header or footer');
