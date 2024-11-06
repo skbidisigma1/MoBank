@@ -48,7 +48,7 @@ header nav {
 }
 
 #mobileMenuToggle {
-    right: 20px;
+    left: 20px;
     display: none;
     flex-direction: column;
     justify-content: space-between;
@@ -276,12 +276,12 @@ ul#userList, ul#transactions {
         display: flex;
         position: absolute;
         top: 50%;
-        right: 20px;
+        left: 20px;
         transform: translateY(-50%);
         z-index: 1101;
     }
 
-    nav ul {
+    header nav {
         display: none;
     }
 
@@ -305,9 +305,6 @@ ul#userList, ul#transactions {
         padding: 0;
         margin: 0;
         width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
     }
 
     .mobile-nav li {
