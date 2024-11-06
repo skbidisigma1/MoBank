@@ -12,7 +12,7 @@
     <main>
         <div class="container">
             <h2>Dashboard</h2>
-            <p>Welcome to your dashboard!</p>
+            <p id="welcome-message">Welcome to your dashboard!</p>
             <button id="logout-btn">Logout</button>
         </div>
     </main>
@@ -20,8 +20,22 @@
     <div id="footer-placeholder"></div>
 
     <script type="module">
-        import { logoutUser } from "../js/auth.js";
+        import { getUser, isAuthenticated, logoutUser } from "../js/auth.js";
+
+        async function displayUserInfo() {
+            const authenticated = await isAuthenticated();
+            if (!authenticated) {
+                window.location.href = '/pages/login.html';
+                return;
+            }
+
+            const user = await getUser();
+            document.getElementById('welcome-message').innerText = `Welcome, ${user.name}!`;
+        }
+
         document.getElementById('logout-btn').addEventListener('click', logoutUser);
+
+        displayUserInfo();
     </script>
 </body>
 </html>
