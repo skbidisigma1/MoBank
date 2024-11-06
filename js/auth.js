@@ -48,6 +48,39 @@ export async function getToken() {
     return await auth0Client.getTokenSilently();
 }
 
+export async function displayUserProfile() {
+    const authenticated = await isAuthenticated();
+    const profilePictureDesktop = document.getElementById('profile-picture');
+    const profilePictureMobile = document.getElementById('profile-picture-mobile');
+
+    if (authenticated) {
+        const user = await getUser();
+        if (profilePictureDesktop) {
+            profilePictureDesktop.src = user.picture;
+            profilePictureDesktop.style.display = 'block';
+            profilePictureDesktop.onclick = () => {
+                window.location.href = '/pages/dashboard.html';
+            };
+        }
+        if (profilePictureMobile) {
+            profilePictureMobile.src = user.picture;
+            profilePictureMobile.parentElement.style.display = 'block';
+            profilePictureMobile.onclick = () => {
+                window.location.href = '/pages/dashboard.html';
+            };
+        }
+    } else {
+        if (profilePictureDesktop) {
+            profilePictureDesktop.style.display = 'none';
+        }
+        if (profilePictureMobile) {
+            profilePictureMobile.parentElement.style.display = 'none';
+        }
+    }
+}
+
+window.displayUserProfile = displayUserProfile;
+
 document.addEventListener('DOMContentLoaded', async () => {
     await configureAuth0Client();
     await handleAuthRedirect();
