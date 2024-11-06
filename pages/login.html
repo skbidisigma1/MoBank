@@ -4,12 +4,6 @@
     <meta charset="UTF-8">
     <title>MoBank - Login</title>
     <link rel="stylesheet" href="../css/style.css">
-
-    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"></script>
-    <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19.0/auth0-spa-js.production.js"></script>
-
     <script type="module" src="../js/auth.js" defer></script>
 </head>
 <body>
@@ -23,7 +17,8 @@
                 <input type="password" id="password" placeholder="Password" required>
                 <button type="submit">Login</button>
             </form>
-            <button id="auth0-signin">Sign in with Google (Auth0)</button>
+            <!-- Updated button ID to match Auth0 function -->
+            <button id="auth0-signin">Sign in with Google</button>
             <p><a href="/pages/password-reset.html">Forgot your password? Reset it here.</a></p>
         </div>
     </main>
@@ -31,7 +26,7 @@
     <div id="footer-placeholder"></div>
 
     <script type="module">
-        import { loginWithEmail, loginWithAuth0 } from "../js/auth.js";
+        import { loginWithEmail, signInWithAuth0 } from "../js/auth.js";
 
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -40,8 +35,9 @@
             loginWithEmail(email, password);
         });
 
+        // Updated to use signInWithAuth0 for Google login
         document.getElementById('auth0-signin').addEventListener('click', () => {
-            loginWithAuth0();
+            signInWithAuth0();
         });
     </script>
 </body>
