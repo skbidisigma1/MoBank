@@ -336,7 +336,7 @@ ul#userList, ul#transactions {
 
     main {
         padding: 15px;
-        margin: 10px;
+        margin: 10px 10px 10px 10px;
     }
 
     .container {
