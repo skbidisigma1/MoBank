@@ -1,24 +1,35 @@
 <header>
-    <button id="mobileMenuToggle" aria-label="Toggle navigation">
-        <span class="bar"></span>
-        <span class="bar"></span>
-        <span class="bar"></span>
+  <div class="header-content">
+    <button id="mobileMenuToggle" class="hamburger-menu">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
     </button>
-    <h1>MoBank</h1>
-    <nav>
-        <ul>
-            <li><a href="/index.html">Home</a></li>
-            <li><a href="/pages/login.html">Login</a></li>
-            <li><a href="/pages/dashboard.html">Dashboard</a></li>
-            <li><a href="/pages/admin.html" id="admin-link" style="display: none;">Admin Panel</a></li>
-        </ul>
-    </nav>
-    <div class="mobile-nav">
-        <ul>
-            <li><a href="/index.html">Home</a></li>
-            <li><a href="/pages/login.html">Login</a></li>
-            <li><a href="/pages/dashboard.html">Dashboard</a></li>
-            <li><a href="/pages/admin.html" id="admin-link-mobile" style="display: none;">Admin Panel</a></li>
-        </ul>
+    <div class="logo">
+      <a href="/">MoBank</a>
     </div>
+    <nav>
+      <a href="/pages/about.html">About</a>
+      <a href="/pages/contact.html">Contact</a>
+      <div id="profile-menu" class="profile-menu">
+        <img
+          id="profile-picture"
+          src=""
+          alt="Profile"
+          style="display: none; width:40px; height:40px; border-radius:50%; cursor:pointer;"
+        />
+        <div id="dropdown-menu" class="dropdown-menu">
+          <p id="user-name"></p>
+          <p id="user-email"></p>
+          <button id="auth0-signout">Sign Out</button>
+        </div>
+      </div>
+    </nav>
+  </div>
+  <div class="mobile-nav">
+    <ul>
+      <li><a href="/pages/about.html">About</a></li>
+      <li><a href="/pages/contact.html">Contact</a></li>
+    </ul>
+  </div>
 </header>
