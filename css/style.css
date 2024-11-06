@@ -299,7 +299,7 @@ ul#userList, ul#transactions {
         top: 60px;
         left: 0;
         width: 100%;
-        background-color: rgba(0, 86, 179, 0.8);
+        background-color: rgba(0, 86, 179, 0.9);
         display: none;
         flex-direction: column;
         z-index: 1100;
