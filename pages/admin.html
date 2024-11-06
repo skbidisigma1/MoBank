@@ -21,6 +21,7 @@
 
     <div id="footer-placeholder"></div>
 
+    <script src="../js/headerFooter.js"></script>
     <script type="module">
         import { getUser, isAuthenticated, logoutUser } from "../js/auth.js";
 
@@ -30,17 +31,14 @@
                 window.location.href = '/pages/login.html';
                 return;
             }
-
             const user = await getUser();
             if (!user['https://yourapp.com/isAdmin']) {
                 alert("Access denied: Admins only.");
                 window.location.href = '/pages/dashboard.html';
             }
         }
-
         checkAdmin();
 
-        // Handle Add Student Form Submission
         document.getElementById('add-student-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const studentName = document.getElementById('student-name').value;
