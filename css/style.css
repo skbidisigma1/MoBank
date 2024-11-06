@@ -240,6 +240,13 @@ footer {
     padding: 10px;
     width: 100%;
     margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+footer p {
+    margin: 0;
 }
 
 footer a {
