@@ -329,6 +329,7 @@ ul#userList, ul#transactions {
         color: white;
         text-decoration: none;
         background-color: transparent;
+        font-weight: bold;
     }
 
     .mobile-nav li a:hover {
