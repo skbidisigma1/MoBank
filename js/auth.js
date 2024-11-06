@@ -1,22 +1,8 @@
-import createAuth0Client from "@auth0/auth0-spa-js";
+// Import required modules
+import createAuth0Client from "../node_modules/@auth0/auth0-spa-js/dist/auth0-spa-js.production.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { 
-    getAuth, 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword, 
-    signOut, 
-    sendEmailVerification,
-    sendPasswordResetEmail, 
-    confirmPasswordReset,
-    GoogleAuthProvider,
-    signInWithPopup
-} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-import { 
-    getFirestore, 
-    doc, 
-    setDoc,
-    getDoc
-} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -50,9 +36,9 @@ export async function loginWithAuth0() {
 }
 
 export async function handleAuthRedirect() {
-    const isAuthenticated = await auth0.isAuthenticated();
-    if (!isAuthenticated) {
+    if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
         await auth0.handleRedirectCallback();
+        window.history.replaceState({}, document.title, "/");
     }
 }
 
@@ -68,65 +54,31 @@ export async function getUser() {
     return await auth0.getUser();
 }
 
-// Firebase Functions (Commented out, for fallback if needed)
-// export async function registerWithEmail(email, password) {
-//     try {
-//         const result = await createUserWithEmailAndPassword(auth, email, password);
-//         const user = result.user;
-//         await sendEmailVerification(user, {
-//             url: 'https://mo-bank.vercel.app/pages/action.html',
-//             handleCodeInApp: true
-//         });
-//         await setDoc(doc(db, "users", user.uid), {
-//             email: user.email,
-//             displayName: user.displayName || "",
-//             balance: 0,
-//             isAdmin: false
-//         });
-//         alert("Registration successful! Please verify your email to continue.");
-//         window.location.href = '/pages/login.html';
-//     } catch (error) {
-//         console.error("Registration Error:", error);
-//         alert("Registration failed. Please try again.");
-//     }
-// }
+// Firebase Google Sign-In
+export async function signInWithGoogle() {
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
 
-// export async function loginWithEmail(email, password) {
-//     try {
-//         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-//         const user = userCredential.user;
-//         if (!user.emailVerified) {
-//             alert("Please verify your email before logging in.");
-//             await signOut(auth);
-//         } else {
-//             window.location.href = '/pages/dashboard.html';
-//         }
-//     } catch (error) {
-//         console.error("Login Error:", error);
-//         alert("Login failed. Please try again.");
-//     }
-// }
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (!userDoc.exists()) {
+            await setDoc(doc(db, "users", user.uid), {
+                email: user.email,
+                displayName: user.displayName || "",
+                balance: 0,
+                isAdmin: false
+            });
+        }
 
-// export async function sendPasswordReset(email) {
-//     const actionCodeSettings = {
-//         url: 'https://mo-bank.vercel.app/pages/action.html',
-//         handleCodeInApp: false
-//     };
+        window.location.href = '/pages/dashboard.html';
+    } catch (error) {
+        console.error("Google Sign-In Error:", error);
+        alert("Google Sign-In failed. Please try again.");
+    }
+}
 
-//     try {
-//         await sendPasswordResetEmail(auth, email, actionCodeSettings);
-//         alert("Password reset email sent. Please check your inbox.");
-//     } catch (error) {
-//         console.error("Password Reset Error:", error);
-//         alert("Failed to send password reset email. Please try again.");
-//     }
-// }
-
+// Initialize Auth0 Client on Page Load
 document.addEventListener('DOMContentLoaded', async () => {
     await configureAuth0Client();
-
-    if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
-        await handleAuthRedirect();
-        window.history.replaceState({}, document.title, "/");
-    }
+    await handleAuthRedirect();
 });
