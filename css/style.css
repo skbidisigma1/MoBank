@@ -271,17 +271,21 @@ ul#userList, ul#transactions {
     display: none;
 }
 
+.mobile-nav {
+    display: none;
+}
+
 @media (max-width: 600px) {
     #mobileMenuToggle {
         display: flex;
         position: absolute;
         top: 50%;
-        left: 20px;
+        right: 20px;
         transform: translateY(-50%);
         z-index: 1101;
     }
 
-    header nav {
+    nav ul {
         display: none;
     }
 
@@ -305,6 +309,9 @@ ul#userList, ul#transactions {
         padding: 0;
         margin: 0;
         width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
     .mobile-nav li {
@@ -329,7 +336,7 @@ ul#userList, ul#transactions {
 
     main {
         padding: 15px;
-        margin: 10px;
+        margin: 10px 10px 10px 10px;
     }
 
     .container {
