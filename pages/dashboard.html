@@ -19,6 +19,7 @@
 
     <div id="footer-placeholder"></div>
 
+    <script src="../js/headerFooter.js"></script>
     <script type="module">
         import { getUser, isAuthenticated, logoutUser } from "../js/auth.js";
 
@@ -28,13 +29,11 @@
                 window.location.href = '/pages/login.html';
                 return;
             }
-
             const user = await getUser();
             document.getElementById('welcome-message').innerText = `Welcome, ${user.name}!`;
         }
 
         document.getElementById('logout-btn').addEventListener('click', logoutUser);
-
         displayUserInfo();
     </script>
 </body>
