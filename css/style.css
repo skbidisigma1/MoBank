@@ -240,19 +240,17 @@ footer {
     padding: 10px;
     width: 100%;
     margin-top: auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 }
 
 footer p {
-    margin: 0;
+    display: inline;
+    font-family: 'Poppins', sans-serif;
 }
 
 footer a {
-    font-family: 'Poppins', sans-serif;
     color: #aad4ff;
     text-decoration: none;
+    margin-left: 5px;
 }
 
 footer a:hover {
