@@ -1,5 +1,3 @@
-import { displayUserProfile } from './auth.js';
-
 async function loadHeaderFooter() {
     try {
         const headerResponse = await fetch('/header.html');
@@ -36,8 +34,6 @@ async function loadHeaderFooter() {
         if (adminLinkMobile) {
             adminLinkMobile.style.display = isAdmin ? 'block' : 'none';
         }
-
-        await window.displayUserProfile();
 
     } catch (error) {
         console.error('Error loading header and footer:', error);
