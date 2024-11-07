@@ -12,13 +12,11 @@
     <div id="header-placeholder"></div>
 
     <main>
-        <div class="container">
-            <h2>Admin Panel</h2>
-            <form id="add-student-form">
-                <input type="text" id="student-name" placeholder="Student Name" required>
-                <button type="submit">Add Student</button>
-            </form>
-        </div>
+        <h2>Admin Panel</h2>
+        <form id="add-student-form">
+            <input type="text" id="student-name" placeholder="Student Name" required>
+            <button type="submit">Add Student</button>
+        </form>
     </main>
 
     <div id="footer-placeholder"></div>
@@ -33,6 +31,7 @@
                 window.location.href = '/pages/login.html';
                 return;
             }
+
             const user = await getUser();
             if (!user['https://yourapp.com/isAdmin']) {
                 alert("Access denied: Admins only.");
