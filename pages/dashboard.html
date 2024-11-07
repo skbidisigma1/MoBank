@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
-    <script src="../js/auth.js" defer></script>
 </head>
 <body>
     <div id="header-placeholder"></div>
@@ -21,7 +20,9 @@
     <div id="footer-placeholder"></div>
 
     <script src="../js/headerFooter.js"></script>
-    <script>
+    <script type="module">
+        import { getUser, isAuthenticated, logoutUser } from "../js/auth.js";
+
         async function displayUserInfo() {
             const authenticated = await isAuthenticated();
             if (!authenticated) {
@@ -32,7 +33,10 @@
             document.getElementById('welcome-message').innerText = `Welcome, ${user.name}!`;
         }
 
-        document.getElementById('logout-btn').addEventListener('click', logoutUser);
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await logoutUser();
+        });
+
         displayUserInfo();
     </script>
 </body>
