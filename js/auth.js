@@ -48,7 +48,21 @@ export async function getToken() {
     return await auth0Client.getTokenSilently();
 }
 
+async function checkSilentAuth() {
+    try {
+        const isAuthenticated = await auth0Client.isAuthenticated();
+        if (isAuthenticated) {
+            console.log("User is authenticated.");
+        } else {
+            await auth0Client.getTokenSilently();
+        }
+    } catch (error) {
+        console.error("Silent Authentication Error:", error);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     await configureAuth0Client();
     await handleAuthRedirect();
+    await checkSilentAuth();
 });
