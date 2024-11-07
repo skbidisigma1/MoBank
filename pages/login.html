@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
-    <script type="module" src="../js/auth.js" defer></script>
+    <script src="../js/auth.js" defer></script>
 </head>
 <body>
     <div id="header-placeholder"></div>
@@ -19,13 +19,12 @@
         <div style="margin-top: 30px;">
             <button id="auth0-signin">Sign in with Google</button>
         </div>
+        <p id="login-status">Checking login status...</p>
     </main>
 
     <div id="footer-placeholder"></div>
-
     <script src="../js/headerFooter.js"></script>
-    <script type="module">
-        import { signInWithAuth0 } from "../js/auth.js";
+    <script>
         document.getElementById('auth0-signin').addEventListener('click', () => {
             signInWithAuth0();
         });
