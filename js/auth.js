@@ -5,12 +5,12 @@ async function configureAuth0Client() {
         domain: "dev-nqdfwemz14t8nf7w.us.auth0.com",
         client_id: "IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA",
         redirect_uri: "https://mo-bank.vercel.app/pages/dashboard.html",
-        cacheLocation: 'localstorage',
-        useRefreshTokens: true
+        cacheLocation: 'localstorage', // Stores tokens in localStorage
+        useRefreshTokens: true        // Enables refresh tokens
     });
 }
 
-async function signInWithAuth0() {
+export async function signInWithAuth0() {
     try {
         await auth0Client.loginWithRedirect({
             connection: 'google-oauth2'
@@ -20,7 +20,7 @@ async function signInWithAuth0() {
     }
 }
 
-async function handleAuthRedirect() {
+export async function handleAuthRedirect() {
     const query = window.location.search;
     if (query.includes("code=") && query.includes("state=")) {
         try {
@@ -32,31 +32,50 @@ async function handleAuthRedirect() {
     }
 }
 
-async function logoutUser() {
-    await auth0Client.logout({
-        returnTo: window.location.origin
-    });
-}
-
-async function isAuthenticated() {
-    return await auth0Client.isAuthenticated();
-}
-
-async function getUser() {
-    return await auth0Client.getUser();
-}
-
-async function getToken() {
-    return await auth0Client.getTokenSilently();
-}
-
-async function checkSilentAuth() {
+export async function logoutUser() {
     try {
-        const authenticated = await auth0Client.isAuthenticated();
+        await auth0Client.logout({
+            returnTo: window.location.origin
+        });
+    } catch (error) {
+        console.error("Auth0 Logout Error:", error);
+    }
+}
+
+export async function isAuthenticated() {
+    try {
+        return await auth0Client.isAuthenticated();
+    } catch (error) {
+        console.error("Auth0 isAuthenticated Error:", error);
+        return false;
+    }
+}
+
+export async function getUser() {
+    try {
+        return await auth0Client.getUser();
+    } catch (error) {
+        console.error("Auth0 getUser Error:", error);
+        return null;
+    }
+}
+
+export async function getToken() {
+    try {
+        return await auth0Client.getTokenSilently();
+    } catch (error) {
+        console.error("Auth0 getTokenSilently Error:", error);
+        return null;
+    }
+}
+
+export async function checkSilentAuth() {
+    try {
+        const authenticated = await isAuthenticated();
         if (authenticated) {
             console.log("User is authenticated.");
             const user = await getUser();
-            document.getElementById("login-status").textContent = `Welcome, ${user.name}!`;
+            document.getElementById("login-status").innerText = `Welcome, ${user.name}!`;
         } else {
             console.log("User is not authenticated.");
         }
@@ -70,6 +89,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     await handleAuthRedirect();
     await checkSilentAuth();
 });
-
-window.signInWithAuth0 = signInWithAuth0;
-window.logoutUser = logoutUser;
