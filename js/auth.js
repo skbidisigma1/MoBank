@@ -1,14 +1,10 @@
-import { createAuth0Client } from 'https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js';
-
 let auth0Client = null;
 
 async function configureAuth0Client() {
     auth0Client = await createAuth0Client({
         domain: "dev-nqdfwemz14t8nf7w.us.auth0.com",
         client_id: "IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA",
-        redirect_uri: "https://mo-bank.vercel.app/pages/dashboard.html",
-        cacheLocation: 'localstorage',
-        useRefreshTokens: true
+        redirect_uri: "https://mo-bank.vercel.app/pages/dashboard.html"
     });
 }
 
@@ -35,59 +31,24 @@ export async function handleAuthRedirect() {
 }
 
 export async function logoutUser() {
-    try {
-        await auth0Client.logout({
-            returnTo: window.location.origin
-        });
-    } catch (error) {
-        console.error("Auth0 Logout Error:", error);
-    }
+    await auth0Client.logout({
+        returnTo: window.location.origin
+    });
 }
 
 export async function isAuthenticated() {
-    try {
-        return await auth0Client.isAuthenticated();
-    } catch (error) {
-        console.error("Auth0 isAuthenticated Error:", error);
-        return false;
-    }
+    return await auth0Client.isAuthenticated();
 }
 
 export async function getUser() {
-    try {
-        return await auth0Client.getUser();
-    } catch (error) {
-        console.error("Auth0 getUser Error:", error);
-        return null;
-    }
+    return await auth0Client.getUser();
 }
 
 export async function getToken() {
-    try {
-        return await auth0Client.getTokenSilently();
-    } catch (error) {
-        console.error("Auth0 getTokenSilently Error:", error);
-        return null;
-    }
-}
-
-export async function checkSilentAuth() {
-    try {
-        const authenticated = await isAuthenticated();
-        if (authenticated) {
-            console.log("User is authenticated.");
-            const user = await getUser();
-            document.getElementById("login-status").innerText = `Welcome, ${user.name}!`;
-        } else {
-            console.log("User is not authenticated.");
-        }
-    } catch (error) {
-        console.error("Silent Authentication Error:", error);
-    }
+    return await auth0Client.getTokenSilently();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
     await configureAuth0Client();
     await handleAuthRedirect();
-    await checkSilentAuth();
 });
