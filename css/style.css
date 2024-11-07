@@ -347,15 +347,13 @@ ul#userList, ul#transactions {
     main {
         padding: 15px;
         margin: 10px;
-        width: 100%;
-        min-width: 600px;
+        max-width: 90vw;
     }
 
     .container {
         padding: 15px;
         margin: 10px;
-        width: 100%;
-        min-width: 600px;
+        max-width: 90vw;
     }
 }
 
