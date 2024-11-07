@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account - MoBank</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+    <div id="header-placeholder"></div>
+
+    <main>
+        <h2>Your Account</h2>
+        <p>Manage your account details below, including your class period and instrument.</p>
+
+        <form>
+            <label for="class-period">Class Period:</label>
+            <select id="class-period" name="class-period">
+                <option value="">Select your class period</option>
+                <option value="1">Period 1</option>
+                <option value="2">Period 2</option>
+                <option value="3">Period 3</option>
+                <!-- Add more periods as needed -->
+            </select>
+
+            <label for="instrument">Instrument:</label>
+            <select id="instrument" name="instrument">
+                <option value="">Select your instrument</option>
+                <option value="violin">Violin</option>
+                <option value="viola">Viola</option>
+                <option value="cello">Cello</option>
+                <option value="bass">Bass</option>
+            </select>
+
+            <button type="submit">Save Changes</button>
+        </form>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="../js/headerFooter.js"></script>
+
+</body>
+</html>
