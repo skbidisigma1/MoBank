@@ -5,8 +5,8 @@ async function configureAuth0Client() {
         domain: "dev-nqdfwemz14t8nf7w.us.auth0.com",
         client_id: "IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA",
         redirect_uri: "https://mo-bank.vercel.app/pages/dashboard.html",
-        cacheLocation: 'localstorage', // Optional
-        useRefreshTokens: true       // Optional
+        cacheLocation: 'localstorage',
+        useRefreshTokens: true
     });
 }
 
@@ -70,3 +70,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await handleAuthRedirect();
     await checkSilentAuth();
 });
+
+window.signInWithAuth0 = signInWithAuth0;
+window.logoutUser = logoutUser;
