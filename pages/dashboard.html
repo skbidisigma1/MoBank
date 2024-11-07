@@ -21,16 +21,16 @@
 
     <script src="../js/headerFooter.js"></script>
     <script type="module">
-        import { signInWithAuth0, logoutUser } from "../js/auth.js";
+        import { getUser, isAuthenticated, logoutUser } from "../js/auth.js";
 
         async function displayUserInfo() {
-            // Basic check without isAuthenticated for simplicity
-            const user = await signInWithAuth0();
-            if (user) {
-                document.getElementById('welcome-message').innerText = `Welcome, ${user.name}!`;
-            } else {
+            const authenticated = await isAuthenticated();
+            if (!authenticated) {
                 window.location.href = '/pages/login.html';
+                return;
             }
+            const user = await getUser();
+            document.getElementById('welcome-message').innerText = `Welcome, ${user.name}!`;
         }
 
         document.getElementById('logout-btn').addEventListener('click', async () => {
