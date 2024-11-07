@@ -4,7 +4,7 @@ async function configureAuth0Client() {
     auth0Client = await createAuth0Client({
         domain: "dev-nqdfwemz14t8nf7w.us.auth0.com",
         client_id: "IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA",
-        redirect_uri: window.location.origin
+        redirect_uri: "https://mo-bank.vercel.app/pages/dashboard.html"
     });
 }
 
@@ -23,7 +23,7 @@ export async function handleAuthRedirect() {
     if (query.includes("code=") && query.includes("state=")) {
         try {
             await auth0Client.handleRedirectCallback();
-            window.history.replaceState({}, document.title, "/");
+            window.history.replaceState({}, document.title, "/pages/dashboard.html");
         } catch (error) {
             console.error("Auth0 Callback Error:", error);
         }
