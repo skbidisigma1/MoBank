@@ -4,11 +4,13 @@ async function configureAuth0Client() {
     auth0Client = await createAuth0Client({
         domain: "dev-nqdfwemz14t8nf7w.us.auth0.com",
         client_id: "IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA",
-        redirect_uri: "https://mo-bank.vercel.app/pages/dashboard.html"
+        redirect_uri: "https://mo-bank.vercel.app/pages/dashboard.html",
+        cacheLocation: 'localstorage', // Optional
+        useRefreshTokens: true       // Optional
     });
 }
 
-export async function signInWithAuth0() {
+async function signInWithAuth0() {
     try {
         await auth0Client.loginWithRedirect({
             connection: 'google-oauth2'
@@ -18,7 +20,7 @@ export async function signInWithAuth0() {
     }
 }
 
-export async function handleAuthRedirect() {
+async function handleAuthRedirect() {
     const query = window.location.search;
     if (query.includes("code=") && query.includes("state=")) {
         try {
@@ -30,31 +32,33 @@ export async function handleAuthRedirect() {
     }
 }
 
-export async function logoutUser() {
+async function logoutUser() {
     await auth0Client.logout({
         returnTo: window.location.origin
     });
 }
 
-export async function isAuthenticated() {
+async function isAuthenticated() {
     return await auth0Client.isAuthenticated();
 }
 
-export async function getUser() {
+async function getUser() {
     return await auth0Client.getUser();
 }
 
-export async function getToken() {
+async function getToken() {
     return await auth0Client.getTokenSilently();
 }
 
 async function checkSilentAuth() {
     try {
-        const isAuthenticated = await auth0Client.isAuthenticated();
-        if (isAuthenticated) {
+        const authenticated = await auth0Client.isAuthenticated();
+        if (authenticated) {
             console.log("User is authenticated.");
+            const user = await getUser();
+            document.getElementById("login-status").textContent = `Welcome, ${user.name}!`;
         } else {
-            await auth0Client.getTokenSilently();
+            console.log("User is not authenticated.");
         }
     } catch (error) {
         console.error("Silent Authentication Error:", error);
