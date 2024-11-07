@@ -164,16 +164,6 @@ main {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.container {
-    /* Removed max-width: 800px; */
-    margin: 20px auto;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    text-align: center;
-}
-
 form {
     margin: 20px auto;
     display: flex;
@@ -343,10 +333,5 @@ ul#userList, ul#transactions {
     main {
         padding: 15px;
         margin: 10px 10px 10px 10px;
-    }
-
-    .container {
-        padding: 15px;
-        margin: 10px;
     }
 }
