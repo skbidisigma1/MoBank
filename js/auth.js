@@ -1,6 +1,6 @@
-export let auth0Client = null;
+let auth0Client = null;
 
-export async function configureAuth0Client() {
+async function configureAuth0Client() {
     auth0Client = await createAuth0Client({
         domain: "dev-nqdfwemz14t8nf7w.us.auth0.com",
         client_id: "IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA",
@@ -10,7 +10,7 @@ export async function configureAuth0Client() {
     });
 }
 
-export async function signInWithAuth0() {
+async function signInWithAuth0() {
     try {
         await auth0Client.loginWithRedirect({
             connection: 'google-oauth2'
@@ -20,7 +20,7 @@ export async function signInWithAuth0() {
     }
 }
 
-export async function handleAuthRedirect() {
+async function handleAuthRedirect() {
     const query = window.location.search;
     if (query.includes("code=") && query.includes("state=")) {
         try {
@@ -32,27 +32,46 @@ export async function handleAuthRedirect() {
     }
 }
 
-export async function logoutUser() {
-    await auth0Client.logout({
-        returnTo: window.location.origin
-    });
-}
-
-export async function isAuthenticated() {
-    return await auth0Client.isAuthenticated();
-}
-
-export async function getUser() {
-    return await auth0Client.getUser();
-}
-
-export async function getToken() {
-    return await auth0Client.getTokenSilently();
-}
-
-export async function checkSilentAuth() {
+async function logoutUser() {
     try {
-        const authenticated = await auth0Client.isAuthenticated();
+        await auth0Client.logout({
+            returnTo: window.location.origin
+        });
+    } catch (error) {
+        console.error("Auth0 Logout Error:", error);
+    }
+}
+
+async function isAuthenticated() {
+    try {
+        return await auth0Client.isAuthenticated();
+    } catch (error) {
+        console.error("Auth0 isAuthenticated Error:", error);
+        return false;
+    }
+}
+
+async function getUser() {
+    try {
+        return await auth0Client.getUser();
+    } catch (error) {
+        console.error("Auth0 getUser Error:", error);
+        return null;
+    }
+}
+
+async function getToken() {
+    try {
+        return await auth0Client.getTokenSilently();
+    } catch (error) {
+        console.error("Auth0 getTokenSilently Error:", error);
+        return null;
+    }
+}
+
+async function checkSilentAuth() {
+    try {
+        const authenticated = await isAuthenticated();
         if (authenticated) {
             console.log("User is authenticated.");
             const user = await getUser();
@@ -64,3 +83,14 @@ export async function checkSilentAuth() {
         console.error("Silent Authentication Error:", error);
     }
 }
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await configureAuth0Client();
+    await handleAuthRedirect();
+    await checkSilentAuth();
+});
+
+window.signInWithAuth0 = signInWithAuth0;
+window.logoutUser = logoutUser;
+window.isAuthenticated = isAuthenticated;
+window.getUser = getUser;
