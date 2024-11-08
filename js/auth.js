@@ -35,12 +35,12 @@ async function handleAuthRedirect() {
 async function logoutUser() {
     try {
         await auth0Client.logout({
-            returnTo: window.location.origin,
-            federated: true
+            logoutParams: {
+                returnTo: window.location.origin,
+                federated: false
+            }
         });
-        localStorage.clear();
-        sessionStorage.clear();
-        console.log("Logged out, storage cleared.");
+        localStorage.removeItem('auth0.is.authenticated');
     } catch (error) {
         console.error("Auth0 Logout Error:", error);
     }
@@ -77,7 +77,6 @@ async function checkSilentAuth() {
     try {
         const authenticated = await isAuthenticated();
         if (authenticated) {
-            console.log("User is authenticated.");
             const user = await getUser();
             document.getElementById("login-status").textContent = `Welcome, ${user.name}!`;
         } else {
@@ -85,22 +84,6 @@ async function checkSilentAuth() {
         }
     } catch (error) {
         console.error("Silent Authentication Error:", error);
-    }
-}
-
-async function checkAdminAccess() {
-    const authenticated = await isAuthenticated();
-    if (!authenticated) {
-        window.location.href = '/pages/login.html';
-        return;
-    }
-
-    const user = await getUser();
-    const isAdmin = user && user['https://mo-bank.vercel.app/isAdmin'];
-
-    if (!isAdmin) {
-        alert("Access denied: Admins only.");
-        window.location.href = '/pages/dashboard.html';
     }
 }
 
@@ -114,4 +97,3 @@ window.signInWithAuth0 = signInWithAuth0;
 window.logoutUser = logoutUser;
 window.isAuthenticated = isAuthenticated;
 window.getUser = getUser;
-window.checkAdminAccess = checkAdminAccess;
