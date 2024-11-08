@@ -31,9 +31,7 @@ async function loadHeaderFooter() {
             });
         }
 
-        await configureAuth0Client();
-        await handleAuthRedirect();
-        await checkSilentAuth();
+        await window.auth0Promise;
 
         const user = await getUser();
         const isAdmin = user && user['https://mo-bank.vercel.app/isAdmin'];
