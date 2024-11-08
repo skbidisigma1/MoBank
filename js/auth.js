@@ -16,7 +16,8 @@ const auth0Promise = (async () => {
 async function signInWithAuth0() {
     try {
         await auth0Client.loginWithRedirect({
-            connection: 'google-oauth2'
+            connection: 'google-oauth2',
+            prompt: 'select_account'
         });
     } catch (error) {
         console.error("Auth0 Login Error:", error);
