@@ -10,12 +10,14 @@
 </head>
 <body>
     <div id="header-placeholder"></div>
-    <main id="admin-content">
+    <main id="admin-content" style="display: none;">
+        <!-- Admin content will be loaded here -->
     </main>
     <div id="footer-placeholder"></div>
 
     <script>
         async function loadAdminContent() {
+            await window.auth0Promise;
             const token = await getToken();
             if (!token) {
                 window.location.href = '/pages/login.html';
@@ -32,13 +34,17 @@
                 if (response.ok) {
                     const htmlContent = await response.text();
                     document.getElementById('admin-content').innerHTML = htmlContent;
+                    document.getElementById('admin-content').style.display = 'block';
 
-                    document.getElementById('add-student-form').addEventListener('submit', async (e) => {
-                        e.preventDefault();
-                        const studentName = document.getElementById('student-name').value;
-                        alert("Student added successfully! (Implement backend logic)");
-                        document.getElementById('add-student-form').reset();
-                    });
+                    const addStudentForm = document.getElementById('add-student-form');
+                    if (addStudentForm) {
+                        addStudentForm.addEventListener('submit', async (e) => {
+                            e.preventDefault();
+                            const studentName = document.getElementById('student-name').value;
+                            alert("Student added successfully! (Implement backend logic)");
+                            addStudentForm.reset();
+                        });
+                    }
                 } else if (response.status === 403) {
                     alert('Access denied: Admins only.');
                     window.location.href = '/pages/dashboard.html';
