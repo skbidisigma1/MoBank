@@ -29,7 +29,7 @@ const jwtCheck = jwt({
     algorithms: ['RS256']
 });
 
-app.get('/pages/admin.html', jwtCheck, (req, res) => {
+app.get('/admin', jwtCheck, (req, res) => {
     const roles = req.user['https://mo-bank.vercel.app/roles'] || [];
     const isAdmin = roles.includes('admin');
 
