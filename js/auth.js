@@ -93,4 +93,5 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.signInWithAuth0 = signInWithAuth0;
 window.logoutUser = logoutUser;
 window.isAuthenticated = isAuthenticated;
+
 window.getUser = getUser;
