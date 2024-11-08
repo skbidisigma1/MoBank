@@ -76,13 +76,10 @@ async function checkSilentAuth() {
     try {
         const authenticated = await isAuthenticated();
         if (authenticated) {
-            console.log("User is authenticated.");
             const user = await getUser();
             if (document.getElementById("login-status")) {
                 document.getElementById("login-status").textContent = `Welcome, ${user.name}!`;
             }
-        } else {
-            console.log("User is not authenticated.");
         }
     } catch (error) {
         console.error("Silent Authentication Error:", error);
