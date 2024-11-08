@@ -34,7 +34,8 @@ async function loadHeaderFooter() {
         await window.auth0Promise;
 
         const user = await getUser();
-        const isAdmin = user && user['https://mo-bank.vercel.app/isAdmin'];
+        const roles = user && user['https://mo-bank.vercel.app/roles'] || [];
+        const isAdmin = roles.includes('admin');
 
         const adminLink = headerPlaceholder.querySelector('#admin-link');
         const adminLinkMobile = headerPlaceholder.querySelector('#admin-link-mobile');
@@ -45,7 +46,6 @@ async function loadHeaderFooter() {
         if (adminLinkMobile) {
             adminLinkMobile.style.display = isAdmin ? 'block' : 'none';
         }
-
     } catch (error) {
         console.error('Error loading header and footer:', error);
     }
