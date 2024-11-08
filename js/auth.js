@@ -1,6 +1,6 @@
 let auth0Client = null;
 
-async function configureAuth0Client() {
+const auth0Promise = (async () => {
     auth0Client = await createAuth0Client({
         domain: "dev-nqdfwemz14t8nf7w.us.auth0.com",
         client_id: "IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA",
@@ -8,7 +8,10 @@ async function configureAuth0Client() {
         cacheLocation: 'localstorage',
         useRefreshTokens: true
     });
-}
+
+    await handleAuthRedirect();
+    await checkSilentAuth();
+})();
 
 async function signInWithAuth0() {
     try {
@@ -33,7 +36,9 @@ async function handleAuthRedirect() {
 async function logoutUser() {
     try {
         await auth0Client.logout({
-            logoutParams: { returnTo: window.location.origin },
+            logoutParams: {
+                returnTo: window.location.origin
+            },
             federated: false
         });
         localStorage.removeItem('auth0.is.authenticated');
@@ -66,7 +71,9 @@ async function checkSilentAuth() {
         if (authenticated) {
             console.log("User is authenticated.");
             const user = await getUser();
-            document.getElementById("login-status").textContent = `Welcome, ${user.name}!`;
+            if (document.getElementById("login-status")) {
+                document.getElementById("login-status").textContent = `Welcome, ${user.name}!`;
+            }
         } else {
             console.log("User is not authenticated.");
         }
@@ -75,13 +82,8 @@ async function checkSilentAuth() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await configureAuth0Client();
-    await handleAuthRedirect();
-    await checkSilentAuth();
-});
-
 window.signInWithAuth0 = signInWithAuth0;
 window.logoutUser = logoutUser;
 window.isAuthenticated = isAuthenticated;
 window.getUser = getUser;
+window.auth0Promise = auth0Promise;
