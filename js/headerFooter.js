@@ -27,7 +27,7 @@ async function loadHeaderFooter() {
             });
         }
 
-        const isAdmin = true;
+        const isAdmin = false;
         const adminLink = headerPlaceholder.querySelector('#admin-link');
         const adminLinkMobile = headerPlaceholder.querySelector('#admin-link-mobile');
 
