@@ -35,7 +35,7 @@ app.get('/admin', jwtCheck, (req, res) => {
     const isAdmin = roles.includes('admin');
 
     if (isAdmin) {
-        res.sendFile(path.join(__dirname, 'pages/adminContent.html'));
+        res.sendFile(path.join(__dirname, 'adminContent.html'));
     } else {
         res.status(403).send('Forbidden: Admins only');
     }
