@@ -3,15 +3,19 @@ async function loadHeaderFooter() {
         const headerPath = window.location.pathname.includes('/pages/') ? '../header.html' : 'header.html';
         const footerPath = window.location.pathname.includes('/pages/') ? '../footer.html' : 'footer.html';
 
-        const headerResponse = await fetch(headerPath);
-        const footerResponse = await fetch(footerPath);
+        const [headerResponse, footerResponse] = await Promise.all([
+            fetch(headerPath),
+            fetch(footerPath)
+        ]);
 
         if (!headerResponse.ok || !footerResponse.ok) {
             throw new Error('Failed to load header or footer');
         }
 
-        const headerContent = await headerResponse.text();
-        const footerContent = await footerResponse.text();
+        const [headerContent, footerContent] = await Promise.all([
+            headerResponse.text(),
+            footerResponse.text()
+        ]);
 
         document.getElementById('header-placeholder').innerHTML = headerContent;
         document.getElementById('footer-placeholder').innerHTML = footerContent;
@@ -27,7 +31,11 @@ async function loadHeaderFooter() {
             });
         }
 
-        const user = await window.getUser();
+        await configureAuth0Client();
+        await handleAuthRedirect();
+        await checkSilentAuth();
+
+        const user = await getUser();
         const isAdmin = user && user['https://mo-bank.vercel.app/isAdmin'];
 
         const adminLink = headerPlaceholder.querySelector('#admin-link');
