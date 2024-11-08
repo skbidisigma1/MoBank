@@ -30,7 +30,7 @@ const jwtCheck = jwt({
 });
 
 app.get('/admin', jwtCheck, (req, res) => {
-    res.sendFile(path.join(__dirname, 'adminContent.html'));
+    res.sendFile(path.join(__dirname, 'adminContent.html'));  // Assuming it's in the root
 });
 
 app.use('/pages', express.static(path.join(__dirname, 'pages')));
