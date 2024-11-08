@@ -30,6 +30,7 @@ const jwtCheck = jwt({
 });
 
 app.get('/admin', jwtCheck, (req, res) => {
+    console.log('User roles:', req.user['https://mo-bank.vercel.app/roles']);
     const roles = req.user['https://mo-bank.vercel.app/roles'] || [];
     const isAdmin = roles.includes('admin');
 
