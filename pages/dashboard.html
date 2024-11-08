@@ -7,7 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
-    <script src="../js/auth.js" defer></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/headerFooter.js"></script>
 </head>
 <body>
     <div id="header-placeholder"></div>
@@ -20,9 +21,9 @@
 
     <div id="footer-placeholder"></div>
 
-    <script src="../js/headerFooter.js"></script>
     <script>
         async function displayUserInfo() {
+            await window.auth0Promise;
             const authenticated = await isAuthenticated();
             if (!authenticated) {
                 window.location.href = '/pages/login.html';
