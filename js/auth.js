@@ -15,7 +15,9 @@ const auth0Promise = (async () => {
 
 async function signInWithAuth0() {
     try {
-        await auth0Client.loginWithRedirect();
+        await auth0Client.loginWithRedirect({
+            connection: 'google-oauth2'
+        });
     } catch (error) {
         console.error("Auth0 Login Error:", error);
     }
@@ -42,6 +44,7 @@ async function logoutUser() {
             federated: false
         });
         localStorage.removeItem('auth0.is.authenticated');
+        sessionStorage.clear();
     } catch (error) {
         console.error("Auth0 Logout Error:", error);
     }
@@ -65,14 +68,23 @@ async function getUser() {
     }
 }
 
+async function getToken() {
+    try {
+        return await auth0Client.getTokenSilently();
+    } catch (error) {
+        console.error("Auth0 getTokenSilently Error:", error);
+        return null;
+    }
+}
+
 async function checkSilentAuth() {
     try {
         const authenticated = await isAuthenticated();
         if (authenticated) {
-            console.log("User is authenticated.");
             const user = await getUser();
-            if (document.getElementById("login-status")) {
-                document.getElementById("login-status").textContent = `Welcome, ${user.name}!`;
+            const loginStatus = document.getElementById("login-status");
+            if (loginStatus) {
+                loginStatus.textContent = `Welcome, ${user.name}!`;
             }
         } else {
             console.log("User is not authenticated.");
@@ -81,6 +93,10 @@ async function checkSilentAuth() {
         console.error("Silent Authentication Error:", error);
     }
 }
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await auth0Promise;
+});
 
 window.signInWithAuth0 = signInWithAuth0;
 window.logoutUser = logoutUser;
