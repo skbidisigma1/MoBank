@@ -7,10 +7,8 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(express.static(__dirname));
 app.use('/css', express.static(path.join(__dirname, 'css')));
 app.use('/js', express.static(path.join(__dirname, 'js')));
-app.use('/pages', express.static(path.join(__dirname, 'pages')));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -35,6 +33,14 @@ app.get('/pages/admin.html', jwt({
     } else {
         console.log('Access denied: Admins only');
         res.status(403).send('Forbidden: Admins only');
+    }
+});
+
+app.use('/pages', (req, res, next) => {
+    if (req.path === '/admin.html') {
+        next();
+    } else {
+        express.static(path.join(__dirname, 'pages'))(req, res, next);
     }
 });
 
