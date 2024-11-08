@@ -33,7 +33,7 @@
             }
 
             const user = await getUser();
-            if (!user['https://yourapp.com/isAdmin']) {
+            if (!user['https://mo-bank.vercel.app/isAdmin']) {
                 alert("Access denied: Admins only.");
                 window.location.href = '/pages/dashboard.html';
             }
