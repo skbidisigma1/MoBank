@@ -4,7 +4,7 @@ async function configureAuth0Client() {
     auth0Client = await createAuth0Client({
         domain: "dev-nqdfwemz14t8nf7w.us.auth0.com",
         client_id: "IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA",
-        redirect_uri: "https://mo-bank.vercel.app/pages/dashboard.html",
+        redirect_uri: window.location.origin + "/pages/dashboard.html",
         cacheLocation: 'localstorage',
         useRefreshTokens: true
     });
@@ -12,9 +12,7 @@ async function configureAuth0Client() {
 
 async function signInWithAuth0() {
     try {
-        await auth0Client.loginWithRedirect({
-            connection: 'google-oauth2'
-        });
+        await auth0Client.loginWithRedirect();
     } catch (error) {
         console.error("Auth0 Login Error:", error);
     }
@@ -35,10 +33,8 @@ async function handleAuthRedirect() {
 async function logoutUser() {
     try {
         await auth0Client.logout({
-            logoutParams: {
-                returnTo: window.location.origin,
-                federated: false
-            }
+            logoutParams: { returnTo: window.location.origin },
+            federated: false
         });
         localStorage.removeItem('auth0.is.authenticated');
     } catch (error) {
@@ -64,19 +60,11 @@ async function getUser() {
     }
 }
 
-async function getToken() {
-    try {
-        return await auth0Client.getTokenSilently();
-    } catch (error) {
-        console.error("Auth0 getTokenSilently Error:", error);
-        return null;
-    }
-}
-
 async function checkSilentAuth() {
     try {
         const authenticated = await isAuthenticated();
         if (authenticated) {
+            console.log("User is authenticated.");
             const user = await getUser();
             document.getElementById("login-status").textContent = `Welcome, ${user.name}!`;
         } else {
