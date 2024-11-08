@@ -27,7 +27,9 @@ async function loadHeaderFooter() {
             });
         }
 
-        const isAdmin = false;
+        const user = await window.getUser();
+        const isAdmin = user && user['https://mo-bank.vercel.app/isAdmin'];
+
         const adminLink = headerPlaceholder.querySelector('#admin-link');
         const adminLinkMobile = headerPlaceholder.querySelector('#admin-link-mobile');
 
