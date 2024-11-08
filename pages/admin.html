@@ -12,52 +12,41 @@
 </head>
 <body>
     <div id="header-placeholder"></div>
+
     <main id="admin-content" style="display: none;">
+        <h2>Admin Panel</h2>
+        <form id="add-student-form">
+            <input type="text" id="student-name" placeholder="Student Name" required>
+            <button type="submit">Add Student</button>
+        </form>
     </main>
+
     <div id="footer-placeholder"></div>
 
     <script>
         async function loadAdminContent() {
             await window.auth0Promise;
-            const token = await getToken();
-            if (!token) {
-                window.location.href = '/pages/login.html';
+            const user = await getUser();
+            const roles = user && user['https://mo-bank.vercel.app/roles'] || [];
+
+            if (!roles.includes('admin')) {
+                window.location.href = '/pages/dashboard.html';
                 return;
             }
 
-            try {
-                const response = await fetch('/admin', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+            document.getElementById('admin-content').style.display = 'block';
 
-                if (response.ok) {
-                    const htmlContent = await response.text();
-                    document.getElementById('admin-content').innerHTML = htmlContent;
-                    document.getElementById('admin-content').style.display = 'block';
-
-                    const addStudentForm = document.getElementById('add-student-form');
-                    if (addStudentForm) {
-                        addStudentForm.addEventListener('submit', async (e) => {
-                            e.preventDefault();
-                            const studentName = document.getElementById('student-name').value;
-                            alert("Student added successfully! (Implement backend logic)");
-                            addStudentForm.reset();
-                        });
-                    }
-                } else if (response.status === 403) {
-                    alert('Access denied: Admins only.');
-                    window.location.href = '/pages/dashboard.html';
-                } else if (response.status === 401) {
-                    alert('Please log in.');
-                    window.location.href = '/pages/login.html';
-                } else {
-                    throw new Error('An error occurred');
+            const addStudentForm = document.getElementById('add-student-form');
+            addStudentForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!roles.includes('admin')) {
+                    alert("You do not have permission to perform this action.");
+                    return;
                 }
-            } catch (error) {
-                console.error('Error loading admin content:', error);
-            }
+                const studentName = document.getElementById('student-name').value;
+                alert("Student added successfully! (Implement backend logic)");
+                addStudentForm.reset();
+            });
         }
 
         loadAdminContent();
