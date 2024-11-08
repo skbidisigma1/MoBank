@@ -10,6 +10,8 @@ const port = process.env.PORT || 3000;
 app.use('/css', express.static(path.join(__dirname, 'css')));
 app.use('/js', express.static(path.join(__dirname, 'js')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use('/header.html', express.static(path.join(__dirname, 'header.html')));
+app.use('/footer.html', express.static(path.join(__dirname, 'footer.html')));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -31,7 +33,7 @@ app.get('/admin', jwtCheck, (req, res) => {
     const claims = req.user;
     const isAdmin = claims && claims['https://mo-bank.vercel.app/isAdmin'];
     if (isAdmin) {
-        res.sendFile(path.join(__dirname, 'pages/admin.html'));
+        res.sendFile(path.join(__dirname, 'pages/adminContent.html'));
     } else {
         res.status(403).send('Forbidden: Admins only');
     }
