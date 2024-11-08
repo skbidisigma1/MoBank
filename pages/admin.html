@@ -2,50 +2,58 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MoBank - Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
-    <script type="module" src="../js/auth.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/headerFooter.js"></script>
 </head>
 <body>
     <div id="header-placeholder"></div>
-
-    <main>
-        <h2>Admin Panel</h2>
-        <form id="add-student-form">
-            <input type="text" id="student-name" placeholder="Student Name" required>
-            <button type="submit">Add Student</button>
-        </form>
+    <main id="admin-content">
     </main>
-
     <div id="footer-placeholder"></div>
 
-    <script src="../js/headerFooter.js"></script>
-    <script type="module">
-        import { getUser, isAuthenticated, logoutUser } from "../js/auth.js";
-
-        async function checkAdmin() {
-            const authenticated = await isAuthenticated();
-            if (!authenticated) {
+    <script>
+        async function loadAdminContent() {
+            const token = await getToken();
+            if (!token) {
                 window.location.href = '/pages/login.html';
                 return;
             }
 
-            const user = await getUser();
-            if (!user['https://mo-bank.vercel.app/isAdmin']) {
-                alert("Access denied: Admins only.");
-                window.location.href = '/pages/dashboard.html';
+            try {
+                const response = await fetch('/admin', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const htmlContent = await response.text();
+                    document.getElementById('admin-content').innerHTML = htmlContent;
+
+                    document.getElementById('add-student-form').addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        const studentName = document.getElementById('student-name').value;
+                        alert("Student added successfully! (Implement backend logic)");
+                        document.getElementById('add-student-form').reset();
+                    });
+                } else if (response.status === 403) {
+                    alert('Access denied: Admins only.');
+                    window.location.href = '/pages/dashboard.html';
+                } else if (response.status === 401) {
+                    alert('Please log in.');
+                    window.location.href = '/pages/login.html';
+                } else {
+                    throw new Error('An error occurred');
+                }
+            } catch (error) {
+                console.error('Error loading admin content:', error);
             }
         }
-        checkAdmin();
 
-        document.getElementById('add-student-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const studentName = document.getElementById('student-name').value;
-            alert("Student added successfully! (Implement backend logic)");
-            document.getElementById('add-student-form').reset();
-        });
+        loadAdminContent();
     </script>
 </body>
 </html>
