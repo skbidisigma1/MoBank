@@ -30,15 +30,7 @@ const jwtCheck = jwt({
 });
 
 app.get('/admin', jwtCheck, (req, res) => {
-    console.log('User roles:', req.user['https://mo-bank.vercel.app/roles']);
-    const roles = req.user['https://mo-bank.vercel.app/roles'] || [];
-    const isAdmin = roles.includes('admin');
-
-    if (isAdmin) {
-        res.sendFile(path.join(__dirname, 'adminContent.html'));
-    } else {
-        res.status(403).send('Forbidden: Admins only');
-    }
+    res.sendFile(path.join(__dirname, 'adminContent.html'));
 });
 
 app.use('/pages', express.static(path.join(__dirname, 'pages')));
