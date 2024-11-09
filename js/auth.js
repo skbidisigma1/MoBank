@@ -22,13 +22,14 @@ async function initializeUser() {
   
   const auth0Promise = (async () => {
     auth0Client = await createAuth0Client({
-      domain: 'your-auth0-domain',
-      client_id: 'your-auth0-client-id',
+      domain: 'dev-nqdfwemz14t8nf7w.us.auth0.com',
+      client_id: 'IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA',
       redirect_uri: window.location.origin + '/pages/dashboard.html',
-      audience: 'your-auth0-audience',
+      audience: 'https://mo-bank.vercel.app/api',
       cacheLocation: 'localstorage',
       useRefreshTokens: true,
     });
+  
     await handleAuthRedirect();
     const isAuthenticated = await auth0Client.isAuthenticated();
     if (isAuthenticated) {
