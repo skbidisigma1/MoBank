@@ -6,7 +6,7 @@ const auth0Promise = (async () => {
         redirect_uri: window.location.origin + "/pages/dashboard.html",
         cacheLocation: 'localstorage',
         useRefreshTokens: true,
-        audience: "your-auth0-audience"
+        audience: process.env.AUTH0_AUDIENCE
     });
     await handleAuthRedirect();
     await checkSilentAuth();
