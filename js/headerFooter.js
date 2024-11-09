@@ -46,6 +46,19 @@ async function loadHeaderFooter() {
         if (adminLinkMobile) {
             adminLinkMobile.style.display = isAdmin ? 'block' : 'none';
         }
+
+        const isLoggedIn = await isAuthenticated();
+        const loginLink = headerPlaceholder.querySelector('#login-link');
+        const logoutLink = headerPlaceholder.querySelector('#logout-link');
+
+        if (isLoggedIn) {
+            if (loginLink) loginLink.style.display = 'none';
+            if (logoutLink) logoutLink.style.display = 'block';
+        } else {
+            if (loginLink) loginLink.style.display = 'block';
+            if (logoutLink) logoutLink.style.display = 'none';
+        }
+
     } catch (error) {
         console.error('Error loading header and footer:', error);
     }
