@@ -6,11 +6,12 @@ const auth0Promise = (async () => {
         redirect_uri: window.location.origin + "/pages/dashboard.html",
         cacheLocation: 'localstorage',
         useRefreshTokens: true,
-        audience: process.env.AUTH0_AUDIENCE
+        audience: "https://mo-bank.vercel.app/api"
     });
     await handleAuthRedirect();
     await checkSilentAuth();
 })();
+
 async function signInWithAuth0() {
     try {
         await auth0Client.loginWithRedirect({
@@ -21,6 +22,7 @@ async function signInWithAuth0() {
         console.error("Auth0 Login Error:", error);
     }
 }
+
 async function handleAuthRedirect() {
     const query = window.location.search;
     if (query.includes("code=") && query.includes("state=")) {
@@ -41,6 +43,7 @@ async function handleAuthRedirect() {
         }
     }
 }
+
 async function logoutUser() {
     try {
         await auth0Client.logout({
@@ -55,6 +58,7 @@ async function logoutUser() {
         console.error("Auth0 Logout Error:", error);
     }
 }
+
 async function isAuthenticated() {
     try {
         return await auth0Client.isAuthenticated();
@@ -63,6 +67,7 @@ async function isAuthenticated() {
         return false;
     }
 }
+
 async function getUser() {
     try {
         return await auth0Client.getUser();
@@ -71,6 +76,7 @@ async function getUser() {
         return null;
     }
 }
+
 async function getToken() {
     try {
         return await auth0Client.getTokenSilently();
@@ -79,6 +85,7 @@ async function getToken() {
         return null;
     }
 }
+
 async function checkSilentAuth() {
     try {
         const authenticated = await isAuthenticated();
@@ -95,9 +102,11 @@ async function checkSilentAuth() {
         console.error("Silent Authentication Error:", error);
     }
 }
+
 document.addEventListener('DOMContentLoaded', async () => {
     await auth0Promise;
 });
+
 window.signInWithAuth0 = signInWithAuth0;
 window.logoutUser = logoutUser;
 window.isAuthenticated = isAuthenticated;
