@@ -5,13 +5,18 @@ async function initializeUser() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({}),
+          Authorization: `Bearer ${token}`
+        }
       });
   
       if (!response.ok) {
-        console.error('Error initializing user:', await response.json());
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { message: await response.text() };
+        }
+        console.error('Error initializing user:', errorData.message);
       }
     } catch (error) {
       console.error('Error initializing user:', error);
@@ -27,9 +32,8 @@ async function initializeUser() {
       redirect_uri: window.location.origin + '/pages/dashboard.html',
       audience: 'https://mo-bank.vercel.app/api',
       cacheLocation: 'localstorage',
-      useRefreshTokens: true,
+      useRefreshTokens: true
     });
-  
     await handleAuthRedirect();
     const isAuthenticated = await auth0Client.isAuthenticated();
     if (isAuthenticated) {
@@ -42,7 +46,7 @@ async function initializeUser() {
     try {
       await auth0Client.loginWithRedirect({
         connection: 'google-oauth2',
-        prompt: 'select_account',
+        prompt: 'select_account'
       });
     } catch (error) {
       console.error('Auth0 Login Error:', error);
@@ -65,9 +69,9 @@ async function initializeUser() {
     try {
       await auth0Client.logout({
         logoutParams: {
-          returnTo: window.location.origin,
+          returnTo: window.location.origin
         },
-        federated: false,
+        federated: false
       });
       localStorage.removeItem('auth0.is.authenticated');
       sessionStorage.clear();

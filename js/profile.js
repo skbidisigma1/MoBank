@@ -27,15 +27,20 @@ document.addEventListener('DOMContentLoaded', async () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token}`
           },
-          body: JSON.stringify({ class_period, instrument }),
+          body: JSON.stringify({ class_period, instrument })
         });
   
         if (response.ok) {
           window.location.href = '/pages/dashboard.html';
         } else {
-          const errorData = await response.json();
+          let errorData;
+          try {
+            errorData = await response.json();
+          } catch {
+            errorData = { message: await response.text() };
+          }
           alert('Error updating profile: ' + errorData.message);
         }
       } catch (error) {
@@ -43,4 +48,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         alert('An error occurred while updating your profile.');
       }
     });
-  });  
+  });
+  
