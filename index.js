@@ -7,8 +7,7 @@ const admin = require('firebase-admin');
 const serviceAccount = require('./keys/mo-bank-firebase-adminsdk-ynglt-6cbe523bdc.json');
 
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://<your-project-id>.firebaseio.com"
+    credential: admin.credential.cert(serviceAccount)
 });
 
 const db = admin.firestore();
@@ -42,7 +41,7 @@ app.get('/admin', jwtCheck, async (req, res) => {
     const roles = req.user['https://mo-bank.vercel.app/roles'] || [];
     const isAdmin = roles.includes('admin');
     if (isAdmin) {
-        res.sendFile(path.join(__dirname, 'adminContent.html'));
+        res.sendFile(path.join(__dirname, 'pages/admin.html'));
     } else {
         res.status(403).send('Forbidden: Admins only');
     }
@@ -61,19 +60,46 @@ app.use((err, req, res, next) => {
 async function addUser(uid, email, metadata = {}) {
     const userRef = db.collection('users').doc(uid);
     await userRef.set({
+        auth0_user_id: uid,
+        name: metadata.name || 'Unknown',
         email: email,
-        ...metadata
+        currency_balance: metadata.currency_balance || 0,
+        role: metadata.role || ['user'],
+        transaction_history: metadata.transaction_history || []
     }, { merge: true });
 }
 
-async function addTransaction(senderId, receiverId, amount) {
+async function addTransaction(senderId, receiverId, amount, transactionType, adminId = null) {
     const transactionRef = db.collection('transactions').doc();
     await transactionRef.set({
         senderId,
         receiverId,
         amount,
-        timestamp: admin.firestore.FieldValue.serverTimestamp()
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        transactionType,
+        adminId
     });
+
+    if (transactionType === 'add') {
+        const receiverRef = db.collection('users').doc(receiverId);
+        await receiverRef.update({
+            currency_balance: admin.firestore.FieldValue.increment(amount)
+        });
+    } else if (transactionType === 'remove') {
+        const receiverRef = db.collection('users').doc(receiverId);
+        await receiverRef.update({
+            currency_balance: admin.firestore.FieldValue.increment(-amount)
+        });
+    } else if (transactionType === 'send') {
+        const senderRef = db.collection('users').doc(senderId);
+        const receiverRef = db.collection('users').doc(receiverId);
+        await senderRef.update({
+            currency_balance: admin.firestore.FieldValue.increment(-amount)
+        });
+        await receiverRef.update({
+            currency_balance: admin.firestore.FieldValue.increment(amount)
+        });
+    }
 }
 
 async function getUserData(uid) {
@@ -85,8 +111,9 @@ async function getUserData(uid) {
 app.post('/login', jwtCheck, async (req, res) => {
     const uid = req.user.sub;
     const email = req.user.email;
-    const roles = req.user['https://mo-bank.vercel.app/roles'] || [];
-    await addUser(uid, email, { roles });
+    const name = req.user.name || 'Unknown';
+    const roles = req.user['https://mo-bank.vercel.app/roles'] || ['user'];
+    await addUser(uid, email, { name, role: roles });
     res.sendStatus(200);
 });
 
@@ -95,8 +122,9 @@ app.post('/transactions', jwtCheck, async (req, res) => {
     if (!roles.includes('admin')) {
         return res.status(403).send('Forbidden: Admins only');
     }
-    const { senderId, receiverId, amount } = req.body;
-    await addTransaction(senderId, receiverId, amount);
+    const { senderId, receiverId, amount, transactionType } = req.body;
+    const adminId = req.user.sub;
+    await addTransaction(senderId, receiverId, amount, transactionType, adminId);
     res.sendStatus(200);
 });
 
