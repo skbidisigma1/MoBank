@@ -11,10 +11,7 @@ async function initializeUser() {
       });
   
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error initializing user:', errorText);
-      } else {
-        console.log('User initialized successfully');
+        console.error('Error initializing user:', await response.json());
       }
     } catch (error) {
       console.error('Error initializing user:', error);
@@ -25,10 +22,10 @@ async function initializeUser() {
   
   const auth0Promise = (async () => {
     auth0Client = await createAuth0Client({
-      domain: 'dev-nqdfwemz14t8nf7w.us.auth0.com',
-      client_id: 'IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA',
+      domain: 'your-auth0-domain',
+      client_id: 'your-auth0-client-id',
       redirect_uri: window.location.origin + '/pages/dashboard.html',
-      audience: 'https://mo-bank.vercel.app/api',
+      audience: 'your-auth0-audience',
       cacheLocation: 'localstorage',
       useRefreshTokens: true,
     });
@@ -114,8 +111,6 @@ async function initializeUser() {
         if (loginStatus) {
           loginStatus.textContent = `Welcome, ${user.name}!`;
         }
-      } else {
-        console.log('User is not authenticated.');
       }
     } catch (error) {
       console.error('Silent Authentication Error:', error);

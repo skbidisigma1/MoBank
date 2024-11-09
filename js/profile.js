@@ -35,8 +35,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (response.ok) {
           window.location.href = '/pages/dashboard.html';
         } else {
-          const errorText = await response.json();
-          alert('Error updating profile: ' + errorText.message);
+          const errorData = await response.json();
+          alert('Error updating profile: ' + errorData.message);
         }
       } catch (error) {
         console.error('Error updating profile:', error);

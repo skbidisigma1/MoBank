@@ -20,7 +20,7 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-module.exports = async function handler(req, res) {
+module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
@@ -40,14 +40,10 @@ module.exports = async function handler(req, res) {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Auth0 UserInfo Error:', errorText);
-      throw new Error('Token verification failed');
+      return res.status(401).json({ message: 'Token verification failed' });
     }
 
     const user = await response.json();
-    console.log('Auth0 User:', user);
-
     const uid = user.sub;
 
     const { class_period, instrument } = req.body;
@@ -67,7 +63,6 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({ message: 'Profile updated successfully' });
   } catch (error) {
-    console.error('Error updating profile:', error);
     return res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
   }
-}
+};

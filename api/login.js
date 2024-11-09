@@ -20,7 +20,7 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-module.exports = async function handler(req, res) {
+module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
@@ -40,14 +40,10 @@ module.exports = async function handler(req, res) {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Auth0 UserInfo Error:', errorText);
-      throw new Error('Token verification failed');
+      return res.status(401).json({ message: 'Token verification failed' });
     }
 
     const user = await response.json();
-    console.log('Auth0 User:', user);
-
     const uid = user.sub;
 
     const userRef = db.collection('users').doc(uid);
@@ -64,14 +60,10 @@ module.exports = async function handler(req, res) {
         class_period: null,
         instrument: '',
       });
-      console.log('User initialized in Firestore');
-    } else {
-      console.log('User already exists in Firestore');
     }
 
     return res.status(200).json({ message: 'User initialized successfully' });
   } catch (error) {
-    console.error('Error during login:', error);
     return res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
   }
-}
+};
