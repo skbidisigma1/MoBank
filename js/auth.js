@@ -26,6 +26,15 @@ async function handleAuthRedirect() {
         try {
             await auth0Client.handleRedirectCallback();
             window.history.replaceState({}, document.title, "/pages/dashboard.html");
+            const token = await auth0Client.getTokenSilently();
+            await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({})
+            });
         } catch (error) {
             console.error("Auth0 Callback Error:", error);
         }
