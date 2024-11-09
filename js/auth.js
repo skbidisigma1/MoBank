@@ -5,7 +5,8 @@ const auth0Promise = (async () => {
         client_id: "IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA",
         redirect_uri: window.location.origin + "/pages/dashboard.html",
         cacheLocation: 'localstorage',
-        useRefreshTokens: true
+        useRefreshTokens: true,
+        audience: "your-auth0-audience"
     });
     await handleAuthRedirect();
     await checkSilentAuth();
@@ -101,4 +102,5 @@ window.signInWithAuth0 = signInWithAuth0;
 window.logoutUser = logoutUser;
 window.isAuthenticated = isAuthenticated;
 window.getUser = getUser;
+window.getToken = getToken;
 window.auth0Promise = auth0Promise;
