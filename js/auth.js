@@ -13,6 +13,8 @@ async function initializeUser() {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Error initializing user:', errorText);
+      } else {
+        console.log('User initialized successfully');
       }
     } catch (error) {
       console.error('Error initializing user:', error);
@@ -31,7 +33,10 @@ async function initializeUser() {
       useRefreshTokens: true,
     });
     await handleAuthRedirect();
-    await initializeUser();
+    const isAuthenticated = await auth0Client.isAuthenticated();
+    if (isAuthenticated) {
+      await initializeUser();
+    }
     await checkSilentAuth();
   })();
   
@@ -52,15 +57,6 @@ async function initializeUser() {
       try {
         await auth0Client.handleRedirectCallback();
         window.history.replaceState({}, document.title, '/pages/dashboard.html');
-        const token = await auth0Client.getTokenSilently();
-        await fetch('/api/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({}),
-        });
       } catch (error) {
         console.error('Auth0 Callback Error:', error);
       }
