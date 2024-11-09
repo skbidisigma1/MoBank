@@ -1,6 +1,7 @@
 {
   "name": "mobank",
   "version": "1.0.0",
+  "type": "commonjs",
   "description": "online **mobuck** tracker",
   "main": "index.js",
   "scripts": {
