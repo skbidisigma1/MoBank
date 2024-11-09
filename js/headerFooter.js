@@ -39,13 +39,8 @@ async function loadHeaderFooter() {
 
         const adminLink = headerPlaceholder.querySelector('#admin-link');
         const adminLinkMobile = headerPlaceholder.querySelector('#admin-link-mobile');
-
-        if (adminLink) {
-            adminLink.style.display = isAdmin ? 'block' : 'none';
-        }
-        if (adminLinkMobile) {
-            adminLinkMobile.style.display = isAdmin ? 'block' : 'none';
-        }
+        if (adminLink) adminLink.style.display = isAdmin ? 'block' : 'none';
+        if (adminLinkMobile) adminLinkMobile.style.display = isAdmin ? 'block' : 'none';
 
         const isLoggedIn = await isAuthenticated();
         const loginLink = headerPlaceholder.querySelector('#login-link');
@@ -58,13 +53,17 @@ async function loadHeaderFooter() {
             if (logoutLink) logoutLink.style.display = 'block';
             if (loginLinkMobile) loginLinkMobile.style.display = 'none';
             if (logoutLinkMobile) logoutLinkMobile.style.display = 'block';
+
+            if (user && user.picture) {
+                const profilePic = document.getElementById('profile-pic');
+                profilePic.src = user.picture;
+            }
         } else {
             if (loginLink) loginLink.style.display = 'block';
             if (logoutLink) logoutLink.style.display = 'none';
             if (loginLinkMobile) loginLinkMobile.style.display = 'block';
             if (logoutLinkMobile) logoutLinkMobile.style.display = 'none';
         }
-
     } catch (error) {
         console.error('Error loading header and footer:', error);
     }
