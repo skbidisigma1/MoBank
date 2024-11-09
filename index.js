@@ -5,6 +5,7 @@ const jwksRsa = require('jwks-rsa');
 const path = require('path');
 const admin = require('firebase-admin');
 const serviceAccount = require('./keys/mo-bank-firebase-adminsdk-ynglt-6cbe523bdc.json');
+const cookieParser = require('cookie-parser');
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -15,6 +16,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use(cookieParser());
 app.use('/css', express.static(path.join(__dirname, 'css')));
 app.use('/js', express.static(path.join(__dirname, 'js')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
@@ -65,7 +67,9 @@ async function addUser(uid, email, metadata = {}) {
         email: email,
         currency_balance: metadata.currency_balance || 0,
         role: metadata.role || ['user'],
-        transaction_history: metadata.transaction_history || []
+        transaction_history: metadata.transaction_history || [],
+        class_period: metadata.class_period || null,
+        instrument: metadata.instrument || ''
     }, { merge: true });
 }
 
@@ -115,6 +119,33 @@ app.post('/login', jwtCheck, async (req, res) => {
     const roles = req.user['https://mo-bank.vercel.app/roles'] || ['user'];
     await addUser(uid, email, { name, role: roles });
     res.sendStatus(200);
+});
+
+app.post('/updateProfile', jwtCheck, async (req, res) => {
+    const uid = req.user.sub;
+    const { class_period, instrument } = req.body;
+
+    if (class_period == null || instrument == null) {
+        return res.status(400).send('Missing class_period or instrument');
+    }
+
+    const userRef = db.collection('users').doc(uid);
+    await userRef.set({
+        class_period,
+        instrument
+    }, { merge: true });
+
+    res.sendStatus(200);
+});
+
+app.get('/getUserData', jwtCheck, async (req, res) => {
+    const uid = req.user.sub;
+    const userData = await getUserData(uid);
+    if (userData) {
+        res.json(userData);
+    } else {
+        res.status(404).send('User not found');
+    }
 });
 
 app.post('/transactions', jwtCheck, async (req, res) => {
