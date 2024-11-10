@@ -31,6 +31,12 @@ async function loadHeaderFooter() {
             });
         }
 
+        const profilePicElement = document.getElementById('profile-pic');
+        const placeholderPath = window.location.pathname.includes('/pages/')
+            ? '../images/default_profile.svg'
+            : 'images/default_profile.svg';
+        profilePicElement.src = placeholderPath;
+
         await window.auth0Promise;
 
         const user = await getUser();
@@ -65,8 +71,7 @@ async function loadHeaderFooter() {
             }
 
             if (user && user.picture) {
-                const profilePic = document.getElementById('profile-pic');
-                profilePic.src = user.picture;
+                profilePicElement.src = user.picture;
             }
         } else {
             if (authLink) {
