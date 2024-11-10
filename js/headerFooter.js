@@ -1,135 +1,87 @@
-async function initializeUser() {
-    const token = await getToken();
+async function loadHeaderFooter() {
     try {
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-            }
-        });
+        const headerPath = window.location.pathname.includes('/pages/') ? '../header.html' : 'header.html';
+        const footerPath = window.location.pathname.includes('/pages/') ? '../footer.html' : 'footer.html';
 
-        if (!response.ok) {
-            let errorData;
-            try {
-                errorData = await response.json();
-            } catch {
-                errorData = { message: await response.text() };
-            }
-            console.error('Error initializing user:', errorData.message);
+        const [headerResponse, footerResponse] = await Promise.all([
+            fetch(headerPath),
+            fetch(footerPath)
+        ]);
+
+        if (!headerResponse.ok || !footerResponse.ok) return;
+
+        const [headerContent, footerContent] = await Promise.all([
+            headerResponse.text(),
+            footerResponse.text()
+        ]);
+
+        document.getElementById('header-placeholder').innerHTML = headerContent;
+        document.getElementById('footer-placeholder').innerHTML = footerContent;
+
+        const headerPlaceholder = document.getElementById('header-placeholder');
+        const mobileMenuToggle = headerPlaceholder.querySelector('#mobileMenuToggle');
+        const mobileNav = headerPlaceholder.querySelector('.mobile-nav');
+
+        if (mobileMenuToggle && mobileNav) {
+            mobileMenuToggle.addEventListener('click', () => {
+                mobileNav.classList.toggle('active');
+                mobileMenuToggle.classList.toggle('active');
+            });
         }
-    } catch (error) {
-        console.error('Error initializing user:', error);
-    }
-}
 
-let auth0Client = null;
+        const profilePicElement = document.getElementById('profile-pic');
+        const loadingText = document.getElementById('loading-text');
+        const cachedUserData = JSON.parse(localStorage.getItem('userData'));
 
-const auth0Promise = (async () => {
-    auth0Client = await createAuth0Client({
-        domain: 'dev-nqdfwemz14t8nf7w.us.auth0.com',
-        client_id: 'IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA',
-        redirect_uri: window.location.origin + '/pages/dashboard.html',
-        audience: 'https://mo-bank.vercel.app/api',
-        cacheLocation: 'localstorage',
-        useRefreshTokens: true
-    });
-    await handleAuthRedirect();
-    const isAuthenticated = await auth0Client.isAuthenticated();
-    if (isAuthenticated) {
-        await initializeUser();
-    }
-    await checkSilentAuth();
-})();
-
-async function signInWithAuth0() {
-    try {
-        await auth0Client.loginWithRedirect({
-            connection: 'google-oauth2',
-            prompt: 'select_account'
-        });
-    } catch (error) {
-        console.error('Auth0 Login Error:', error);
-    }
-}
-
-async function handleAuthRedirect() {
-    const query = window.location.search;
-    if (query.includes('code=') && query.includes('state=')) {
-        try {
-            await auth0Client.handleRedirectCallback();
-            window.history.replaceState({}, document.title, '/pages/dashboard.html');
-        } catch (error) {
-            console.error('Auth0 Callback Error:', error);
+        if (cachedUserData && cachedUserData.picture) {
+            profilePicElement.src = cachedUserData.picture;
+            loadingText.style.display = 'none';
+        } else {
+            loadingText.style.display = 'inline';
         }
-    }
-}
 
-async function logoutUser() {
-    try {
-        await auth0Client.logout({
-            logoutParams: {
-                returnTo: window.location.origin
-            },
-            federated: false
-        });
-        localStorage.removeItem('auth0.is.authenticated');
-        localStorage.removeItem('userData');
-        sessionStorage.clear();
-    } catch (error) {
-        console.error('Auth0 Logout Error:', error);
-    }
-}
+        await window.auth0Promise;
 
-async function isAuthenticated() {
-    try {
-        return await auth0Client.isAuthenticated();
-    } catch (error) {
-        console.error('Auth0 isAuthenticated Error:', error);
-        return false;
-    }
-}
+        const user = await getUser();
+        const roles = user && user['https://mo-bank.vercel.app/roles'] || [];
+        const isAdmin = roles.includes('admin');
 
-async function getUser() {
-    try {
-        return await auth0Client.getUser();
-    } catch (error) {
-        console.error('Auth0 getUser Error:', error);
-        return null;
-    }
-}
+        const adminLink = headerPlaceholder.querySelector('#admin-link');
+        const adminLinkMobile = headerPlaceholder.querySelector('#admin-link-mobile');
+        if (adminLink) adminLink.style.display = isAdmin ? 'block' : 'none';
+        if (adminLinkMobile) adminLinkMobile.style.display = isAdmin ? 'block' : 'none';
 
-async function getToken() {
-    try {
-        return await auth0Client.getTokenSilently();
-    } catch (error) {
-        console.error('Auth0 getTokenSilently Error:', error);
-        return null;
-    }
-}
+        const isLoggedIn = await isAuthenticated();
+        const authLink = headerPlaceholder.querySelector('#auth-link');
+        const authLinkMobile = headerPlaceholder.querySelector('#auth-link-mobile');
 
-async function checkSilentAuth() {
-    try {
-        const authenticated = await isAuthenticated();
-        if (authenticated) {
-            const user = await getUser();
-            const loginStatus = document.getElementById('login-status');
-            if (loginStatus) {
-                loginStatus.textContent = `Welcome, ${user.name}!`;
+        if (isLoggedIn) {
+            if (authLink) {
+                authLink.textContent = 'Logout';
+                authLink.href = '#';
+                authLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    logoutUser();
+                });
             }
-        }
-    } catch (error) {
-        console.error('Silent Authentication Error:', error);
-    }
-}
+            if (authLinkMobile) {
+                authLinkMobile.textContent = 'Logout';
+                authLinkMobile.href = '#';
+                authLinkMobile.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    logoutUser();
+                });
+            }
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await auth0Promise;
-});
-
-window.signInWithAuth0 = signInWithAuth0;
-window.logoutUser = logoutUser;
-window.isAuthenticated = isAuthenticated;
-window.getUser = getUser;
-window.getToken = getToken;
-window.auth0Promise = auth0Promise;
+            if (user && user.picture) {
+                profilePicElement.src = user.picture;
+                loadingText.style.display = 'none';
+                localStorage.setItem('userData', JSON.stringify({ ...cachedUserData, picture: user.picture }));
+            }
+        } else {
+            if (authLink) {
+                authLink.textContent = 'Login';
+                authLink.href = '/pages/login.html';
+            }
+            if (authLinkMobile) {
+                authLink
