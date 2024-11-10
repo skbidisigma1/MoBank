@@ -18,26 +18,13 @@ async function loadHeaderFooter() {
         document.getElementById('header-placeholder').innerHTML = headerContent;
         document.getElementById('footer-placeholder').innerHTML = footerContent;
 
-        const headerPlaceholder = document.getElementById('header-placeholder');
-        const mobileMenuToggle = headerPlaceholder.querySelector('#mobileMenuToggle');
-        const mobileNav = headerPlaceholder.querySelector('.mobile-nav');
-
-        if (mobileMenuToggle && mobileNav) {
-            mobileMenuToggle.addEventListener('click', () => {
-                mobileNav.classList.toggle('active');
-                mobileMenuToggle.classList.toggle('active');
-            });
-        }
-
         const profilePicElement = document.getElementById('profile-pic');
-        const loadingText = document.getElementById('loading-text');
         const cachedUserData = JSON.parse(localStorage.getItem('userData'));
 
         if (cachedUserData && cachedUserData.picture) {
             profilePicElement.src = cachedUserData.picture;
-            loadingText.style.display = 'none';
         } else {
-            loadingText.style.display = 'inline';
+            profilePicElement.src = 'images/default_profile.svg';
         }
 
         await window.auth0Promise;
@@ -46,50 +33,56 @@ async function loadHeaderFooter() {
         const roles = user && user['https://mo-bank.vercel.app/roles'] || [];
         const isAdmin = roles.includes('admin');
 
-        const adminLink = headerPlaceholder.querySelector('#admin-link');
-        const adminLinkMobile = headerPlaceholder.querySelector('#admin-link-mobile');
-        if (adminLink) adminLink.style.display = isAdmin ? 'block' : 'none';
-        if (adminLinkMobile) adminLinkMobile.style.display = isAdmin ? 'block' : 'none';
+        // Update navigation links and profile picture based on login status
+        updateNavigation(user, isAdmin);
 
-        const isLoggedIn = await isAuthenticated();
-        const authLink = headerPlaceholder.querySelector('#auth-link');
-        const authLinkMobile = headerPlaceholder.querySelector('#auth-link-mobile');
-
-        if (isLoggedIn) {
-            if (authLink) {
-                authLink.textContent = 'Logout';
-                authLink.href = '#';
-                authLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    logoutUser();
-                });
-            }
-            if (authLinkMobile) {
-                authLinkMobile.textContent = 'Logout';
-                authLinkMobile.href = '#';
-                authLinkMobile.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    logoutUser();
-                });
-            }
-
-            if (user && user.picture) {
-                profilePicElement.src = user.picture;
-                loadingText.style.display = 'none';
-                localStorage.setItem('userData', JSON.stringify({ ...cachedUserData, picture: user.picture }));
-            }
-        } else {
-            if (authLink) {
-                authLink.textContent = 'Login';
-                authLink.href = '/pages/login.html';
-            }
-            if (authLinkMobile) {
-                authLinkMobile.textContent = 'Login';
-                authLinkMobile.href = '/pages/login.html';
-            }
+        if (user && user.picture) {
+            profilePicElement.src = user.picture;
+            localStorage.setItem('userData', JSON.stringify({ picture: user.picture }));
         }
     } catch (error) {
         console.error('Error loading header and footer:', error);
+    }
+}
+
+function updateNavigation(user, isAdmin) {
+    const authLink = document.querySelector('#auth-link');
+    const authLinkMobile = document.querySelector('#auth-link-mobile');
+    const adminLink = document.querySelector('#admin-link');
+    const adminLinkMobile = document.querySelector('#admin-link-mobile');
+
+    if (user) {
+        if (authLink) {
+            authLink.textContent = 'Logout';
+            authLink.href = '#';
+            authLink.onclick = (e) => {
+                e.preventDefault();
+                logoutUser();
+            };
+        }
+        if (authLinkMobile) {
+            authLinkMobile.textContent = 'Logout';
+            authLinkMobile.href = '#';
+            authLinkMobile.onclick = (e) => {
+                e.preventDefault();
+                logoutUser();
+            };
+        }
+        if (isAdmin) {
+            if (adminLink) adminLink.style.display = 'block';
+            if (adminLinkMobile) adminLinkMobile.style.display = 'block';
+        }
+    } else {
+        if (authLink) {
+            authLink.textContent = 'Login';
+            authLink.href = '/pages/login.html';
+        }
+        if (authLinkMobile) {
+            authLinkMobile.textContent = 'Login';
+            authLinkMobile.href = '/pages/login.html';
+        }
+        if (adminLink) adminLink.style.display = 'none';
+        if (adminLinkMobile) adminLinkMobile.style.display = 'none';
     }
 }
 
@@ -103,6 +96,7 @@ async function logoutUser() {
         });
         localStorage.removeItem('userData');
         sessionStorage.clear();
+        window.location.reload();
     } catch (error) {
         console.error('Auth0 Logout Error:', error);
     }
