@@ -6,9 +6,17 @@ const path = require('path');
 const admin = require('firebase-admin');
 const cookieParser = require('cookie-parser');
 const lusca = require('lusca');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 125,
+});
+
+app.use(limiter);
 
 if (!admin.apps.length) {
   admin.initializeApp({
