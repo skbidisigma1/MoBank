@@ -8,9 +8,7 @@ async function loadHeaderFooter() {
             fetch(footerPath)
         ]);
 
-        if (!headerResponse.ok || !footerResponse.ok) {
-            throw new Error('Failed to load header or footer');
-        }
+        if (!headerResponse.ok || !footerResponse.ok) return;
 
         const [headerContent, footerContent] = await Promise.all([
             headerResponse.text(),
@@ -32,10 +30,11 @@ async function loadHeaderFooter() {
         }
 
         const profilePicElement = document.getElementById('profile-pic');
-        const placeholderPath = window.location.pathname.includes('/pages/')
-            ? '../images/default_profile.svg'
-            : 'images/default_profile.svg';
-        profilePicElement.src = placeholderPath;
+        const cachedUserData = JSON.parse(localStorage.getItem('userData'));
+
+        if (cachedUserData && cachedUserData.picture) {
+            profilePicElement.src = cachedUserData.picture;
+        }
 
         await window.auth0Promise;
 
@@ -72,17 +71,16 @@ async function loadHeaderFooter() {
 
             if (user && user.picture) {
                 profilePicElement.src = user.picture;
+                localStorage.setItem('userData', JSON.stringify({ ...cachedUserData, picture: user.picture }));
             }
         } else {
             if (authLink) {
                 authLink.textContent = 'Login';
                 authLink.href = '/pages/login.html';
-                authLink.removeEventListener('click', logoutUser);
             }
             if (authLinkMobile) {
                 authLinkMobile.textContent = 'Login';
                 authLinkMobile.href = '/pages/login.html';
-                authLinkMobile.removeEventListener('click', logoutUser);
             }
         }
     } catch (error) {
