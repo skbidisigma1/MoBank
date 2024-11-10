@@ -30,14 +30,12 @@ async function loadHeaderFooter() {
         }
 
         const profilePicElement = document.getElementById('profile-pic');
-        const loadingText = document.getElementById('loading-text');
         const cachedUserData = JSON.parse(localStorage.getItem('userData'));
 
         if (cachedUserData && cachedUserData.picture) {
             profilePicElement.src = cachedUserData.picture;
-            loadingText.style.display = 'none';
         } else {
-            loadingText.style.display = 'inline';
+            profilePicElement.alt = 'Loading...';
         }
 
         await window.auth0Promise;
@@ -75,7 +73,6 @@ async function loadHeaderFooter() {
 
             if (user && user.picture) {
                 profilePicElement.src = user.picture;
-                loadingText.style.display = 'none';
                 localStorage.setItem('userData', JSON.stringify({ ...cachedUserData, picture: user.picture }));
             }
         } else {
@@ -84,4 +81,13 @@ async function loadHeaderFooter() {
                 authLink.href = '/pages/login.html';
             }
             if (authLinkMobile) {
-                authLink
+                authLinkMobile.textContent = 'Login';
+                authLinkMobile.href = '/pages/login.html';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading header and footer:', error);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadHeaderFooter);
