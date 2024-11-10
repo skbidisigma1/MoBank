@@ -34,6 +34,8 @@ async function loadHeaderFooter() {
 
         if (cachedUserData && cachedUserData.picture) {
             profilePicElement.src = cachedUserData.picture;
+        } else {
+            profilePicElement.alt = 'Loading...';
         }
 
         await window.auth0Promise;
