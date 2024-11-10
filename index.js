@@ -5,6 +5,7 @@ const jwksRsa = require('jwks-rsa');
 const path = require('path');
 const admin = require('firebase-admin');
 const cookieParser = require('cookie-parser');
+const lusca = require('lusca');
 require('dotenv').config();
 
 const app = express();
@@ -30,6 +31,7 @@ const db = admin.firestore();
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(lusca.csrf());
 
 const jwtCheck = jwt({
   secret: jwksRsa.expressJwtSecret({
