@@ -44,17 +44,25 @@ async function loadHeaderFooter() {
 
         const isLoggedIn = await isAuthenticated();
         const loginLink = headerPlaceholder.querySelector('#login-link');
+        const logoutLink = headerPlaceholder.querySelector('#logout-link');
         const loginLinkMobile = headerPlaceholder.querySelector('#login-link-mobile');
+        const logoutLinkMobile = headerPlaceholder.querySelector('#logout-link-mobile');
 
         if (isLoggedIn) {
-            if (loginLink) loginLink.style.display = 'none';
-            if (loginLinkMobile) loginLinkMobile.style.display = 'none';
+            if (loginLink) loginLink.remove();
+            if (loginLinkMobile) loginLinkMobile.remove();
+
+            if (logoutLink) logoutLink.style.display = 'block';
+            if (logoutLinkMobile) logoutLinkMobile.style.display = 'block';
 
             if (user && user.picture) {
                 const profilePic = document.getElementById('profile-pic');
                 profilePic.src = user.picture;
             }
         } else {
+            if (logoutLink) logoutLink.remove();
+            if (logoutLinkMobile) logoutLinkMobile.remove();
+
             if (loginLink) loginLink.style.display = 'block';
             if (loginLinkMobile) loginLinkMobile.style.display = 'block';
         }
