@@ -43,28 +43,42 @@ async function loadHeaderFooter() {
         if (adminLinkMobile) adminLinkMobile.style.display = isAdmin ? 'block' : 'none';
 
         const isLoggedIn = await isAuthenticated();
-        const loginLink = headerPlaceholder.querySelector('#login-link');
-        const logoutLink = headerPlaceholder.querySelector('#logout-link');
-        const loginLinkMobile = headerPlaceholder.querySelector('#login-link-mobile');
-        const logoutLinkMobile = headerPlaceholder.querySelector('#logout-link-mobile');
+        const authLink = headerPlaceholder.querySelector('#auth-link');
+        const authLinkMobile = headerPlaceholder.querySelector('#auth-link-mobile');
 
         if (isLoggedIn) {
-            if (loginLink) loginLink.remove();
-            if (loginLinkMobile) loginLinkMobile.remove();
-
-            if (logoutLink) logoutLink.style.display = 'block';
-            if (logoutLinkMobile) logoutLinkMobile.style.display = 'block';
+            if (authLink) {
+                authLink.textContent = 'Logout';
+                authLink.href = '#';
+                authLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    logoutUser();
+                });
+            }
+            if (authLinkMobile) {
+                authLinkMobile.textContent = 'Logout';
+                authLinkMobile.href = '#';
+                authLinkMobile.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    logoutUser();
+                });
+            }
 
             if (user && user.picture) {
                 const profilePic = document.getElementById('profile-pic');
                 profilePic.src = user.picture;
             }
         } else {
-            if (logoutLink) logoutLink.remove();
-            if (logoutLinkMobile) logoutLinkMobile.remove();
-
-            if (loginLink) loginLink.style.display = 'block';
-            if (loginLinkMobile) loginLinkMobile.style.display = 'block';
+            if (authLink) {
+                authLink.textContent = 'Login';
+                authLink.href = '/pages/login.html';
+                authLink.removeEventListener('click', logoutUser);
+            }
+            if (authLinkMobile) {
+                authLinkMobile.textContent = 'Login';
+                authLinkMobile.href = '/pages/login.html';
+                authLinkMobile.removeEventListener('click', logoutUser);
+            }
         }
     } catch (error) {
         console.error('Error loading header and footer:', error);
