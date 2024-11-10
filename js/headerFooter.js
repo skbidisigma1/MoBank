@@ -1,4 +1,4 @@
-async function loadHeaderFooter(retry = 3) {
+async function loadHeaderFooter() {
     try {
         const headerPath = window.location.pathname.includes('/pages/') ? '../header.html' : 'header.html';
         const footerPath = window.location.pathname.includes('/pages/') ? '../footer.html' : 'footer.html';
@@ -8,7 +8,7 @@ async function loadHeaderFooter(retry = 3) {
             fetch(footerPath)
         ]);
 
-        if (!headerResponse.ok || !footerResponse.ok) throw new Error("Header or footer fetch failed");
+        if (!headerResponse.ok || !footerResponse.ok) return;
 
         const [headerContent, footerContent] = await Promise.all([
             headerResponse.text(),
@@ -18,9 +18,8 @@ async function loadHeaderFooter(retry = 3) {
         document.getElementById('header-placeholder').innerHTML = headerContent;
         document.getElementById('footer-placeholder').innerHTML = footerContent;
 
-        const headerPlaceholder = document.getElementById('header-placeholder');
-        const mobileMenuToggle = headerPlaceholder.querySelector('#mobileMenuToggle');
-        const mobileNav = headerPlaceholder.querySelector('.mobile-nav');
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileNav = document.querySelector('.mobile-nav');
 
         if (mobileMenuToggle && mobileNav) {
             mobileMenuToggle.addEventListener('click', () => {
@@ -32,10 +31,10 @@ async function loadHeaderFooter(retry = 3) {
         const profilePicElement = document.getElementById('profile-pic');
         const cachedUserData = JSON.parse(localStorage.getItem('userData'));
 
-        if (profilePicElement) {
-            profilePicElement.src = cachedUserData && cachedUserData.picture
-                ? cachedUserData.picture
-                : 'images/default_profile.svg';
+        if (cachedUserData && cachedUserData.picture) {
+            profilePicElement.src = cachedUserData.picture;
+        } else {
+            profilePicElement.src = 'images/default_profile.svg';
         }
 
         await window.auth0Promise;
@@ -46,17 +45,12 @@ async function loadHeaderFooter(retry = 3) {
 
         updateNavigation(user, isAdmin);
 
-        if (user && user.picture && profilePicElement) {
+        if (user && user.picture) {
             profilePicElement.src = user.picture;
             localStorage.setItem('userData', JSON.stringify({ picture: user.picture }));
         }
     } catch (error) {
-        if (retry > 0) {
-            console.error('Retrying loadHeaderFooter due to error:', error);
-            loadHeaderFooter(retry - 1);
-        } else {
-            console.error('Failed to load header and footer:', error);
-        }
+        console.error('Error loading header and footer:', error);
     }
 }
 
