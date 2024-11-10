@@ -18,6 +18,16 @@ async function loadHeaderFooter() {
         document.getElementById('header-placeholder').innerHTML = headerContent;
         document.getElementById('footer-placeholder').innerHTML = footerContent;
 
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileNav = document.querySelector('.mobile-nav');
+
+        if (mobileMenuToggle && mobileNav) {
+            mobileMenuToggle.addEventListener('click', () => {
+                mobileNav.classList.toggle('active');
+                mobileMenuToggle.classList.toggle('active');
+            });
+        }
+
         const profilePicElement = document.getElementById('profile-pic');
         const cachedUserData = JSON.parse(localStorage.getItem('userData'));
 
@@ -33,7 +43,6 @@ async function loadHeaderFooter() {
         const roles = user && user['https://mo-bank.vercel.app/roles'] || [];
         const isAdmin = roles.includes('admin');
 
-        // Update navigation links and profile picture based on login status
         updateNavigation(user, isAdmin);
 
         if (user && user.picture) {
