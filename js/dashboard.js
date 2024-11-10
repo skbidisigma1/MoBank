@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cachedUserData = JSON.parse(localStorage.getItem('userData'));
     if (cachedUserData) {
         displayUserData(cachedUserData);
+    } else {
+        displayUserData({ name: 'Loading...', email: 'Loading...', class_period: 'Loading...', instrument: 'Loading...', currency_balance: 'Loading...' });
     }
 
     const isLoggedIn = await isAuthenticated();
