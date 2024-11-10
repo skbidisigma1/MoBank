@@ -30,12 +30,14 @@ async function loadHeaderFooter() {
         }
 
         const profilePicElement = document.getElementById('profile-pic');
+        const loadingText = document.getElementById('loading-text');
         const cachedUserData = JSON.parse(localStorage.getItem('userData'));
 
         if (cachedUserData && cachedUserData.picture) {
             profilePicElement.src = cachedUserData.picture;
+            loadingText.style.display = 'none';
         } else {
-            profilePicElement.alt = 'Loading...';
+            loadingText.style.display = 'inline';
         }
 
         await window.auth0Promise;
@@ -73,6 +75,7 @@ async function loadHeaderFooter() {
 
             if (user && user.picture) {
                 profilePicElement.src = user.picture;
+                loadingText.style.display = 'none';
                 localStorage.setItem('userData', JSON.stringify({ ...cachedUserData, picture: user.picture }));
             }
         } else {
@@ -87,6 +90,21 @@ async function loadHeaderFooter() {
         }
     } catch (error) {
         console.error('Error loading header and footer:', error);
+    }
+}
+
+async function logoutUser() {
+    try {
+        await auth0Client.logout({
+            logoutParams: {
+                returnTo: window.location.origin
+            },
+            federated: false
+        });
+        localStorage.removeItem('userData');
+        sessionStorage.clear();
+    } catch (error) {
+        console.error('Auth0 Logout Error:', error);
     }
 }
 
