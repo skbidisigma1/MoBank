@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    profileForm.addEventListener('submit', (e) => {
+    function handleFormSubmit(e) {
         e.preventDefault();
         const class_period = parseInt(document.getElementById('class_period').value);
         const instrument = document.getElementById('instrument').value.trim();
@@ -55,6 +55,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             alert('Please fill out all fields.');
             return;
         }
+
+        profileForm.removeEventListener('submit', handleFormSubmit);
 
         submitButton.remove();
 
@@ -70,5 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         updateProfile(class_period, instrument);
-    });
+    }
+
+    profileForm.addEventListener('submit', handleFormSubmit);
 });
