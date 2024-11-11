@@ -32,10 +32,12 @@ async function loadHeaderFooter() {
         const profilePicElement = document.getElementById('profile-pic');
         const cachedUserData = JSON.parse(sessionStorage.getItem('userData'));
 
+        const placeholderPath = '/images/default_profile.svg';
+
         if (cachedUserData && cachedUserData.picture) {
             profilePicElement.src = cachedUserData.picture;
         } else {
-            profilePicElement.alt = 'Loading...';
+            profilePicElement.src = placeholderPath;
         }
 
         await window.auth0Promise;
