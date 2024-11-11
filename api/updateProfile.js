@@ -19,7 +19,7 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
-const COOLDOWN_SECONDS = 120;
+const COOLDOWN_SECONDS = 60;
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
