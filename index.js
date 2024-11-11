@@ -18,6 +18,11 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
+window.showMessage = (msg) => {
+    document.body.insertAdjacentHTML('beforeend', `<div class="message-box">${msg}</div>`);
+    setTimeout(() => document.querySelector('.message-box').remove(), 3000);
+};
+
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert({
