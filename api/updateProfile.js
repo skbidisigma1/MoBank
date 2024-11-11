@@ -19,6 +19,7 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
+const COOLDOWN_SECONDS = 60;
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -34,9 +35,7 @@ module.exports = async (req, res) => {
 
   try {
     const response = await fetch(`https://${process.env.AUTH0_DOMAIN}/userinfo`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      headers: { Authorization: `Bearer ${token}` }
     });
 
     if (!response.ok) {
@@ -46,11 +45,27 @@ module.exports = async (req, res) => {
     const user = await response.json();
     const uid = user.sub;
 
+    const userCooldownDoc = db.collection('cooldowns').doc(uid);
+    const now = admin.firestore.Timestamp.now();
+
+    const userCooldownSnapshot = await userCooldownDoc.get();
+    if (userCooldownSnapshot.exists) {
+      const lastRequestTime = userCooldownSnapshot.data().lastRequest;
+      const secondsSinceLastRequest = now.seconds - lastRequestTime.seconds;
+
+      if (secondsSinceLastRequest < COOLDOWN_SECONDS) {
+        return res.status(429).json({
+          message: `Please wait ${COOLDOWN_SECONDS - secondsSinceLastRequest} seconds before trying again.`,
+          waitTime: COOLDOWN_SECONDS - secondsSinceLastRequest
+        });
+      }
+    }
+
+    await userCooldownDoc.set({ lastRequest: now });
+
     let body = '';
     await new Promise((resolve) => {
-      req.on('data', (chunk) => {
-        body += chunk;
-      });
+      req.on('data', (chunk) => { body += chunk; });
       req.on('end', resolve);
     });
     const requestBody = JSON.parse(body);
