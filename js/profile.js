@@ -36,10 +36,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             console.error('Error updating profile:', error);
             alert("An error occurred while updating your profile. Please don't spam the button and refresh the page.");
-        } finally {
-            setTimeout(() => {
-                submitButton.disabled = false;
-            }, 5000);
         }
     }
 
@@ -54,6 +50,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         submitButton.disabled = true;
+
         updateProfile(class_period, instrument);
+
+        setTimeout(() => {
+            submitButton.disabled = false;
+        }, 5000);
     });
 });
