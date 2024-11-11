@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     await window.auth0Promise;
 
-    const cachedUserData = JSON.parse(localStorage.getItem('userData'));
+    const cachedUserData = JSON.parse(sessionStorage.getItem('userData'));
     if (cachedUserData) {
         displayUserData(cachedUserData);
     } else {
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (response.ok) {
             const userData = await response.json();
-            localStorage.setItem('userData', JSON.stringify(userData));
+            sessionStorage.setItem('userData', JSON.stringify(userData));
             displayUserData(userData);
         } else {
             window.location.href = '/pages/profile.html';
