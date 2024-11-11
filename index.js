@@ -14,6 +14,11 @@ const app = express();
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 125,
+  handler: (req, res) => {
+    res.status(429).json({
+      message: "Rate limit exceeded. Please wait a few minutes and try again."
+    });
+  }
 });
 
 app.use(limiter);
