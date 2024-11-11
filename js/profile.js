@@ -11,17 +11,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const submitButton = profileForm.querySelector('button[type="submit"]');
 
     async function updateProfile(class_period, instrument) {
-        let token;
         try {
-            token = await auth0Client.getTokenSilently();  // Get fresh token before each update
-        } catch (error) {
-            console.error("Error getting fresh token:", error);
-            alert('Session expired. Please log in again.');
-            window.location.href = '/pages/login.html';
-            return;
-        }
+            // Refresh the token silently before making the request
+            const token = await getTokenSilently();
 
-        try {
             const response = await fetch('/api/updateProfile', {
                 method: 'POST',
                 headers: {
@@ -33,13 +26,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (response.ok) {
                 window.location.href = '/pages/dashboard.html';
+            } else if (response.status === 429) {
+                const errorData = await response.json();
+                let waitTime = errorData.waitTime || 60;
+
+                submitButton.disabled = true;
+                const reloadMessage = document.createElement('div');
+                reloadMessage.style.textAlign = 'center';
+                reloadMessage.style.fontSize = '16px';
+                reloadMessage.style.color = 'red';
+                profileForm.appendChild(reloadMessage);
+
+                const interval = setInterval(() => {
+                    if (waitTime > 0) {
+                        reloadMessage.textContent = `Please wait ${waitTime} seconds before trying again.`;
+                        waitTime -= 1;
+                    } else {
+                        clearInterval(interval);
+                        reloadMessage.remove();
+                        submitButton.disabled = false;
+                    }
+                }, 1000);
             } else {
-                let errorData;
-                try {
-                    errorData = await response.json();
-                } catch {
-                    errorData = { message: await response.text() };
-                }
+                const errorData = await response.json();
                 alert('Error updating profile: ' + errorData.message);
             }
         } catch (error) {
@@ -48,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function handleFormSubmit(e) {
+    profileForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const class_period = parseInt(document.getElementById('class_period').value);
         const instrument = document.getElementById('instrument').value.trim();
@@ -58,22 +67,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        profileForm.removeEventListener('submit', handleFormSubmit);
-        submitButton.remove();
-
-        const reloadMessage = document.createElement('div');
-        reloadMessage.textContent = 'Please reload the page to use the button again.';
-        reloadMessage.style.textAlign = 'center';
-        reloadMessage.style.fontSize = '16px';
-        reloadMessage.style.color = 'red';
-        profileForm.appendChild(reloadMessage);
-
-        profileForm.querySelectorAll('input, select, button').forEach((input) => {
-            input.disabled = true;
-        });
-
         updateProfile(class_period, instrument);
-    }
-
-    profileForm.addEventListener('submit', handleFormSubmit);
+    });
 });
