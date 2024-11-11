@@ -55,9 +55,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 const errorData = await response.json();
                 alert('Error updating profile: ' + errorData.message);
+                submitButton.disabled = false;
             }
         } catch (error) {
             alert("An error occurred while updating your profile. Please reload the page and try again.");
+            submitButton.disabled = false;
         }
     }
 
@@ -70,6 +72,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             alert('Please fill out all fields.');
             return;
         }
+
+        submitButton.disabled = true;
 
         updateProfile(class_period, instrument);
     });
