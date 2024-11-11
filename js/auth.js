@@ -16,11 +16,10 @@ async function initializeUser() {
         } catch {
           errorData = { message: await response.text() };
         }
-        console.error('Error initializing user:', errorData.message);
-        window.location.href = '/pages/profile.html';
+         console.error(`Error initializing user: ${errorData.message}. Please refresh the page.`);
       }
     } catch (error) {
-      console.error('Error initializing user:', error);
+       console.error(`Error initializing user: ${error}. Please refresh the page.`);
     }
   }
   
