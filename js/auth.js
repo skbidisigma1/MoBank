@@ -17,6 +17,7 @@ async function initializeUser() {
           errorData = { message: await response.text() };
         }
         console.error('Error initializing user:', errorData.message);
+        location.reload()
       }
     } catch (error) {
       console.error('Error initializing user:', error);
