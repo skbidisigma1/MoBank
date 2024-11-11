@@ -65,6 +65,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         reloadMessage.style.color = 'red';
         profileForm.appendChild(reloadMessage);
 
+        profileForm.querySelectorAll('input, select, button').forEach((input) => {
+            input.disabled = true;
+        });
+
         updateProfile(class_period, instrument);
     });
 });
