@@ -8,6 +8,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const token = await getToken();
+
+    if (!token) {
+        alert('Session expired. Please log in again.');
+        window.location.href = '/pages/login.html';
+        return;
+    }
+
     const profileForm = document.getElementById('profile-form');
     const submitButton = profileForm.querySelector('button[type="submit"]');
 
@@ -35,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } catch (error) {
             console.error('Error updating profile:', error);
-            alert("An error occurred while updating your profile. Please don't spam the button and refresh the page.");
+            alert("An error occurred while updating your profile. Please reload the page and try again.");
         }
     }
 
@@ -49,12 +56,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        submitButton.disabled = true;
+        submitButton.remove();
+
+        const reloadMessage = document.createElement('div');
+        reloadMessage.textContent = 'Please reload the page to use the button again.';
+        reloadMessage.style.textAlign = 'center';
+        reloadMessage.style.fontSize = '16px';
+        reloadMessage.style.color = 'red';
+        profileForm.appendChild(reloadMessage);
 
         updateProfile(class_period, instrument);
-
-        setTimeout(() => {
-            submitButton.disabled = false;
-        }, 5000);
     });
 });
