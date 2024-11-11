@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         displayUserData({ name: 'Loading...', email: 'Loading...', class_period: 'Loading...', instrument: 'Loading...', currency_balance: 'Loading...' });
     }
-
+showMessage('Your message here')
     const isLoggedIn = await isAuthenticated();
     if (!isLoggedIn) {
         window.location.href = '/pages/login.html';
