@@ -30,7 +30,7 @@ async function loadHeaderFooter() {
         }
 
         const profilePicElement = document.getElementById('profile-pic');
-        const cachedUserData = JSON.parse(localStorage.getItem('userData'));
+        const cachedUserData = JSON.parse(sessionStorage.getItem('userData'));
 
         if (cachedUserData && cachedUserData.picture) {
             profilePicElement.src = cachedUserData.picture;
@@ -59,6 +59,7 @@ async function loadHeaderFooter() {
                 authLink.href = '#';
                 authLink.addEventListener('click', (e) => {
                     e.preventDefault();
+                    sessionStorage.clear();
                     logoutUser();
                 });
             }
@@ -67,13 +68,14 @@ async function loadHeaderFooter() {
                 authLinkMobile.href = '#';
                 authLinkMobile.addEventListener('click', (e) => {
                     e.preventDefault();
+                    sessionStorage.clear();
                     logoutUser();
                 });
             }
 
             if (user && user.picture) {
                 profilePicElement.src = user.picture;
-                localStorage.setItem('userData', JSON.stringify({ ...cachedUserData, picture: user.picture }));
+                sessionStorage.setItem('userData', JSON.stringify({ ...cachedUserData, picture: user.picture }));
             }
         } else {
             if (authLink) {
