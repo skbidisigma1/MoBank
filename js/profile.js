@@ -11,10 +11,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const submitButton = profileForm.querySelector('button[type="submit"]');
 
     async function updateProfile(class_period, instrument) {
+        let token;
         try {
-            // Refresh the token silently before making the request
-            const token = await getTokenSilently();
+            token = await auth0Client.getTokenSilently();
+        } catch (error) {
+            window.location.href = '/pages/login.html';
+            return;
+        }
 
+        try {
             const response = await fetch('/api/updateProfile', {
                 method: 'POST',
                 headers: {
@@ -52,7 +57,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 alert('Error updating profile: ' + errorData.message);
             }
         } catch (error) {
-            console.error('Error updating profile:', error);
             alert("An error occurred while updating your profile. Please reload the page and try again.");
         }
     }
