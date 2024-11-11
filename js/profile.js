@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       } catch (error) {
         console.error('Error updating profile:', error);
-        alert('An error occurred while updating your profile.');
+        alert("An error occurred while updating your profile. Please don't spam the button and refresh the page.");
       }
     });
   });
