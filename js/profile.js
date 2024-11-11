@@ -9,14 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const token = await getToken();
     const profileForm = document.getElementById('profile-form');
-
-    function debounce(func, delay) {
-        let timer;
-        return function(...args) {
-            clearTimeout(timer);
-            timer = setTimeout(() => func.apply(this, args), delay);
-        };
-    }
+    const submitButton = profileForm.querySelector('button[type="submit"]');
 
     async function updateProfile(class_period, instrument) {
         try {
@@ -43,10 +36,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             console.error('Error updating profile:', error);
             alert("An error occurred while updating your profile. Please don't spam the button and refresh the page.");
+        } finally {
+            setTimeout(() => {
+                submitButton.disabled = false;
+            }, 5000);
         }
     }
-
-    const debouncedUpdateProfile = debounce(updateProfile, 5000);
 
     profileForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -58,6 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        debouncedUpdateProfile(class_period, instrument);
+        submitButton.disabled = true;
+        updateProfile(class_period, instrument);
     });
 });
