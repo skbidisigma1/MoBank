@@ -66,15 +66,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     profileForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const class_period = parseInt(document.getElementById('class_period').value);
-        const instrument = document.getElementById('instrument').value.trim();
+        const instrument = document.getElementById('instrument').value.trim().toLowerCase();
 
-        if (!class_period || !instrument) {
-            alert('Please fill out all fields.');
+        const validClassPeriods = [1, 3, 4, 5, 6, 7];
+        const validInstruments = ['violin', 'viola', 'cello', 'bass'];
+
+        if (!validClassPeriods.includes(class_period)) {
+            alert('Please enter a valid class period (1, 3-7).');
+            return;
+        }
+
+        if (!validInstruments.includes(instrument)) {
+            alert('Please enter a valid instrument (violin, viola, cello, bass).');
             return;
         }
 
         submitButton.disabled = true;
-
         updateProfile(class_period, instrument);
     });
 });
