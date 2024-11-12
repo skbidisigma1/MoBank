@@ -72,8 +72,15 @@ module.exports = async (req, res) => {
 
     const { class_period, instrument } = requestBody;
 
-    if (class_period == null || instrument == null) {
-      return res.status(400).json({ message: 'Missing class_period or instrument' });
+    const validClassPeriods = [1, 3, 4, 5, 6, 7];
+    const validInstruments = ['violin', 'viola', 'cello', 'bass'];
+
+    if (!validClassPeriods.includes(class_period)) {
+      return res.status(400).json({ message: 'Invalid class period' });
+    }
+
+    if (!validInstruments.includes(instrument)) {
+      return res.status(400).json({ message: 'Invalid instrument' });
     }
 
     const userRef = db.collection('users').doc(uid);
