@@ -7,6 +7,7 @@ const admin = require('firebase-admin');
 const cookieParser = require('cookie-parser');
 const lusca = require('lusca');
 const rateLimit = require('express-rate-limit');
+const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
@@ -21,6 +22,13 @@ const limiter = rateLimit({
   }
 });
 
+const corsOptions = {
+  origin: 'https://yourdomain.com',
+  methods: ['GET', 'POST'],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(limiter);
 
 if (!admin.apps.length) {
@@ -35,8 +43,8 @@ if (!admin.apps.length) {
       auth_uri: process.env.FIREBASE_AUTH_URI,
       token_uri: process.env.FIREBASE_TOKEN_URI,
       auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
-      client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
-    }),
+      client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL
+    })
   });
 }
 
