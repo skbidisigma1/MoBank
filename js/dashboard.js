@@ -35,6 +35,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (response.ok) {
             const userData = await response.json();
+
+            const user = await getUser();
+            userData.picture = user.picture || userData.picture;
+
             sessionStorage.setItem('userData', JSON.stringify(userData));
 
             profileName.textContent = `Welcome, ${userData.name}!`;
