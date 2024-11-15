@@ -9,6 +9,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     loader.classList.remove('hidden');
 
+    const cachedUserData = JSON.parse(sessionStorage.getItem('userData'));
+    if (cachedUserData) {
+        profileName.textContent = `Welcome, ${cachedUserData.name}!`;
+        profileCurrency.textContent = `Currency Balance: $${cachedUserData.currency_balance}`;
+        if (cachedUserData.picture) {
+            profileImage.src = cachedUserData.picture;
+        }
+    }
+
     const isLoggedIn = await isAuthenticated();
     if (!isLoggedIn) {
         window.location.href = '/pages/login.html';
@@ -44,6 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.location.href = '/pages/profile.html';
         }
     } catch (error) {
+        console.error('Error fetching user data:', error);
         window.location.href = '/pages/profile.html';
     } finally {
         loader.classList.add('hidden');
