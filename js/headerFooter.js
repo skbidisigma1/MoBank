@@ -89,6 +89,10 @@ async function loadHeaderFooter() {
                 authLinkMobile.href = '/pages/login.html';
             }
         }
+        profilePicElement.addEventListener('click', () => {
+            window.location.href = isLoggedIn ? '/pages/dashboard.html' : '/pages/login.html';
+        });
+
     } catch (error) {
         console.error('Error loading header and footer:', error);
     }
