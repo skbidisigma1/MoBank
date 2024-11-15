@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dashboardContent = document.getElementById('dashboard-content');
     const profileName = document.getElementById('profile-name');
     const profileCurrency = document.getElementById('profile-currency');
+    const profileImage = document.querySelector('.dashboard-profile-icon');
 
     loader.classList.remove('hidden');
 
@@ -29,6 +30,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             profileName.textContent = `Welcome, ${userData.name}!`;
             profileCurrency.textContent = `Currency Balance: $${userData.currency_balance}`;
+
+            if (userData.picture) {
+                profileImage.src = userData.picture;
+            }
 
             dashboardContent.innerHTML = `
                 <div class="dashboard-card"><strong>Email:</strong> ${userData.email}</div>
