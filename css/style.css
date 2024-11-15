@@ -426,6 +426,11 @@ select:after {
 .profile div {
     text-align: left;
 }
+
+#profile-pic {
+    cursor: pointer;
+}
+
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
