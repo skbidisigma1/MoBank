@@ -7,15 +7,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const profileCurrency = document.getElementById('profile-currency');
     const profileImage = document.querySelector('.dashboard-profile-icon');
 
-    loader.classList.remove('hidden');
+    const placeholderPath = '/images/default_profile.svg';
 
+    loader.classList.remove('hidden');
+    
     const cachedUserData = JSON.parse(sessionStorage.getItem('userData'));
     if (cachedUserData) {
         profileName.textContent = `Welcome, ${cachedUserData.name}!`;
         profileCurrency.textContent = `Currency Balance: $${cachedUserData.currency_balance}`;
-        if (cachedUserData.picture) {
-            profileImage.src = cachedUserData.picture;
-        }
+        profileImage.src = cachedUserData.picture || placeholderPath;
     }
 
     const isLoggedIn = await isAuthenticated();
@@ -39,10 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             profileName.textContent = `Welcome, ${userData.name}!`;
             profileCurrency.textContent = `Currency Balance: $${userData.currency_balance}`;
-
-            if (userData.picture) {
-                profileImage.src = userData.picture;
-            }
+            profileImage.src = userData.picture || placeholderPath;
 
             dashboardContent.innerHTML = `
                 <div class="dashboard-card"><strong>Email:</strong> ${userData.email}</div>
