@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', async () => {
     await window.auth0Promise;
 
-    const cachedUserData = JSON.parse(sessionStorage.getItem('userData'));
-    if (cachedUserData) {
-        displayUserData(cachedUserData);
-    } else {
-        displayUserData({ name: 'Loading...', email: 'Loading...', class_period: 'Loading...', instrument: 'Loading...', currency_balance: 'Loading...' });
-    }
+    const loader = document.getElementById('loader');
+    const dashboardContent = document.getElementById('dashboard-content');
+    const profileName = document.getElementById('profile-name');
+    const profileCurrency = document.getElementById('profile-currency');
+
+    loader.classList.remove('hidden');
 
     const isLoggedIn = await isAuthenticated();
     if (!isLoggedIn) {
@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const token = await getToken();
-
     try {
         const response = await fetch('/api/getUserData', {
             method: 'GET',
@@ -27,22 +26,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (response.ok) {
             const userData = await response.json();
             sessionStorage.setItem('userData', JSON.stringify(userData));
-            displayUserData(userData);
+
+            profileName.textContent = `Welcome, ${userData.name}!`;
+            profileCurrency.textContent = `Currency Balance: $${userData.currency_balance}`;
+
+            dashboardContent.innerHTML = `
+                <div class="dashboard-card"><strong>Email:</strong> ${userData.email}</div>
+                <div class="dashboard-card"><strong>Class Period:</strong> ${userData.class_period}</div>
+                <div class="dashboard-card"><strong>Instrument:</strong> ${userData.instrument}</div>
+            `;
         } else {
             window.location.href = '/pages/profile.html';
         }
     } catch (error) {
         window.location.href = '/pages/profile.html';
+    } finally {
+        loader.classList.add('hidden');
     }
 });
-
-function displayUserData(userData) {
-    const dashboardContent = document.getElementById('dashboard-content');
-    dashboardContent.innerHTML = `
-        <p><strong>Name:</strong> ${userData.name}</p>
-        <p><strong>Email:</strong> ${userData.email}</p>
-        <p><strong>Class Period:</strong> ${userData.class_period}</p>
-        <p><strong>Instrument:</strong> ${userData.instrument}</p>
-        <p><strong>Currency Balance:</strong> ${userData.currency_balance}</p>
-    `;
-}
