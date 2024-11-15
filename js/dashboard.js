@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cachedUserData = JSON.parse(sessionStorage.getItem('userData'));
     if (cachedUserData) {
         profileName.textContent = `Welcome, ${cachedUserData.name}!`;
-        profileCurrency.textContent = `Currency Balance: $${cachedUserData.currency_balance}`;
+        profileCurrency.textContent = `MoBuck Balance: $${cachedUserData.currency_balance}`;
         profileImage.src = cachedUserData.picture || placeholderPath;
     }
 
