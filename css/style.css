@@ -410,6 +410,54 @@ select:after {
   opacity: 8%;
 }
 
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 20px auto;
+    max-width: 600px;
+}
+.profile-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 2px solid #0056b3;
+}
+.profile div {
+    text-align: left;
+}
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin: 20px;
+}
+.dashboard-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: left;
+    font-family: 'Poppins', sans-serif;
+}
+.loader {
+    border: 6px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 6px solid #0056b3;
+    width: 50px;
+    height: 50px;
+    animation: spin 2s linear infinite;
+    margin: 20px auto;
+    display: block;
+}
+.hidden {
+    display: none;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 @media (max-width: 600px) {
     #mobileMenuToggle {
         display: flex;
