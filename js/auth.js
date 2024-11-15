@@ -73,7 +73,7 @@ async function initializeUser() {
         },
         federated: false
       });
-      localStorage.removeItem('auth0.is.authenticated');
+      localStorage.clear();
       sessionStorage.clear();
     } catch (error) {
       console.error('Auth0 Logout Error:', error);
