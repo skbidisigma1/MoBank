@@ -42,13 +42,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             sessionStorage.setItem('userData', JSON.stringify(userData));
 
             profileName.textContent = `Welcome, ${userData.name}!`;
-            profileCurrency.textContent = `Currency Balance: $${userData.currency_balance}`;
+            profileCurrency.textContent = `MoBuck Balance: $${userData.currency_balance}`;
             profileImage.src = userData.picture || placeholderPath;
+
+            const instrument = userData.instrument.charAt(0).toUpperCase() + userData.instrument.slice(1);
 
             dashboardContent.innerHTML = `
                 <div class="dashboard-card"><strong>Email:</strong> ${userData.email}</div>
                 <div class="dashboard-card"><strong>Class Period:</strong> ${userData.class_period}</div>
-                <div class="dashboard-card"><strong>Instrument:</strong> ${userData.instrument}</div>
+                <div class="dashboard-card"><strong>Instrument:</strong> ${instrument}</div>
             `;
         } else {
             window.location.href = '/pages/profile.html';
