@@ -23,7 +23,7 @@ const limiter = rateLimit({
 });
 
 const corsOptions = {
-  origin: 'https://yourdomain.com',
+  origin: 'https://mo-bank.vercel.app',
   methods: ['GET', 'POST'],
   credentials: true,
 };
