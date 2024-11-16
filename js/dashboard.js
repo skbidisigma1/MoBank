@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    const loader = document.getElementById('loader');
+    loader.classList.remove('hidden');
+
     await window.auth0Promise;
 
-    const loader = document.getElementById('loader');
     const dashboardContent = document.getElementById('dashboard-content');
     const profileName = document.getElementById('profile-name');
     const profileCurrency = document.getElementById('profile-currency');
@@ -9,17 +11,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const placeholderPath = '/images/default_profile.svg';
 
-    loader.classList.remove('hidden');
-
     const isLoggedIn = await isAuthenticated();
     if (!isLoggedIn) {
+        loader.classList.add('hidden');
         window.location.href = '/pages/login.html';
         return;
     }
 
-    const user = await getUser();
-    const token = await getToken();
     try {
+        const user = await getUser();
+        const token = await getToken();
+
         const response = await fetch('/api/getUserData', {
             method: 'GET',
             headers: { Authorization: `Bearer ${token}` },
