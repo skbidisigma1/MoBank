@@ -444,6 +444,7 @@ select:after {
     padding: 20px;
     text-align: left;
     font-family: 'Poppins', sans-serif;
+}
 
 .dashboard-actions {
     display: flex;
