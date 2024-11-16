@@ -474,6 +474,9 @@ select:after {
     margin: 20px auto;
     z-index: 1300;
     position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     display: block;
 }
 .hidden {
