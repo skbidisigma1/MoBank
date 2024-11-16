@@ -462,7 +462,11 @@ select:after {
 .dashboard-actions button + button {
     margin-top: 8px;
 }
-    
+
+.button-container {
+    margin-top: 30px;
+}
+
 }
 .loader {
     position: fixed;
