@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  const user = await getUser();
   const token = await getToken();
   try {
     const response = await fetch('/api/getUserData', {
@@ -35,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       profileName.textContent = `Welcome, ${name}!`;
       profileCurrency.textContent = `MoBuck Balance: $${currency_balance}`;
-      profileImage.src = publicData.picture || placeholderPath;
+      profileImage.src = user && user.picture ? user.picture : placeholderPath;
 
       dashboardContent.innerHTML = `
         <div class="dashboard-card"><strong>Email:</strong> ${privateData.email}</div>
