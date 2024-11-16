@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const profileName = document.getElementById('profile-name');
     const profileCurrency = document.getElementById('profile-currency');
     const profileImage = document.querySelector('.dashboard-profile-icon');
-
     const transferButton = document.getElementById('transfer-mobucks-btn');
     const logoutButton = document.getElementById('logout-btn');
 
