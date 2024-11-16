@@ -5,12 +5,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const dashboardContent = document.getElementById('dashboard-content');
   const profileName = document.getElementById('profile-name');
   const profileCurrency = document.getElementById('profile-currency');
-  const profileImage = document.querySelector('.dashboard-profile-icon'); // Larger 80px profile picture
+  const profileImage = document.querySelector('.dashboard-profile-icon');
   const placeholderPath = '/images/default_profile.svg';
 
   loader.classList.remove('hidden');
 
-  // Use sessionStorage just like the header
   const cachedUserData = JSON.parse(sessionStorage.getItem('userData'));
 
   if (cachedUserData) {
