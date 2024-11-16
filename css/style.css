@@ -448,6 +448,7 @@ select:after {
 .dashboard-actions {
     display: flex;
     flex-direction: column;
+    gap: 15px;
     margin: 20px auto;
     max-width: 200px;
 }
@@ -456,14 +457,22 @@ select:after {
     padding: 10px 20px;
     font-size: 16px;
     border-radius: 4px;
-    margin-bottom: 15px;
+    background-color: #0056b3;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.dashboard-actions button:last-child {
-    margin-bottom: 0;
+.dashboard-actions button:hover {
+    background-color: #004494;
+    transform: translateY(-2px);
+}
+
+.dashboard-actions button:active {
+    transform: translateY(0);
 }
     
-}
 .loader {
     border: 6px solid #f3f3f3;
     border-radius: 50%;
