@@ -2,7 +2,6 @@ const serverless = require('serverless-http');
 const express = require('express');
 const { expressjwt: jwt } = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
-const path = require('path');
 const admin = require('firebase-admin');
 const cookieParser = require('cookie-parser');
 const lusca = require('lusca');
@@ -17,10 +16,8 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 125,
   handler: (req, res) => {
-    res.status(429).json({
-      message: "Rate limit exceeded. Please wait a few minutes and try again."
-    });
-  }
+    res.status(429).json({ message: "Rate limit exceeded. Please wait a few minutes and try again." });
+  },
 });
 
 const corsOptions = {
@@ -64,8 +61,8 @@ if (!admin.apps.length) {
       auth_uri: process.env.FIREBASE_AUTH_URI,
       token_uri: process.env.FIREBASE_TOKEN_URI,
       auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
-      client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL
-    })
+      client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
+    }),
   });
 }
 
@@ -101,13 +98,7 @@ app.post('/updateProfile', jwtCheck, async (req, res) => {
   }
 
   const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
-  await publicDataRef.set(
-    {
-      class_period,
-      instrument,
-    },
-    { merge: true }
-  );
+  await publicDataRef.set({ class_period, instrument }, { merge: true });
 
   res.sendStatus(200);
 });
@@ -143,25 +134,20 @@ app.use((err, req, res, next) => {
 
 async function addUser(uid, email, metadata = {}) {
   const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
-  await publicDataRef.set(
-    {
-      name: metadata.name || 'Unknown',
-      instrument: metadata.instrument || '',
-      class_period: metadata.class_period || null,
-      currency_balance: metadata.currency_balance || 0,
-    },
-    { merge: true }
-  );
+  await publicDataRef.set({
+    name: metadata.name || 'Unknown',
+    instrument: metadata.instrument || '',
+    class_period: metadata.class_period || null,
+    currency_balance: metadata.currency_balance || 0,
+    picture: '/images/default_profile.svg',
+  }, { merge: true });
 
   const privateDataRef = db.collection('users').doc(uid).collection('privateData').doc('main');
-  await privateDataRef.set(
-    {
-      email: email,
-      auth0_user_id: uid,
-      role: metadata.role || ['user'],
-    },
-    { merge: true }
-  );
+  await privateDataRef.set({
+    email: email,
+    auth0_user_id: uid,
+    role: metadata.role || ['user'],
+  }, { merge: true });
 }
 
 async function addTransaction(senderId, receiverId, amount, transactionType, adminId = null) {
