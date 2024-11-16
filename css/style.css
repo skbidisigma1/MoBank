@@ -449,7 +449,6 @@ select:after {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    max-width: 200px;
     margin: 20px auto;
 }
 
@@ -457,11 +456,10 @@ select:after {
     padding: 10px 20px;
     font-size: 16px;
     border-radius: 4px;
-    margin-bottom: 15px;
 }
 
-.dashboard-actions button:last-child {
-    margin-bottom: 0;
+.dashboard-actions button + button {
+    margin-top: 15px;
 }
     
 }
