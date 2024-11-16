@@ -1,73 +1,65 @@
+// dashboard.js
+import { getUserData } from './userData.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
-  await window.auth0Promise;
-
-  const loader = document.getElementById('loader');
-  const dashboardContent = document.getElementById('dashboard-content');
-  const profileName = document.getElementById('profile-name');
-  const profileCurrency = document.getElementById('profile-currency');
-  const profileImage = document.querySelector('.dashboard-profile-icon'); // Larger 80px profile picture
-  const placeholderPath = '/images/default_profile.svg';
-
-  loader.classList.remove('hidden');
-
-  // Use sessionStorage just like the header
-  const cachedUserData = JSON.parse(sessionStorage.getItem('userData'));
-
-  if (cachedUserData) {
-    profileImage.src = cachedUserData.picture || placeholderPath;
-    profileName.textContent = `Welcome, ${cachedUserData.name || 'User'}!`;
-    profileCurrency.textContent = `MoBuck Balance: $${cachedUserData.currency_balance || 0}`;
-    dashboardContent.innerHTML = `
-      <div class="dashboard-card"><strong>Email:</strong> ${cachedUserData.email || 'N/A'}</div>
-      <div class="dashboard-card"><strong>Class Period:</strong> ${cachedUserData.class_period || 'N/A'}</div>
-      <div class="dashboard-card"><strong>Instrument:</strong> ${cachedUserData.instrument || 'N/A'}</div>
-    `;
-  } else {
-    const isLoggedIn = await isAuthenticated();
-    if (!isLoggedIn) {
-      window.location.href = '/pages/login.html';
-      return;
-    }
-
-    const token = await getToken();
     try {
-      const response = await fetch('/api/getUserData', {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+        // Wait for Auth0 to initialize
+        await window.auth0Promise;
 
-      if (response.ok) {
-        const userData = await response.json();
+        const loader = document.getElementById('loader');
+        const dashboardContent = document.getElementById('dashboard-content');
+        const profileName = document.getElementById('profile-name');
+        const profileCurrency = document.getElementById('profile-currency');
+        const profileImage = document.querySelector('.dashboard-profile-icon');
+        const placeholderPath = '/images/default_profile.svg';
 
-        const publicData = userData.publicData || {};
-        const privateData = userData.privateData || {};
-        const dataToCache = {
-          name: publicData.name || 'User',
-          currency_balance: publicData.currency_balance || 0,
-          picture: privateData.picture || placeholderPath,
-          email: privateData.email,
-          class_period: publicData.class_period,
-          instrument: publicData.instrument,
+        // Show loader
+        loader.classList.remove('hidden');
+
+        // Function to update the dashboard with user data
+        const updateDashboard = () => {
+            const cachedUserData = JSON.parse(sessionStorage.getItem('userData'));
+            console.log('Dashboard - Cached User Data:', cachedUserData);
+
+            if (cachedUserData) {
+                const pictureUrl = cachedUserData.picture || placeholderPath;
+                console.log('Dashboard - Setting profile image to:', pictureUrl);
+                profileImage.src = pictureUrl;
+
+                // Set error handler
+                profileImage.onerror = function() {
+                    console.error('Dashboard - Failed to load profile image. Reverting to placeholder.');
+                    this.src = placeholderPath;
+                };
+
+                profileName.textContent = `Welcome, ${cachedUserData.name || 'User'}!`;
+                profileCurrency.textContent = `MoBuck Balance: $${cachedUserData.currency_balance || 0}`;
+                dashboardContent.innerHTML = `
+                    <div class="dashboard-card"><strong>Email:</strong> ${cachedUserData.email || 'N/A'}</div>
+                    <div class="dashboard-card"><strong>Class Period:</strong> ${cachedUserData.class_period || 'N/A'}</div>
+                    <div class="dashboard-card"><strong>Instrument:</strong> ${cachedUserData.instrument || 'N/A'}</div>
+                `;
+            } else {
+                console.log('Dashboard - No cached user data found.');
+                // Optionally, fetch user data or redirect to login
+            }
         };
 
-        sessionStorage.setItem('userData', JSON.stringify(dataToCache));
+        // Initial dashboard update
+        updateDashboard();
 
-        profileImage.src = dataToCache.picture || placeholderPath;
-        profileName.textContent = `Welcome, ${dataToCache.name}!`;
-        profileCurrency.textContent = `MoBuck Balance: $${dataToCache.currency_balance}`;
-        dashboardContent.innerHTML = `
-          <div class="dashboard-card"><strong>Email:</strong> ${dataToCache.email || 'N/A'}</div>
-          <div class="dashboard-card"><strong>Class Period:</strong> ${dataToCache.class_period || 'N/A'}</div>
-          <div class="dashboard-card"><strong>Instrument:</strong> ${dataToCache.instrument || 'N/A'}</div>
-        `;
-      } else {
-        window.location.href = '/pages/profile.html';
-      }
+        // Listen for updates to userData
+        window.addEventListener('userDataUpdated', () => {
+            console.log('Dashboard - userDataUpdated event received.');
+            updateDashboard();
+        });
+
+        // Hide loader
+        loader.classList.add('hidden');
+
     } catch (error) {
-      console.error('Error fetching user data:', error);
-      window.location.href = '/pages/profile.html';
+        console.error('Dashboard Initialization Error:', error);
+        loader.classList.add('hidden');
+        // Optionally, redirect or show an error message to the user
     }
-  }
-
-  loader.classList.add('hidden');
 });
