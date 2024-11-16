@@ -38,22 +38,11 @@ app.use(
   helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: [
-        "'self'",
-        "https://cdn.auth0.com",
-        "https://cdn.jsdelivr.net",
-      ],
-      styleSrc: [
-        "'self'",
-        "https://fonts.googleapis.com",
-        "'unsafe-inline'",
-      ],
+      scriptSrc: ["'self'", "https://cdn.auth0.com", "https://cdn.jsdelivr.net"],
+      styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:"],
-      connectSrc: [
-        "'self'",
-        `https://${process.env.AUTH0_DOMAIN}`,
-      ],
+      connectSrc: ["'self'", `https://${process.env.AUTH0_DOMAIN}`],
       objectSrc: ["'none'"],
       frameAncestors: ["'self'"],
       upgradeInsecureRequests: [],
@@ -111,8 +100,8 @@ app.post('/updateProfile', jwtCheck, async (req, res) => {
     return res.status(400).send('Missing class_period or instrument');
   }
 
-  const userRef = db.collection('users').doc(uid);
-  await userRef.set(
+  const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
+  await publicDataRef.set(
     {
       class_period,
       instrument,
@@ -153,17 +142,23 @@ app.use((err, req, res, next) => {
 });
 
 async function addUser(uid, email, metadata = {}) {
-  const userRef = db.collection('users').doc(uid);
-  await userRef.set(
+  const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
+  await publicDataRef.set(
     {
-      auth0_user_id: uid,
       name: metadata.name || 'Unknown',
-      email: email,
-      currency_balance: metadata.currency_balance || 0,
-      role: metadata.role || ['user'],
-      transaction_history: metadata.transaction_history || [],
-      class_period: metadata.class_period || null,
       instrument: metadata.instrument || '',
+      class_period: metadata.class_period || null,
+      currency_balance: metadata.currency_balance || 0,
+    },
+    { merge: true }
+  );
+
+  const privateDataRef = db.collection('users').doc(uid).collection('privateData').doc('main');
+  await privateDataRef.set(
+    {
+      email: email,
+      auth0_user_id: uid,
+      role: metadata.role || ['user'],
     },
     { merge: true }
   );
@@ -171,28 +166,34 @@ async function addUser(uid, email, metadata = {}) {
 
 async function addTransaction(senderId, receiverId, amount, transactionType, adminId = null) {
   const transactionRef = db.collection('transactions').doc();
-  await transactionRef.set({
+  const transactionId = transactionRef.id;
+
+  const transactionData = {
     senderId,
     receiverId,
     amount,
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
     transactionType,
     adminId,
-  });
+    status: 'pending',
+  };
 
-  if (transactionType === 'add') {
-    const receiverRef = db.collection('users').doc(receiverId);
-    await receiverRef.update({
-      currency_balance: admin.firestore.FieldValue.increment(amount),
-    });
-  } else if (transactionType === 'remove') {
-    const receiverRef = db.collection('users').doc(receiverId);
-    await receiverRef.update({
-      currency_balance: admin.firestore.FieldValue.increment(-amount),
-    });
-  } else if (transactionType === 'send') {
-    const senderRef = db.collection('users').doc(senderId);
-    const receiverRef = db.collection('users').doc(receiverId);
+  await transactionRef.set(transactionData);
+
+  if (senderId) {
+    const senderHistoryRef = db.collection('users').doc(senderId).collection('transaction_history').doc(transactionId);
+    await senderHistoryRef.set(transactionData);
+  }
+
+  if (receiverId) {
+    const receiverHistoryRef = db.collection('users').doc(receiverId).collection('transaction_history').doc(transactionId);
+    await receiverHistoryRef.set(transactionData);
+  }
+
+  if (transactionType === 'send') {
+    const senderRef = db.collection('users').doc(senderId).collection('publicData').doc('main');
+    const receiverRef = db.collection('users').doc(receiverId).collection('publicData').doc('main');
+
     await senderRef.update({
       currency_balance: admin.firestore.FieldValue.increment(-amount),
     });
@@ -203,9 +204,19 @@ async function addTransaction(senderId, receiverId, amount, transactionType, adm
 }
 
 async function getUserData(uid) {
-  const userRef = db.collection('users').doc(uid);
-  const userDoc = await userRef.get();
-  return userDoc.exists ? userDoc.data() : null;
+  const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
+  const privateDataRef = db.collection('users').doc(uid).collection('privateData').doc('main');
+
+  const [publicDoc, privateDoc] = await Promise.all([publicDataRef.get(), privateDataRef.get()]);
+
+  if (!publicDoc.exists || !privateDoc.exists) {
+    return null;
+  }
+
+  return {
+    publicData: publicDoc.data(),
+    privateData: privateDoc.data(),
+  };
 }
 
 module.exports = serverless(app);
