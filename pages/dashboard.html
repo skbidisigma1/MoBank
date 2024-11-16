@@ -6,15 +6,16 @@
     <title>Your Dashboard - MoBank</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
-    <script type="module" src="../js/auth.js"></script>
-    <script type="module" src="../js/headerFooter.js"></script>
-    <script type="module" src="../js/dashboard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/headerFooter.js"></script>
+    <script src="../js/dashboard.js"></script>
 </head>
 <body>
     <div id="header-placeholder"></div>
     <main>
         <div class="profile">
-            <img src="/images/default_profile.svg" alt="Profile Picture" class="dashboard-profile-icon" onerror="this.src='/images/default_profile.svg'">
+            <img src="/images/default_profile.svg" alt="Profile Picture" class="dashboard-profile-icon">
             <div>
                 <h3 id="profile-name">Welcome, User!</h3>
                 <p id="profile-currency"><strong>MoBuck Balance:</strong> $0</p>
