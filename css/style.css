@@ -450,29 +450,19 @@ select:after {
     flex-direction: column;
     gap: 15px;
     margin: 20px auto;
-    max-width: 200px;
 }
 
 .dashboard-actions button {
     padding: 10px 20px;
     font-size: 16px;
     border-radius: 4px;
-    background-color: #0056b3;
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.dashboard-actions button:hover {
-    background-color: #004494;
-    transform: translateY(-2px);
-}
-
-.dashboard-actions button:active {
-    transform: translateY(0);
+.dashboard-actions button + button {
+    margin-top: 15px;
 }
     
+}
 .loader {
     border: 6px solid #f3f3f3;
     border-radius: 50%;
