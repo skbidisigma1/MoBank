@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transfer Currency - MoBank</title>
+    <title>Transfer MoBucks - MoBank</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
@@ -14,14 +14,14 @@
     <div id="header-placeholder"></div>
 
     <main>
-        <h2>Transfer Currency</h2>
+        <h2>Transfer MoBucks</h2>
         
         <section id="user-balance">
             <p><strong>Current Balance:</strong> <span id="current-balance">$0</span></p>
         </section>
 
         <form id="transfer-form">
-            <input type="text" id="recipient-id" placeholder="Recipient User ID" required>
+            <input type="text" id="recipient-name" placeholder="Recipient Name" required>
             <input type="number" id="transfer-amount" placeholder="Amount to Transfer" required>
             <button type="submit">Send Currency</button>
         </form>
