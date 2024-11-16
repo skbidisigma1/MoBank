@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const user = await getUser();
     const token = await getToken();
-
     try {
         const response = await fetch('/api/getUserData', {
             method: 'GET',
@@ -34,24 +33,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const name = publicData.name || 'User';
             const currency_balance = publicData.currency_balance || 0;
+            const instrument = capitalizeFirstLetter(publicData.instrument || 'N/A');
+            const email = privateData.email || 'N/A';
 
             profileName.textContent = `Welcome, ${name}!`;
             profileCurrency.textContent = `MoBuck Balance: $${currency_balance}`;
             profileImage.src = user && user.picture ? user.picture : placeholderPath;
 
-            const instrument = capitalizeFirstLetter(publicData.instrument || 'N/A');
-
             dashboardContent.innerHTML = `
-                <div class="dashboard-card"><strong>Email:</strong> ${privateData.email}</div>
+                <div class="dashboard-card"><strong>Email:</strong> ${email}</div>
                 <div class="dashboard-card"><strong>Class Period:</strong> ${publicData.class_period || 'N/A'}</div>
                 <div class="dashboard-card"><strong>Instrument:</strong> ${instrument}</div>
             `;
         } else {
-            window.location.href = '/pages/profile.html';
+            console.error('Failed to fetch user data');
+            alert('Could not load your data. Please try again later.');
         }
     } catch (error) {
         console.error('Error fetching user data:', error);
-        window.location.href = '/pages/profile.html';
+        alert('Something went wrong. Please refresh the page.');
     } finally {
         loader.classList.add('hidden');
     }
