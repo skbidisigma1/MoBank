@@ -8,6 +8,7 @@ const cookieParser = require('cookie-parser');
 const lusca = require('lusca');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
+const helmet = require('helmet');
 require('dotenv').config();
 
 const app = express();
@@ -30,6 +31,37 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(limiter);
+app.use(express.json());
+app.use(cookieParser());
+
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        "https://cdn.auth0.com",
+        "https://cdn.jsdelivr.net",
+      ],
+      styleSrc: [
+        "'self'",
+        "https://fonts.googleapis.com",
+        "'unsafe-inline'",
+      ],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: [
+        "'self'",
+        `https://${process.env.AUTH0_DOMAIN}`,
+      ],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'self'"],
+      upgradeInsecureRequests: [],
+    },
+  })
+);
+
+app.use(lusca.csrf());
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -49,10 +81,6 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
-
-app.use(express.json());
-app.use(cookieParser());
-app.use(lusca.csrf());
 
 const jwtCheck = jwt({
   secret: jwksRsa.expressJwtSecret({
