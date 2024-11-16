@@ -13,7 +13,7 @@
 <body>
     <div id="header-placeholder"></div>
 
-    <main id="admin-content" style="display: none;">
+    <main id="admin-content" class="hidden">
         <h2>Admin Panel</h2>
         <form id="add-student-form">
             <input type="text" id="student-name" placeholder="Student Name" required>
@@ -34,7 +34,7 @@
                 return;
             }
 
-            document.getElementById('admin-content').style.display = 'block';
+            document.getElementById('admin-content').classList.remove('hidden');
 
             const addStudentForm = document.getElementById('add-student-form');
             addStudentForm.addEventListener('submit', async (e) => {
