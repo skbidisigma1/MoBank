@@ -46,19 +46,27 @@ module.exports = async (req, res) => {
     const user = await response.json();
     const uid = user.sub;
 
-    const userRef = db.collection('users').doc(uid);
-    const userDoc = await userRef.get();
+    const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
+    const privateDataRef = db.collection('users').doc(uid).collection('privateData').doc('main');
 
-    if (!userDoc.exists) {
-      await userRef.set({
-        auth0_user_id: uid,
-        email: user.email,
+    const publicDoc = await publicDataRef.get();
+
+    if (!publicDoc.exists) {
+      await publicDataRef.set({
         name: user.name || 'Unknown',
-        currency_balance: 0,
-        role: ['user'],
-        transaction_history: [],
+        instrument: '',
         class_period: null,
-        instrument: ''
+        currency_balance: 0,
+      });
+    }
+
+    const privateDoc = await privateDataRef.get();
+
+    if (!privateDoc.exists) {
+      await privateDataRef.set({
+        email: user.email,
+        auth0_user_id: uid,
+        role: ['user'],
       });
     }
 
