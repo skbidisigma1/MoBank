@@ -448,18 +448,19 @@ select:after {
 .dashboard-actions {
     display: flex;
     flex-direction: column;
-    gap: 15px;
     margin: 20px auto;
+    max-width: 200px;
 }
 
 .dashboard-actions button {
     padding: 10px 20px;
     font-size: 16px;
     border-radius: 4px;
+    margin-bottom: 15px;
 }
 
-.dashboard-actions button + button {
-    margin-top: 15px;
+.dashboard-actions button:last-child {
+    margin-bottom: 0;
 }
     
 }
