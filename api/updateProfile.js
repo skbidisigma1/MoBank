@@ -83,8 +83,8 @@ module.exports = async (req, res) => {
       return res.status(400).json({ message: 'Invalid instrument' });
     }
 
-    const userRef = db.collection('users').doc(uid);
-    await userRef.set(
+    const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
+    await publicDataRef.set(
       {
         class_period,
         instrument
