@@ -45,30 +45,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="dashboard-card"><strong>Class Period:</strong> ${publicData.class_period || 'N/A'}</div>
                 <div class="dashboard-card"><strong>Instrument:</strong> ${instrument}</div>
             `;
+
+            loader.classList.add('hidden');
         } else {
-            console.error('Failed to fetch user data');
-            alert('Could not load your data. Please try again later.');
+            throw new Error('Failed to fetch user data');
         }
     } catch (error) {
         console.error('Error fetching user data:', error);
-        alert('Something went wrong. Please refresh the page.');
-    } finally {
+        alert('Could not load your data. Please try again later.');
         loader.classList.add('hidden');
-    }
-
-    const transferButton = document.getElementById('transfer-mobucks-btn');
-    if (transferButton) {
-        transferButton.addEventListener('click', () => {
-            window.location.href = '/pages/transfer.html';
-        });
-    }
-
-    const logoutButton = document.getElementById('logout-btn');
-    if (logoutButton) {
-        logoutButton.addEventListener('click', async () => {
-            await logoutUser();
-            window.location.href = '/pages/login.html';
-        });
+        window.location.href = '/pages/profile.html';
     }
 });
 
