@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const profileCurrency = document.getElementById('profile-currency');
     const profileImage = document.querySelector('.dashboard-profile-icon');
 
+    const transferButton = document.getElementById('transfer-mobucks-btn');
+    const logoutButton = document.getElementById('logout-btn');
+
     const placeholderPath = '/images/default_profile.svg';
 
     const isLoggedIn = await isAuthenticated();
@@ -16,6 +19,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         loader.classList.add('hidden');
         window.location.href = '/pages/login.html';
         return;
+    }
+
+    if (transferButton) {
+        transferButton.addEventListener('click', () => {
+            window.location.href = '/pages/transfer.html';
+        });
+    }
+
+    if (logoutButton) {
+        logoutButton.addEventListener('click', async () => {
+            await logoutUser();
+            window.location.href = '/pages/login.html';
+        });
     }
 
     try {
