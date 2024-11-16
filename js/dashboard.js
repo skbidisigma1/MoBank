@@ -10,24 +10,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   loader.classList.remove('hidden');
 
+  const isLoggedIn = await isAuthenticated();
+  if (!isLoggedIn) {
+    window.location.href = '/pages/login.html';
+    return;
+  }
+
   const cachedUserData = JSON.parse(sessionStorage.getItem('userData'));
 
   if (cachedUserData) {
-    profileImage.src = cachedUserData.picture || placeholderPath;
-    profileName.textContent = `Welcome, ${cachedUserData.name || 'User'}!`;
-    profileCurrency.textContent = `MoBuck Balance: $${cachedUserData.currency_balance || 0}`;
-    dashboardContent.innerHTML = `
-      <div class="dashboard-card"><strong>Email:</strong> ${cachedUserData.email || 'N/A'}</div>
-      <div class="dashboard-card"><strong>Class Period:</strong> ${cachedUserData.class_period || 'N/A'}</div>
-      <div class="dashboard-card"><strong>Instrument:</strong> ${cachedUserData.instrument || 'N/A'}</div>
-    `;
+    updateDashboardUI(cachedUserData);
   } else {
-    const isLoggedIn = await isAuthenticated();
-    if (!isLoggedIn) {
-      window.location.href = '/pages/login.html';
-      return;
-    }
-
     const token = await getToken();
     try {
       const response = await fetch('/api/getUserData', {
@@ -50,15 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         sessionStorage.setItem('userData', JSON.stringify(dataToCache));
-
-        profileImage.src = dataToCache.picture || placeholderPath;
-        profileName.textContent = `Welcome, ${dataToCache.name}!`;
-        profileCurrency.textContent = `MoBuck Balance: $${dataToCache.currency_balance}`;
-        dashboardContent.innerHTML = `
-          <div class="dashboard-card"><strong>Email:</strong> ${dataToCache.email || 'N/A'}</div>
-          <div class="dashboard-card"><strong>Class Period:</strong> ${dataToCache.class_period || 'N/A'}</div>
-          <div class="dashboard-card"><strong>Instrument:</strong> ${dataToCache.instrument || 'N/A'}</div>
-        `;
+        updateDashboardUI(dataToCache);
       } else {
         window.location.href = '/pages/profile.html';
       }
@@ -69,4 +54,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   loader.classList.add('hidden');
+
+  function updateDashboardUI(userData) {
+    profileName.textContent = `Welcome, ${userData.name}!`;
+    profileCurrency.textContent = `MoBuck Balance: $${userData.currency_balance}`;
+    profileImage.src = userData.picture || placeholderPath;
+    dashboardContent.innerHTML = `
+      <div class="dashboard-card"><strong>Email:</strong> ${userData.email || 'N/A'}</div>
+      <div class="dashboard-card"><strong>Class Period:</strong> ${userData.class_period || 'N/A'}</div>
+      <div class="dashboard-card"><strong>Instrument:</strong> ${userData.instrument || 'N/A'}</div>
+    `;
+  }
 });
