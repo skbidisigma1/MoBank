@@ -1,5 +1,4 @@
 const admin = require('firebase-admin');
-const fetch = require('node-fetch');
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -46,15 +45,19 @@ module.exports = async (req, res) => {
     const user = await response.json();
     const uid = user.sub;
 
-    const userRef = db.collection('users').doc(uid);
-    const userDoc = await userRef.get();
+    const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
+    const privateDataRef = db.collection('users').doc(uid).collection('privateData').doc('main');
 
-    if (!userDoc.exists) {
+    const [publicDoc, privateDoc] = await Promise.all([publicDataRef.get(), privateDataRef.get()]);
+
+    if (!publicDoc.exists || !privateDoc.exists) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const userData = userDoc.data();
-    return res.status(200).json(userData);
+    return res.status(200).json({
+      publicData: publicDoc.data(),
+      privateData: privateDoc.data(),
+    });
   } catch (error) {
     return res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
   }
