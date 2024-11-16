@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/headerFooter.js"></script>
+    <script src="../js/admin.js" defer></script>
 </head>
 <body>
     <div id="header-placeholder"></div>
@@ -22,34 +23,5 @@
     </main>
 
     <div id="footer-placeholder"></div>
-
-    <script>
-        async function loadAdminContent() {
-            await window.auth0Promise;
-            const user = await getUser();
-            const roles = user && user['https://mo-bank.vercel.app/roles'] || [];
-
-            if (!roles.includes('admin')) {
-                window.location.href = '/pages/dashboard.html';
-                return;
-            }
-
-            document.getElementById('admin-content').classList.remove('hidden');
-
-            const addStudentForm = document.getElementById('add-student-form');
-            addStudentForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (!roles.includes('admin')) {
-                    alert("You do not have permission to perform this action.");
-                    return;
-                }
-                const studentName = document.getElementById('student-name').value;
-                alert("Student added successfully! (Implement backend logic)");
-                addStudentForm.reset();
-            });
-        }
-
-        loadAdminContent();
-    </script>
 </body>
 </html>
