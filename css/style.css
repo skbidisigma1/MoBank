@@ -444,6 +444,21 @@ select:after {
     padding: 20px;
     text-align: left;
     font-family: 'Poppins', sans-serif;
+
+.dashboard-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 200px;
+    margin: 20px auto;
+}
+
+.dashboard-actions button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 4px;
+}
+    
 }
 .loader {
     border: 6px solid #f3f3f3;
