@@ -457,6 +457,11 @@ select:after {
     padding: 10px 20px;
     font-size: 16px;
     border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+.dashboard-actions button:last-child {
+    margin-bottom: 0;
 }
     
 }
