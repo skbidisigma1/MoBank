@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transfer Currency - MoBank</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/headerFooter.js"></script>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main>
+        <h2>Transfer Currency</h2>
+        
+        <section id="user-balance">
+            <p><strong>Current Balance:</strong> <span id="current-balance">$0</span></p>
+        </section>
+
+        <form id="transfer-form">
+            <input type="text" id="recipient-id" placeholder="Recipient User ID" required>
+            <input type="number" id="transfer-amount" placeholder="Amount to Transfer" required>
+            <button type="submit">Send Currency</button>
+        </form>
+
+        <section id="transaction-history">
+            <h3>Recent Transactions</h3>
+            <ul id="transactions">
+                <li>No transactions to show.</li>
+            </ul>
+        </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script>
+        async function loadTransferPage() {
+            await window.auth0Promise;
+
+            const isLoggedIn = await isAuthenticated();
+            if (!isLoggedIn) {
+                window.location.href = '/pages/login.html';
+                return;
+            }
+
+            const user = await getUser();
+            document.getElementById('current-balance').textContent = `$${user.currency_balance || 0}`;
+          // This will show transaction history but will be added later
+        }
+
+        loadTransferPage();
+    </script>
+</body>
+</html>
