@@ -472,6 +472,7 @@ select:after {
     height: 50px;
     animation: spin 2s linear infinite;
     margin: 20px auto;
+    z-index: 1300;
     display: block;
 }
 .hidden {
