@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const name = publicData.name || 'User';
       const currency_balance = publicData.currency_balance || 0;
+      const instrument = publicData.instrument 
+        ? publicData.instrument.charAt(0).toUpperCase() + publicData.instrument.slice(1) 
+        : 'N/A';
 
       profileName.textContent = `Welcome, ${name}!`;
       profileCurrency.textContent = `MoBuck Balance: $${currency_balance}`;
@@ -41,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       dashboardContent.innerHTML = `
         <div class="dashboard-card"><strong>Email:</strong> ${privateData.email}</div>
         <div class="dashboard-card"><strong>Class Period:</strong> ${publicData.class_period || 'N/A'}</div>
-        <div class="dashboard-card"><strong>Instrument:</strong> ${publicData.instrument || 'N/A'}</div>
+        <div class="dashboard-card"><strong>Instrument:</strong> ${instrument}</div>
       `;
     } else {
       window.location.href = '/pages/profile.html';
