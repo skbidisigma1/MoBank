@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const user = await getUser();
     const token = await getToken();
+
     try {
         const response = await fetch('/api/getUserData', {
             method: 'GET',
@@ -38,10 +39,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             profileCurrency.textContent = `MoBuck Balance: $${currency_balance}`;
             profileImage.src = user && user.picture ? user.picture : placeholderPath;
 
+            const instrument = capitalizeFirstLetter(publicData.instrument || 'N/A');
+
             dashboardContent.innerHTML = `
                 <div class="dashboard-card"><strong>Email:</strong> ${privateData.email}</div>
                 <div class="dashboard-card"><strong>Class Period:</strong> ${publicData.class_period || 'N/A'}</div>
-                <div class="dashboard-card"><strong>Instrument:</strong> ${publicData.instrument || 'N/A'}</div>
+                <div class="dashboard-card"><strong>Instrument:</strong> ${instrument}</div>
             `;
         } else {
             window.location.href = '/pages/profile.html';
@@ -68,3 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 });
+
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+}
