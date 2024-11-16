@@ -473,6 +473,7 @@ select:after {
     animation: spin 2s linear infinite;
     margin: 20px auto;
     z-index: 1300;
+    position: fixed;
     display: block;
 }
 .hidden {
