@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
 
     const { class_period, instrument } = requestBody;
 
-    const validClassPeriods = [1, 3, 4, 5, 6, 7];
+    const validClassPeriods = [1, 2, 4, 5, 6, 7];
     const validInstruments = ['violin', 'viola', 'cello', 'bass'];
 
     if (!validClassPeriods.includes(class_period)) {
