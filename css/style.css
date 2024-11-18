@@ -473,8 +473,8 @@ select:after {
     border: 6px solid #f3f3f3;
     border-top: 6px solid #0056b3;
     border-radius: 50%;
-    width: 100px;
-    height: 100px;
+    width: 25%;
+    height: 25%;
     animation: spin 2s linear infinite;
 }
 
