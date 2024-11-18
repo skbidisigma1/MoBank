@@ -338,24 +338,24 @@ select:after {
   color: #1f1f1f;
   cursor: pointer;
   font-family: 'Roboto', Arial, sans-serif;
-  font-size: 16px; /* Increased font size */
-  height: 50px; /* Increased height */
+  font-size: 16px;
+  height: 50px;
   letter-spacing: 0.25px;
   overflow: hidden;
-  padding: 10px 20px; /* Adjusted padding */
+  padding: 10px 20px;
   position: relative;
   text-align: center;
   transition: background-color 0.218s, border-color 0.218s, box-shadow 0.218s;
   width: auto;
-  max-width: 500px; /* Increased max width */
+  max-width: 500px;
   min-width: min-content;
   display: flex;
   align-items: center;
 }
 
 .gsi-material-button .gsi-material-button-icon {
-  height: 24px; /* Adjusted icon size */
-  margin-right: 16px; /* Increased space between icon and text */
+  height: 24px;
+  margin-right: 16px;
   min-width: 24px;
   width: 24px;
 }
@@ -473,7 +473,7 @@ select:after {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 1300;
+    z-index: 13000;
     border: 6px solid #f3f3f3;
     border-top: 6px solid #0056b3;
     border-radius: 50%;
