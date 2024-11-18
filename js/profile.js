@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const classPeriod = parseInt(document.getElementById('class_period').value, 10);
         const instrument = document.getElementById('instrument').value.trim().toLowerCase();
 
-        const validClassPeriods = [1, 3, 4, 5, 6, 7];
+        const validClassPeriods = [1, 2, 4, 5, 6, 7];
         const validInstruments = ['violin', 'viola', 'cello', 'bass'];
 
         if (!validClassPeriods.includes(classPeriod)) {
