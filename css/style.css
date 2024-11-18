@@ -474,6 +474,7 @@ select:after {
     border-top: 6px solid #0056b3;
     border-radius: 50%;
     width: 25%;
+    max-width: 250px;
     aspect-ratio: 1 / 1;
     animation: spin 2s linear infinite;
 }
