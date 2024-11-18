@@ -468,7 +468,7 @@ select:after {
 }
 
 .loader {
-    position: fixed;
+    margin: 20px auto;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
