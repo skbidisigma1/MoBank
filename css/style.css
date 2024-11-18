@@ -469,11 +469,11 @@ select:after {
 
 }
 .loader {
-    position: fixed;
+    position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 13000;
+    z-index: 1400;
     border: 6px solid #f3f3f3;
     border-top: 6px solid #0056b3;
     border-radius: 50%;
