@@ -473,7 +473,7 @@ select:after {
     border: 6px solid #f3f3f3;
     border-top: 6px solid #0056b3;
     border-radius: 50%;
-    width: clamp(50px, 25%, 250px);
+    width: clamp(50px, 25%, 250px) !important;
     aspect-ratio: 1 / 1;
     animation: spin 2s linear infinite;
 }
