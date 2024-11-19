@@ -10,6 +10,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
 
+
 const app = express();
 
 const limiter = rateLimit({
@@ -129,6 +130,48 @@ app.use((err, req, res, next) => {
     res.status(401).send('Invalid token');
   } else {
     next(err);
+  }
+});
+
+app.post('/api/adminAdjustBalance', jwtCheck, async (req, res) => {
+  const roles = req.user['https://mo-bank.vercel.app/roles'] || [];
+  if (!roles.includes('admin')) {
+    return res.status(403).json({ message: 'Forbidden: Admins only' });
+  }
+
+  let body = '';
+  await new Promise((resolve) => {
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', resolve);
+  });
+
+  const { name, period, amount } = JSON.parse(body);
+
+  if (!name || !period || !amount || amount <= 0) {
+    return res.status(400).json({ message: 'Invalid input' });
+  }
+
+  try {
+    const usersRef = db.collection('users');
+    const query = usersRef.where('publicData.main.class_period', '==', parseInt(period, 10))
+                          .where('publicData.main.name', '==', name);
+
+    const snapshot = await query.get();
+
+    if (snapshot.empty) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const userDoc = snapshot.docs[0];
+    const userRef = userDoc.ref.collection('publicData').doc('main');
+
+    await userRef.update({
+      currency_balance: admin.firestore.FieldValue.increment(amount),
+    });
+
+    return res.status(200).json({ message: 'Balance adjusted successfully' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
   }
 });
 
