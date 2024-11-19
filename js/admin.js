@@ -10,16 +10,24 @@ async function loadAdminContent() {
 
     document.getElementById('admin-content').classList.remove('hidden');
 
-    const addStudentForm = document.getElementById('add-student-form');
-    addStudentForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!roles.includes('admin')) {
-            alert("You do not have permission to perform this action.");
-            return;
-        }
-        const studentName = document.getElementById('student-name').value;
-        alert("Student added successfully! (Implement backend logic)");
-        addStudentForm.reset();
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    tabButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const period = button.dataset.period;
+
+            tabButtons.forEach((btn) => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            tabPanels.forEach((panel) => {
+                if (panel.id === `period-${period}-panel`) {
+                    panel.classList.remove('hidden');
+                } else {
+                    panel.classList.add('hidden');
+                }
+            });
+        });
     });
 }
 
