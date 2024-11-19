@@ -31,7 +31,7 @@ async function loadAdminContent() {
     });
 
     document.querySelectorAll('form').forEach((form) => {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formId = form.id;
             const period = formId.split('-')[1];
@@ -52,7 +52,31 @@ async function loadAdminContent() {
                 return;
             }
 
-            alert(`Period ${period}: ${studentName} - ${amount}`);
+            try {
+                const response = await fetch('/api/adminAdjustBalance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+                    },
+                    body: JSON.stringify({
+                        name: studentName,
+                        period: parseInt(period, 10),
+                        amount,
+                    }),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(result.message);
+                } else {
+                    alert(result.message || 'An error occurred.');
+                }
+            } catch (error) {
+                alert('Failed to process the request. Please try again later.');
+            }
+
             studentNameInput.value = '';
             amountInput.value = '';
         });
