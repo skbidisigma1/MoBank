@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const logoutButton = document.getElementById('logout-btn');
 
     const placeholderPath = '/images/default_profile.svg';
-    const cacheExpiry = 20000;
+    const cacheExpiry = 20000; // 20 seconds in milliseconds
 
     const isLoggedIn = await isAuthenticated();
     if (!isLoggedIn) {
@@ -59,7 +59,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else if (response.status === 429) {
                 throw new Error('Rate limit exceeded. Please wait a few minutes and try again.');
             } else if (response.status === 401) {
-                sessionStorage.clear();
                 throw new Error('Unauthorized access. Please log in again.');
             } else {
                 throw new Error('Failed to fetch user data');
