@@ -19,7 +19,6 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
-const COOLDOWN_SECONDS = 60;
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -65,37 +64,14 @@ module.exports = async (req, res) => {
       return res.status(400).json({ message: 'Invalid instrument' });
     }
 
-    const now = admin.firestore.Timestamp.now();
-    const userCooldownDoc = db.collection('cooldowns').doc(uid);
-
-    const userCooldownSnapshot = await userCooldownDoc.get();
-    if (userCooldownSnapshot.exists) {
-      const lastRequestTime = userCooldownSnapshot.data().lastRequest;
-      const secondsSinceLastRequest = now.seconds - lastRequestTime.seconds;
-
-      if (secondsSinceLastRequest < COOLDOWN_SECONDS) {
-        return res.status(429).json({
-          message: `Please wait ${COOLDOWN_SECONDS - secondsSinceLastRequest} seconds before trying again.`,
-          waitTime: COOLDOWN_SECONDS - secondsSinceLastRequest
-        });
-      }
-    }
-
-    const batch = db.batch();
-
-    batch.set(userCooldownDoc, { lastRequest: now });
-
     const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
-    batch.set(
-      publicDataRef,
+    await publicDataRef.set(
       {
         class_period,
         instrument: instrument.toLowerCase()
       },
       { merge: true }
     );
-
-    await batch.commit();
 
     return res.status(200).json({ message: 'Profile updated successfully' });
   } catch (error) {
