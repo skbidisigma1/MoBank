@@ -45,24 +45,6 @@ module.exports = async (req, res) => {
     const user = await response.json();
     const uid = user.sub;
 
-    const userCooldownDoc = db.collection('cooldowns').doc(uid);
-    const now = admin.firestore.Timestamp.now();
-
-    const userCooldownSnapshot = await userCooldownDoc.get();
-    if (userCooldownSnapshot.exists) {
-      const lastRequestTime = userCooldownSnapshot.data().lastRequest;
-      const secondsSinceLastRequest = now.seconds - lastRequestTime.seconds;
-
-      if (secondsSinceLastRequest < COOLDOWN_SECONDS) {
-        return res.status(429).json({
-          message: `Please wait ${COOLDOWN_SECONDS - secondsSinceLastRequest} seconds before trying again.`,
-          waitTime: COOLDOWN_SECONDS - secondsSinceLastRequest
-        });
-      }
-    }
-
-    await userCooldownDoc.set({ lastRequest: now });
-
     let body = '';
     await new Promise((resolve) => {
       req.on('data', (chunk) => { body += chunk; });
@@ -79,21 +61,44 @@ module.exports = async (req, res) => {
       return res.status(400).json({ message: 'Invalid class period' });
     }
 
-    if (!validInstruments.includes(instrument)) {
+    if (!validInstruments.includes(instrument.toLowerCase())) {
       return res.status(400).json({ message: 'Invalid instrument' });
     }
 
+    const now = admin.firestore.Timestamp.now();
+    const userCooldownDoc = db.collection('cooldowns').doc(uid);
+
+    const userCooldownSnapshot = await userCooldownDoc.get();
+    if (userCooldownSnapshot.exists) {
+      const lastRequestTime = userCooldownSnapshot.data().lastRequest;
+      const secondsSinceLastRequest = now.seconds - lastRequestTime.seconds;
+
+      if (secondsSinceLastRequest < COOLDOWN_SECONDS) {
+        return res.status(429).json({
+          message: `Please wait ${COOLDOWN_SECONDS - secondsSinceLastRequest} seconds before trying again.`,
+          waitTime: COOLDOWN_SECONDS - secondsSinceLastRequest
+        });
+      }
+    }
+
+    const batch = db.batch();
+
+    batch.set(userCooldownDoc, { lastRequest: now });
+
     const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
-    await publicDataRef.set(
+    batch.set(
+      publicDataRef,
       {
         class_period,
-        instrument
+        instrument: instrument.toLowerCase()
       },
       { merge: true }
     );
 
+    await batch.commit();
+
     return res.status(200).json({ message: 'Profile updated successfully' });
   } catch (error) {
-    return res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 };
