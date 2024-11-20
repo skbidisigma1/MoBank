@@ -43,6 +43,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!userData || !cachedTimestamp || (now - cachedTimestamp) > cacheExpiry) {
             const token = await getToken();
 
+            if (!token) {
+                throw new Error('Authentication token is missing.');
+            }
+
             const response = await fetch('/api/getUserData', {
                 method: 'GET',
                 headers: { Authorization: `Bearer ${token}` },
@@ -52,6 +56,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 userData = await response.json();
                 sessionStorage.setItem('userData', JSON.stringify(userData));
                 sessionStorage.setItem('userDataTimestamp', now.toString());
+            } else if (response.status === 429) {
+                throw new Error('Rate limit exceeded. Please wait a few minutes and try again.');
+            } else if (response.status === 401) {
+                throw new Error('Unauthorized access. Please log in again.');
             } else {
                 throw new Error('Failed to fetch user data');
             }
@@ -79,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         loader.classList.add('hidden');
     } catch (error) {
         console.error('Error fetching user data:', error);
-        alert('Could not load your data. Please try again later.');
+        alert(`Could not load your data: ${error.message}`);
         loader.classList.add('hidden');
         window.location.href = '/pages/profile.html';
     }
