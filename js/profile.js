@@ -24,12 +24,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             if (response.ok) {
+                sessionStorage.setItem('cooldownTimestamp', Date.now().toString());
                 window.location.href = '/pages/dashboard.html';
                 return;
             }
 
             if (response.status === 429) {
-                handleRateLimit(response);
+                const errorData = await response.json();
+                alert(`Please wait ${errorData.waitTime} seconds before trying again.`);
             } else {
                 const errorData = await response.json();
                 alert(`Error updating profile: ${errorData.message}`);
@@ -39,30 +41,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         } finally {
             submitButton.disabled = false;
         }
-    }
-
-    function handleRateLimit(response) {
-        response.json().then((errorData) => {
-            let waitTime = errorData.waitTime || 60;
-
-            submitButton.disabled = true;
-            const reloadMessage = document.createElement('div');
-            reloadMessage.style.textAlign = 'center';
-            reloadMessage.style.fontSize = '16px';
-            reloadMessage.style.color = 'red';
-            profileForm.appendChild(reloadMessage);
-
-            const interval = setInterval(() => {
-                if (waitTime > 0) {
-                    reloadMessage.textContent = `Please wait ${waitTime} seconds before trying again.`;
-                    waitTime -= 1;
-                } else {
-                    clearInterval(interval);
-                    reloadMessage.remove();
-                    submitButton.disabled = false;
-                }
-            }, 1000);
-        });
     }
 
     profileForm.addEventListener('submit', (e) => {
@@ -81,6 +59,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!validInstruments.includes(instrument)) {
             alert('Please select a valid instrument (violin, viola, cello, bass).');
+            return;
+        }
+
+        const cooldownTimestamp = parseInt(sessionStorage.getItem('cooldownTimestamp'), 10) || 0;
+        const now = Date.now();
+        const COOLDOWN_MILLISECONDS = 60000;
+
+        if (now - cooldownTimestamp < COOLDOWN_MILLISECONDS) {
+            const remainingTime = Math.ceil((COOLDOWN_MILLISECONDS - (now - cooldownTimestamp)) / 1000);
+            alert(`Please wait ${remainingTime} seconds before trying again.`);
             return;
         }
 
