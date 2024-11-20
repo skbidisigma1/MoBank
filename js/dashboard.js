@@ -28,45 +28,51 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (logoutButton) {
         logoutButton.addEventListener('click', async () => {
+            sessionStorage.clear();
             await logoutUser();
             window.location.href = '/pages/login.html';
         });
     }
 
     try {
-        const user = await getUser();
-        const token = await getToken();
+        let userData = JSON.parse(sessionStorage.getItem('userData'));
 
-        const response = await fetch('/api/getUserData', {
-            method: 'GET',
-            headers: { Authorization: `Bearer ${token}` },
-        });
+        if (!userData) {
+            const token = await getToken();
 
-        if (response.ok) {
-            const userData = await response.json();
+            const response = await fetch('/api/getUserData', {
+                method: 'GET',
+                headers: { Authorization: `Bearer ${token}` },
+            });
 
-            const publicData = userData.publicData || {};
-            const privateData = userData.privateData || {};
-
-            const name = publicData.name || 'User';
-            const currency_balance = publicData.currency_balance || 0;
-            const instrument = capitalizeFirstLetter(publicData.instrument || 'N/A');
-            const email = privateData.email || 'N/A';
-
-            profileName.textContent = `Welcome, ${name}!`;
-            profileCurrency.textContent = `MoBuck Balance: $${currency_balance}`;
-            profileImage.src = user && user.picture ? user.picture : placeholderPath;
-
-            dashboardContent.innerHTML = `
-                <div class="dashboard-card"><strong>Email:</strong> ${email}</div>
-                <div class="dashboard-card"><strong>Class Period:</strong> ${publicData.class_period || 'N/A'}</div>
-                <div class="dashboard-card"><strong>Instrument:</strong> ${instrument}</div>
-            `;
-
-            loader.classList.add('hidden');
-        } else {
-            throw new Error('Failed to fetch user data');
+            if (response.ok) {
+                userData = await response.json();
+                sessionStorage.setItem('userData', JSON.stringify(userData));
+            } else {
+                throw new Error('Failed to fetch user data');
+            }
         }
+
+        const publicData = userData.publicData || {};
+        const privateData = userData.privateData || {};
+
+        const name = publicData.name || 'User';
+        const currency_balance = publicData.currency_balance || 0;
+        const instrument = capitalizeFirstLetter(publicData.instrument || 'N/A');
+        const email = privateData.email || 'N/A';
+
+        const user = await getUser();
+        profileName.textContent = `Welcome, ${name}!`;
+        profileCurrency.textContent = `MoBuck Balance: $${currency_balance}`;
+        profileImage.src = user && user.picture ? user.picture : placeholderPath;
+
+        dashboardContent.innerHTML = `
+            <div class="dashboard-card"><strong>Email:</strong> ${email}</div>
+            <div class="dashboard-card"><strong>Class Period:</strong> ${publicData.class_period || 'N/A'}</div>
+            <div class="dashboard-card"><strong>Instrument:</strong> ${instrument}</div>
+        `;
+
+        loader.classList.add('hidden');
     } catch (error) {
         console.error('Error fetching user data:', error);
         alert('Could not load your data. Please try again later.');
