@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const logoutButton = document.getElementById('logout-btn');
 
     const placeholderPath = '/images/default_profile.svg';
+    const cacheExpiry = 20000; // 20 seconds in milliseconds
 
     const isLoggedIn = await isAuthenticated();
     if (!isLoggedIn) {
@@ -36,8 +37,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         let userData = JSON.parse(sessionStorage.getItem('userData'));
+        const cachedTimestamp = parseInt(sessionStorage.getItem('userDataTimestamp'), 10);
+        const now = Date.now();
 
-        if (!userData) {
+        if (!userData || !cachedTimestamp || (now - cachedTimestamp) > cacheExpiry) {
             const token = await getToken();
 
             const response = await fetch('/api/getUserData', {
@@ -48,6 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (response.ok) {
                 userData = await response.json();
                 sessionStorage.setItem('userData', JSON.stringify(userData));
+                sessionStorage.setItem('userDataTimestamp', now.toString());
             } else {
                 throw new Error('Failed to fetch user data');
             }
