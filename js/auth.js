@@ -35,9 +35,10 @@ const auth0Promise = (async () => {
     useRefreshTokens: true
   });
   await handleAuthRedirect();
-  const isAuthenticated = await auth0Client.isAuthenticated();
-  if (isAuthenticated) {
+  const isAuthenticatedFlag = await auth0Client.isAuthenticated();
+  if (isAuthenticatedFlag) {
     await initializeUser();
+    await cacheUserData();
   }
   await checkSilentAuth();
 })();
@@ -75,6 +76,7 @@ async function logoutUser() {
     });
     localStorage.clear();
     sessionStorage.clear();
+    window.location.href = '/pages/login.html';
   } catch (error) {
     console.error('Auth0 Logout Error:', error);
   }
@@ -103,6 +105,9 @@ async function getToken() {
     return await auth0Client.getTokenSilently();
   } catch (error) {
     console.error('Auth0 getTokenSilently Error:', error);
+    if (error.error === 'login_required' || error.error === 'consent_required') {
+      await signInWithAuth0();
+    }
     return null;
   }
 }
@@ -110,15 +115,52 @@ async function getToken() {
 async function checkSilentAuth() {
   try {
     const authenticated = await isAuthenticated();
-    if (authenticated) {
+    if (!authenticated) {
+      sessionStorage.clear();
+      window.location.href = '/pages/login.html';
+    } else {
       const user = await getUser();
       const loginStatus = document.getElementById('login-status');
-      if (loginStatus) {
+      if (loginStatus && user && user.name) {
         loginStatus.textContent = `Welcome, ${user.name}!`;
       }
+      await cacheUserData();
     }
   } catch (error) {
+    sessionStorage.clear();
     console.error('Silent Authentication Error:', error);
+    window.location.href = '/pages/login.html';
+  }
+}
+
+async function cacheUserData() {
+  try {
+    const token = await getToken();
+    if (!token) {
+      throw new Error('Authentication token is missing.');
+    }
+
+    const response = await fetch('/api/getUserData', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (response.ok) {
+      const userData = await response.json();
+      const now = Date.now();
+      sessionStorage.setItem('userData', JSON.stringify(userData));
+      sessionStorage.setItem('userDataTimestamp', now.toString());
+    } else if (response.status === 429) {
+      console.error('Rate limit exceeded while caching user data.');
+    } else if (response.status === 401) {
+      console.error('Unauthorized access while caching user data.');
+      sessionStorage.clear();
+      window.location.href = '/pages/login.html';
+    } else {
+      console.error('Failed to cache user data.');
+    }
+  } catch (error) {
+    console.error('Error caching user data:', error);
   }
 }
 
