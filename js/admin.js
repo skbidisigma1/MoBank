@@ -43,12 +43,12 @@ async function loadAdminContent() {
       const amount = parseInt(amountInput.value, 10);
 
       if (!studentName) {
-        alert('Please enter a valid student name.');
+        showToast('Validation Error', 'Please enter a valid student name.');
         return;
       }
 
       if (!amount || amount <= 0) {
-        alert('Please enter a positive integer for the amount.');
+        showToast('Validation Error', 'Please enter a positive integer for the amount.');
         return;
       }
 
@@ -71,12 +71,12 @@ async function loadAdminContent() {
         const result = await response.json();
 
         if (response.ok) {
-          alert(result.message);
+          showToast('Success', result.message);
         } else {
-          alert(result.message || 'An error occurred.');
+          showToast('Error', result.message || 'An error occurred.');
         }
       } catch (error) {
-        alert('Failed to process the request. Please try again later.');
+        showToast('Network Error', 'Failed to process the request. Please try again later.');
       }
 
       studentNameInput.value = '';
