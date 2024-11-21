@@ -520,38 +520,22 @@ select:after {
     background-color: #003366;
 }
 
-@keyframes toast-slide-in {
-    0% {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-    10% {
-        opacity: 1;
-        transform: translateX(0);
-    }
-    90% {
-        opacity: 1;
-        transform: translateX(0);
-    }
-    100% {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-}
-
 .toast {
     position: fixed;
     top: 20px;
     right: 20px;
     width: 350px;
-    background-color: rgba(0, 0, 0, 0.8);
-    border: 2px solid #fff;
+    background-color: rgb(33, 33, 33);
+    border-radius: 8px;
+    box-shadow:
+        0 0 0 1px #000000,
+        0 0 0 3px rgb(85, 85, 85);
     padding: 15px;
     display: flex;
     align-items: center;
     opacity: 0;
     z-index: 1000;
-    animation: toast-slide-in 5s forwards;
+    animation: toast-slide-in 0.5s forwards, toast-slide-out 0.5s forwards 4.5s;
 }
 
 .toast-icon {
@@ -566,16 +550,38 @@ select:after {
 }
 
 .toast-title {
-    font-size: 18px;
-    color: #fff;
-    font-family: 'Press Start 2P', sans-serif;
+    font-size: 14px;
+    color: #ffffff;
+    font-family: 'Press Start 2P', cursive;
     margin-bottom: 5px;
 }
 
 .toast-message {
-    font-size: 14px;
-    color: #fff;
-    font-family: 'Press Start 2P', sans-serif;
+    font-size: 10px;
+    color: #ffffff;
+    font-family: 'Press Start 2P', cursive;
+}
+
+@keyframes toast-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes toast-slide-out {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
 }
 
 @media (max-width: 600px) {
@@ -585,20 +591,18 @@ select:after {
         right: 5%;
         top: 10px;
     }
-
     .toast-icon {
         width: 30px;
         height: 30px;
     }
-
     .toast-title {
-        font-size: 16px;
-    }
-
-    .toast-message {
         font-size: 12px;
     }
+    .toast-message {
+        font-size: 8px;
+    }
 }
+
 
 @keyframes spin {
     0% { transform: rotate(0deg); }
