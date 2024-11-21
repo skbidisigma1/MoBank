@@ -7,6 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     setTimeout(() => {
-        showToast('Achievement Get!', 'Welcome to MoBank!', 'images/achievement_icon.png');
+        showToast('Achievement Get!', 'Watch 100000000000000000000000000000000000000000000 unskippable advertisements!');
     }, 1000);
 });
