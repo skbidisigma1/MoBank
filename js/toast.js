@@ -24,14 +24,27 @@ function showToast(title, message) {
         toast.classList.add('show');
     }, 10);
 
-    setTimeout(() => {
-        toast.classList.remove('show');
-        toast.classList.add('hide');
+    toast.addEventListener('click', () => {
+        hideToast(toast);
+    });
 
-        toast.addEventListener('animationend', function(e) {
-            if (e.animationName === 'toast-slide-out') {
-                toast.remove();
-            }
-        });
+    const autoHideTimeout = setTimeout(() => {
+        hideToast(toast);
     }, 5000);
+
+    function hideToast(toastElement) {
+        clearTimeout(autoHideTimeout);
+
+        if (!toastElement.classList.contains('hide')) {
+            toastElement.classList.remove('show');
+            toastElement.classList.add('hide');
+
+            toastElement.addEventListener('animationend', function animationEndHandler(e) {
+                if (e.animationName === 'toast-slide-out') {
+                    toastElement.remove();
+                    toastElement.removeEventListener('animationend', animationEndHandler);
+                }
+            });
+        }
+    }
 }
