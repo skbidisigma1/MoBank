@@ -5,4 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = '/pages/login.html';
         });
     }
+
+    setTimeout(() => {
+        showToast('Welcome to MoBank!');
+    }, 1000);
 });
