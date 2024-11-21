@@ -2,7 +2,7 @@ function showToast(message) {
     const toast = document.createElement('div');
     toast.className = 'toast';
     toast.textContent = message || 'Action Completed!';
-    
+
     document.body.appendChild(toast);
 
     setTimeout(() => {
