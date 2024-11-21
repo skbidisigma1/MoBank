@@ -1,10 +1,6 @@
-function showToast(title, message, iconSrc) {
+function showToast(title, message) {
     const toast = document.createElement('div');
     toast.className = 'toast';
-
-    const icon = document.createElement('img');
-    icon.className = 'toast-icon';
-    icon.src = iconSrc || 'images/default_icon.png';
 
     const content = document.createElement('div');
     content.className = 'toast-content';
@@ -20,7 +16,6 @@ function showToast(title, message, iconSrc) {
     content.appendChild(toastTitle);
     content.appendChild(toastMessage);
 
-    toast.appendChild(icon);
     toast.appendChild(content);
 
     document.body.appendChild(toast);
@@ -32,8 +27,11 @@ function showToast(title, message, iconSrc) {
     setTimeout(() => {
         toast.classList.remove('show');
         toast.classList.add('hide');
-        setTimeout(() => {
-            toast.remove();
-        }, 500);
+
+        toast.addEventListener('animationend', function(e) {
+            if (e.animationName === 'toast-slide-out') {
+                toast.remove();
+            }
+        });
     }, 5000);
 }
