@@ -530,7 +530,7 @@ select:after {
     box-shadow:
         0 0 0 1px rgb(0, 0, 0),
         0 0 0 3px rgb(85, 85, 85);
-    padding: 15px;
+    padding: 10px;
     opacity: 0;
     z-index: 1000;
     display: flex;
@@ -551,14 +551,14 @@ select:after {
 }
 
 .toast-title {
-    font-size: 24px;
+    font-size: 20px;
     color: #ffffff;
     font-family: 'Poppins', sans-serif;
-    margin-bottom: 5px;
+    margin-bottom: 3px;
 }
 
 .toast-message {
-    font-size: 18px;
+    font-size: 14px;
     color: #ffffff;
     font-family: 'Poppins', sans-serif;
 }
@@ -591,30 +591,10 @@ select:after {
         left: 5%;
         right: 5%;
         top: 10px;
-        padding: 10px;
+        padding: 8px;
     }
     .toast-title {
-        font-size: 20px;
-    }
-    .toast-message {
-        font-size: 16px;
-    }
-}
-
-@media (max-width: 600px) {
-    .toast {
-        width: 90%;
-        left: 5%;
-        right: 5%;
-        top: 10px;
-        padding: 10px;
-    }
-    .toast-icon {
-        width: 30px;
-        height: 30px;
-    }
-    .toast-title {
-        font-size: 16px;
+        font-size: 18px;
     }
     .toast-message {
         font-size: 12px;
