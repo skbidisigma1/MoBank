@@ -44,13 +44,11 @@ module.exports = async (req, res) => {
     const user = await response.json();
     const uid = user.sub;
 
-    const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
-    const privateDataRef = db.collection('users').doc(uid).collection('privateData').doc('main');
+    const userRef = db.collection('users').doc(uid);
+    const userDoc = await userRef.get();
 
-    const publicDoc = await publicDataRef.get();
-
-    if (!publicDoc.exists) {
-      await publicDataRef.set({
+    if (!userDoc.exists) {
+      await userRef.set({
         name: user.name || 'Unknown',
         instrument: '',
         class_period: null,
@@ -59,6 +57,7 @@ module.exports = async (req, res) => {
       });
     }
 
+    const privateDataRef = userRef.collection('privateData').doc('main');
     const privateDoc = await privateDataRef.get();
 
     if (!privateDoc.exists) {
