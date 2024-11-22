@@ -198,7 +198,7 @@ async function addTransaction(senderId, receiverId, amount, transactionType, adm
       currency_balance: admin.firestore.FieldValue.increment(amount),
     });
   }
-});
+}
 
 app.post('/api/adminAdjustBalance', jwtCheck, async (req, res) => {
   const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
@@ -232,6 +232,33 @@ app.post('/api/adminAdjustBalance', jwtCheck, async (req, res) => {
     return res.status(200).json({ message: 'Balance adjusted successfully' });
   } catch (error) {
     return res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
+  }
+});
+
+app.get('/api/getLeaderboard', jwtCheck, async (req, res) => {
+  try {
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.get();
+
+    const leaderboardData = [];
+
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      leaderboardData.push({
+        uid: doc.id,
+        name: data.name || 'Unknown User',
+        balance: data.currency_balance || 0,
+        instrument: data.instrument || 'N/A',
+        class_period: data.class_period || 'N/A',
+      });
+    });
+
+    leaderboardData.sort((a, b) => b.balance - a.balance);
+
+    res.status(200).json(leaderboardData);
+  } catch (error) {
+    console.error('Error fetching leaderboard data:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
