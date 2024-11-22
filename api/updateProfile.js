@@ -13,8 +13,8 @@ if (!admin.apps.length) {
       auth_uri: process.env.FIREBASE_AUTH_URI,
       token_uri: process.env.FIREBASE_TOKEN_URI,
       auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
-      client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL
-    })
+      client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
+    }),
   });
 }
 
@@ -34,7 +34,7 @@ module.exports = async (req, res) => {
 
   try {
     const response = await fetch(`https://${process.env.AUTH0_DOMAIN}/userinfo`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     if (!response.ok) {
@@ -46,7 +46,9 @@ module.exports = async (req, res) => {
 
     let body = '';
     await new Promise((resolve) => {
-      req.on('data', (chunk) => { body += chunk; });
+      req.on('data', (chunk) => {
+        body += chunk;
+      });
       req.on('end', resolve);
     });
     const requestBody = JSON.parse(body);
@@ -64,11 +66,11 @@ module.exports = async (req, res) => {
       return res.status(400).json({ message: 'Invalid instrument' });
     }
 
-    const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
-    await publicDataRef.set(
+    const userRef = db.collection('users').doc(uid);
+    await userRef.set(
       {
         class_period,
-        instrument: instrument.toLowerCase()
+        instrument: instrument.toLowerCase(),
       },
       { merge: true }
     );
