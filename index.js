@@ -4,7 +4,6 @@ const { expressjwt: jwt } = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
 const admin = require('firebase-admin');
 const cookieParser = require('cookie-parser');
-const lusca = require('lusca');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -16,7 +15,7 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 125,
   handler: (req, res) => {
-    res.status(429).json({ message: "Rate limit exceeded. Please wait a few minutes and try again." });
+    res.status(429).json({ message: 'Rate limit exceeded. Please wait a few minutes and try again.' });
   },
 });
 
@@ -35,10 +34,10 @@ app.use(
   helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "https://cdn.auth0.com", "https://cdn.jsdelivr.net"],
-      styleSrc: ["'self'", "https://fonts.googleapis.com", "'unsafe-inline'"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:"],
+      scriptSrc: ["'self'", 'https://cdn.auth0.com', 'https://cdn.jsdelivr.net'],
+      styleSrc: ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:'],
       connectSrc: ["'self'", `https://${process.env.AUTH0_DOMAIN}`],
       objectSrc: ["'none'"],
       frameAncestors: ["'self'"],
@@ -46,8 +45,6 @@ app.use(
     },
   })
 );
-
-app.use(lusca.csrf());
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -81,34 +78,40 @@ const jwtCheck = jwt({
 });
 
 app.post('/login', jwtCheck, async (req, res) => {
-  const uid = req.user.sub;
-  const email = req.user.email;
-  const name = req.user.name || 'Unknown';
-  const roles = req.user['https://mo-bank.vercel.app/roles'] || ['user'];
+  const uid = req.auth.payload.sub;
+  const email = req.auth.payload.email;
+  const name = req.auth.payload.name || 'Unknown';
+  const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || ['user'];
   await addUser(uid, email, { name, role: roles });
   res.sendStatus(200);
 });
 
 async function addUser(uid, email, metadata = {}) {
   const userRef = db.collection('users').doc(uid);
-  await userRef.set({
-    name: metadata.name || 'Unknown',
-    instrument: metadata.instrument || '',
-    class_period: metadata.class_period || null,
-    currency_balance: metadata.currency_balance || 0,
-    picture: '/images/default_profile.svg',
-  }, { merge: true });
+  await userRef.set(
+    {
+      name: metadata.name || 'Unknown',
+      instrument: metadata.instrument || '',
+      class_period: metadata.class_period || null,
+      currency_balance: metadata.currency_balance || 0,
+      picture: '/images/default_profile.svg',
+    },
+    { merge: true }
+  );
 
   const privateDataRef = userRef.collection('privateData').doc('main');
-  await privateDataRef.set({
-    email: email,
-    auth0_user_id: uid,
-    role: metadata.role || ['user'],
-  }, { merge: true });
+  await privateDataRef.set(
+    {
+      email: email,
+      auth0_user_id: uid,
+      role: metadata.role || ['user'],
+    },
+    { merge: true }
+  );
 }
 
 app.post('/updateProfile', jwtCheck, async (req, res) => {
-  const uid = req.user.sub;
+  const uid = req.auth.payload.sub;
   const { class_period, instrument } = req.body;
 
   if (class_period == null || instrument == null) {
@@ -122,7 +125,7 @@ app.post('/updateProfile', jwtCheck, async (req, res) => {
 });
 
 app.get('/getUserData', jwtCheck, async (req, res) => {
-  const uid = req.user.sub;
+  const uid = req.auth.payload.sub;
   const userData = await getUserData(uid);
   if (userData) {
     res.json(userData);
@@ -148,12 +151,12 @@ async function getUserData(uid) {
 }
 
 app.post('/transactions', jwtCheck, async (req, res) => {
-  const roles = req.user['https://mo-bank.vercel.app/roles'] || [];
+  const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
   if (!roles.includes('admin')) {
     return res.status(403).send('Forbidden: Admins only');
   }
   const { senderId, receiverId, amount, transactionType } = req.body;
-  const adminId = req.user.sub;
+  const adminId = req.auth.payload.sub;
   await addTransaction(senderId, receiverId, amount, transactionType, adminId);
   res.sendStatus(200);
 });
@@ -195,21 +198,15 @@ async function addTransaction(senderId, receiverId, amount, transactionType, adm
       currency_balance: admin.firestore.FieldValue.increment(amount),
     });
   }
-}
+});
 
 app.post('/api/adminAdjustBalance', jwtCheck, async (req, res) => {
-  const roles = req.user['https://mo-bank.vercel.app/roles'] || [];
+  const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
   if (!roles.includes('admin')) {
     return res.status(403).json({ message: 'Forbidden: Admins only' });
   }
 
-  let body = '';
-  await new Promise((resolve) => {
-    req.on('data', (chunk) => { body += chunk; });
-    req.on('end', resolve);
-  });
-
-  const { name, period, amount } = JSON.parse(body);
+  const { name, period, amount } = req.body;
 
   if (!name || !period || !amount || amount <= 0) {
     return res.status(400).json({ message: 'Invalid input' });
@@ -217,8 +214,7 @@ app.post('/api/adminAdjustBalance', jwtCheck, async (req, res) => {
 
   try {
     const usersRef = db.collection('users');
-    const query = usersRef.where('class_period', '==', parseInt(period, 10))
-                          .where('name', '==', name);
+    const query = usersRef.where('class_period', '==', parseInt(period, 10)).where('name', '==', name);
 
     const snapshot = await query.get();
 
