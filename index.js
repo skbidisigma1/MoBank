@@ -10,7 +10,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
 
-
 const app = express();
 
 const limiter = rateLimit({
@@ -90,6 +89,24 @@ app.post('/login', jwtCheck, async (req, res) => {
   res.sendStatus(200);
 });
 
+async function addUser(uid, email, metadata = {}) {
+  const userRef = db.collection('users').doc(uid);
+  await userRef.set({
+    name: metadata.name || 'Unknown',
+    instrument: metadata.instrument || '',
+    class_period: metadata.class_period || null,
+    currency_balance: metadata.currency_balance || 0,
+    picture: '/images/default_profile.svg',
+  }, { merge: true });
+
+  const privateDataRef = userRef.collection('privateData').doc('main');
+  await privateDataRef.set({
+    email: email,
+    auth0_user_id: uid,
+    role: metadata.role || ['user'],
+  }, { merge: true });
+}
+
 app.post('/updateProfile', jwtCheck, async (req, res) => {
   const uid = req.user.sub;
   const { class_period, instrument } = req.body;
@@ -98,8 +115,8 @@ app.post('/updateProfile', jwtCheck, async (req, res) => {
     return res.status(400).send('Missing class_period or instrument');
   }
 
-  const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
-  await publicDataRef.set({ class_period, instrument }, { merge: true });
+  const userRef = db.collection('users').doc(uid);
+  await userRef.set({ class_period, instrument }, { merge: true });
 
   res.sendStatus(200);
 });
@@ -114,6 +131,22 @@ app.get('/getUserData', jwtCheck, async (req, res) => {
   }
 });
 
+async function getUserData(uid) {
+  const userRef = db.collection('users').doc(uid);
+  const privateDataRef = userRef.collection('privateData').doc('main');
+
+  const [userDoc, privateDoc] = await Promise.all([userRef.get(), privateDataRef.get()]);
+
+  if (!userDoc.exists || !privateDoc.exists) {
+    return null;
+  }
+
+  return {
+    publicData: userDoc.data(),
+    privateData: privateDoc.data(),
+  };
+}
+
 app.post('/transactions', jwtCheck, async (req, res) => {
   const roles = req.user['https://mo-bank.vercel.app/roles'] || [];
   if (!roles.includes('admin')) {
@@ -124,74 +157,6 @@ app.post('/transactions', jwtCheck, async (req, res) => {
   await addTransaction(senderId, receiverId, amount, transactionType, adminId);
   res.sendStatus(200);
 });
-
-app.use((err, req, res, next) => {
-  if (err.name === 'UnauthorizedError') {
-    res.status(401).send('Invalid token');
-  } else {
-    next(err);
-  }
-});
-
-app.post('/api/adminAdjustBalance', jwtCheck, async (req, res) => {
-  const roles = req.user['https://mo-bank.vercel.app/roles'] || [];
-  if (!roles.includes('admin')) {
-    return res.status(403).json({ message: 'Forbidden: Admins only' });
-  }
-
-  let body = '';
-  await new Promise((resolve) => {
-    req.on('data', (chunk) => { body += chunk; });
-    req.on('end', resolve);
-  });
-
-  const { name, period, amount } = JSON.parse(body);
-
-  if (!name || !period || !amount || amount <= 0) {
-    return res.status(400).json({ message: 'Invalid input' });
-  }
-
-  try {
-    const usersRef = db.collection('users');
-    const query = usersRef.where('publicData.main.class_period', '==', parseInt(period, 10))
-                          .where('publicData.main.name', '==', name);
-
-    const snapshot = await query.get();
-
-    if (snapshot.empty) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const userDoc = snapshot.docs[0];
-    const userRef = userDoc.ref.collection('publicData').doc('main');
-
-    await userRef.update({
-      currency_balance: admin.firestore.FieldValue.increment(amount),
-    });
-
-    return res.status(200).json({ message: 'Balance adjusted successfully' });
-  } catch (error) {
-    return res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
-  }
-});
-
-async function addUser(uid, email, metadata = {}) {
-  const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
-  await publicDataRef.set({
-    name: metadata.name || 'Unknown',
-    instrument: metadata.instrument || '',
-    class_period: metadata.class_period || null,
-    currency_balance: metadata.currency_balance || 0,
-    picture: '/images/default_profile.svg',
-  }, { merge: true });
-
-  const privateDataRef = db.collection('users').doc(uid).collection('privateData').doc('main');
-  await privateDataRef.set({
-    email: email,
-    auth0_user_id: uid,
-    role: metadata.role || ['user'],
-  }, { merge: true });
-}
 
 async function addTransaction(senderId, receiverId, amount, transactionType, adminId = null) {
   const transactionRef = db.collection('transactions').doc();
@@ -220,8 +185,8 @@ async function addTransaction(senderId, receiverId, amount, transactionType, adm
   }
 
   if (transactionType === 'send') {
-    const senderRef = db.collection('users').doc(senderId).collection('publicData').doc('main');
-    const receiverRef = db.collection('users').doc(receiverId).collection('publicData').doc('main');
+    const senderRef = db.collection('users').doc(senderId);
+    const receiverRef = db.collection('users').doc(receiverId);
 
     await senderRef.update({
       currency_balance: admin.firestore.FieldValue.increment(-amount),
@@ -232,20 +197,54 @@ async function addTransaction(senderId, receiverId, amount, transactionType, adm
   }
 }
 
-async function getUserData(uid) {
-  const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
-  const privateDataRef = db.collection('users').doc(uid).collection('privateData').doc('main');
-
-  const [publicDoc, privateDoc] = await Promise.all([publicDataRef.get(), privateDataRef.get()]);
-
-  if (!publicDoc.exists || !privateDoc.exists) {
-    return null;
+app.post('/api/adminAdjustBalance', jwtCheck, async (req, res) => {
+  const roles = req.user['https://mo-bank.vercel.app/roles'] || [];
+  if (!roles.includes('admin')) {
+    return res.status(403).json({ message: 'Forbidden: Admins only' });
   }
 
-  return {
-    publicData: publicDoc.data(),
-    privateData: privateDoc.data(),
-  };
-}
+  let body = '';
+  await new Promise((resolve) => {
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', resolve);
+  });
+
+  const { name, period, amount } = JSON.parse(body);
+
+  if (!name || !period || !amount || amount <= 0) {
+    return res.status(400).json({ message: 'Invalid input' });
+  }
+
+  try {
+    const usersRef = db.collection('users');
+    const query = usersRef.where('class_period', '==', parseInt(period, 10))
+                          .where('name', '==', name);
+
+    const snapshot = await query.get();
+
+    if (snapshot.empty) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const userDoc = snapshot.docs[0];
+    const userRef = userDoc.ref;
+
+    await userRef.update({
+      currency_balance: admin.firestore.FieldValue.increment(amount),
+    });
+
+    return res.status(200).json({ message: 'Balance adjusted successfully' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
+  }
+});
+
+app.use((err, req, res, next) => {
+  if (err.name === 'UnauthorizedError') {
+    res.status(401).send('Invalid token');
+  } else {
+    next(err);
+  }
+});
 
 module.exports = serverless(app);
