@@ -1,40 +1,47 @@
-function populateLeaderboard(data) {
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.auth0Promise;
+
+  const isLoggedIn = await isAuthenticated();
+  if (!isLoggedIn) {
+    window.location.href = '/pages/login.html';
+    return;
+  }
+
+  fetchLeaderboardData();
+});
+
+async function fetchLeaderboardData() {
+  const loader = document.getElementById('loader');
   const leaderboardBody = document.getElementById('leaderboard-body');
 
-  data.forEach((user, index) => {
-    const row = document.createElement('tr');
+  try {
+    loader.style.display = 'block';
 
-    const rankCell = document.createElement('td');
-    rankCell.textContent = index + 1;
-    rankCell.setAttribute('data-label', 'Rank');
+    const token = await auth0Client.getTokenSilently();
 
-    const userCell = document.createElement('td');
-    userCell.textContent = user.name || 'Unknown User';
-    userCell.setAttribute('data-label', 'User');
+    const response = await fetch('/api/getLeaderboard', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-    const balanceCell = document.createElement('td');
-    balanceCell.textContent = `$${user.balance.toFixed(2) || '0.00'}`;
-    balanceCell.setAttribute('data-label', 'MoBuck Balance');
+    if (!response.ok) {
+      throw new Error('Failed to fetch leaderboard data');
+    }
 
-    const instrumentCell = document.createElement('td');
-    instrumentCell.textContent = capitalizeFirstLetter(user.instrument || 'N/A');
-    instrumentCell.setAttribute('data-label', 'Instrument');
+    const data = await response.json();
 
-    const classPeriodCell = document.createElement('td');
-    classPeriodCell.textContent = `Period ${user.class_period || 'N/A'}`;
-    classPeriodCell.setAttribute('data-label', 'Class Period');
+    loader.style.display = 'none';
 
-    row.appendChild(rankCell);
-    row.appendChild(userCell);
-    row.appendChild(balanceCell);
-    row.appendChild(instrumentCell);
-    row.appendChild(classPeriodCell);
+    populateLeaderboard(data);
+  } catch (error) {
+    console.error('Error fetching leaderboard data:', error);
+    loader.style.display = 'none';
 
-    leaderboardBody.appendChild(row);
-  });
-}
-
-function capitalizeFirstLetter(string) {
-  if (!string) return '';
-  return string.charAt(0).toUpperCase() + string.slice(1);
+    const main = document.querySelector('main');
+    const errorMessage = document.createElement('p');
+    errorMessage.textContent = 'Unable to load leaderboard at this time. Please try again later.';
+    errorMessage.classList.add('error-message');
+    main.appendChild(errorMessage);
+  }
 }
