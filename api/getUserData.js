@@ -43,17 +43,24 @@ module.exports = async (req, res) => {
     const user = await response.json();
     const uid = user.sub;
 
-    const publicDataRef = db.collection('users').doc(uid).collection('publicData').doc('main');
-    const privateDataRef = db.collection('users').doc(uid).collection('privateData').doc('main');
+    const userRef = db.collection('users').doc(uid);
+    const userDoc = await userRef.get();
 
-    const [publicDoc, privateDoc] = await Promise.all([publicDataRef.get(), privateDataRef.get()]);
-
-    if (!publicDoc.exists || !privateDoc.exists) {
+    if (!userDoc.exists) {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    const publicData = userDoc.data();
+
+    const privateDataRef = userRef.collection('privateData').doc('main');
+    const privateDoc = await privateDataRef.get();
+
+    if (!privateDoc.exists) {
+      return res.status(404).json({ message: 'Private data not found' });
+    }
+
     return res.status(200).json({
-      publicData: publicDoc.data(),
+      publicData: publicData,
       privateData: privateDoc.data(),
     });
   } catch (error) {
