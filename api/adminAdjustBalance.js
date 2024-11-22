@@ -82,8 +82,8 @@ module.exports = async (req, res) => {
       try {
         const usersRef = db.collection('users');
         const query = usersRef
-          .where('publicData.main.class_period', '==', parseInt(period, 10))
-          .where('publicData.main.name', '==', name);
+          .where('class_period', '==', parseInt(period, 10))
+          .where('name', '==', name);
 
         const snapshot = await query.get();
 
@@ -92,7 +92,7 @@ module.exports = async (req, res) => {
         }
 
         const userDoc = snapshot.docs[0];
-        const userRef = userDoc.ref.collection('publicData').doc('main');
+        const userRef = userDoc.ref;
 
         await userRef.update({
           currency_balance: admin.firestore.FieldValue.increment(amount),
