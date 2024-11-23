@@ -74,7 +74,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
-        alert(`Could not load your data: ${error.message}`);
         window.location.href = '/pages/profile.html';
       }
     }
