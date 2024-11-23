@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const logoutButton = document.getElementById('logout-btn');
 
     const placeholderPath = '/images/default_profile.svg';
-    const cacheExpiry = 20000; // 20 seconds in milliseconds
+    const cacheExpiry = 20000;
 
     const isLoggedIn = await isAuthenticated();
     if (!isLoggedIn) {
@@ -35,62 +35,51 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    try {
-        let userData = JSON.parse(sessionStorage.getItem('userData'));
-        const cachedTimestamp = parseInt(sessionStorage.getItem('userDataTimestamp'), 10);
-        const now = Date.now();
+    async function fetchUserData() {
+      try {
+        const token = await getToken();
+        const response = await fetch('/api/getUserData', {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-        if (!userData || !cachedTimestamp || (now - cachedTimestamp) > cacheExpiry) {
-            const token = await getToken();
+        if (response.ok) {
+          const userData = await response.json();
+          if (!userData.class_period || !userData.instrument) {
+            throw new Error('Incomplete profile data');
+          }
+          sessionStorage.setItem('userData', JSON.stringify(userData));
+          sessionStorage.setItem('userDataTimestamp', Date.now().toString());
 
-            if (!token) {
-                throw new Error('Authentication token is missing.');
-            }
+          const name = userData.name || 'User';
+          const currency_balance = userData.currency_balance || 0;
+          const instrument = capitalizeFirstLetter(userData.instrument || 'N/A');
+          const email = userData.privateData.email || 'N/A';
 
-            const response = await fetch('/api/getUserData', {
-                method: 'GET',
-                headers: { Authorization: `Bearer ${token}` },
-            });
+          profileName.textContent = `Welcome, ${name}!`;
+          profileCurrency.textContent = `MoBuck Balance: $${currency_balance}`;
+          profileImage.src = userData.picture || '/images/default_profile.svg';
 
-            if (response.ok) {
-                userData = await response.json();
-                sessionStorage.setItem('userData', JSON.stringify(userData));
-                sessionStorage.setItem('userDataTimestamp', now.toString());
-            } else if (response.status === 429) {
-                throw new Error('Rate limit exceeded. Please wait a few minutes and try again.');
-            } else if (response.status === 401) {
-                throw new Error('Unauthorized access. Please log in again.');
-            } else {
-                throw new Error('Failed to fetch user data');
-            }
+          dashboardContent.innerHTML = `
+              <div class="dashboard-card"><strong>Email:</strong> ${email}</div>
+              <div class="dashboard-card"><strong>Class Period:</strong> ${userData.class_period || 'N/A'}</div>
+              <div class="dashboard-card"><strong>Instrument:</strong> ${instrument}</div>
+          `;
+
+          loader.classList.add('hidden');
+        } else if (response.status === 404) {
+          window.location.href = '/pages/profile.html';
+        } else {
+          throw new Error('Failed to fetch user data');
         }
-
-        const publicData = userData.publicData || {};
-        const privateData = userData.privateData || {};
-
-        const name = publicData.name || 'User';
-        const currency_balance = publicData.currency_balance || 0;
-        const instrument = capitalizeFirstLetter(publicData.instrument || 'N/A');
-        const email = privateData.email || 'N/A';
-
-        const user = await getUser();
-        profileName.textContent = `Welcome, ${name}!`;
-        profileCurrency.textContent = `MoBuck Balance: $${currency_balance}`;
-        profileImage.src = user && user.picture ? user.picture : placeholderPath;
-
-        dashboardContent.innerHTML = `
-            <div class="dashboard-card"><strong>Email:</strong> ${email}</div>
-            <div class="dashboard-card"><strong>Class Period:</strong> ${publicData.class_period || 'N/A'}</div>
-            <div class="dashboard-card"><strong>Instrument:</strong> ${instrument}</div>
-        `;
-
-        loader.classList.add('hidden');
-    } catch (error) {
+      } catch (error) {
         console.error('Error fetching user data:', error);
         alert(`Could not load your data: ${error.message}`);
-        loader.classList.add('hidden');
         window.location.href = '/pages/profile.html';
+      }
     }
+
+    await fetchUserData();
 });
 
 function capitalizeFirstLetter(string) {
