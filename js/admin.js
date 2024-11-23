@@ -47,8 +47,8 @@ async function loadAdminContent() {
         return;
       }
 
-      if (!amount || amount <= 0) {
-        showToast('Validation Error', 'Please enter a positive integer for the amount.');
+      if (!amount) {
+        showToast('Validation Error', 'Please enter a valid integer for the amount.');
         return;
       }
 
