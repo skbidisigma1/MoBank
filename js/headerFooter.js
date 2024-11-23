@@ -77,7 +77,10 @@ async function loadHeaderFooter() {
 
             if (user && user.picture) {
                 profilePicElement.src = user.picture;
-                sessionStorage.setItem('userData', JSON.stringify({ ...cachedUserData, picture: user.picture }));
+                if (cachedUserData) {
+                    cachedUserData.picture = user.picture;
+                    sessionStorage.setItem('userData', JSON.stringify(cachedUserData));
+                }
             }
         } else {
             if (authLink) {
