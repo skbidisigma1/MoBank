@@ -60,7 +60,7 @@ module.exports = async (req, res) => {
     }
 
     return res.status(200).json({
-      publicData: publicData,
+      ...publicData,
       privateData: privateDoc.data(),
     });
   } catch (error) {
