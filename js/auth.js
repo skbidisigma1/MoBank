@@ -1,3 +1,8 @@
+let auth0Client = null;
+let cachedUser = null;
+let userFetchTimestamp = 0;
+const USER_INFO_COOLDOWN = 20000;
+
 async function initializeUser() {
   const token = await getToken();
   try {
@@ -22,8 +27,6 @@ async function initializeUser() {
     console.error(`Error initializing user: ${error}. Please refresh the page.`);
   }
 }
-
-let auth0Client = null;
 
 const auth0Promise = (async () => {
   auth0Client = await createAuth0Client({
@@ -90,12 +93,16 @@ async function isAuthenticated() {
 }
 
 async function getUser() {
-  try {
-    return await auth0Client.getUser();
-  } catch (error) {
-    console.error('Auth0 getUser Error:', error);
-    return null;
+  if (!cachedUser || Date.now() - userFetchTimestamp > USER_INFO_COOLDOWN) {
+    try {
+      cachedUser = await auth0Client.getUser();
+      userFetchTimestamp = Date.now();
+    } catch (error) {
+      console.error('Auth0 getUser Error:', error);
+      cachedUser = null;
+    }
   }
+  return cachedUser;
 }
 
 async function getToken() {
