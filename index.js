@@ -37,7 +37,7 @@ app.use(
       scriptSrc: ["'self'", 'https://cdn.auth0.com', 'https://cdn.jsdelivr.net'],
       styleSrc: ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-      imgSrc: ["'self'", 'data:'],
+      imgSrc: ["'self'", 'data:', 'https://lh3.googleusercontent.com'],
       connectSrc: ["'self'", `https://${process.env.AUTH0_DOMAIN}`],
       objectSrc: ["'none'"],
       frameAncestors: ["'self'"],
@@ -85,7 +85,7 @@ async function addUser(uid, email, metadata = {}) {
       instrument: metadata.instrument || '',
       class_period: metadata.class_period || null,
       currency_balance: metadata.currency_balance || 0,
-      picture: '/images/default_profile.svg',
+      // Remove 'picture' field to avoid storing it in the database
     },
     { merge: true }
   );
@@ -123,6 +123,7 @@ app.post('/api/login', jwtCheck, async (req, res) => {
     const email = req.auth.payload.email;
     const name = req.auth.payload.name || 'Unknown';
     const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || ['user'];
+    // Do not store picture in the database
     await addUser(uid, email, { name, role: roles });
     res.sendStatus(200);
   } catch (error) {
@@ -261,12 +262,20 @@ async function addTransaction(senderId, receiverId, amount, transactionType, adm
   await transactionRef.set(transactionData);
 
   if (senderId) {
-    const senderHistoryRef = db.collection('users').doc(senderId).collection('transaction_history').doc(transactionId);
+    const senderHistoryRef = db
+      .collection('users')
+      .doc(senderId)
+      .collection('transaction_history')
+      .doc(transactionId);
     await senderHistoryRef.set(transactionData);
   }
 
   if (receiverId) {
-    const receiverHistoryRef = db.collection('users').doc(receiverId).collection('transaction_history').doc(transactionId);
+    const receiverHistoryRef = db
+      .collection('users')
+      .doc(receiverId)
+      .collection('transaction_history')
+      .doc(transactionId);
     await receiverHistoryRef.set(transactionData);
   }
 
