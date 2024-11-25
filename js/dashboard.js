@@ -94,48 +94,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    async function fetchLeaderboard() {
-        try {
-            const token = await getCachedToken();
-
-            const response = await fetch('/api/getLeaderboard', {
-                method: 'GET',
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            if (response.ok) {
-                const leaderboardData = await response.json();
-                renderLeaderboard(leaderboardData);
-            } else {
-                throw new Error('Failed to fetch leaderboard');
-            }
-        } catch (error) {
-            console.error('Error fetching leaderboard:', error);
-        }
-    }
-
-    function renderLeaderboard(data) {
-        const leaderboardContainer = document.getElementById('leaderboard');
-        if (!leaderboardContainer) return;
-
-        leaderboardContainer.innerHTML = data
-            .map(
-                (user) => `
-            <div class="leaderboard-entry">
-                <span>${user.name}</span>
-                <span>$${user.balance}</span>
-                <span>${capitalizeFirstLetter(user.instrument)}</span>
-                <span>${user.class_period}</span>
-            </div>
-        `
-            )
-            .join('');
-    }
-
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
     }
 
     await fetchUserData();
-    await fetchLeaderboard();
 });
