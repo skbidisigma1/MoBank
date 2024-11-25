@@ -14,8 +14,8 @@ const app = express();
 const rateLimit = require('express-rate-limit');
 
 const userRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 125, // 125 requests
+  windowMs: 1 * 60 * 1000, // 15 minutes
+  max: 10000, // 125 requests
   keyGenerator: (req) => req.auth?.payload?.sub || req.ip,
   standardHeaders: true,
   legacyHeaders: false,
