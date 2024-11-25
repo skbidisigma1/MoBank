@@ -4,23 +4,23 @@ const { expressjwt: jwt } = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
 const admin = require('firebase-admin');
 const cookieParser = require('cookie-parser');
-const rateLimit = require('express-rate-limit');
+//const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
 
 const app = express();
 
-const userRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 125,
-  keyGenerator: (req) => req.auth?.payload?.sub || req.ip,
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req, res) => {
-    res.status(429).json({ message: "Too many requests, please try again later." });
-  },
-});
+//const userRateLimiter = rateLimit({
+  //windowMs: 15 * 60 * 1000,
+  //max: 125,
+  //keyGenerator: (req) => req.auth?.payload?.sub || req.ip,
+  //standardHeaders: true,
+  //legacyHeaders: false,
+  //handler: (req, res) => {
+    //res.status(429).json({ message: "Too many requests, please try again later." });
+  //},
+//});
 
 const corsOptions = {
   origin: 'https://mo-bank.vercel.app',
@@ -83,7 +83,7 @@ const jwtCheck = jwt({
 
 app.use(jwtCheck);
 
-app.use('/api', userRateLimiter);
+//app.use('/api', userRateLimiter);
 
 async function addUser(uid, email, metadata = {}) {
   const userRef = db.collection('users').doc(uid);
