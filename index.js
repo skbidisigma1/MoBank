@@ -28,7 +28,7 @@ const corsOptions = {
   credentials: true,
 };
 
-app.use(express.static('public'));
+app.use(express.static(__dirname));
 app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -268,20 +268,12 @@ async function addTransaction(senderId, receiverId, amount, transactionType, adm
   await transactionRef.set(transactionData);
 
   if (senderId) {
-    const senderHistoryRef = db
-      .collection('users')
-      .doc(senderId)
-      .collection('transaction_history')
-      .doc(transactionId);
+    const senderHistoryRef = db.collection('users').doc(senderId).collection('transaction_history').doc(transactionId);
     await senderHistoryRef.set(transactionData);
   }
 
   if (receiverId) {
-    const receiverHistoryRef = db
-      .collection('users')
-      .doc(receiverId)
-      .collection('transaction_history')
-      .doc(transactionId);
+    const receiverHistoryRef = db.collection('users').doc(receiverId).collection('transaction_history').doc(transactionId);
     await receiverHistoryRef.set(transactionData);
   }
 
