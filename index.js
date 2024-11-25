@@ -11,11 +11,9 @@ require('dotenv').config();
 
 const app = express();
 
-const rateLimit = require('express-rate-limit');
-
 const userRateLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 15 minutes
-  max: 10000, // 125 requests
+  windowMs: 15 * 60 * 1000,
+  max: 125,
   keyGenerator: (req) => req.auth?.payload?.sub || req.ip,
   standardHeaders: true,
   legacyHeaders: false,
@@ -24,16 +22,15 @@ const userRateLimiter = rateLimit({
   },
 });
 
-app.use(userRateLimiter);
-
 const corsOptions = {
   origin: 'https://mo-bank.vercel.app',
   methods: ['GET', 'POST'],
   credentials: true,
 };
 
+app.use(express.static('public'));
+app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
-app.use(limiter);
 app.use(express.json());
 app.use(cookieParser());
 
@@ -84,6 +81,10 @@ const jwtCheck = jwt({
   algorithms: ['RS256'],
 });
 
+app.use(jwtCheck);
+
+app.use('/api', userRateLimiter);
+
 async function addUser(uid, email, metadata = {}) {
   const userRef = db.collection('users').doc(uid);
   await userRef.set(
@@ -92,7 +93,6 @@ async function addUser(uid, email, metadata = {}) {
       instrument: metadata.instrument || '',
       class_period: metadata.class_period || null,
       currency_balance: metadata.currency_balance || 0,
-      // Remove 'picture' field to avoid storing it in the database
     },
     { merge: true }
   );
@@ -124,13 +124,12 @@ async function getUserData(uid) {
   };
 }
 
-app.post('/api/login', jwtCheck, async (req, res) => {
+app.post('/api/login', async (req, res) => {
   try {
     const uid = req.auth.payload.sub;
     const email = req.auth.payload.email;
     const name = req.auth.payload.name || 'Unknown';
     const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || ['user'];
-    // Do not store picture in the database
     await addUser(uid, email, { name, role: roles });
     res.sendStatus(200);
   } catch (error) {
@@ -139,7 +138,7 @@ app.post('/api/login', jwtCheck, async (req, res) => {
   }
 });
 
-app.post('/api/updateProfile', jwtCheck, async (req, res) => {
+app.post('/api/updateProfile', async (req, res) => {
   try {
     const uid = req.auth.payload.sub;
     const { class_period, instrument } = req.body;
@@ -158,7 +157,7 @@ app.post('/api/updateProfile', jwtCheck, async (req, res) => {
   }
 });
 
-app.get('/api/getUserData', jwtCheck, async (req, res) => {
+app.get('/api/getUserData', async (req, res) => {
   try {
     const uid = req.auth.payload.sub;
     const userData = await getUserData(uid);
@@ -173,7 +172,7 @@ app.get('/api/getUserData', jwtCheck, async (req, res) => {
   }
 });
 
-app.post('/api/adminAdjustBalance', jwtCheck, async (req, res) => {
+app.post('/api/adminAdjustBalance', async (req, res) => {
   try {
     const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
     if (!roles.includes('admin')) {
@@ -209,7 +208,7 @@ app.post('/api/adminAdjustBalance', jwtCheck, async (req, res) => {
   }
 });
 
-app.get('/api/getLeaderboard', jwtCheck, async (req, res) => {
+app.get('/api/getLeaderboard', async (req, res) => {
   try {
     const usersRef = db.collection('users');
     const snapshot = await usersRef.get();
@@ -236,7 +235,7 @@ app.get('/api/getLeaderboard', jwtCheck, async (req, res) => {
   }
 });
 
-app.post('/api/transactions', jwtCheck, async (req, res) => {
+app.post('/api/transactions', async (req, res) => {
   try {
     const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
     if (!roles.includes('admin')) {
