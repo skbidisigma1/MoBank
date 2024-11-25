@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const logoutButton = document.getElementById('logout-btn');
 
     const placeholderPath = '/images/default_profile.svg';
-    const COOLDOWN_MILLISECONDS = 20000;
+    const TOKEN_COOLDOWN_MILLISECONDS = 5 * 60 * 1000;
+    const USER_DATA_COOLDOWN_MILLISECONDS = 20000;
     let cachedToken = null;
     let tokenTimestamp = 0;
 
@@ -31,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function getCachedToken() {
-        if (!cachedToken || Date.now() - tokenTimestamp > COOLDOWN_MILLISECONDS) {
+        if (!cachedToken || Date.now() - tokenTimestamp > TOKEN_COOLDOWN_MILLISECONDS) {
             cachedToken = await auth0Client.getTokenSilently();
             tokenTimestamp = Date.now();
         }
@@ -40,8 +41,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function fetchUserData() {
         try {
-            const token = await getCachedToken();
+            const lastFetchTimestamp = parseInt(sessionStorage.getItem('userDataTimestamp'), 10) || 0;
+            if (Date.now() - lastFetchTimestamp < USER_DATA_COOLDOWN_MILLISECONDS) {
+                const cachedUserData = JSON.parse(sessionStorage.getItem('userData')) || {};
+                populateDashboard(cachedUserData);
+                loader.classList.add('hidden');
+                return;
+            }
 
+            const token = await getCachedToken();
             const user = await getUser();
             const cachedUserData = JSON.parse(sessionStorage.getItem('userData')) || {};
 
@@ -96,6 +104,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+    }
+
+    function populateDashboard(userData) {
+        const name = userData.name || 'User';
+        const currency_balance = userData.currency_balance || 0;
+        const instrument = capitalizeFirstLetter(userData.instrument || 'N/A');
+        const email = userData.privateData.email || 'N/A';
+
+        profileName.textContent = `Welcome, ${name}!`;
+        profileCurrency.textContent = `MoBuck Balance: $${currency_balance}`;
+
+        dashboardContent.innerHTML = `
+            <div class="dashboard-card"><strong>Email:</strong> ${email}</div>
+            <div class="dashboard-card"><strong>Class Period:</strong> ${userData.class_period || 'N/A'}</div>
+            <div class="dashboard-card"><strong>Instrument:</strong> ${instrument}</div>
+        `;
     }
 
     await fetchUserData();
