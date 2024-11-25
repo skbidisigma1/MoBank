@@ -11,13 +11,20 @@ require('dotenv').config();
 
 const app = express();
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 125,
+const rateLimit = require('express-rate-limit');
+
+const userRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 125, // 125 requests
+  keyGenerator: (req) => req.auth?.payload?.sub || req.ip,
+  standardHeaders: true,
+  legacyHeaders: false,
   handler: (req, res) => {
-    res.status(429).json({ message: 'Rate limit exceeded. Please wait a few minutes and try again.' });
+    res.status(429).json({ message: "Too many requests, please try again later." });
   },
 });
+
+app.use(userRateLimiter);
 
 const corsOptions = {
   origin: 'https://mo-bank.vercel.app',
