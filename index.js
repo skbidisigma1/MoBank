@@ -82,8 +82,7 @@ const jwtCheck = jwt({
 });
 
 app.use(jwtCheck);
-
-//app.use('/api', userRateLimiter);
+app.use('/api', userRateLimiter);
 
 async function addUser(uid, email, metadata = {}) {
   const userRef = db.collection('users').doc(uid);
