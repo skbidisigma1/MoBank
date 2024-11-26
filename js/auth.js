@@ -1,8 +1,22 @@
+let auth0Client = null;
+
+async function initializeAuth0Client() {
+  if (!auth0Client) {
+    auth0Client = await createAuth0Client({
+      domain: 'dev-nqdfwemz14t8nf7w.us.auth0.com',
+      client_id: 'IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA',
+      redirect_uri: window.location.origin + '/pages/dashboard.html',
+      audience: 'https://mo-bank.vercel.app/api',
+      cacheLocation: 'localstorage',
+      useRefreshTokens: true
+    });
+  }
+}
+
 async function initializeUser() {
   try {
     const token = await getToken();
     if (!token) {
-      signInWithAuth0();
       return;
     }
     const response = await fetch('/api/login', {
@@ -24,51 +38,13 @@ async function initializeUser() {
     }
   } catch (error) {
     console.error(`Error initializing user: ${error}. Please refresh the page.`);
-    signInWithAuth0();
-  }
-}
-
-let auth0Client = null;
-
-const auth0Promise = (async () => {
-  auth0Client = await createAuth0Client({
-    domain: 'dev-nqdfwemz14t8nf7w.us.auth0.com',
-    client_id: 'IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA',
-    redirect_uri: window.location.origin + '/pages/dashboard.html',
-    audience: 'https://mo-bank.vercel.app/api',
-    cacheLocation: 'localstorage',
-    useRefreshTokens: true
-  });
-  await handleAuthRedirect();
-
-  try {
-    const token = await auth0Client.getTokenSilently();
-    await initializeUser();
-  } catch (error) {
-    if (error.error === 'login_required' || error.error === 'consent_required') {
-      localStorage.clear();
-      sessionStorage.clear();
-      signInWithAuth0();
-    } else {
-      console.error('Unexpected error during authentication:', error);
-    }
-  }
-})();
-
-async function signInWithAuth0() {
-  try {
-    await auth0Client.loginWithRedirect({
-      connection: 'google-oauth2',
-      prompt: 'select_account'
-    });
-  } catch (error) {
-    console.error('Auth0 Login Error:', error);
   }
 }
 
 async function handleAuthRedirect() {
   const query = window.location.search;
   if (query.includes('code=') && query.includes('state=')) {
+    await initializeAuth0Client();
     try {
       await auth0Client.handleRedirectCallback();
       window.history.replaceState({}, document.title, '/pages/dashboard.html');
@@ -78,8 +54,21 @@ async function handleAuthRedirect() {
   }
 }
 
+async function signInWithAuth0() {
+  try {
+    await initializeAuth0Client();
+    await auth0Client.loginWithRedirect({
+      connection: 'google-oauth2',
+      prompt: 'select_account'
+    });
+  } catch (error) {
+    console.error('Auth0 Login Error:', error);
+  }
+}
+
 async function logoutUser() {
   try {
+    await initializeAuth0Client();
     await auth0Client.logout({
       logoutParams: {
         returnTo: window.location.origin
@@ -95,6 +84,7 @@ async function logoutUser() {
 
 async function isAuthenticated() {
   try {
+    await initializeAuth0Client();
     return await auth0Client.isAuthenticated();
   } catch (error) {
     console.error('Auth0 isAuthenticated Error:', error);
@@ -104,6 +94,7 @@ async function isAuthenticated() {
 
 async function getUser() {
   try {
+    await initializeAuth0Client();
     return await auth0Client.getUser();
   } catch (error) {
     console.error('Auth0 getUser Error:', error);
@@ -113,25 +104,28 @@ async function getUser() {
 
 async function getToken() {
   try {
+    await initializeAuth0Client();
     return await auth0Client.getTokenSilently();
   } catch (error) {
-    if (error.error === 'login_required' || error.error === 'consent_required') {
-      localStorage.clear();
-      sessionStorage.clear();
-      signInWithAuth0();
-    } else {
-      console.error('Auth0 getTokenSilently Error:', error);
-    }
+    console.error('Auth0 getTokenSilently Error:', error);
     return null;
   }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await auth0Promise;
+  await initializeAuth0Client();
 
   const signInButton = document.getElementById('auth0-signin');
   if (signInButton) {
     signInButton.addEventListener('click', signInWithAuth0);
+  }
+
+  await handleAuthRedirect();
+
+  const isAuth = await isAuthenticated();
+  if (isAuth) {
+    await initializeUser();
+    window.location.href = '/pages/dashboard.html';
   }
 });
 
@@ -141,4 +135,3 @@ window.isAuthenticated = isAuthenticated;
 window.getUser = getUser;
 window.getToken = getToken;
 window.auth0Client = auth0Client;
-window.auth0Promise = auth0Promise;
