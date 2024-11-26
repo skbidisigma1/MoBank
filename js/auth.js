@@ -1,6 +1,6 @@
 async function initializeUser() {
-  const token = await getToken();
   try {
+    const token = await getToken();
     const response = await fetch('/api/login', {
       method: 'POST',
       headers: {
@@ -38,8 +38,9 @@ const auth0Promise = (async () => {
   const isAuthenticated = await auth0Client.isAuthenticated();
   if (isAuthenticated) {
     await initializeUser();
+  } else {
+    signInWithAuth0();
   }
-  await checkSilentAuth();
 })();
 
 async function signInWithAuth0() {
@@ -104,21 +105,6 @@ async function getToken() {
   } catch (error) {
     console.error('Auth0 getTokenSilently Error:', error);
     return null;
-  }
-}
-
-async function checkSilentAuth() {
-  try {
-    const authenticated = await isAuthenticated();
-    if (authenticated) {
-      const user = await getUser();
-      const loginStatus = document.getElementById('login-status');
-      if (loginStatus) {
-        loginStatus.textContent = `Welcome, ${user.name}!`;
-      }
-    }
-  } catch (error) {
-    console.error('Silent Authentication Error:', error);
   }
 }
 
