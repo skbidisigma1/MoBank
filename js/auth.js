@@ -1,6 +1,7 @@
 async function initializeUser() {
   try {
     const token = await getToken();
+    if (!token) return;
     const response = await fetch('/api/login', {
       method: 'POST',
       headers: {
@@ -25,6 +26,8 @@ async function initializeUser() {
 
 let auth0Client = null;
 
+const protectedPages = ['dashboard.html', 'admin.html', 'transfer.html', 'leaderboard.html'];
+
 const auth0Promise = (async () => {
   auth0Client = await createAuth0Client({
     domain: 'dev-nqdfwemz14t8nf7w.us.auth0.com',
@@ -35,11 +38,15 @@ const auth0Promise = (async () => {
     useRefreshTokens: true
   });
   await handleAuthRedirect();
+  const currentPage = window.location.pathname.split('/').pop();
+  const isProtected = protectedPages.includes(currentPage);
   const isAuthenticated = await auth0Client.isAuthenticated();
-  if (isAuthenticated) {
-    await initializeUser();
-  } else {
-    signInWithAuth0();
+  if (isProtected) {
+    if (isAuthenticated) {
+      await initializeUser();
+    } else {
+      window.location.href = '/login.html';
+    }
   }
 })();
 
@@ -59,7 +66,8 @@ async function handleAuthRedirect() {
   if (query.includes('code=') && query.includes('state=')) {
     try {
       await auth0Client.handleRedirectCallback();
-      window.history.replaceState({}, document.title, '/pages/dashboard.html');
+      const targetUrl = '/pages/dashboard.html';
+      window.history.replaceState({}, document.title, targetUrl);
     } catch (error) {
       console.error('Auth0 Callback Error:', error);
     }
