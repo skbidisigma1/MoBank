@@ -67,12 +67,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 localStorage.setItem('userData', JSON.stringify(userData));
                 localStorage.setItem('userDataTimestamp', Date.now().toString());
 
-                if (userData.picture) {
-                    profileImage.src = userData.picture;
-                } else {
-                    profileImage.src = placeholderPath;
-                }
-
                 populateDashboard(userData);
 
                 loader.classList.add('hidden');
@@ -107,5 +101,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
     }
 
-    await fetchUserData();
+    async function setProfileImage() {
+        try {
+            const user = await auth0Client.getUser();
+            if (user && user.picture) {
+                profileImage.src = user.picture;
+            } else {
+                profileImage.src = placeholderPath;
+            }
+        } catch (error) {
+            console.error('Error fetching Auth0 user:', error);
+            profileImage.src = placeholderPath;
+        }
+    }
+
+    await Promise.all([fetchUserData(), setProfileImage()]);
 });
