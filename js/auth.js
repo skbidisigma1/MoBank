@@ -1,6 +1,10 @@
 async function initializeUser() {
   try {
     const token = await getToken();
+    if (!token) {
+      signInWithAuth0();
+      return;
+    }
     const response = await fetch('/api/login', {
       method: 'POST',
       headers: {
@@ -20,6 +24,7 @@ async function initializeUser() {
     }
   } catch (error) {
     console.error(`Error initializing user: ${error}. Please refresh the page.`);
+    signInWithAuth0();
   }
 }
 
@@ -35,11 +40,18 @@ const auth0Promise = (async () => {
     useRefreshTokens: true
   });
   await handleAuthRedirect();
-  const isAuthenticated = await auth0Client.isAuthenticated();
-  if (isAuthenticated) {
+
+  try {
+    const token = await auth0Client.getTokenSilently();
     await initializeUser();
-  } else {
-    signInWithAuth0();
+  } catch (error) {
+    if (error.error === 'login_required' || error.error === 'consent_required') {
+      localStorage.clear();
+      sessionStorage.clear();
+      signInWithAuth0();
+    } else {
+      console.error('Unexpected error during authentication:', error);
+    }
   }
 })();
 
@@ -103,7 +115,13 @@ async function getToken() {
   try {
     return await auth0Client.getTokenSilently();
   } catch (error) {
-    console.error('Auth0 getTokenSilently Error:', error);
+    if (error.error === 'login_required' || error.error === 'consent_required') {
+      localStorage.clear();
+      sessionStorage.clear();
+      signInWithAuth0();
+    } else {
+      console.error('Auth0 getTokenSilently Error:', error);
+    }
     return null;
   }
 }
@@ -122,4 +140,5 @@ window.logoutUser = logoutUser;
 window.isAuthenticated = isAuthenticated;
 window.getUser = getUser;
 window.getToken = getToken;
+window.auth0Client = auth0Client;
 window.auth0Promise = auth0Promise;
