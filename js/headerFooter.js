@@ -30,30 +30,24 @@ async function loadHeaderFooter() {
         }
 
         const profilePicElement = document.getElementById('profile-pic');
-        const cachedUserData = JSON.parse(sessionStorage.getItem('userData'));
-
         const placeholderPath = '/images/default_profile.svg';
-
-        if (cachedUserData && cachedUserData.picture) {
-            profilePicElement.src = cachedUserData.picture;
-        } else {
-            profilePicElement.src = placeholderPath;
-        }
 
         await window.auth0Promise;
 
         const user = await getUser();
         const roles = user && user['https://mo-bank.vercel.app/roles'] || [];
         const isAdmin = roles.includes('admin');
+        const isLoggedIn = await isAuthenticated();
 
         const adminLink = headerPlaceholder.querySelector('#admin-link');
         const adminLinkMobile = headerPlaceholder.querySelector('#admin-link-mobile');
         if (adminLink) adminLink.style.display = isAdmin ? 'block' : 'none';
         if (adminLinkMobile) adminLinkMobile.style.display = isAdmin ? 'block' : 'none';
 
-        const isLoggedIn = await isAuthenticated();
         const authLink = headerPlaceholder.querySelector('#auth-link');
         const authLinkMobile = headerPlaceholder.querySelector('#auth-link-mobile');
+        const dashboardLink = headerPlaceholder.querySelector('#dashboard-link');
+        const dashboardLinkMobile = headerPlaceholder.querySelector('#dashboard-link-mobile');
 
         if (isLoggedIn) {
             if (authLink) {
@@ -77,10 +71,7 @@ async function loadHeaderFooter() {
 
             if (user && user.picture) {
                 profilePicElement.src = user.picture;
-                if (cachedUserData) {
-                    cachedUserData.picture = user.picture;
-                    sessionStorage.setItem('userData', JSON.stringify(cachedUserData));
-                }
+                sessionStorage.setItem('userData', JSON.stringify({ ...user, picture: user.picture }));
             }
         } else {
             if (authLink) {
@@ -92,6 +83,25 @@ async function loadHeaderFooter() {
                 authLinkMobile.href = '/pages/login.html';
             }
         }
+
+        if (dashboardLink) {
+            dashboardLink.addEventListener('click', (e) => {
+                if (!isLoggedIn) {
+                    e.preventDefault();
+                    window.location.href = `/pages/login.html?redirect=/pages/dashboard.html`;
+                }
+            });
+        }
+
+        if (dashboardLinkMobile) {
+            dashboardLinkMobile.addEventListener('click', (e) => {
+                if (!isLoggedIn) {
+                    e.preventDefault();
+                    window.location.href = `/pages/login.html?redirect=/pages/dashboard.html`;
+                }
+            });
+        }
+
         profilePicElement.addEventListener('click', () => {
             window.location.href = isLoggedIn ? '/pages/dashboard.html' : '/pages/login.html';
         });
