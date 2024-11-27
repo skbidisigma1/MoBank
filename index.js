@@ -81,8 +81,7 @@ const jwtCheck = jwt({
   algorithms: ['RS256'],
 });
 
-app.use(jwtCheck);
-app.use('/api', userRateLimiter);
+app.use('/api', jwtCheck, userRateLimiter);
 
 async function addUser(uid, email, metadata = {}) {
   const userRef = db.collection('users').doc(uid);
