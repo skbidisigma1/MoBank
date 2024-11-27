@@ -29,27 +29,17 @@ const corsOptions = {
   credentials: true,
 };
 
-app.use(express.static(path.join(__dirname, 'public')));
-app.options('*', cors(corsOptions));
-app.use(cors(corsOptions));
-app.use(express.json());
-app.use(cookieParser());
-
-app.use(
-  helmet.contentSecurityPolicy({
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", 'https://cdn.auth0.com', 'https://cdn.jsdelivr.net'],
-      styleSrc: ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-      imgSrc: ["'self'", 'data:', 'https://lh3.googleusercontent.com'],
-      connectSrc: ["'self'", `https://${process.env.AUTH0_DOMAIN}`],
-      objectSrc: ["'none'"],
-      frameAncestors: ["'self'"],
-      upgradeInsecureRequests: [],
-    },
-  })
-);
+const jwtCheck = jwt({
+  secret: jwksRsa.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 30,
+    jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
+  }),
+  audience: process.env.AUTH0_AUDIENCE,
+  issuer: `https://${process.env.AUTH0_DOMAIN}/`,
+  algorithms: ['RS256'],
+});
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -69,20 +59,6 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
-
-const jwtCheck = jwt({
-  secret: jwksRsa.expressJwtSecret({
-    cache: true,
-    rateLimit: true,
-    jwksRequestsPerMinute: 30,
-    jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
-  }),
-  audience: process.env.AUTH0_AUDIENCE,
-  issuer: `https://${process.env.AUTH0_DOMAIN}/`,
-  algorithms: ['RS256'],
-});
-
-app.use('/api', jwtCheck, userRateLimiter);
 
 async function addUser(uid, email, metadata = {}) {
   const userRef = db.collection('users').doc(uid);
@@ -123,7 +99,7 @@ async function getUserData(uid) {
   };
 }
 
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', jwtCheck, userRateLimiter, async (req, res) => {
   try {
     const uid = req.auth.payload.sub;
     const email = req.auth.payload.email;
@@ -137,7 +113,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-app.post('/api/updateProfile', async (req, res) => {
+app.post('/api/updateProfile', jwtCheck, userRateLimiter, async (req, res) => {
   try {
     const uid = req.auth.payload.sub;
     const { class_period, instrument } = req.body;
@@ -156,7 +132,7 @@ app.post('/api/updateProfile', async (req, res) => {
   }
 });
 
-app.get('/api/getUserData', async (req, res) => {
+app.get('/api/getUserData', jwtCheck, userRateLimiter, async (req, res) => {
   try {
     const uid = req.auth.payload.sub;
     const userData = await getUserData(uid);
@@ -171,7 +147,7 @@ app.get('/api/getUserData', async (req, res) => {
   }
 });
 
-app.post('/api/adminAdjustBalance', async (req, res) => {
+app.post('/api/adminAdjustBalance', jwtCheck, userRateLimiter, async (req, res) => {
   try {
     const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
     if (!roles.includes('admin')) {
@@ -207,7 +183,7 @@ app.post('/api/adminAdjustBalance', async (req, res) => {
   }
 });
 
-app.get('/api/getLeaderboard', async (req, res) => {
+app.get('/api/getLeaderboard', jwtCheck, userRateLimiter, async (req, res) => {
   try {
     const usersRef = db.collection('users');
     const snapshot = await usersRef.get();
@@ -234,7 +210,7 @@ app.get('/api/getLeaderboard', async (req, res) => {
   }
 });
 
-app.post('/api/transactions', async (req, res) => {
+app.post('/api/transactions', jwtCheck, userRateLimiter, async (req, res) => {
   try {
     const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
     if (!roles.includes('admin')) {
@@ -289,9 +265,23 @@ async function addTransaction(senderId, receiverId, amount, transactionType, adm
   }
 }
 
+const protectedRoutes = ['/dashboard', '/admin'];
+
+protectedRoutes.forEach((route) => {
+  app.get(route, jwtCheck, userRateLimiter, (req, res) => {
+    res.sendFile(path.join(__dirname, 'pages', `${route.slice(1)}.html`));
+  });
+});
+
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.use((err, req, res, next) => {
   if (err.name === 'UnauthorizedError') {
-    res.redirect('/login.html');
+    if (req.path.startsWith('/api')) {
+      res.status(401).json({ message: 'Unauthorized' });
+    } else {
+      res.redirect('/login.html');
+    }
   } else {
     next(err);
   }
