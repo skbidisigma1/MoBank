@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const helmet = require('helmet');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -28,7 +29,7 @@ const corsOptions = {
   credentials: true,
 };
 
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'public')));
 app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -290,7 +291,7 @@ async function addTransaction(senderId, receiverId, amount, transactionType, adm
 
 app.use((err, req, res, next) => {
   if (err.name === 'UnauthorizedError') {
-    res.status(401).send('Invalid token');
+    res.redirect('/login.html');
   } else {
     next(err);
   }
