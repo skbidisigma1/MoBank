@@ -123,7 +123,7 @@ async function getUserData(uid) {
   };
 }
 
-app.post('/api/login', jwtCheck, async (req, res) => {
+app.post('/api/login', async (req, res) => {
   try {
     const uid = req.auth.payload.sub;
     const email = req.auth.payload.email;
@@ -137,7 +137,7 @@ app.post('/api/login', jwtCheck, async (req, res) => {
   }
 });
 
-app.post('/api/updateProfile', jwtCheck, async (req, res) => {
+app.post('/api/updateProfile', async (req, res) => {
   try {
     const uid = req.auth.payload.sub;
     const { class_period, instrument } = req.body;
@@ -156,7 +156,7 @@ app.post('/api/updateProfile', jwtCheck, async (req, res) => {
   }
 });
 
-app.get('/api/getUserData', jwtCheck, async (req, res) => {
+app.get('/api/getUserData', async (req, res) => {
   try {
     const uid = req.auth.payload.sub;
     const userData = await getUserData(uid);
@@ -171,7 +171,7 @@ app.get('/api/getUserData', jwtCheck, async (req, res) => {
   }
 });
 
-app.post('/api/adminAdjustBalance', jwtCheck, async (req, res) => {
+app.post('/api/adminAdjustBalance', async (req, res) => {
   try {
     const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
     if (!roles.includes('admin')) {
@@ -207,7 +207,7 @@ app.post('/api/adminAdjustBalance', jwtCheck, async (req, res) => {
   }
 });
 
-app.get('/api/getLeaderboard', jwtCheck, async (req, res) => {
+app.get('/api/getLeaderboard', async (req, res) => {
   try {
     const usersRef = db.collection('users');
     const snapshot = await usersRef.get();
@@ -234,7 +234,7 @@ app.get('/api/getLeaderboard', jwtCheck, async (req, res) => {
   }
 });
 
-app.post('/api/transactions', jwtCheck, async (req, res) => {
+app.post('/api/transactions', async (req, res) => {
   try {
     const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
     if (!roles.includes('admin')) {
@@ -296,7 +296,7 @@ app.use((err, req, res, next) => {
     if (req.path.startsWith('/api')) {
       res.status(401).json({ message: 'Unauthorized' });
     } else {
-      res.redirect('/login.html');
+      next();
     }
   } else {
     next(err);
