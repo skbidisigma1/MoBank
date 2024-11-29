@@ -33,6 +33,11 @@ async function loadAdminContent() {
   document.querySelectorAll('form').forEach((form) => {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      const submitButton = form.querySelector('button[type="submit"]');
+      if (submitButton.disabled) return;
+      submitButton.disabled = true;
+
       const formId = form.id;
       const period = formId.split('-')[1];
 
@@ -44,11 +49,13 @@ async function loadAdminContent() {
 
       if (!studentName) {
         showToast('Validation Error', 'Please enter a valid student name.');
+        submitButton.disabled = false;
         return;
       }
 
       if (!amount) {
         showToast('Validation Error', 'Please enter a valid integer for the amount.');
+        submitButton.disabled = false;
         return;
       }
 
@@ -81,6 +88,9 @@ async function loadAdminContent() {
 
       studentNameInput.value = '';
       amountInput.value = '';
+      setTimeout(() => {
+        submitButton.disabled = false;
+      }, 2000);
     });
   });
 }
