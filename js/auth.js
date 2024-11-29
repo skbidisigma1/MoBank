@@ -82,7 +82,8 @@ async function logoutUser() {
       },
       federated: false
     });
-    localStorage.clear();
+    const cacheKey = '@@auth0spajs@@::IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA::dev-nqdfwemz14t8nf7w.us.auth0.com::openid profile email offline_access';
+    localStorage.removeItem(cacheKey);
     sessionStorage.clear();
   } catch (error) {
     console.error('Auth0 Logout Error:', error);
