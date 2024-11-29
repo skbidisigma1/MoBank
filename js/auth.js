@@ -82,11 +82,15 @@ async function logoutUser() {
       },
       federated: false
     });
-    const cacheKey = '@@auth0spajs@@::IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA::dev-nqdfwemz14t8nf7w.us.auth0.com::openid profile email offline_access';
-    localStorage.removeItem(cacheKey);
+    localStorage.clear();
     sessionStorage.clear();
+    document.cookie.split(';').forEach(cookie => {
+      const eqPos = cookie.indexOf('=');
+      const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+    });
   } catch (error) {
-    console.error('Auth0 Logout Error:', error);
+    console.error('Logout failed:', error);
   }
 }
 
