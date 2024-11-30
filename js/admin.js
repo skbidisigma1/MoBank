@@ -30,7 +30,60 @@ async function loadAdminContent() {
     });
   });
 
+  // Fetch names for each period
+  let namesByPeriod = {};
+  try {
+    const token = await getToken();
+    const response = await fetch('/api/getUserNames', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    namesByPeriod = await response.json();
+  } catch (error) {
+    showToast('Error', 'Failed to load student names.');
+    console.error(error);
+  }
+
+  // Setup autosuggest for each form
   document.querySelectorAll('form').forEach((form) => {
+    const formId = form.id;
+    const period = formId.split('-')[1];
+
+    const studentNameInput = form.querySelector(`#period-${period}-student-name`);
+
+    const suggestionsContainer = document.createElement('div');
+    suggestionsContainer.classList.add('suggestions-container');
+    studentNameInput.parentNode.appendChild(suggestionsContainer);
+
+    studentNameInput.addEventListener('input', () => {
+      const query = studentNameInput.value.trim().toLowerCase();
+      suggestionsContainer.innerHTML = '';
+
+      if (!query) return;
+
+      const names = namesByPeriod[period] || [];
+      const matches = names.filter((name) => name.toLowerCase().includes(query));
+
+      matches.forEach((name) => {
+        const suggestion = document.createElement('div');
+        suggestion.classList.add('suggestion-item');
+        suggestion.textContent = name;
+        suggestion.addEventListener('click', () => {
+          studentNameInput.value = name;
+          suggestionsContainer.innerHTML = '';
+        });
+        suggestionsContainer.appendChild(suggestion);
+      });
+    });
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!form.contains(e.target)) {
+        suggestionsContainer.innerHTML = '';
+      }
+    });
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -38,10 +91,6 @@ async function loadAdminContent() {
       if (submitButton.disabled) return;
       submitButton.disabled = true;
 
-      const formId = form.id;
-      const period = formId.split('-')[1];
-
-      const studentNameInput = form.querySelector(`#period-${period}-student-name`);
       const amountInput = form.querySelector(`#period-${period}-amount`);
 
       const studentName = studentNameInput.value.trim();
@@ -88,6 +137,7 @@ async function loadAdminContent() {
 
       studentNameInput.value = '';
       amountInput.value = '';
+      suggestionsContainer.innerHTML = '';
       setTimeout(() => {
         submitButton.disabled = false;
       }, 2000);
