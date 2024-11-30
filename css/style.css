@@ -563,6 +563,29 @@ select:after {
     font-family: 'Poppins', sans-serif;
 }
 
+.suggestions-container {
+    position: absolute;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    width: calc(100% - 20px);
+    max-height: 150px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.suggestion-item {
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.suggestion-item:hover {
+    background-color: #f0f0f0;
+}
+
+.input-container {
+    position: relative;
+}
+
 @keyframes toast-slide-in {
     from {
         opacity: 0;
