@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const placeholderPath = '/images/default_profile.svg';
     const TOKEN_COOLDOWN_MILLISECONDS = 5 * 60 * 1000;
-    const USER_DATA_COOLDOWN_MILLISECONDS = 2 * 60 * 1000;
+    const USER_DATA_COOLDOWN_MILLISECONDS = 20 * 1000;
     let cachedToken = null;
     let tokenTimestamp = 0;
 
