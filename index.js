@@ -289,6 +289,29 @@ async function addTransaction(senderId, receiverId, amount, transactionType, adm
   }
 }
 
+app.get('/api/getUserNames', async (req, res) => {
+  try {
+    const periods = [5, 6, 7];
+    const namesByPeriod = {};
+
+    for (const period of periods) {
+      const usersRef = db.collection('users').where('class_period', '==', period);
+      const snapshot = await usersRef.get();
+
+      const names = snapshot.docs
+        .map((doc) => doc.data().name)
+        .filter((name) => name);
+      
+      namesByPeriod[period] = names;
+    }
+
+    res.status(200).json(namesByPeriod);
+  } catch (error) {
+    console.error('Get User Names Error:', error);
+    res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
+  }
+});
+
 app.use(express.static(path.join(__dirname, 'pages')));
 
 app.use((err, req, res, next) => {
