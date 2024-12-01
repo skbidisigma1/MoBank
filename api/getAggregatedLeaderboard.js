@@ -43,7 +43,13 @@ module.exports = async (req, res) => {
 
     const user = await response.json();
 
-    const docRef = db.collection('aggregates').doc('leaderboard');
+    const period = parseInt(req.query.period, 10);
+
+    if (!period || ![5, 6, 7].includes(period)) {
+      return res.status(400).json({ message: 'Invalid period' });
+    }
+
+    const docRef = db.collection('aggregates').doc(`leaderboard_period_${period}`);
     const doc = await docRef.get();
 
     if (!doc.exists) {
