@@ -109,11 +109,11 @@ header nav {
 }
 
 #mobileMenuToggle:not(.active) .bar:nth-child(1) {
-    animation: toHamburgerTop 0.3s forwards;
+    animation: toXTop 0.3s forwards;
 }
 
 #mobileMenuToggle:not(.active) .bar:nth-child(3) {
-    animation: toHamburgerBottom 0.3s forwards;
+    animation: toXBottom 0.3s forwards;
 }
 
 nav ul {
@@ -196,9 +196,9 @@ input[type="number"] {
     width: 100%;
     box-sizing: border-box;
     text-align: left;
-    height: 40px;
-    display: block;
     background-color: #fff;
+    appearance: none;
+    outline: none;
 }
 
 input[type="number"]::-webkit-inner-spin-button,
@@ -302,6 +302,10 @@ select option {
     font-family: 'Poppins', sans-serif;
     font-size: 16px;
     color: #333;
+}
+
+.select-wrapper {
+    position: relative;
 }
 
 select:after {
@@ -604,13 +608,6 @@ select:after {
 
 .suggestion-item:hover {
     background-color: #f0f0f0;
-}
-
-.input-container {
-    position: relative;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
 }
 
 @keyframes toast-slide-in {
