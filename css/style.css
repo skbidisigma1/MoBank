@@ -593,6 +593,10 @@ select:after {
     text-align: left;
 }
 
+.suggestion-item span {
+  text-decoration: underline;
+}
+
 @keyframes toast-slide-in {
     from {
         opacity: 0;
