@@ -8,7 +8,12 @@ async function loadTransferPage() {
     }
 
     try {
-        const userData = await getUserData();
+        let userData = getCachedUserData();
+        if (!userData) {
+            userData = await getUserData();
+            setCachedUserData(userData);
+        }
+
         document.getElementById('current-balance').textContent = `$${userData.currency_balance || 0}`;
         
         const classPeriod = userData.class_period;
@@ -38,9 +43,9 @@ async function getUserData() {
     return response.json();
 }
 
-function getCachedUserNames(period) {
-    const cachedData = localStorage.getItem(`userNames_period_${period}`);
-    const timestamp = localStorage.getItem(`userNamesTimestamp_period_${period}`);
+function getCachedUserData() {
+    const cachedData = localStorage.getItem('userData');
+    const timestamp = localStorage.getItem('userDataTimestamp');
     if (cachedData && timestamp) {
         const currentTime = Date.now();
         const cacheDuration = 2 * 60 * 1000;
@@ -51,11 +56,12 @@ function getCachedUserNames(period) {
     return null;
 }
 
+function setCachedUserData(data) {
+    localStorage.setItem('userData', JSON.stringify(data));
+    localStorage.setItem('userDataTimestamp', Date.now().toString());
+}
+
 async function fetchUserNames(period) {
-    let names = getCachedUserNames(period);
-    if (names) {
-        return names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-    }
     try {
         const token = await getToken();
         const response = await fetch(`/api/getAggregatedLeaderboard?period=${period}`, {
@@ -67,8 +73,6 @@ async function fetchUserNames(period) {
 
         if (response.ok) {
             const names = data.leaderboardData.map(user => user.name);
-            localStorage.setItem(`userNames_period_${period}`, JSON.stringify(names));
-            localStorage.setItem(`userNamesTimestamp_period_${period}`, Date.now().toString());
             return names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
         } else {
             showToast('Error', data.message || 'Failed to load user names.');
