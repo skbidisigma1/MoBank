@@ -33,24 +33,28 @@ module.exports = async (req, res) => {
     const usersRef = db.collection('users').where('class_period', '==', period);
     const snapshot = await usersRef.get();
 
-    const userData = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        uid: doc.id,
-        name: data.name || 'Unknown User',
-        balance: data.currency_balance || 0,
-        instrument: data.instrument || 'N/A',
-      };
-    }).filter((user) => user.name);
+    const userData = snapshot.docs
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          uid: doc.id,
+          name: data.name || 'Unknown User',
+          balance: data.currency_balance || 0,
+          instrument: data.instrument || 'N/A',
+        };
+      })
+      .filter((user) => user.name);
 
-    const leaderboardData = {};
-    leaderboardData[period] = userData.sort((a, b) => b.balance - a.balance);
+    const leaderboardData = userData.sort((a, b) => b.balance - a.balance);
 
-    const aggregateRef = db.collection('aggregates').doc('leaderboard');
-    await aggregateRef.set({
-      [`leaderboardData.${period}`]: leaderboardData[period],
-      lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
+    const aggregateRef = db.collection('aggregates').doc(`leaderboard_period_${period}`);
+    await aggregateRef.set(
+      {
+        leaderboardData: leaderboardData,
+        lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
 
     const names = userData.map((user) => user.name);
 
