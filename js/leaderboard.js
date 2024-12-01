@@ -7,48 +7,73 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  fetchLeaderboardData();
-});
+  const user = await getUser();
+  const roles = (user && user['https://mo-bank.vercel.app/roles']) || [];
+  const isAdmin = roles.includes('admin');
 
-async function fetchLeaderboardData() {
-  const loader = document.getElementById('loader');
-  const leaderboardBody = document.getElementById('leaderboard-body');
+  let currentPeriod;
 
   try {
-    loader.style.display = 'block';
-
-    const cachedData = localStorage.getItem('cachedLeaderboardData');
-    const cacheTimestamp = localStorage.getItem('cachedLeaderboardTimestamp');
-    const cacheDuration = 10 * 60 * 1000;
-
-    let data;
-
-    if (cachedData && cacheTimestamp && Date.now() - cacheTimestamp < cacheDuration) {
-      data = JSON.parse(cachedData);
+    const token = await auth0Client.getTokenSilently();
+    const response = await fetch('/api/getUserData', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (response.ok) {
+      const userData = await response.json();
+      currentPeriod = userData.class_period;
     } else {
-      const token = await auth0Client.getTokenSilently();
+      currentPeriod = 5;
+    }
+  } catch (error) {
+    currentPeriod = 5;
+  }
 
-      const response = await fetch('/api/getAggregatedLeaderboard', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  const periodButtons = document.getElementById('period-buttons');
+  if (isAdmin) {
+    periodButtons.classList.remove('hidden');
+    const buttons = periodButtons.querySelectorAll('.period-button');
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        buttons.forEach((btn) => btn.classList.remove('active'));
+        button.classList.add('active');
+        const period = parseInt(button.dataset.period, 10);
+        currentPeriod = period;
+        fetchLeaderboardData(period);
+        const title = document.getElementById('leaderboard-title');
+        title.textContent = `Leaderboard - Period ${period}`;
       });
+    });
+  }
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch leaderboard data');
-      }
+  fetchLeaderboardData(currentPeriod);
+  const title = document.getElementById('leaderboard-title');
+  title.textContent = `Leaderboard - Period ${currentPeriod}`;
+});
 
-      data = await response.json();
-      localStorage.setItem('cachedLeaderboardData', JSON.stringify(data));
-      localStorage.setItem('cachedLeaderboardTimestamp', Date.now());
+async function fetchLeaderboardData(period) {
+  const leaderboardBody = document.getElementById('leaderboard-body');
+  const lastUpdatedElement = document.getElementById('last-updated');
+
+  try {
+    const token = await auth0Client.getTokenSilently();
+
+    const response = await fetch(`/api/getAggregatedLeaderboard?period=${period}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch leaderboard data');
     }
 
-    loader.style.display = 'none';
+    const data = await response.json();
 
     populateLeaderboard(data);
   } catch (error) {
     console.error('Error fetching leaderboard data:', error);
-    loader.style.display = 'none';
 
     const main = document.querySelector('main');
     const errorMessage = document.createElement('p');
@@ -60,45 +85,38 @@ async function fetchLeaderboardData() {
 
 function populateLeaderboard(data) {
   const leaderboardBody = document.getElementById('leaderboard-body');
+  const lastUpdatedElement = document.getElementById('last-updated');
+
   leaderboardBody.innerHTML = '';
 
   const leaderboardData = data.leaderboardData;
-  const periods = Object.keys(leaderboardData);
 
-  let rank = 1;
+  leaderboardData.forEach((user, index) => {
+    const row = document.createElement('tr');
 
-  periods.forEach((period) => {
-    const users = leaderboardData[period];
+    const rankCell = document.createElement('td');
+    rankCell.textContent = index + 1;
+    row.appendChild(rankCell);
 
-    users.forEach((user) => {
-      const row = document.createElement('tr');
+    const nameCell = document.createElement('td');
+    nameCell.textContent = user.name;
+    row.appendChild(nameCell);
 
-      const rankCell = document.createElement('td');
-      rankCell.textContent = rank++;
-      row.appendChild(rankCell);
+    const balanceCell = document.createElement('td');
+    balanceCell.textContent = user.balance;
+    row.appendChild(balanceCell);
 
-      const nameCell = document.createElement('td');
-      nameCell.textContent = user.name;
-      row.appendChild(nameCell);
+    const instrumentCell = document.createElement('td');
+    instrumentCell.textContent = user.instrument;
+    row.appendChild(instrumentCell);
 
-      const balanceCell = document.createElement('td');
-      balanceCell.textContent = user.balance;
-      row.appendChild(balanceCell);
-
-      const instrumentCell = document.createElement('td');
-      instrumentCell.textContent = user.instrument;
-      row.appendChild(instrumentCell);
-
-      const periodCell = document.createElement('td');
-      periodCell.textContent = period;
-      row.appendChild(periodCell);
-
-      leaderboardBody.appendChild(row);
-    });
+    leaderboardBody.appendChild(row);
   });
 
-  const lastUpdated = document.createElement('p');
-  lastUpdated.textContent = `Last Updated: ${new Date(data.lastUpdated).toLocaleString()}`;
-  lastUpdated.classList.add('last-updated');
-  document.querySelector('main').appendChild(lastUpdated);
+  if (data.lastUpdated && data.lastUpdated._seconds) {
+    const lastUpdatedDate = new Date(data.lastUpdated._seconds * 1000);
+    lastUpdatedElement.textContent = `Last Updated: ${lastUpdatedDate.toLocaleString()}`;
+  } else {
+    lastUpdatedElement.textContent = '';
+  }
 }
