@@ -1,3 +1,4 @@
+// headerFooter.js
 async function loadHeaderFooter() {
     try {
         const headerPath = window.location.pathname.includes('/pages/') ? '../header.html' : 'header.html';
@@ -24,8 +25,9 @@ async function loadHeaderFooter() {
 
         if (mobileMenuToggle && mobileNav) {
             mobileMenuToggle.addEventListener('click', () => {
-                mobileNav.classList.toggle('active');
+                const isActive = mobileNav.classList.toggle('active');
                 mobileMenuToggle.classList.toggle('active');
+                mobileMenuToggle.setAttribute('aria-expanded', isActive);
             });
         }
 
