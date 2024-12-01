@@ -590,6 +590,7 @@ select:after {
 
 .input-container {
     position: relative;
+    text-align: left;
 }
 
 @keyframes toast-slide-in {
@@ -697,12 +698,14 @@ select:after {
         padding: 15px;
         margin: 10px auto;
         max-width: 90vw;
+        text-align: left;
     }
 
     .container {
         padding: 15px;
         margin: 10px auto;
         max-width: 90vw;
+        text-align: left;
     }
 }
 
