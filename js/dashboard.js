@@ -31,6 +31,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    function getCachedUserData() {
+        const cached = localStorage.getItem('userData');
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            const now = Date.now();
+            if (now - parsed.timestamp < USER_DATA_COOLDOWN_MILLISECONDS) {
+                return parsed.data;
+            }
+        }
+        return null;
+    }
+
+    function setCachedUserData(data) {
+        const cacheEntry = {
+            data: data,
+            timestamp: Date.now(),
+        };
+        localStorage.setItem('userData', JSON.stringify(cacheEntry));
+    }
+
     async function getCachedToken() {
         if (!cachedToken || Date.now() - tokenTimestamp > TOKEN_COOLDOWN_MILLISECONDS) {
             try {
@@ -46,9 +66,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function fetchUserData() {
         try {
-            const lastFetchTimestamp = parseInt(localStorage.getItem('userDataTimestamp'), 10) || 0;
-            if (Date.now() - lastFetchTimestamp < USER_DATA_COOLDOWN_MILLISECONDS) {
-                const cachedUserData = JSON.parse(localStorage.getItem('userData')) || {};
+            const cachedUserData = getCachedUserData();
+            if (cachedUserData) {
                 populateDashboard(cachedUserData);
                 loader.classList.add('hidden');
                 return;
@@ -63,13 +82,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (response.ok) {
                 const userData = await response.json();
-
-                localStorage.setItem('userData', JSON.stringify(userData));
-                localStorage.setItem('userDataTimestamp', Date.now().toString());
-
+                setCachedUserData(userData);
                 populateDashboard(userData);
-
-                loader.classList.add('hidden');
             } else if (response.status === 404) {
                 window.location.href = '/pages/profile.html';
             } else {
@@ -78,6 +92,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             console.error('Error fetching user data:', error);
             window.location.href = '/pages/profile.html';
+        } finally {
+            loader.classList.add('hidden');
         }
     }
 
