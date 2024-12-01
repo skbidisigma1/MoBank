@@ -43,8 +43,8 @@ async function loadAdminContent() {
     const timestamp = localStorage.getItem(`namesByPeriodTimestamp-${period}`);
     if (cachedData && timestamp) {
       const currentTime = Date.now();
-      const fiveMinutes = 5 * 60 * 1000;
-      if (currentTime - parseInt(timestamp, 10) < fiveMinutes) {
+      const cacheDuration = 10 * 60 * 1000;
+      if (currentTime - parseInt(timestamp, 10) < cacheDuration) {
         return JSON.parse(cachedData);
       }
     }
