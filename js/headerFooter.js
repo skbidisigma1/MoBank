@@ -1,4 +1,3 @@
-// headerFooter.js
 async function loadHeaderFooter() {
     try {
         const headerPath = window.location.pathname.includes('/pages/') ? '../header.html' : 'header.html';
