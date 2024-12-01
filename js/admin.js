@@ -93,7 +93,7 @@ async function loadAdminContent() {
 
         const highlightedName = name.replace(
           new RegExp(query, 'gi'),
-          (match) => `<span style="text-decoration: underline;">${match}</span>`
+          (match) => `<span class="highlighted">${match}</span>`
         );
         suggestion.innerHTML = highlightedName;
 
