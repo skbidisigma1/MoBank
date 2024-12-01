@@ -63,10 +63,16 @@ async function loadAdminContent() {
           Authorization: `Bearer ${token}`,
         },
       });
-      names = await response.json();
-      localStorage.setItem(`namesByPeriod-${period}`, JSON.stringify(names));
-      localStorage.setItem(`namesByPeriodTimestamp-${period}`, Date.now().toString());
-      return names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem(`namesByPeriod-${period}`, JSON.stringify(data));
+        localStorage.setItem(`namesByPeriodTimestamp-${period}`, Date.now().toString());
+        return data.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+      } else {
+        showToast('Error', data.message || `Failed to load student names for period ${period}.`);
+        return [];
+      }
     } catch (error) {
       showToast('Error', `Failed to load student names for period ${period}.`);
       console.error(error);
@@ -155,13 +161,6 @@ async function loadAdminContent() {
 
         if (response.ok) {
           showToast('Success', result.message);
-
-          await fetch('/api/aggregateLeaderboard', {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
         } else {
           showToast('Error', result.message || 'An error occurred.');
         }
