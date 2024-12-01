@@ -84,7 +84,45 @@ const jwtCheck = jwt({
 
 app.use('/api', jwtCheck, userRateLimiter);
 
-// Login Endpoint
+async function addUser(uid, email, metadata = {}) {
+  const userRef = db.collection('users').doc(uid);
+  await userRef.set(
+    {
+      name: metadata.name || 'Unknown',
+      instrument: metadata.instrument || '',
+      class_period: metadata.class_period || null,
+      currency_balance: metadata.currency_balance || 0,
+    },
+    { merge: true }
+  );
+
+  const privateDataRef = userRef.collection('privateData').doc('main');
+  await privateDataRef.set(
+    {
+      email: email,
+      auth0_user_id: uid,
+      role: metadata.role || ['user'],
+    },
+    { merge: true }
+  );
+}
+
+async function getUserData(uid) {
+  const userRef = db.collection('users').doc(uid);
+  const privateDataRef = userRef.collection('privateData').doc('main');
+
+  const [userDoc, privateDoc] = await Promise.all([userRef.get(), privateDoc.get()]);
+
+  if (!userDoc.exists || !privateDoc.exists) {
+    return null;
+  }
+
+  return {
+    ...userDoc.data(),
+    privateData: privateDoc.data(),
+  };
+}
+
 app.post('/api/login', async (req, res) => {
   try {
     const uid = req.auth.payload.sub;
@@ -99,7 +137,6 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// Update Profile Endpoint
 app.post('/api/updateProfile', async (req, res) => {
   try {
     const uid = req.auth.payload.sub;
@@ -119,7 +156,6 @@ app.post('/api/updateProfile', async (req, res) => {
   }
 });
 
-// Get User Data Endpoint
 app.get('/api/getUserData', async (req, res) => {
   try {
     const uid = req.auth.payload.sub;
@@ -135,7 +171,6 @@ app.get('/api/getUserData', async (req, res) => {
   }
 });
 
-// Admin Adjust Balance Endpoint
 app.post('/api/adminAdjustBalance', async (req, res) => {
   try {
     const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
@@ -172,7 +207,6 @@ app.post('/api/adminAdjustBalance', async (req, res) => {
   }
 });
 
-// Aggregate Leaderboard Endpoint
 app.post('/api/aggregateLeaderboard', async (req, res) => {
   try {
     const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
@@ -180,34 +214,37 @@ app.post('/api/aggregateLeaderboard', async (req, res) => {
       return res.status(403).json({ message: 'Forbidden: Admins only' });
     }
 
-    const usersRef = db.collection('users');
+    const { period } = req.body;
+
+    if (!period || ![5, 6, 7].includes(period)) {
+      return res.status(400).json({ message: 'Invalid period' });
+    }
+
+    const usersRef = db.collection('users').where('class_period', '==', parseInt(period, 10));
     const snapshot = await usersRef.get();
 
-    const leaderboardData = {};
+    const userData = snapshot.docs
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          uid: doc.id,
+          name: data.name || 'Unknown User',
+          balance: data.currency_balance || 0,
+          instrument: data.instrument || 'N/A',
+        };
+      })
+      .filter((user) => user.name);
 
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      const period = data.class_period || 'Unknown';
-      if (!leaderboardData[period]) {
-        leaderboardData[period] = [];
-      }
-      leaderboardData[period].push({
-        uid: doc.id,
-        name: data.name || 'Unknown User',
-        balance: data.currency_balance || 0,
-        instrument: data.instrument || 'N/A',
-      });
-    });
+    const leaderboardData = userData.sort((a, b) => b.balance - a.balance);
 
-    Object.keys(leaderboardData).forEach((period) => {
-      leaderboardData[period].sort((a, b) => b.balance - a.balance);
-    });
-
-    const aggregateRef = db.collection('aggregates').doc('leaderboard');
-    await aggregateRef.set({
-      leaderboardData,
-      lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    const aggregateRef = db.collection('aggregates').doc(`leaderboard_period_${period}`);
+    await aggregateRef.set(
+      {
+        leaderboardData: leaderboardData,
+        lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
 
     res.status(200).json({ message: 'Leaderboard aggregated successfully' });
   } catch (error) {
@@ -216,10 +253,9 @@ app.post('/api/aggregateLeaderboard', async (req, res) => {
   }
 });
 
-// Get Aggregated Leaderboard Endpoint
 app.get('/api/getAggregatedLeaderboard', async (req, res) => {
   try {
-    const docRef = db.collection('aggregates').doc('leaderboard');
+    const docRef = db.collection('aggregates').doc(`leaderboard_period_${req.query.period}`);
     const doc = await docRef.get();
 
     if (!doc.exists) {
@@ -234,20 +270,62 @@ app.get('/api/getAggregatedLeaderboard', async (req, res) => {
   }
 });
 
-// Get User Names Endpoint
 app.get('/api/getUserNames', async (req, res) => {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
   try {
+    const response = await fetch(`https://${process.env.AUTH0_DOMAIN}/userinfo`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) {
+      return res.status(401).json({ message: 'Token verification failed' });
+    }
+
+    const user = await response.json();
+
     const period = parseInt(req.query.period, 10);
-    if (!period) {
+
+    if (!period || ![5, 6, 7].includes(period)) {
       return res.status(400).json({ message: 'Invalid period' });
     }
 
     const usersRef = db.collection('users').where('class_period', '==', period);
     const snapshot = await usersRef.get();
 
-    const names = snapshot.docs
-      .map((doc) => doc.data().name)
-      .filter((name) => name);
+    const userData = snapshot.docs
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          uid: doc.id,
+          name: data.name || 'Unknown User',
+          balance: data.currency_balance || 0,
+          instrument: data.instrument || 'N/A',
+        };
+      })
+      .filter((user) => user.name);
+
+    const leaderboardData = userData.sort((a, b) => b.balance - a.balance);
+
+    const aggregateRef = db.collection('aggregates').doc(`leaderboard_period_${period}`);
+    await aggregateRef.set(
+      {
+        leaderboardData: leaderboardData,
+        lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    const names = userData.map((user) => user.name);
 
     res.status(200).json(names);
   } catch (error) {
