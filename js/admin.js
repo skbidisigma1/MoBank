@@ -13,8 +13,10 @@ async function loadAdminContent() {
   const tabButtons = document.querySelectorAll('.tab-button');
   const tabPanels = document.querySelectorAll('.tab-panel');
 
+  const namesCache = {};
+
   tabButtons.forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const period = button.dataset.period;
 
       tabButtons.forEach((btn) => btn.classList.remove('active'));
@@ -27,34 +29,55 @@ async function loadAdminContent() {
           panel.classList.add('hidden');
         }
       });
+
+      if (!namesCache[period]) {
+        namesCache[period] = await getNamesForPeriod(period);
+      }
+
+      setupFormForPeriod(period, namesCache[period]);
     });
   });
 
-  // Fetch names for each period
-  let namesByPeriod = {};
-  try {
-    const token = await getToken();
-    const response = await fetch('/api/getUserNames', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    namesByPeriod = await response.json();
-  } catch (error) {
-    showToast('Error', 'Failed to load student names.');
-    console.error(error);
+  function getCachedNames(period) {
+    const cachedData = localStorage.getItem(`namesByPeriod-${period}`);
+    const timestamp = localStorage.getItem(`namesByPeriodTimestamp-${period}`);
+    if (cachedData && timestamp) {
+      const currentTime = Date.now();
+      const fiveMinutes = 5 * 60 * 1000;
+      if (currentTime - parseInt(timestamp, 10) < fiveMinutes) {
+        return JSON.parse(cachedData);
+      }
+    }
+    return null;
   }
 
-  // Setup autosuggest for each form
-  document.querySelectorAll('form').forEach((form) => {
-    const formId = form.id;
-    const period = formId.split('-')[1];
+  async function getNamesForPeriod(period) {
+    let names = getCachedNames(period);
+    if (names) {
+      return names;
+    }
+    try {
+      const token = await getToken();
+      const response = await fetch(`/api/getUserNames?period=${period}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      names = await response.json();
+      localStorage.setItem(`namesByPeriod-${period}`, JSON.stringify(names));
+      localStorage.setItem(`namesByPeriodTimestamp-${period}`, Date.now().toString());
+      return names;
+    } catch (error) {
+      showToast('Error', `Failed to load student names for period ${period}.`);
+      console.error(error);
+      return [];
+    }
+  }
 
+  function setupFormForPeriod(period, names) {
+    const form = document.querySelector(`#period-${period}-form`);
     const studentNameInput = form.querySelector(`#period-${period}-student-name`);
-
-    const suggestionsContainer = document.createElement('div');
-    suggestionsContainer.classList.add('suggestions-container');
-    studentNameInput.parentNode.appendChild(suggestionsContainer);
+    const suggestionsContainer = form.querySelector('.suggestions-container');
 
     studentNameInput.addEventListener('input', () => {
       const query = studentNameInput.value.trim().toLowerCase();
@@ -62,7 +85,6 @@ async function loadAdminContent() {
 
       if (!query) return;
 
-      const names = namesByPeriod[period] || [];
       const matches = names.filter((name) => name.toLowerCase().includes(query));
 
       matches.forEach((name) => {
@@ -77,7 +99,6 @@ async function loadAdminContent() {
       });
     });
 
-    // Hide suggestions when clicking outside
     document.addEventListener('click', (e) => {
       if (!form.contains(e.target)) {
         suggestionsContainer.innerHTML = '';
@@ -142,7 +163,12 @@ async function loadAdminContent() {
         submitButton.disabled = false;
       }, 2000);
     });
-  });
+  }
+
+  const activeButton = document.querySelector('.tab-button.active');
+  if (activeButton) {
+    activeButton.click();
+  }
 }
 
 loadAdminContent();
