@@ -613,6 +613,13 @@ select:after {
   text-decoration: underline;
 }
 
+#user-balance p {
+    margin: 0;
+    padding: 10px 0;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
 @keyframes toast-slide-in {
     from {
         opacity: 0;
