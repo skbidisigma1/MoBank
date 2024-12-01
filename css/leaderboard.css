@@ -8,7 +8,7 @@
 }
 
 .leaderboard-table thead tr {
-    background-color: #0056b3;
+    background-color: #90ee90;
     color: #ffffff;
     text-align: left;
     font-weight: bold;
@@ -29,11 +29,27 @@
 }
 
 .leaderboard-table tbody tr:last-of-type {
-    border-bottom: 2px solid #0056b3;
+    border-bottom: 2px solid #90ee90;
 }
 
 .leaderboard-table tbody tr:hover {
     background-color: #f1f1f1;
+}
+
+.leaderboard-table tbody tr td.rank {
+    font-weight: bold;
+}
+
+.leaderboard-table tbody tr:nth-child(1) .rank {
+    color: gold;
+}
+
+.leaderboard-table tbody tr:nth-child(2) .rank {
+    color: silver;
+}
+
+.leaderboard-table tbody tr:nth-child(3) .rank {
+    color: #cd7f32;
 }
 
 @media screen and (max-width: 600px) {
