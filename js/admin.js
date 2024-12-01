@@ -155,6 +155,13 @@ async function loadAdminContent() {
 
         if (response.ok) {
           showToast('Success', result.message);
+
+          await fetch('/api/aggregateLeaderboard', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
         } else {
           showToast('Error', result.message || 'An error occurred.');
         }
