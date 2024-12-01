@@ -25,21 +25,19 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const periods = [5, 6, 7];
-    const namesByPeriod = {};
-
-    for (const period of periods) {
-      const usersRef = db.collection('users').where('class_period', '==', period);
-      const snapshot = await usersRef.get();
-
-      const names = snapshot.docs
-        .map((doc) => doc.data().name)
-        .filter((name) => name);
-
-      namesByPeriod[period] = names;
+    const period = parseInt(req.query.period, 10);
+    if (!period || ![5, 6, 7].includes(period)) {
+      return res.status(400).json({ message: 'Invalid period' });
     }
 
-    res.status(200).json(namesByPeriod);
+    const usersRef = db.collection('users').where('class_period', '==', period);
+    const snapshot = await usersRef.get();
+
+    const names = snapshot.docs
+      .map((doc) => doc.data().name)
+      .filter((name) => name);
+
+    res.status(200).json(names);
   } catch (error) {
     console.error('Get User Names Error:', error);
     res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
