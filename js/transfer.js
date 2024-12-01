@@ -7,18 +7,36 @@ async function loadTransferPage() {
         return;
     }
 
-    const user = await getUser();
-    document.getElementById('current-balance').textContent = `$${user.currency_balance || 0}`;
-
-    const classPeriod = user.class_period;
-    if (!classPeriod) {
-        showToast('Error', 'User class period is undefined.');
-        return;
+    try {
+        const userData = await getUserData();
+        document.getElementById('current-balance').textContent = `$${userData.currency_balance || 0}`;
+        
+        const classPeriod = userData.class_period;
+        if (!classPeriod) {
+            showToast('Error', 'User class period is undefined.');
+            return;
+        }
+        setupTransferForm(classPeriod);
+    } catch (error) {
+        showToast('Error', 'Failed to load user data.');
+        console.error(error);
     }
-    setupTransferForm(classPeriod);
 }
 
 document.addEventListener('DOMContentLoaded', loadTransferPage);
+
+async function getUserData() {
+    const token = await getToken();
+    const response = await fetch('/api/getUserData', {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch user data.');
+    }
+    return response.json();
+}
 
 function getCachedUserNames(period) {
     const cachedData = localStorage.getItem(`transferUserNames_period_${period}`);
