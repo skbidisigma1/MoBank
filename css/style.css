@@ -565,15 +565,13 @@ select:after {
 
 .suggestions-container {
     position: absolute;
-    top: 100%;
-    left: 0;
     background-color: #fff;
     border: 1px solid #ccc;
-    width: 100%;
+    width: calc(100% - 20px);
     max-height: 150px;
     overflow-y: auto;
     z-index: 1000;
-    box-sizing: border-box;
+    display: none;
 }
 
 .suggestions-container:not(:empty) {
