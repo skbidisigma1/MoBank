@@ -8,7 +8,7 @@
 }
 
 .leaderboard-table thead tr {
-    background-color: #009879;
+    background-color: #0056b3;
     color: #ffffff;
     text-align: left;
     font-weight: bold;
@@ -29,7 +29,7 @@
 }
 
 .leaderboard-table tbody tr:last-of-type {
-    border-bottom: 2px solid #009879;
+    border-bottom: 2px solid #0056b3;
 }
 
 .leaderboard-table tbody tr:hover {
@@ -113,4 +113,40 @@
     font-size: 14px;
     color: #666;
     font-family: 'Poppins', sans-serif;
+}
+
+.loader {
+    margin: 20px auto;
+    z-index: 1400;
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #0056b3;
+    border-radius: 50%;
+    width: clamp(50px, 20%, 200px);
+    aspect-ratio: 1 / 1;
+    animation: spin 2s linear infinite;
+}
+
+.hidden {
+    display: none;
+}
+
+.error-container {
+    margin: 10px auto;
+    max-width: 600px;
+    padding: 10px;
+    background-color: #ffdddd;
+    border-left: 6px solid #f44336;
+    color: #a94442;
+    font-family: 'Poppins', sans-serif;
+    border-radius: 4px;
+}
+
+.error-message {
+    margin: 0;
+    font-size: 14px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
