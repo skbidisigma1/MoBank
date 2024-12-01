@@ -48,7 +48,7 @@ function getCachedUserData() {
     const timestamp = localStorage.getItem('userDataTimestamp');
     if (cachedData && timestamp) {
         const currentTime = Date.now();
-        const cacheDuration = 2 * 60 * 1000;
+        const cacheDuration = 20 * 1000;
         if (currentTime - parseInt(timestamp, 10) < cacheDuration) {
             return JSON.parse(cachedData);
         }
