@@ -613,11 +613,16 @@ select:after {
   text-decoration: underline;
 }
 
-#user-balance p {
-    margin: 0;
+#current-balance-container {
+    display: flex;
+    justify-content: space-between;
     padding: 10px 0;
-    font-size: 1rem;
+    font-size: 1.2rem;
     line-height: 1.5;
+}
+
+#current-balance {
+    font-weight: bold;
 }
 
 @keyframes toast-slide-in {
