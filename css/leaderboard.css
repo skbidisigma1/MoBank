@@ -8,7 +8,7 @@
 }
 
 .leaderboard-table thead tr {
-    background-color: #90ee90;
+    background-color: #009879;
     color: #ffffff;
     text-align: left;
     font-weight: bold;
@@ -29,7 +29,7 @@
 }
 
 .leaderboard-table tbody tr:last-of-type {
-    border-bottom: 2px solid #90ee90;
+    border-bottom: 2px solid #009879;
 }
 
 .leaderboard-table tbody tr:hover {
