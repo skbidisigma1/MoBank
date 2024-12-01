@@ -593,7 +593,7 @@ select:after {
     text-align: left;
 }
 
-.suggestion-item span {
+.highlighted {
   text-decoration: underline;
 }
 
