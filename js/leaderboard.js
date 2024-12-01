@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const errorMessage = document.getElementById('error-message');
     const leaderboardTitle = document.getElementById('leaderboard-title');
 
+    const CACHE_DURATION = 2 * 60 * 1000;
+
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
     }
@@ -78,11 +80,48 @@ document.addEventListener('DOMContentLoaded', async () => {
             lastUpdatedElement.textContent = '';
             lastUpdatedElement.setAttribute('title', '');
         }
+
+        if (data.leaderboardData.length > 0) {
+            const firstRank = leaderboardBody.querySelector('tr:nth-child(1) .rank');
+            const secondRank = leaderboardBody.querySelector('tr:nth-child(2) .rank');
+            const thirdRank = leaderboardBody.querySelector('tr:nth-child(3) .rank');
+
+            if (firstRank) firstRank.style.color = 'gold';
+            if (secondRank) secondRank.style.color = 'silver';
+            if (thirdRank) thirdRank.style.color = '#cd7f32';
+        }
+    }
+
+    function getCachedLeaderboard(period) {
+        const cached = localStorage.getItem(`leaderboard_period_${period}`);
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            const now = Date.now();
+            if (now - parsed.timestamp < CACHE_DURATION) {
+                return parsed.data;
+            }
+        }
+        return null;
+    }
+
+    function setCachedLeaderboard(period, data) {
+        const cacheEntry = {
+            data: data,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(`leaderboard_period_${period}`, JSON.stringify(cacheEntry));
     }
 
     async function fetchLeaderboard(period) {
         showLoader();
         hideError();
+
+        const cachedData = getCachedLeaderboard(period);
+        if (cachedData) {
+            populateLeaderboard(cachedData, period);
+            hideLoader();
+            return;
+        }
 
         try {
             const token = await getToken();
@@ -100,6 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const data = await response.json();
             populateLeaderboard(data, period);
+            setCachedLeaderboard(period, data);
         } catch (error) {
             console.error('Error fetching leaderboard data:', error);
             showError(error.message || 'An unexpected error occurred.');
