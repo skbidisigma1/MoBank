@@ -13,6 +13,8 @@ async function loadAdminContent() {
   const tabButtons = document.querySelectorAll('.tab-button');
   const tabPanels = document.querySelectorAll('.tab-panel');
 
+  const CACHE_DURATION = 10 * 60 * 1000;
+
   const namesCache = {};
 
   tabButtons.forEach((button) => {
@@ -39,16 +41,23 @@ async function loadAdminContent() {
   });
 
   function getCachedNames(period) {
-    const cachedData = localStorage.getItem(`namesByPeriod-${period}`);
-    const timestamp = localStorage.getItem(`namesByPeriodTimestamp-${period}`);
-    if (cachedData && timestamp) {
-      const currentTime = Date.now();
-      const cacheDuration = 10 * 60 * 1000;
-      if (currentTime - parseInt(timestamp, 10) < cacheDuration) {
-        return JSON.parse(cachedData);
+    const cached = localStorage.getItem(`namesByPeriod-${period}`);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      const now = Date.now();
+      if (now - parsed.timestamp < CACHE_DURATION) {
+        return parsed.data;
       }
     }
     return null;
+  }
+
+  function setCachedNames(period, data) {
+    const cacheEntry = {
+      data: data,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(`namesByPeriod-${period}`, JSON.stringify(cacheEntry));
   }
 
   async function getNamesForPeriod(period) {
@@ -66,8 +75,7 @@ async function loadAdminContent() {
       const data = await response.json();
 
       if (response.ok) {
-        localStorage.setItem(`namesByPeriod-${period}`, JSON.stringify(data));
-        localStorage.setItem(`namesByPeriodTimestamp-${period}`, Date.now().toString());
+        setCachedNames(period, data);
         return data.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
       } else {
         showToast('Error', data.message || `Failed to load student names for period ${period}.`);
