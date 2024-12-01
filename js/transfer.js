@@ -30,6 +30,27 @@ async function loadTransferPage() {
 
 document.addEventListener('DOMContentLoaded', loadTransferPage);
 
+function getCachedUserData() {
+    const cached = localStorage.getItem('userData');
+    if (cached) {
+        const parsed = JSON.parse(cached);
+        const now = Date.now();
+        const cacheDuration = 20 * 1000;
+        if (now - parsed.timestamp < cacheDuration) {
+            return parsed.data;
+        }
+    }
+    return null;
+}
+
+function setCachedUserData(data) {
+    const cacheEntry = {
+        data: data,
+        timestamp: Date.now(),
+    };
+    localStorage.setItem('userData', JSON.stringify(cacheEntry));
+}
+
 async function getUserData() {
     const token = await getToken();
     const response = await fetch('/api/getUserData', {
@@ -41,24 +62,6 @@ async function getUserData() {
         throw new Error('Failed to fetch user data.');
     }
     return response.json();
-}
-
-function getCachedUserData() {
-    const cachedData = localStorage.getItem('userData');
-    const timestamp = localStorage.getItem('userDataTimestamp');
-    if (cachedData && timestamp) {
-        const currentTime = Date.now();
-        const cacheDuration = 20 * 1000;
-        if (currentTime - parseInt(timestamp, 10) < cacheDuration) {
-            return JSON.parse(cachedData);
-        }
-    }
-    return null;
-}
-
-function setCachedUserData(data) {
-    localStorage.setItem('userData', JSON.stringify(data));
-    localStorage.setItem('userDataTimestamp', Date.now().toString());
 }
 
 async function fetchUserNames(period) {
