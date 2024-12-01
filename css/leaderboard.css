@@ -90,7 +90,7 @@
 }
 
 .period-button:hover {
-    background-color: #007f65;
+    background-color: #004494;
     transform: translateY(-2px);
 }
 
@@ -99,7 +99,7 @@
 }
 
 .period-button.active {
-    background-color: #006f57;
+    background-color: #003366;
 }
 
 #leaderboard-title {
