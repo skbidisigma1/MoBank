@@ -84,45 +84,7 @@ const jwtCheck = jwt({
 
 app.use('/api', jwtCheck, userRateLimiter);
 
-async function addUser(uid, email, metadata = {}) {
-  const userRef = db.collection('users').doc(uid);
-  await userRef.set(
-    {
-      name: metadata.name || 'Unknown',
-      instrument: metadata.instrument || '',
-      class_period: metadata.class_period || null,
-      currency_balance: metadata.currency_balance || 0,
-    },
-    { merge: true }
-  );
-
-  const privateDataRef = userRef.collection('privateData').doc('main');
-  await privateDataRef.set(
-    {
-      email: email,
-      auth0_user_id: uid,
-      role: metadata.role || ['user'],
-    },
-    { merge: true }
-  );
-}
-
-async function getUserData(uid) {
-  const userRef = db.collection('users').doc(uid);
-  const privateDataRef = userRef.collection('privateData').doc('main');
-
-  const [userDoc, privateDoc] = await Promise.all([userRef.get(), privateDataRef.get()]);
-
-  if (!userDoc.exists || !privateDoc.exists) {
-    return null;
-  }
-
-  return {
-    ...userDoc.data(),
-    privateData: privateDoc.data(),
-  };
-}
-
+// Login Endpoint
 app.post('/api/login', async (req, res) => {
   try {
     const uid = req.auth.payload.sub;
@@ -137,6 +99,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// Update Profile Endpoint
 app.post('/api/updateProfile', async (req, res) => {
   try {
     const uid = req.auth.payload.sub;
@@ -156,6 +119,7 @@ app.post('/api/updateProfile', async (req, res) => {
   }
 });
 
+// Get User Data Endpoint
 app.get('/api/getUserData', async (req, res) => {
   try {
     const uid = req.auth.payload.sub;
@@ -171,6 +135,7 @@ app.get('/api/getUserData', async (req, res) => {
   }
 });
 
+// Admin Adjust Balance Endpoint
 app.post('/api/adminAdjustBalance', async (req, res) => {
   try {
     const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
@@ -207,6 +172,7 @@ app.post('/api/adminAdjustBalance', async (req, res) => {
   }
 });
 
+// Aggregate Leaderboard Endpoint
 app.post('/api/aggregateLeaderboard', async (req, res) => {
   try {
     const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
@@ -250,6 +216,7 @@ app.post('/api/aggregateLeaderboard', async (req, res) => {
   }
 });
 
+// Get Aggregated Leaderboard Endpoint
 app.get('/api/getAggregatedLeaderboard', async (req, res) => {
   try {
     const docRef = db.collection('aggregates').doc('leaderboard');
@@ -267,6 +234,7 @@ app.get('/api/getAggregatedLeaderboard', async (req, res) => {
   }
 });
 
+// Get User Names Endpoint
 app.get('/api/getUserNames', async (req, res) => {
   try {
     const period = parseInt(req.query.period, 10);
@@ -301,5 +269,44 @@ app.use((err, req, res, next) => {
     next(err);
   }
 });
+
+async function addUser(uid, email, metadata = {}) {
+  const userRef = db.collection('users').doc(uid);
+  await userRef.set(
+    {
+      name: metadata.name || 'Unknown',
+      instrument: metadata.instrument || '',
+      class_period: metadata.class_period || null,
+      currency_balance: metadata.currency_balance || 0,
+    },
+    { merge: true }
+  );
+
+  const privateDataRef = userRef.collection('privateData').doc('main');
+  await privateDataRef.set(
+    {
+      email: email,
+      auth0_user_id: uid,
+      role: metadata.role || ['user'],
+    },
+    { merge: true }
+  );
+}
+
+async function getUserData(uid) {
+  const userRef = db.collection('users').doc(uid);
+  const privateDataRef = userRef.collection('privateData').doc('main');
+
+  const [userDoc, privateDoc] = await Promise.all([userRef.get(), privateDataRef.get()]);
+
+  if (!userDoc.exists || !privateDoc.exists) {
+    return null;
+  }
+
+  return {
+    ...userDoc.data(),
+    privateData: privateDoc.data(),
+  };
+}
 
 module.exports = serverless(app);
