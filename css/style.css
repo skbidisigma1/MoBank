@@ -66,7 +66,7 @@ header nav {
     border-radius: 2px;
     position: absolute;
     left: 0;
-    transition: top 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+    transition: opacity 0.3s ease;
     transform-origin: center;
 }
 
@@ -86,24 +86,26 @@ header nav {
 
 @keyframes toXTop {
     0% { top: 0; transform: translateY(0) rotate(0deg); }
-    40% { top: 50%; transform: translateY(-50%) rotate(0deg); }
+    50% { top: 0; transform: translateY(0) rotate(22.5deg); }
     100% { top: 50%; transform: translateY(-50%) rotate(45deg); }
 }
 
 @keyframes toXBottom {
     0% { top: 100%; transform: translateY(-100%) rotate(0deg); }
-    40% { top: 50%; transform: translateY(-50%) rotate(0deg); }
+    50% { top: 100%; transform: translateY(-100%) rotate(-22.5deg); }
     100% { top: 50%; transform: translateY(-50%) rotate(-45deg); }
 }
 
 @keyframes toHamburgerTop {
-    from { top: 50%; transform: translateY(-50%) rotate(45deg); }
-    to { top: 0; transform: translateY(0) rotate(0deg); }
+    0% { top: 50%; transform: translateY(-50%) rotate(45deg); }
+    50% { top: 50%; transform: translateY(-50%) rotate(0deg); }
+    100% { top: 0; transform: translateY(0) rotate(0deg); }
 }
 
 @keyframes toHamburgerBottom {
-    from { top: 50%; transform: translateY(-50%) rotate(-45deg); }
-    to { top: 100%; transform: translateY(-100%) rotate(0deg); }
+    0% { top: 50%; transform: translateY(-50%) rotate(-45deg); }
+    50% { top: 50%; transform: translateY(-50%) rotate(0deg); }
+    100% { top: 100%; transform: translateY(-100%) rotate(0deg); }
 }
 
 #mobileMenuToggle.active .bar:nth-child(1) {
