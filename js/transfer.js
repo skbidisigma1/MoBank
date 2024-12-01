@@ -1,5 +1,3 @@
-const AGGREGATED_LEADERBOARD_CACHE_DURATION = 30 * 1000;
-
 async function loadTransferPage() {
     await window.auth0Promise;
 
@@ -37,7 +35,8 @@ function getCachedUserData() {
     if (cached) {
         const parsed = JSON.parse(cached);
         const now = Date.now();
-        if (now - parsed.timestamp < 20000) { // 20 seconds
+        const cacheDuration = 20 * 1000;
+        if (now - parsed.timestamp < cacheDuration) {
             return parsed.data;
         }
     }
@@ -66,10 +65,6 @@ async function getUserData() {
 }
 
 async function fetchUserNames(period) {
-    let names = getCachedNames(period);
-    if (names) {
-        return names;
-    }
     try {
         const token = await getToken();
         const response = await fetch(`/api/getAggregatedLeaderboard?period=${period}`, {
@@ -80,8 +75,8 @@ async function fetchUserNames(period) {
         const data = await response.json();
 
         if (response.ok) {
-            setCachedNames(period, data.leaderboardData);
-            return data.leaderboardData.map(user => user.name).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+            const names = data.leaderboardData.map(user => user.name);
+            return names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
         } else {
             showToast('Error', data.message || 'Failed to load user names.');
             return [];
@@ -93,39 +88,11 @@ async function fetchUserNames(period) {
     }
 }
 
-function getCachedNames(period) {
-    const cached = localStorage.getItem(`namesByPeriod-${period}`);
-    if (cached) {
-        const parsed = JSON.parse(cached);
-        const now = Date.now();
-        if (now - parsed.timestamp < AGGREGATED_LEADERBOARD_CACHE_DURATION) {
-            return parsed.data;
-        }
-    }
-    return null;
-}
-
-function setCachedNames(period, data) {
-    const cacheEntry = {
-        data: data,
-        timestamp: Date.now(),
-    };
-    localStorage.setItem(`namesByPeriod-${period}`, JSON.stringify(cacheEntry));
-}
-
 function setupTransferForm(period) {
     const recipientInput = document.getElementById('recipient-name');
     const suggestionsContainer = recipientInput.nextElementSibling;
 
-    let names = [];
-
-    recipientInput.addEventListener('focus', async () => {
-        if (names.length === 0) {
-            names = await fetchUserNames(period);
-        }
-    });
-
-    recipientInput.addEventListener('input', () => {
+    recipientInput.addEventListener('input', async () => {
         const query = recipientInput.value.trim().toLowerCase();
         suggestionsContainer.innerHTML = '';
 
@@ -133,6 +100,7 @@ function setupTransferForm(period) {
             return;
         }
 
+        const names = await fetchUserNames(period);
         const matches = names.filter(name => name.toLowerCase().includes(query));
 
         matches.forEach(name => {
