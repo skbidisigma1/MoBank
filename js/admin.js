@@ -54,7 +54,7 @@ async function loadAdminContent() {
   async function getNamesForPeriod(period) {
     let names = getCachedNames(period);
     if (names) {
-      return names;
+      return names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     }
     try {
       const token = await getToken();
