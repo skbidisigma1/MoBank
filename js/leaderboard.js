@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const lastUpdatedElement = document.getElementById('last-updated');
     const errorContainer = document.getElementById('error-container');
     const errorMessage = document.getElementById('error-message');
+    const leaderboardTitle = document.getElementById('leaderboard-title');
 
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
@@ -28,14 +29,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         errorContainer.classList.add('hidden');
     }
 
-    function populateLeaderboard(data) {
+    function populateLeaderboard(data, period) {
         leaderboardBody.innerHTML = '';
+        leaderboardTitle.textContent = `Leaderboard - Period ${period}`;
 
         data.leaderboardData.forEach((user, index) => {
             const row = document.createElement('tr');
 
             const rankCell = document.createElement('td');
             rankCell.textContent = index + 1;
+            rankCell.classList.add('rank');
             row.appendChild(rankCell);
 
             const nameCell = document.createElement('td');
@@ -56,13 +59,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (data.lastUpdated && data.lastUpdated._seconds) {
             const timestamp = new Date(data.lastUpdated._seconds * 1000);
             const formatter = new Intl.DateTimeFormat('en-US', {
-                timeZone: 'America/Denver',
+                month: '2-digit',
+                day: '2-digit',
+                year: '2-digit',
                 hour: '2-digit',
                 minute: '2-digit',
-                hour12: true
+                hour12: true,
+                timeZone: 'America/Denver'
             });
             const formattedTime = formatter.format(timestamp);
-            lastUpdatedElement.textContent = `Last Updated: ${formattedTime} MST`;
+            lastUpdatedElement.textContent = `Last Updated: ${formattedTime}`;
             lastUpdatedElement.setAttribute('title', `In your local time: ${timestamp.toLocaleTimeString('en-US', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -93,7 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const data = await response.json();
-            populateLeaderboard(data);
+            populateLeaderboard(data, period);
         } catch (error) {
             console.error('Error fetching leaderboard data:', error);
             showError(error.message || 'An unexpected error occurred.');
