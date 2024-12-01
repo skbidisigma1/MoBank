@@ -39,8 +39,8 @@ async function getUserData() {
 }
 
 function getCachedUserNames(period) {
-    const cachedData = localStorage.getItem(`transferUserNames_period_${period}`);
-    const timestamp = localStorage.getItem(`transferUserNamesTimestamp_period_${period}`);
+    const cachedData = localStorage.getItem(`userNames_period_${period}`);
+    const timestamp = localStorage.getItem(`userNamesTimestamp_period_${period}`);
     if (cachedData && timestamp) {
         const currentTime = Date.now();
         const cacheDuration = 2 * 60 * 1000;
@@ -67,8 +67,8 @@ async function fetchUserNames(period) {
 
         if (response.ok) {
             const names = data.leaderboardData.map(user => user.name);
-            localStorage.setItem(`transferUserNames_period_${period}`, JSON.stringify(names));
-            localStorage.setItem(`transferUserNamesTimestamp_period_${period}`, Date.now().toString());
+            localStorage.setItem(`userNames_period_${period}`, JSON.stringify(names));
+            localStorage.setItem(`userNamesTimestamp_period_${period}`, Date.now().toString());
             return names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
         } else {
             showToast('Error', data.message || 'Failed to load user names.');
