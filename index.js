@@ -200,112 +200,71 @@ app.post('/api/adminAdjustBalance', async (req, res) => {
       currency_balance: admin.firestore.FieldValue.increment(amount),
     });
 
-    return res.status(200).json({ message: 'Balance adjusted successfully' });
+    res.status(200).json({ message: 'Balance adjusted successfully' });
   } catch (error) {
     console.error('Admin Adjust Balance Error:', error);
     return res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
   }
 });
 
-app.get('/api/getLeaderboard', async (req, res) => {
+app.post('/api/aggregateLeaderboard', async (req, res) => {
   try {
+    const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
+    if (!roles.includes('admin')) {
+      return res.status(403).json({ message: 'Forbidden: Admins only' });
+    }
+
     const usersRef = db.collection('users');
     const snapshot = await usersRef.get();
 
-    const leaderboardData = [];
+    const leaderboardData = {};
 
     snapshot.forEach((doc) => {
       const data = doc.data();
-      leaderboardData.push({
+      const period = data.class_period || 'Unknown';
+      if (!leaderboardData[period]) {
+        leaderboardData[period] = [];
+      }
+      leaderboardData[period].push({
         uid: doc.id,
         name: data.name || 'Unknown User',
         balance: data.currency_balance || 0,
         instrument: data.instrument || 'N/A',
-        class_period: data.class_period || 'N/A',
       });
     });
 
-    leaderboardData.sort((a, b) => b.balance - a.balance);
+    Object.keys(leaderboardData).forEach((period) => {
+      leaderboardData[period].sort((a, b) => b.balance - a.balance);
+    });
 
-    res.status(200).json(leaderboardData);
+    const aggregateRef = db.collection('aggregates').doc('leaderboard');
+    await aggregateRef.set({
+      leaderboardData,
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    res.status(200).json({ message: 'Leaderboard aggregated successfully' });
   } catch (error) {
-    console.error('Get Leaderboard Error:', error);
+    console.error('Aggregate Leaderboard Error:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
-app.post('/api/transactions', async (req, res) => {
-  try {
-    const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
-    if (!roles.includes('admin')) {
-      return res.status(403).send('Forbidden: Admins only');
-    }
-    const { senderId, receiverId, amount, transactionType } = req.body;
-    const adminId = req.auth.payload.sub;
-    await addTransaction(senderId, receiverId, amount, transactionType, adminId);
-    res.sendStatus(200);
-  } catch (error) {
-    console.error('Transactions Error:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
-
-async function addTransaction(senderId, receiverId, amount, transactionType, adminId = null) {
-  const transactionRef = db.collection('transactions').doc();
-  const transactionId = transactionRef.id;
-
-  const transactionData = {
-    senderId,
-    receiverId,
-    amount,
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
-    transactionType,
-    adminId,
-    status: 'pending',
-  };
-
-  await transactionRef.set(transactionData);
-
-  if (senderId) {
-    const senderHistoryRef = db.collection('users').doc(senderId).collection('transaction_history').doc(transactionId);
-    await senderHistoryRef.set(transactionData);
-  }
-
-  if (receiverId) {
-    const receiverHistoryRef = db.collection('users').doc(receiverId).collection('transaction_history').doc(transactionId);
-    await receiverHistoryRef.set(transactionData);
-  }
-
-  if (transactionType === 'send') {
-    const senderRef = db.collection('users').doc(senderId);
-    const receiverRef = db.collection('users').doc(receiverId);
-
-    await senderRef.update({
-      currency_balance: admin.firestore.FieldValue.increment(-amount),
-    });
-    await receiverRef.update({
-      currency_balance: admin.firestore.FieldValue.increment(amount),
-    });
-  }
-}
 
 app.get('/api/getUserNames', async (req, res) => {
   try {
-    const periods = [5, 6, 7];
-    const namesByPeriod = {};
-
-    for (const period of periods) {
-      const usersRef = db.collection('users').where('class_period', '==', period);
-      const snapshot = await usersRef.get();
-
-      const names = snapshot.docs
-        .map((doc) => doc.data().name)
-        .filter((name) => name);
-      
-      namesByPeriod[period] = names;
+    const period = parseInt(req.query.period, 10);
+    if (!period) {
+      return res.status(400).json({ message: 'Invalid period' });
     }
 
-    res.status(200).json(namesByPeriod);
+    const usersRef = db.collection('users').where('class_period', '==', period);
+    const snapshot = await usersRef.get();
+
+    const names = snapshot.docs
+      .map((doc) => doc.data().name)
+      .filter((name) => name);
+
+    res.status(200).json(names);
   } catch (error) {
     console.error('Get User Names Error:', error);
     res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
