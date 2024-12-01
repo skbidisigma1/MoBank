@@ -66,7 +66,7 @@ async function loadAdminContent() {
       names = await response.json();
       localStorage.setItem(`namesByPeriod-${period}`, JSON.stringify(names));
       localStorage.setItem(`namesByPeriodTimestamp-${period}`, Date.now().toString());
-      return names;
+      return names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     } catch (error) {
       showToast('Error', `Failed to load student names for period ${period}.`);
       console.error(error);
@@ -90,7 +90,13 @@ async function loadAdminContent() {
       matches.forEach((name) => {
         const suggestion = document.createElement('div');
         suggestion.classList.add('suggestion-item');
-        suggestion.textContent = name;
+
+        const highlightedName = name.replace(
+          new RegExp(query, 'gi'),
+          (match) => `<span style="text-decoration: underline;">${match}</span>`
+        );
+        suggestion.innerHTML = highlightedName;
+
         suggestion.addEventListener('click', () => {
           studentNameInput.value = name;
           suggestionsContainer.innerHTML = '';
