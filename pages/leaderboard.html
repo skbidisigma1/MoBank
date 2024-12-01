@@ -16,11 +16,19 @@
 
     <main>
         <h2 id="leaderboard-title">Leaderboard</h2>
+        
+        <div id="loader" class="loader"></div>
+        
         <div id="period-buttons" class="hidden">
             <button class="period-button" data-period="5">Period 5</button>
             <button class="period-button" data-period="6">Period 6</button>
             <button class="period-button" data-period="7">Period 7</button>
         </div>
+        
+        <div id="error-container" class="error-container hidden">
+            <p id="error-message" class="error-message"></p>
+        </div>
+        
         <table id="leaderboard-table" class="leaderboard-table">
             <thead>
                 <tr>
@@ -32,7 +40,8 @@
             </thead>
             <tbody id="leaderboard-body"></tbody>
         </table>
-        <p id="last-updated" class="last-updated"></p>
+        
+        <p id="last-updated" class="last-updated" title="In your local time: "></p>
     </main>
 
     <div id="footer-placeholder"></div>
