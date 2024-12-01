@@ -250,6 +250,23 @@ app.post('/api/aggregateLeaderboard', async (req, res) => {
   }
 });
 
+app.get('/api/getAggregatedLeaderboard', async (req, res) => {
+  try {
+    const docRef = db.collection('aggregates').doc('leaderboard');
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ message: 'Leaderboard data not found' });
+    }
+
+    const data = doc.data();
+    res.status(200).json(data);
+  } catch (error) {
+    console.error('Error fetching aggregated leaderboard:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
 app.get('/api/getUserNames', async (req, res) => {
   try {
     const period = parseInt(req.query.period, 10);
