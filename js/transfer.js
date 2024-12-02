@@ -30,16 +30,20 @@ async function loadTransferPage() {
 
 document.addEventListener('DOMContentLoaded', loadTransferPage);
 
-const namesCache = {};
 const CACHE_DURATION = 10 * 60 * 1000;
 
 function getCachedUserData() {
     const cached = localStorage.getItem('userData');
     if (cached) {
-        const parsed = JSON.parse(cached);
-        const now = Date.now();
-        if (now - parsed.timestamp < CACHE_DURATION) {
-            return parsed.data;
+        try {
+            const parsed = JSON.parse(cached);
+            const now = Date.now();
+            if (now - parsed.timestamp < CACHE_DURATION) {
+                return parsed.data;
+            }
+        } catch (e) {
+            console.error('Failed to parse cached userData:', e);
+            return null;
         }
     }
     return null;
@@ -53,24 +57,29 @@ function setCachedUserData(data) {
     localStorage.setItem('userData', JSON.stringify(cacheEntry));
 }
 
-function getCachedNames(period) {
-    const cached = localStorage.getItem(`namesByPeriod-${period}`);
+function getCachedAggregatedData(period) {
+    const cached = localStorage.getItem(`aggregatedByPeriod-${period}`);
     if (cached) {
-        const parsed = JSON.parse(cached);
-        const now = Date.now();
-        if (now - parsed.timestamp < CACHE_DURATION) {
-            return parsed.data;
+        try {
+            const parsed = JSON.parse(cached);
+            const now = Date.now();
+            if (now - parsed.timestamp < CACHE_DURATION) {
+                return parsed.data;
+            }
+        } catch (e) {
+            console.error(`Failed to parse cached aggregated data for period ${period}:`, e);
+            return null;
         }
     }
     return null;
 }
 
-function setCachedNames(period, data) {
+function setCachedAggregatedData(period, data) {
     const cacheEntry = {
         data: data,
         timestamp: Date.now(),
     };
-    localStorage.setItem(`namesByPeriod-${period}`, JSON.stringify(cacheEntry));
+    localStorage.setItem(`aggregatedByPeriod-${period}`, JSON.stringify(cacheEntry));
 }
 
 async function getUserData() {
@@ -86,14 +95,10 @@ async function getUserData() {
     return response.json();
 }
 
-async function fetchUserNames(period) {
-    if (namesCache[period]) {
-        return namesCache[period];
-    }
-    let names = getCachedNames(period);
-    if (names) {
-        namesCache[period] = names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-        return namesCache[period];
+async function fetchAggregatedData(period) {
+    let aggregatedData = getCachedAggregatedData(period);
+    if (aggregatedData) {
+        return aggregatedData;
     }
     try {
         const token = await getToken();
@@ -102,27 +107,26 @@ async function fetchUserNames(period) {
                 Authorization: `Bearer ${token}`,
             },
         });
-        const data = await response.json();
-
-        if (response.ok) {
-            const names = data.leaderboardData.map(user => user.name);
-            namesCache[period] = names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-            setCachedNames(period, namesCache[period]);
-            return namesCache[period];
-        } else {
-            showToast('Error', data.message || 'Failed to load user names.');
-            return [];
+        if (!response.ok) {
+            const errorData = await response.json();
+            showToast('Error', errorData.message || 'Failed to load aggregated data.');
+            return null;
         }
+        const data = await response.json();
+        setCachedAggregatedData(period, data);
+        return data;
     } catch (error) {
-        showToast('Error', 'Failed to load user names.');
+        showToast('Error', 'Failed to load aggregated data.');
         console.error(error);
-        return [];
+        return null;
     }
 }
 
 function setupTransferForm(period) {
     const recipientInput = document.getElementById('recipient-name');
     const suggestionsContainer = recipientInput.nextElementSibling;
+
+    let aggregatedDataPromise = null;
 
     recipientInput.addEventListener('input', async () => {
         const query = recipientInput.value.trim().toLowerCase();
@@ -132,7 +136,16 @@ function setupTransferForm(period) {
             return;
         }
 
-        const names = await fetchUserNames(period);
+        if (!aggregatedDataPromise) {
+            aggregatedDataPromise = fetchAggregatedData(period);
+        }
+
+        const aggregatedData = await aggregatedDataPromise;
+        if (!aggregatedData) {
+            return;
+        }
+
+        const names = aggregatedData.leaderboardData.map(user => user.name).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
         const matches = names.filter(name => name.toLowerCase().includes(query));
 
         matches.forEach(name => {
