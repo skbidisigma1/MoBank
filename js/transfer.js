@@ -30,13 +30,15 @@ async function loadTransferPage() {
 
 document.addEventListener('DOMContentLoaded', loadTransferPage);
 
+const namesCache = {};
+const CACHE_DURATION = 10 * 60 * 1000;
+
 function getCachedUserData() {
     const cached = localStorage.getItem('userData');
     if (cached) {
         const parsed = JSON.parse(cached);
         const now = Date.now();
-        const cacheDuration = 20 * 1000;
-        if (now - parsed.timestamp < cacheDuration) {
+        if (now - parsed.timestamp < CACHE_DURATION) {
             return parsed.data;
         }
     }
@@ -49,6 +51,26 @@ function setCachedUserData(data) {
         timestamp: Date.now(),
     };
     localStorage.setItem('userData', JSON.stringify(cacheEntry));
+}
+
+function getCachedNames(period) {
+    const cached = localStorage.getItem(`namesByPeriod-${period}`);
+    if (cached) {
+        const parsed = JSON.parse(cached);
+        const now = Date.now();
+        if (now - parsed.timestamp < CACHE_DURATION) {
+            return parsed.data;
+        }
+    }
+    return null;
+}
+
+function setCachedNames(period, data) {
+    const cacheEntry = {
+        data: data,
+        timestamp: Date.now(),
+    };
+    localStorage.setItem(`namesByPeriod-${period}`, JSON.stringify(cacheEntry));
 }
 
 async function getUserData() {
@@ -65,6 +87,14 @@ async function getUserData() {
 }
 
 async function fetchUserNames(period) {
+    if (namesCache[period]) {
+        return namesCache[period];
+    }
+    let names = getCachedNames(period);
+    if (names) {
+        namesCache[period] = names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+        return namesCache[period];
+    }
     try {
         const token = await getToken();
         const response = await fetch(`/api/getAggregatedLeaderboard?period=${period}`, {
@@ -76,7 +106,9 @@ async function fetchUserNames(period) {
 
         if (response.ok) {
             const names = data.leaderboardData.map(user => user.name);
-            return names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+            namesCache[period] = names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+            setCachedNames(period, namesCache[period]);
+            return namesCache[period];
         } else {
             showToast('Error', data.message || 'Failed to load user names.');
             return [];
