@@ -45,7 +45,7 @@ const auth0Promise = (async () => {
     if (isAuthenticated) {
       await initializeUser();
     } else {
-      window.location.href = '/login.html';
+      window.location.href = 'pages/login.html';
     }
   }
 })();
