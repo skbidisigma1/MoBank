@@ -125,28 +125,27 @@ async function fetchAggregatedData(period) {
 function setupTransferForm(period) {
     const recipientInput = document.getElementById('recipient-name');
     const suggestionsContainer = recipientInput.nextElementSibling;
+    let aggregatedData = null;
 
-    let aggregatedDataPromise = null;
+    const loadAggregatedData = async () => {
+        if (aggregatedData) return;
+        const data = await fetchAggregatedData(period);
+        if (data) {
+            aggregatedData = data.leaderboardData.map(user => user.name).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+        }
+    };
 
-    recipientInput.addEventListener('input', async () => {
+    recipientInput.addEventListener('focus', loadAggregatedData);
+
+    recipientInput.addEventListener('input', () => {
         const query = recipientInput.value.trim().toLowerCase();
         suggestionsContainer.innerHTML = '';
 
-        if (!query) {
+        if (!query || !aggregatedData) {
             return;
         }
 
-        if (!aggregatedDataPromise) {
-            aggregatedDataPromise = fetchAggregatedData(period);
-        }
-
-        const aggregatedData = await aggregatedDataPromise;
-        if (!aggregatedData) {
-            return;
-        }
-
-        const names = aggregatedData.leaderboardData.map(user => user.name).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-        const matches = names.filter(name => name.toLowerCase().includes(query));
+        const matches = aggregatedData.filter(name => name.toLowerCase().includes(query));
 
         matches.forEach(name => {
             const suggestion = document.createElement('div');
