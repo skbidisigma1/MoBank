@@ -205,7 +205,6 @@ function setupTransferForm(period, senderName) {
         },
         body: JSON.stringify({
           recipientName,
-          recipientPeriod: period,
           amount,
         }),
       });
