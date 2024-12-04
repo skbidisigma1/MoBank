@@ -1,167 +1,233 @@
-const admin = require('firebase-admin');
-const jwt = require('jsonwebtoken');
-const jwksClient = require('jwks-rsa');
+async function loadTransferPage() {
+  await window.auth0Promise;
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      type: process.env.FIREBASE_TYPE,
-      project_id: process.env.FIREBASE_PROJECT_ID,
-      private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-      private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      client_email: process.env.FIREBASE_CLIENT_EMAIL,
-      client_id: process.env.FIREBASE_CLIENT_ID,
-      auth_uri: process.env.FIREBASE_AUTH_URI,
-      token_uri: process.env.FIREBASE_TOKEN_URI,
-      auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
-      client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
-    }),
-  });
+  const isLoggedIn = await isAuthenticated();
+  if (!isLoggedIn) {
+    window.location.href = '/pages/login.html';
+    return;
+  }
+
+  try {
+    let userData = getCachedUserData();
+    if (!userData) {
+      userData = await getUserData();
+      setCachedUserData(userData);
+    }
+
+    document.getElementById('current-balance').textContent = `$${userData.currency_balance || 0}`;
+
+    const classPeriod = userData.class_period;
+    if (!classPeriod) {
+      showToast('Error', 'User class period is undefined.');
+      return;
+    }
+    setupTransferForm(classPeriod, userData.name);
+  } catch (error) {
+    showToast('Error', 'Failed to load user data.');
+    console.error(error);
+  }
 }
 
-const client = jwksClient({
-  jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
-});
+document.addEventListener('DOMContentLoaded', loadTransferPage);
 
-function getKey(header, callback) {
-  client.getSigningKey(header.kid, function (err, key) {
-    if (err) {
-      callback(err);
+const CACHE_DURATION = 10 * 60 * 1000;
+
+function getCachedUserData() {
+  const cached = localStorage.getItem('userData');
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      const now = Date.now();
+      if (now - parsed.timestamp < CACHE_DURATION) {
+        return parsed.data;
+      }
+    } catch (e) {
+      console.error('Failed to parse cached userData:', e);
+      return null;
+    }
+  }
+  return null;
+}
+
+function setCachedUserData(data) {
+  const cacheEntry = {
+    data: data,
+    timestamp: Date.now(),
+  };
+  localStorage.setItem('userData', JSON.stringify(cacheEntry));
+}
+
+function getCachedNames(period) {
+  const cached = localStorage.getItem(`namesByPeriod-${period}`);
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      const now = Date.now();
+      if (now - parsed.timestamp < CACHE_DURATION) {
+        return parsed.data;
+      }
+    } catch (e) {
+      console.error(`Failed to parse cached names for period ${period}:`, e);
+      return null;
+    }
+  }
+  return null;
+}
+
+function setCachedNames(period, data) {
+  const cacheEntry = {
+    data: data,
+    timestamp: Date.now(),
+  };
+  localStorage.setItem(`namesByPeriod-${period}`, JSON.stringify(cacheEntry));
+}
+
+async function getUserData() {
+  const token = await getToken();
+  const response = await fetch('/api/getUserData', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch user data.');
+  }
+  return response.json();
+}
+
+async function getNamesForPeriod(period) {
+  let names = getCachedNames(period);
+  if (names) {
+    return names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }
+  try {
+    const token = await getToken();
+    const response = await fetch(`/api/getUserNames?period=${period}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const data = await response.json();
+
+    if (response.ok) {
+      setCachedNames(period, data);
+      return data.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     } else {
-      const signingKey = key.getPublicKey();
-      callback(null, signingKey);
+      showToast('Error', data.message || `Failed to load student names for period ${period}.`);
+      return [];
+    }
+  } catch (error) {
+    showToast('Error', `Failed to load student names for period ${period}.`);
+    console.error(error);
+    return [];
+  }
+}
+
+function setupTransferForm(period, senderName) {
+  const recipientInput = document.getElementById('recipient-name');
+  const amountInput = document.getElementById('transfer-amount');
+  const transferForm = document.getElementById('transfer-form');
+  const suggestionsContainer = recipientInput.nextElementSibling;
+  let names = null;
+
+  const loadNames = async () => {
+    if (names) return;
+    names = await getNamesForPeriod(period);
+    names = names.filter((name) => name !== senderName);
+  };
+
+  recipientInput.addEventListener('focus', loadNames);
+
+  recipientInput.addEventListener('input', () => {
+    const query = recipientInput.value.trim().toLowerCase();
+    suggestionsContainer.innerHTML = '';
+
+    if (!query || !names) {
+      return;
+    }
+
+    const matches = names.filter((name) => name.toLowerCase().includes(query));
+
+    matches.forEach((name) => {
+      const suggestion = document.createElement('div');
+      suggestion.classList.add('suggestion-item');
+
+      const highlightedName = name.replace(
+        new RegExp(query, 'gi'),
+        (match) => `<span class="highlighted">${match}</span>`
+      );
+      suggestion.innerHTML = highlightedName;
+
+      suggestion.addEventListener('click', () => {
+        recipientInput.value = name;
+        suggestionsContainer.innerHTML = '';
+      });
+      suggestionsContainer.appendChild(suggestion);
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!recipientInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+      suggestionsContainer.innerHTML = '';
     }
   });
-}
 
-const db = admin.firestore();
+  transferForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-module.exports = async (req, res) => {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
+    const submitButton = transferForm.querySelector('button[type="submit"]');
+    if (submitButton.disabled) return;
+    submitButton.disabled = true;
 
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
+    const recipientName = recipientInput.value.trim();
+    const amount = parseInt(amountInput.value, 10);
 
-  const token = authHeader.split(' ')[1];
+    if (!recipientName) {
+      showToast('Validation Error', 'Please enter a valid recipient name.');
+      submitButton.disabled = false;
+      return;
+    }
 
-  jwt.verify(
-    token,
-    getKey,
-    {
-      audience: process.env.AUTH0_AUDIENCE,
-      issuer: `https://${process.env.AUTH0_DOMAIN}/`,
-      algorithms: ['RS256'],
-    },
-    async (err, decoded) => {
-      if (err) {
-        return res.status(401).json({ message: 'Token verification failed' });
-      }
+    if (!amount || amount <= 0) {
+      showToast('Validation Error', 'Please enter a valid amount greater than zero.');
+      submitButton.disabled = false;
+      return;
+    }
 
-      const senderUid = decoded.sub;
+    try {
+      const token = await getToken();
 
-      let body = '';
-      await new Promise((resolve) => {
-        req.on('data', (chunk) => {
-          body += chunk;
-        });
-        req.on('end', resolve);
+      const response = await fetch('/api/transferFunds', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          recipientName,
+          amount,
+        }),
       });
 
-      const { recipientName, amount } = JSON.parse(body);
+      const result = await response.json();
 
-      if (!recipientName || !amount || amount <= 0) {
-        return res.status(400).json({ message: 'Invalid input' });
+      if (response.ok) {
+        showToast('Success', result.message);
+        const updatedUserData = await getUserData();
+        setCachedUserData(updatedUserData);
+        document.getElementById('current-balance').textContent = `$${updatedUserData.currency_balance || 0}`;
+      } else {
+        showToast('Error', result.message || 'An error occurred.');
       }
-
-      try {
-        const senderRef = db.collection('users').doc(senderUid);
-        const recipientQuery = db
-          .collection('users')
-          .where('name', '==', recipientName)
-          .where(admin.firestore.FieldPath.documentId(), '!=', senderUid);
-
-        const [senderDoc, recipientSnapshot] = await Promise.all([
-          senderRef.get(),
-          recipientQuery.get(),
-        ]);
-
-        if (!senderDoc.exists) {
-          return res.status(404).json({ message: 'Sender not found' });
-        }
-
-        if (recipientSnapshot.empty) {
-          return res.status(404).json({ message: 'Recipient not found' });
-        }
-
-        const recipientDoc = recipientSnapshot.docs[0];
-        const recipientRef = recipientDoc.ref;
-
-        const senderData = senderDoc.data();
-        const senderBalance = senderData.currency_balance || 0;
-
-        if (senderBalance < amount) {
-          return res.status(400).json({ message: 'Insufficient balance' });
-        }
-
-        if (senderUid === recipientDoc.id) {
-          return res.status(400).json({ message: 'Cannot transfer to yourself' });
-        }
-
-        await db.runTransaction(async (transaction) => {
-          const senderSnapshot = await transaction.get(senderRef);
-          const recipientSnapshot = await transaction.get(recipientRef);
-
-          if (!senderSnapshot.exists) {
-            throw new Error('Sender does not exist');
-          }
-
-          if (!recipientSnapshot.exists) {
-            throw new Error('Recipient does not exist');
-          }
-
-          const updatedSenderBalance = (senderSnapshot.data().currency_balance || 0) - amount;
-          const updatedRecipientBalance = (recipientSnapshot.data().currency_balance || 0) + amount;
-
-          if (updatedSenderBalance < 0) {
-            throw new Error('Insufficient balance');
-          }
-
-          transaction.update(senderRef, { currency_balance: updatedSenderBalance });
-          transaction.update(recipientRef, { currency_balance: updatedRecipientBalance });
-
-          const senderTransactionRef = senderRef.collection('transactions').doc();
-          const recipientTransactionRef = recipientRef.collection('transactions').doc();
-
-          transaction.set(senderTransactionRef, {
-            type: 'debit',
-            amount: amount,
-            to: recipientName,
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
-          });
-
-          transaction.set(recipientTransactionRef, {
-            type: 'credit',
-            amount: amount,
-            from: senderData.name || 'Unknown',
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
-          });
-        });
-
-        return res.status(200).json({ message: 'Transfer successful' });
-      } catch (error) {
-        console.error('Transfer Funds Error:', error);
-        if (error.message === 'Insufficient balance') {
-          return res.status(400).json({ message: 'Insufficient balance' });
-        }
-        if (error.message === 'Cannot transfer to yourself') {
-          return res.status(400).json({ message: 'Cannot transfer to yourself' });
-        }
-        return res.status(500).json({ message: 'Internal Server Error' });
-      }
+    } catch (error) {
+      showToast('Network Error', 'Failed to process the request. Please try again later.');
     }
-  );
-};
+
+    recipientInput.value = '';
+    amountInput.value = '';
+    suggestionsContainer.innerHTML = '';
+    setTimeout(() => {
+      submitButton.disabled = false;
+    }, 2000);
+  });
+}
