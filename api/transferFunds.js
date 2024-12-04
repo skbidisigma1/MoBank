@@ -81,7 +81,8 @@ module.exports = async (req, res) => {
         const senderRef = db.collection('users').doc(senderUid);
         const recipientQuery = db
           .collection('users')
-          .where('name', '==', recipientName);
+          .where('name', '==', recipientName)
+          .where(admin.firestore.FieldPath.documentId(), '!=', senderUid);
 
         const [senderDoc, recipientSnapshot] = await Promise.all([
           senderRef.get(),
@@ -104,6 +105,10 @@ module.exports = async (req, res) => {
 
         if (senderBalance < amount) {
           return res.status(400).json({ message: 'Insufficient balance' });
+        }
+
+        if (senderUid === recipientDoc.id) {
+          return res.status(400).json({ message: 'Cannot transfer to yourself' });
         }
 
         await db.runTransaction(async (transaction) => {
@@ -151,6 +156,9 @@ module.exports = async (req, res) => {
         console.error('Transfer Funds Error:', error);
         if (error.message === 'Insufficient balance') {
           return res.status(400).json({ message: 'Insufficient balance' });
+        }
+        if (error.message === 'Cannot transfer to yourself') {
+          return res.status(400).json({ message: 'Cannot transfer to yourself' });
         }
         return res.status(500).json({ message: 'Internal Server Error' });
       }
