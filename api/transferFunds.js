@@ -71,9 +71,9 @@ module.exports = async (req, res) => {
         req.on('end', resolve);
       });
 
-      const { recipientName, recipientPeriod, amount } = JSON.parse(body);
+      const { recipientName, amount } = JSON.parse(body);
 
-      if (!recipientName || !recipientPeriod || !amount || amount <= 0) {
+      if (!recipientName || !amount || amount <= 0) {
         return res.status(400).json({ message: 'Invalid input' });
       }
 
@@ -81,7 +81,6 @@ module.exports = async (req, res) => {
         const senderRef = db.collection('users').doc(senderUid);
         const recipientQuery = db
           .collection('users')
-          .where('class_period', '==', parseInt(recipientPeriod, 10))
           .where('name', '==', recipientName);
 
         const [senderDoc, recipientSnapshot] = await Promise.all([
@@ -107,20 +106,52 @@ module.exports = async (req, res) => {
           return res.status(400).json({ message: 'Insufficient balance' });
         }
 
-        const batch = db.batch();
+        await db.runTransaction(async (transaction) => {
+          const senderSnapshot = await transaction.get(senderRef);
+          const recipientSnapshot = await transaction.get(recipientRef);
 
-        batch.update(senderRef, {
-          currency_balance: admin.firestore.FieldValue.increment(-amount),
+          if (!senderSnapshot.exists) {
+            throw new Error('Sender does not exist');
+          }
+
+          if (!recipientSnapshot.exists) {
+            throw new Error('Recipient does not exist');
+          }
+
+          const updatedSenderBalance = (senderSnapshot.data().currency_balance || 0) - amount;
+          const updatedRecipientBalance = (recipientSnapshot.data().currency_balance || 0) + amount;
+
+          if (updatedSenderBalance < 0) {
+            throw new Error('Insufficient balance');
+          }
+
+          transaction.update(senderRef, { currency_balance: updatedSenderBalance });
+          transaction.update(recipientRef, { currency_balance: updatedRecipientBalance });
+
+          const senderTransactionRef = senderRef.collection('transactions').doc();
+          const recipientTransactionRef = recipientRef.collection('transactions').doc();
+
+          transaction.set(senderTransactionRef, {
+            type: 'debit',
+            amount: amount,
+            to: recipientName,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          transaction.set(recipientTransactionRef, {
+            type: 'credit',
+            amount: amount,
+            from: senderData.name || 'Unknown',
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          });
         });
-
-        batch.update(recipientRef, {
-          currency_balance: admin.firestore.FieldValue.increment(amount),
-        });
-
-        await batch.commit();
 
         return res.status(200).json({ message: 'Transfer successful' });
       } catch (error) {
+        console.error('Transfer Funds Error:', error);
+        if (error.message === 'Insufficient balance') {
+          return res.status(400).json({ message: 'Insufficient balance' });
+        }
         return res.status(500).json({ message: 'Internal Server Error' });
       }
     }
