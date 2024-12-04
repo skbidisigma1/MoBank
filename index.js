@@ -19,7 +19,7 @@ const userRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {
-    res.status(429).json({ message: "Too many requests, please try again later." });
+    res.status(429).json({ message: 'Too many requests, please try again later.' });
   },
 });
 
@@ -207,71 +207,6 @@ app.post('/api/adminAdjustBalance', async (req, res) => {
   }
 });
 
-app.post('/api/transferCurrency', async (req, res) => {
-  try {
-    const senderUid = req.auth.payload.sub;
-    const { recipientName, amount } = req.body;
-
-    if (!recipientName || !amount || amount <= 0) {
-      return res.status(400).json({ message: 'Invalid input' });
-    }
-
-    const senderRef = db.collection('users').doc(senderUid);
-    const senderDoc = await senderRef.get();
-
-    if (!senderDoc.exists) {
-      return res.status(404).json({ message: 'Sender not found' });
-    }
-
-    const senderData = senderDoc.data();
-
-    if (senderData.currency_balance < amount) {
-      return res.status(400).json({ message: 'Insufficient balance' });
-    }
-
-    const recipientQuery = db.collection('users').where('name', '==', recipientName);
-    const recipientSnapshot = await recipientQuery.get();
-
-    if (recipientSnapshot.empty) {
-      return res.status(404).json({ message: 'Recipient not found' });
-    }
-
-    const recipientDoc = recipientSnapshot.docs[0];
-    const recipientRef = recipientDoc.ref;
-
-    const batch = db.batch();
-
-    batch.update(senderRef, {
-      currency_balance: admin.firestore.FieldValue.increment(-amount),
-    });
-
-    batch.update(recipientRef, {
-      currency_balance: admin.firestore.FieldValue.increment(amount),
-    });
-
-    await batch.commit();
-
-    res.status(200).json({ message: 'Transfer successful' });
-  } catch (error) {
-    console.error('Transfer Currency Error:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
-
-app.get('/api/getAllUserNames', async (req, res) => {
-  try {
-    const usersRef = db.collection('users');
-    const snapshot = await usersRef.get();
-
-    const names = snapshot.docs.map(doc => doc.data().name).filter(name => name);
-
-    res.status(200).json(names);
-  } catch (error) {
-    console.error('Get All User Names Error:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-});
-
 app.post('/api/aggregateLeaderboard', async (req, res) => {
   try {
     const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
@@ -320,7 +255,12 @@ app.post('/api/aggregateLeaderboard', async (req, res) => {
 
 app.get('/api/getAggregatedLeaderboard', async (req, res) => {
   try {
-    const docRef = db.collection('aggregates').doc(`leaderboard_period_${req.query.period}`);
+    const period = parseInt(req.query.period, 10);
+    if (![5, 6, 7].includes(period)) {
+      return res.status(400).json({ message: 'Invalid period' });
+    }
+
+    const docRef = db.collection('aggregates').doc(`leaderboard_period_${period}`);
     const doc = await docRef.get();
 
     if (!doc.exists) {
@@ -336,7 +276,28 @@ app.get('/api/getAggregatedLeaderboard', async (req, res) => {
 });
 
 app.get('/api/getUserNames', async (req, res) => {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
+
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
   try {
+    const response = await fetch(`https://${process.env.AUTH0_DOMAIN}/userinfo`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) {
+      return res.status(401).json({ message: 'Token verification failed' });
+    }
+
+    const user = await response.json();
+
     const period = parseInt(req.query.period, 10);
 
     if (!period || ![5, 6, 7].includes(period)) {
@@ -346,12 +307,35 @@ app.get('/api/getUserNames', async (req, res) => {
     const usersRef = db.collection('users').where('class_period', '==', period);
     const snapshot = await usersRef.get();
 
-    const names = snapshot.docs.map(doc => doc.data().name).filter(name => name);
+    const userData = snapshot.docs
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          uid: doc.id,
+          name: data.name || 'Unknown User',
+          balance: data.currency_balance || 0,
+          instrument: data.instrument || 'N/A',
+        };
+      })
+      .filter((user) => user.name);
+
+    const leaderboardData = userData.sort((a, b) => b.balance - a.balance);
+
+    const aggregateRef = db.collection('aggregates').doc(`leaderboard_period_${period}`);
+    await aggregateRef.set(
+      {
+        leaderboardData: leaderboardData,
+        lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    const names = userData.map((user) => user.name);
 
     res.status(200).json(names);
   } catch (error) {
     console.error('Get User Names Error:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
   }
 });
 
