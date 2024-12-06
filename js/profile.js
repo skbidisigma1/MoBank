@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const cooldownTimestamp = parseInt(sessionStorage.getItem('cooldownTimestamp'), 10) || 0;
         const now = Date.now();
-        const COOLDOWN_MILLISECONDS = 60000;
+        const COOLDOWN_MILLISECONDS = 30000;
 
         if (now - cooldownTimestamp < COOLDOWN_MILLISECONDS) {
             const remainingTime = Math.ceil((COOLDOWN_MILLISECONDS - (now - cooldownTimestamp)) / 1000);
