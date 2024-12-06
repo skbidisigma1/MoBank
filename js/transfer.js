@@ -188,6 +188,12 @@ function setupTransferForm(period, senderName) {
       return;
     }
 
+    if (recipientName.toLowerCase() === senderName.toLowerCase()) {
+      showToast('Error', 'Why are you even trying to transfer to yourself smh');
+      submitButton.disabled = false;
+      return;
+    }
+
     if (!amount || amount <= 0) {
       showToast('Validation Error', 'Please enter a valid amount greater than zero.');
       submitButton.disabled = false;
