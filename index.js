@@ -5,7 +5,6 @@ const jwksRsa = require('jwks-rsa');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
-const helmet = require('helmet');
 const path = require('path');
 require('dotenv').config();
 
@@ -55,22 +54,6 @@ app.options('*', cors(corsOptions));
 
 app.use(express.json());
 app.use(cookieParser());
-
-app.use(
-  helmet.contentSecurityPolicy({
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", 'https://cdn.auth0.com', 'https://cdn.jsdelivr.net'],
-      styleSrc: ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-      imgSrc: ["'self'", 'data:', 'https://lh3.googleusercontent.com'],
-      connectSrc: ["'self'", `https://${process.env.AUTH0_DOMAIN}`],
-      objectSrc: ["'none'"],
-      frameAncestors: ["'self'"],
-      upgradeInsecureRequests: [],
-    },
-  })
-);
 
 const jwtCheck = jwt({
   secret: jwksRsa.expressJwtSecret({
