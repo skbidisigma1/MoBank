@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const user = await getUser();
-        const roles = (user && user['https://mo-bank.vercel.app/roles']) || [];
+        const roles = (user && user['https://mo-classroom.us/roles']) || [];
         const isAdmin = roles.includes('admin');
 
         const periodButtonsContainer = document.getElementById('period-buttons');
