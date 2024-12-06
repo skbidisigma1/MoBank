@@ -1,7 +1,7 @@
 async function loadAdminContent() {
   await window.auth0Promise;
   const user = await getUser();
-  const roles = (user && user['https://mo-bank.vercel.app/roles']) || [];
+  const roles = (user && user['https://mo-classroom.us/roles']) || [];
 
   if (!roles.includes('admin')) {
     window.location.href = '/pages/dashboard.html';
