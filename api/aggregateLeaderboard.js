@@ -42,7 +42,7 @@ module.exports = async (req, res) => {
     }
 
     const user = await response.json();
-    const roles = user['https://mo-bank.vercel.app/roles'] || [];
+    const roles = user['https://mo-classroom.us/roles'] || [];
 
     if (!roles.includes('admin')) {
       return res.status(403).json({ message: 'Forbidden: Admins only' });
