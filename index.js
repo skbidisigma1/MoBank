@@ -24,7 +24,7 @@ const userRateLimiter = rateLimit({
 });
 
 const corsOptions = {
-  origin: 'https://mo-bank.vercel.app',
+  origin: 'https://mo-classroom.us',
   methods: ['GET', 'POST'],
   credentials: true,
 };
@@ -128,7 +128,7 @@ app.post('/api/login', async (req, res) => {
     const uid = req.auth.payload.sub;
     const email = req.auth.payload.email;
     const name = req.auth.payload.name || 'Unknown';
-    const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || ['user'];
+    const roles = req.auth.payload['https://mo-classroom.us/roles'] || ['user'];
     await addUser(uid, email, { name, role: roles });
     res.sendStatus(200);
   } catch (error) {
@@ -173,7 +173,7 @@ app.get('/api/getUserData', async (req, res) => {
 
 app.post('/api/adminAdjustBalance', async (req, res) => {
   try {
-    const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
+    const roles = req.auth.payload['https://mo-classroom.us/roles'] || [];
     if (!roles.includes('admin')) {
       return res.status(403).json({ message: 'Forbidden: Admins only' });
     }
@@ -209,7 +209,7 @@ app.post('/api/adminAdjustBalance', async (req, res) => {
 
 app.post('/api/aggregateLeaderboard', async (req, res) => {
   try {
-    const roles = req.auth.payload['https://mo-bank.vercel.app/roles'] || [];
+    const roles = req.auth.payload['https://mo-classroom.us/roles'] || [];
     if (!roles.includes('admin')) {
       return res.status(403).json({ message: 'Forbidden: Admins only' });
     }
