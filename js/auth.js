@@ -6,8 +6,8 @@ async function initializeUser() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
 
     if (!response.ok) {
@@ -33,13 +33,15 @@ const auth0Promise = (async () => {
     domain: 'dev-nqdfwemz14t8nf7w.us.auth0.com',
     client_id: 'IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA',
     redirect_uri: window.location.origin + '/pages/dashboard.html',
-    console.log('Redirect URI being sent:', window.location.origin + '/pages/dashboard.html');
-    await auth0Client.loginWithRedirect({
     audience: 'https://mo-classroom.us/api',
     cacheLocation: 'localstorage',
-    useRefreshTokens: true
+    useRefreshTokens: true,
   });
+
+  console.log('Redirect URI being sent:', window.location.origin + '/pages/dashboard.html');
+
   await handleAuthRedirect();
+
   const currentPage = window.location.pathname.split('/').pop();
   const isProtected = protectedPages.includes(currentPage);
   const isAuthenticated = await auth0Client.isAuthenticated();
@@ -56,7 +58,7 @@ async function signInWithAuth0() {
   try {
     await auth0Client.loginWithRedirect({
       connection: 'google-oauth2',
-      prompt: 'select_account'
+      prompt: 'select_account',
     });
   } catch (error) {
     console.error('Auth0 Login Error:', error);
@@ -80,13 +82,13 @@ async function logoutUser() {
   try {
     await auth0Client.logout({
       logoutParams: {
-        returnTo: window.location.origin
+        returnTo: window.location.origin,
       },
-      federated: false
+      federated: false,
     });
     localStorage.clear();
     sessionStorage.clear();
-    document.cookie.split(';').forEach(cookie => {
+    document.cookie.split(';').forEach((cookie) => {
       const eqPos = cookie.indexOf('=');
       const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
       document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
