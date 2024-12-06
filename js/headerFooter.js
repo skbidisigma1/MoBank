@@ -36,7 +36,7 @@ async function loadHeaderFooter() {
         await window.auth0Promise;
 
         const user = await getUser();
-        const roles = user && user['https://mo-bank.vercel.app/roles'] || [];
+        const roles = user && user['https://mo-classroom.us/roles'] || [];
         const isAdmin = roles.includes('admin');
         const isLoggedIn = await isAuthenticated();
 
