@@ -26,7 +26,7 @@ const regularRateLimiter = rateLimit({
 
 const adminRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 250,
+  max: 300,
   keyGenerator: (req) => req.auth?.payload?.sub || req.ip,
   standardHeaders: true,
   legacyHeaders: false,
