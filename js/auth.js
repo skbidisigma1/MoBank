@@ -33,7 +33,7 @@ const auth0Promise = (async () => {
     domain: 'dev-nqdfwemz14t8nf7w.us.auth0.com',
     client_id: 'IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA',
     redirect_uri: window.location.origin + '/pages/dashboard.html',
-    audience: 'https://mo-bank.vercel.app/api',
+    audience: 'https://mo-classroom.us/api',
     cacheLocation: 'localstorage',
     useRefreshTokens: true
   });
