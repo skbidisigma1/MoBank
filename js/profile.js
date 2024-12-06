@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const userData = await userDataResponse.json();
                     setCachedUserData(userData);
                 }
-                window.location.href = '/pages/dashboard.html';
+                window.location.href = '/pages/dashboard.html?profile_successful=true';
                 return;
             }
 
