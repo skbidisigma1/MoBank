@@ -33,6 +33,8 @@ const auth0Promise = (async () => {
     domain: 'dev-nqdfwemz14t8nf7w.us.auth0.com',
     client_id: 'IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA',
     redirect_uri: window.location.origin + '/pages/dashboard.html',
+    console.log('Redirect URI being sent:', window.location.origin + '/pages/dashboard.html');
+    await auth0Client.loginWithRedirect({
     audience: 'https://mo-classroom.us/api',
     cacheLocation: 'localstorage',
     useRefreshTokens: true
