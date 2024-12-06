@@ -10,10 +10,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const profileForm = document.getElementById('profile-form');
     const submitButton = profileForm.querySelector('button[type="submit"]');
 
+    function setCachedUserData(data) {
+        const cacheEntry = {
+            data: data,
+            timestamp: Date.now(),
+        };
+        localStorage.setItem('userData', JSON.stringify(cacheEntry));
+    }
+
     async function updateProfile(classPeriod, instrument) {
         try {
             const token = await auth0Client.getTokenSilently();
-
             const response = await fetch('/api/updateProfile', {
                 method: 'POST',
                 headers: {
@@ -25,6 +32,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (response.ok) {
                 sessionStorage.setItem('cooldownTimestamp', Date.now().toString());
+                const userDataResponse = await fetch('/api/getUserData', {
+                    method: 'GET',
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (userDataResponse.ok) {
+                    const userData = await userDataResponse.json();
+                    setCachedUserData(userData);
+                }
                 window.location.href = '/pages/dashboard.html';
                 return;
             }
