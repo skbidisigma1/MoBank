@@ -46,13 +46,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (response.status === 429) {
                 const errorData = await response.json();
-                alert(`Please wait ${errorData.waitTime} seconds before trying again.`);
+                showToast('Error', `Please wait ${errorData.waitTime} seconds before trying again.`);
             } else {
                 const errorData = await response.json();
-                alert(`Error updating profile: ${errorData.message}`);
+                showToast('Error', `Error updating profile: ${errorData.message}`);
             }
         } catch (error) {
-            alert('An error occurred while updating your profile. Please reload the page and try again.');
+            showToast('Error', 'An error occurred while updating your profile. Please reload the page and try again.');
         } finally {
             submitButton.disabled = false;
         }
@@ -68,12 +68,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const validInstruments = ['violin', 'viola', 'cello', 'bass'];
 
         if (!validClassPeriods.includes(classPeriod)) {
-            alert('Please select a valid class period (5, 6, 7).');
+            showToast('Validation Error', 'Please select a valid class period (5, 6, 7).');
             return;
         }
 
         if (!validInstruments.includes(instrument)) {
-            alert('Please select a valid instrument (violin, viola, cello, bass).');
+            showToast('Validation Error', 'Please select a valid instrument (violin, viola, cello, bass).');
             return;
         }
 
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (now - cooldownTimestamp < COOLDOWN_MILLISECONDS) {
             const remainingTime = Math.ceil((COOLDOWN_MILLISECONDS - (now - cooldownTimestamp)) / 1000);
-            alert(`Please wait ${remainingTime} seconds before trying again.`);
+            showToast('Error', `Please wait ${remainingTime} seconds before trying again.`);
             return;
         }
 
