@@ -141,5 +141,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    function getUrlParameter(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 100); // Allow CSS transition
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 300);
+        }, 3000);
+    }
+
+    const profileSuccessful = getUrlParameter('profile_successful');
+    if (profileSuccessful) {
+        showToast('Profile updated successfully!');
+    }
+
     await Promise.all([fetchUserData(), setProfileImage()]);
 });
