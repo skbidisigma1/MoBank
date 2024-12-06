@@ -38,8 +38,6 @@ const auth0Promise = (async () => {
     useRefreshTokens: true,
   });
 
-  console.log('Redirect URI being sent:', window.location.origin + '/pages/dashboard.html');
-
   await handleAuthRedirect();
 
   const currentPage = window.location.pathname.split('/').pop();
