@@ -75,7 +75,7 @@ module.exports = async (req, res) => {
 
       const { name, period, amount } = JSON.parse(body);
 
-      if (!name || !period || !amount || amount <= 0) {
+      if (!name || !period || !amount) {
         return res.status(400).json({ message: 'Invalid input' });
       }
 
