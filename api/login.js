@@ -53,7 +53,6 @@ module.exports = async (req, res) => {
         instrument: '',
         class_period: null,
         currency_balance: 0,
-        picture: '/images/default_profile.svg',
       });
     }
 
