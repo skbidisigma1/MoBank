@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const cachedUserData = getCachedUserData();
             if (cachedUserData) {
+                validateUserData(cachedUserData);
                 populateDashboard(cachedUserData);
                 loader.classList.add('hidden');
                 return;
@@ -82,6 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (response.ok) {
                 const userData = await response.json();
+                validateUserData(userData);
                 setCachedUserData(userData);
                 populateDashboard(userData);
             } else if (response.status === 404) {
@@ -94,6 +96,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.location.href = '/pages/profile.html';
         } finally {
             loader.classList.add('hidden');
+        }
+    }
+
+    function validateUserData(userData) {
+        const validInstruments = ['violin', 'viola', 'cello', 'bass'];
+        const validClassPeriods = [5, 6, 7];
+        if (!validInstruments.includes(userData.instrument.toLowerCase()) || !validClassPeriods.includes(userData.class_period)) {
+            window.location.href = '/pages/profile.html';
         }
     }
 
