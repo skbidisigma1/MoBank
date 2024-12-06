@@ -142,24 +142,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function showToast(title, message) {
-        const toast = document.createElement('div');
-        toast.className = `toast ${title.toLowerCase()}`;
-        toast.innerHTML = `<strong>${title}</strong>: ${message}`;
-        document.body.appendChild(toast);
-
-        setTimeout(() => {
-            toast.classList.add('show');
-        }, 100);
-
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => {
-                document.body.removeChild(toast);
-            }, 300);
-        }, 3000);
-    }
-
     const profileSuccessful = getUrlParameter('profile_successful');
     if (profileSuccessful) {
         showToast('Success', 'Profile updated successfully!');
