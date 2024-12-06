@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 throw new Error('Failed to fetch user data');
             }
         } catch (error) {
+            showToast('Error', 'Failed to fetch user data. Please try again later.');
             console.error('Error fetching user data:', error);
             window.location.href = '/pages/profile.html';
         } finally {
@@ -141,20 +142,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function getUrlParameter(name) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(name);
-    }
-
-    function showToast(message) {
+    function showToast(title, message) {
         const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.textContent = message;
+        toast.className = `toast ${title.toLowerCase()}`;
+        toast.innerHTML = `<strong>${title}</strong>: ${message}`;
         document.body.appendChild(toast);
 
         setTimeout(() => {
             toast.classList.add('show');
-        }, 100); // Allow CSS transition
+        }, 100);
 
         setTimeout(() => {
             toast.classList.remove('show');
@@ -166,7 +162,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const profileSuccessful = getUrlParameter('profile_successful');
     if (profileSuccessful) {
-        showToast('Profile updated successfully!');
+        showToast('Success', 'Profile updated successfully!');
+    }
+
+    function getUrlParameter(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
     }
 
     await Promise.all([fetchUserData(), setProfileImage()]);
