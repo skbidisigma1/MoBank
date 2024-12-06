@@ -77,6 +77,10 @@ module.exports = async (req, res) => {
         return res.status(400).json({ message: 'Invalid input' });
       }
 
+      if (senderUid === recipientName) {
+        return res.status(400).json({ message: 'Self-transfers are not allowed.' });
+      }
+
       try {
         const senderRef = db.collection('users').doc(senderUid);
         const recipientQuery = db
