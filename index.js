@@ -11,9 +11,11 @@ require('dotenv').config();
 
 const app = express();
 
-const userRateLimiter = rateLimit({
+const { admin, db } = require('./firebase');
+
+const regularRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 125,
+  max: 120,
   keyGenerator: (req) => req.auth?.payload?.sub || req.ip,
   standardHeaders: true,
   legacyHeaders: false,
@@ -21,6 +23,26 @@ const userRateLimiter = rateLimit({
     res.status(429).json({ message: 'Too many requests, please try again later.' });
   },
 });
+
+const adminRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 250,
+  keyGenerator: (req) => req.auth?.payload?.sub || req.ip,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({ message: 'Too many requests, please try again later.' });
+  },
+});
+
+const conditionalRateLimiter = (req, res, next) => {
+  const roles = req.auth?.payload?.['https://mo-classroom.us/roles'] || [];
+  if (roles.includes('admin')) {
+    return adminRateLimiter(req, res, next);
+  } else {
+    return regularRateLimiter(req, res, next);
+  }
+};
 
 const corsOptions = {
   origin: 'https://mo-classroom.us',
@@ -50,8 +72,6 @@ app.use(
   })
 );
 
-const { admin, db } = require('./firebase');
-
 const jwtCheck = jwt({
   secret: jwksRsa.expressJwtSecret({
     cache: true,
@@ -64,7 +84,7 @@ const jwtCheck = jwt({
   algorithms: ['RS256'],
 });
 
-app.use('/api', jwtCheck, userRateLimiter);
+app.use('/api', jwtCheck, conditionalRateLimiter);
 
 async function addUser(uid, email, metadata = {}) {
   const userRef = db.collection('users').doc(uid);
