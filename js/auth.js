@@ -56,7 +56,11 @@ const auth0Promise = (async () => {
 
 async function signInWithAuth0() {
   try {
+    const redirectUri = window.location.origin + '/pages/dashboard.html';
+    console.log('Redirect URI being sent to Auth0:', redirectUri);
+
     await auth0Client.loginWithRedirect({
+      redirect_uri: redirectUri,
       connection: 'google-oauth2',
       prompt: 'select_account',
     });
