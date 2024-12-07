@@ -53,6 +53,7 @@ header nav {
     cursor: pointer;
     z-index: 1101;
     position: relative;
+    margin: 0;
 }
 
 #mobileMenuToggle:focus {
