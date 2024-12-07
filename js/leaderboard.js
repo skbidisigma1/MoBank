@@ -116,6 +116,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         showLoader();
         hideError();
 
+        leaderboardBody.innerHTML = '';
+
         const cachedData = getCachedLeaderboard(period);
         if (cachedData) {
             populateLeaderboard(cachedData, period);
