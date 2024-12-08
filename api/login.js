@@ -41,13 +41,6 @@ module.exports = async (req, res) => {
     const privateDataRef = userRef.collection('privateData').doc('main');
     const privateDoc = await privateDataRef.get();
 
-    if (!privateDoc.exists) {
-      await privateDataRef.set({
-        email: user.email,
-        auth0_user_id: uid,
-      });
-    }
-
     return res.status(200).json({ message: 'User initialized successfully' });
   } catch (error) {
     return res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
