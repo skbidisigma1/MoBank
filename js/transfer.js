@@ -1,21 +1,17 @@
 async function loadTransferPage() {
   await window.auth0Promise;
-
   const isLoggedIn = await isAuthenticated();
   if (!isLoggedIn) {
     window.location.href = '/pages/login.html';
     return;
   }
-
   try {
     let userData = getCachedUserData();
     if (!userData) {
       userData = await getUserData();
       setCachedUserData(userData);
     }
-
     document.getElementById('current-balance').textContent = `$${userData.currency_balance || 0}`;
-
     const classPeriod = userData.class_period;
     if (!classPeriod) {
       showToast('Error', 'User class period is undefined.');
@@ -102,16 +98,16 @@ async function getNamesForPeriod(period) {
   }
   try {
     const token = await getToken();
-    const response = await fetch(`/api/getUserNames?period=${period}`, {
+    const response = await fetch(`/api/getAggregatedLeaderboard?period=${period}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
     const data = await response.json();
-
     if (response.ok) {
-      setCachedNames(period, data);
-      return data.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+      const extractedNames = (data.leaderboardData || []).map(item => item.name);
+      setCachedNames(period, extractedNames);
+      return extractedNames.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     } else {
       showToast('Error', data.message || `Failed to load student names for period ${period}.`);
       return [];
@@ -141,23 +137,18 @@ function setupTransferForm(period, senderName) {
   recipientInput.addEventListener('input', () => {
     const query = recipientInput.value.trim().toLowerCase();
     suggestionsContainer.innerHTML = '';
-
     if (!query || !names) {
       return;
     }
-
     const matches = names.filter((name) => name.toLowerCase().includes(query));
-
     matches.forEach((name) => {
       const suggestion = document.createElement('div');
       suggestion.classList.add('suggestion-item');
-
       const highlightedName = name.replace(
         new RegExp(query, 'gi'),
         (match) => `<span class="highlighted">${match}</span>`
       );
       suggestion.innerHTML = highlightedName;
-
       suggestion.addEventListener('click', () => {
         recipientInput.value = name;
         suggestionsContainer.innerHTML = '';
@@ -174,35 +165,28 @@ function setupTransferForm(period, senderName) {
 
   transferForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-
     const submitButton = transferForm.querySelector('button[type="submit"]');
     if (submitButton.disabled) return;
     submitButton.disabled = true;
-
     const recipientName = recipientInput.value.trim();
     const amount = parseInt(amountInput.value, 10);
-
     if (!recipientName) {
       showToast('Validation Error', 'Please enter a valid recipient name.');
       submitButton.disabled = false;
       return;
     }
-
     if (recipientName.toLowerCase() === senderName.toLowerCase()) {
       showToast('Error', 'Why are you even trying to transfer to yourself smh');
       submitButton.disabled = false;
       return;
     }
-
     if (!amount || amount <= 0) {
       showToast('Validation Error', 'Please enter a valid amount greater than zero.');
       submitButton.disabled = false;
       return;
     }
-
     try {
       const token = await getToken();
-
       const response = await fetch('/api/transferFunds', {
         method: 'POST',
         headers: {
@@ -214,9 +198,7 @@ function setupTransferForm(period, senderName) {
           amount,
         }),
       });
-
       const result = await response.json();
-
       if (response.ok) {
         showToast('Success', result.message);
         const updatedUserData = await getUserData();
@@ -228,7 +210,6 @@ function setupTransferForm(period, senderName) {
     } catch (error) {
       showToast('Network Error', 'Failed to process the request. Please try again later.');
     }
-
     recipientInput.value = '';
     amountInput.value = '';
     suggestionsContainer.innerHTML = '';
