@@ -369,6 +369,7 @@ select:after {
   min-width: min-content;
   display: flex;
   align-items: center;
+  margin-bottom: 20px;
 }
 
 .gsi-material-button .gsi-material-button-icon {
