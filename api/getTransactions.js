@@ -24,13 +24,13 @@ module.exports = async (req, res) => {
     const user = await response.json();
     const uid = user.sub;
 
-    const transactionsRef = db.collection('users').doc(uid).collection('transactions').doc('transactions');
-    const transactionsDoc = await transactionsRef.get();
-    if (!transactionsDoc.exists) {
+    const userRef = db.collection('users').doc(uid);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
       return res.status(200).json({ transactions: [] });
     }
 
-    const transactionsData = transactionsDoc.data().transactions || [];
+    const transactionsData = userDoc.data().transactions || [];
     const transactions = transactionsData.map(tx => ({
       type: tx.type,
       amount: tx.amount,
