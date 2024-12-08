@@ -1,5 +1,4 @@
 const fetch = require('node-fetch');
-
 const { admin, db } = require('../firebase');
 
 module.exports = async (req, res) => {
@@ -39,7 +38,12 @@ module.exports = async (req, res) => {
     }
 
     const data = doc.data();
-    return res.status(200).json(data);
+    const cleanedLeaderboardData = data.leaderboardData.map(({ uid, ...rest }) => rest);
+
+    return res.status(200).json({
+      lastUpdated: data.lastUpdated,
+      leaderboardData: cleanedLeaderboardData,
+    });
   } catch (error) {
     console.error('Error fetching aggregated leaderboard:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
