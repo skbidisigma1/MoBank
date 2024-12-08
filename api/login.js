@@ -45,7 +45,6 @@ module.exports = async (req, res) => {
       await privateDataRef.set({
         email: user.email,
         auth0_user_id: uid,
-        role: ['user'],
       });
     }
 
