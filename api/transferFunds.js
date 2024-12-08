@@ -58,10 +58,6 @@ module.exports = async (req, res) => {
         return res.status(400).json({ message: 'Invalid input' });
       }
 
-      if (senderUid === recipientName) {
-        return res.status(400).json({ message: 'Self-transfers are not allowed.' });
-      }
-
       try {
         const senderRef = db.collection('users').doc(senderUid);
         const recipientQuery = db
@@ -84,6 +80,10 @@ module.exports = async (req, res) => {
         const recipientDoc = recipientSnapshot.docs[0];
         const recipientUid = recipientDoc.id; // Correctly define recipientUid
         const recipientRef = recipientDoc.ref;
+
+        if (senderUid === recipientUid) { // Correct self-transfer check
+          return res.status(400).json({ message: 'Self-transfers are not allowed.' });
+        }
 
         const senderData = senderDoc.data();
         const senderBalance = senderData.currency_balance || 0;
@@ -128,7 +128,7 @@ module.exports = async (req, res) => {
           if (senderTransactions.length > 5) {
             senderTransactions = senderTransactions.slice(0, 5);
           }
-          transaction.set(senderTransactionsRef, { transactions: senderTransactions });
+          transaction.update(senderTransactionsRef, { transactions: senderTransactions });
 
           const recipientTransactionsDoc = await transaction.get(recipientTransactionsRef);
           let recipientTransactions = recipientTransactionsDoc.exists ? recipientTransactionsDoc.data().transactions || [] : [];
@@ -141,11 +141,12 @@ module.exports = async (req, res) => {
           if (recipientTransactions.length > 5) {
             recipientTransactions = recipientTransactions.slice(0, 5);
           }
-          transaction.set(recipientTransactionsRef, { transactions: recipientTransactions });
+          transaction.update(recipientTransactionsRef, { transactions: recipientTransactions });
         });
 
         return res.status(200).json({ message: 'Transfer successful' });
       } catch (error) {
+        console.error('Transfer Error:', error);
         if (error.message === 'Insufficient balance') {
           return res.status(400).json({ message: 'Insufficient balance' });
         }
