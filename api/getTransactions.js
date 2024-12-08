@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
     const user = await response.json();
     const uid = user.sub;
 
-    const transactionsRef = db.collection('users').doc(uid).collection('transactions').doc(uid);
+    const transactionsRef = db.collection('users').doc(uid).collection('transactions').doc('transactions');
     const transactionsDoc = await transactionsRef.get();
     if (!transactionsDoc.exists) {
       return res.status(200).json({ transactions: [] });
