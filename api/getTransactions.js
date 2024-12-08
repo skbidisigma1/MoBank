@@ -24,23 +24,19 @@ module.exports = async (req, res) => {
     const user = await response.json();
     const uid = user.sub;
 
-    const userRef = db.collection('users').doc(uid);
-    const userDoc = await userRef.get();
-    if (!userDoc.exists) {
-      return res.status(404).json({ message: 'User not found' });
+    const transactionsRef = db.collection('users').doc(uid).collection('transactions').doc(uid);
+    const transactionsDoc = await transactionsRef.get();
+    if (!transactionsDoc.exists) {
+      return res.status(200).json({ transactions: [] });
     }
 
-    const transactionsRef = userRef.collection('transactions').orderBy('timestamp', 'desc').limit(5);
-    const snapshot = await transactionsRef.get();
-    const transactions = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        type: data.type,
-        amount: data.amount,
-        timestamp: data.timestamp ? data.timestamp.toMillis() : null,
-        counterpart: data.counterpart || 'Unknown'
-      };
-    });
+    const transactionsData = transactionsDoc.data().transactions || [];
+    const transactions = transactionsData.map(tx => ({
+      type: tx.type,
+      amount: tx.amount,
+      timestamp: tx.timestamp ? tx.timestamp.toMillis() : null,
+      counterpart: tx.counterpart || 'Unknown'
+    }));
 
     res.status(200).json({ transactions });
   } catch (error) {
