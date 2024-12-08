@@ -18,9 +18,10 @@ async function loadTransferPage() {
       return;
     }
     setupTransferForm(classPeriod, userData.name);
-    loadRecentTransactions(userData.transactions);
+    loadRecentTransactions(userData.transactions); // Use transactions from userData directly
   } catch (error) {
     showToast('Error', 'Failed to load user data.');
+    console.error('Load Transfer Page Error:', error);
   }
 }
 
@@ -38,6 +39,7 @@ function getCachedUserData() {
         return parsed.data;
       }
     } catch (e) {
+      console.error('Get Cached User Data Error:', e);
       return null;
     }
   }
@@ -63,6 +65,34 @@ async function getUserData() {
     throw new Error('Failed to fetch user data.');
   }
   return response.json();
+}
+
+async function getNamesForPeriod(period) {
+  let names = getCachedNames(period);
+  if (names) {
+    return names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }
+  try {
+    const token = await getToken();
+    const response = await fetch(`/api/getAggregatedLeaderboard?period=${period}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const data = await response.json();
+    if (response.ok) {
+      const extractedNames = (data.leaderboardData || []).map(item => item.name);
+      setCachedNames(period, extractedNames);
+      return extractedNames.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    } else {
+      showToast('Error', data.message || `Failed to load student names for period ${period}.`);
+      return [];
+    }
+  } catch (error) {
+    showToast('Error', `Failed to load student names for period ${period}.`);
+    console.error('Get Names For Period Error:', error);
+    return [];
+  }
 }
 
 function setupTransferForm(period, senderName) {
@@ -156,6 +186,7 @@ function setupTransferForm(period, senderName) {
       }
     } catch (error) {
       showToast('Network Error', 'Failed to process the request. Please try again later.');
+      console.error('Transfer Form Submit Error:', error);
     }
     recipientInput.value = '';
     amountInput.value = '';
