@@ -18,10 +18,9 @@ async function loadTransferPage() {
       return;
     }
     setupTransferForm(classPeriod, userData.name);
-    loadRecentTransactions(userData.transactions); // Use transactions from userData directly
+    displayRecentTransactions(userData.transactions || []);
   } catch (error) {
     showToast('Error', 'Failed to load user data.');
-    console.error('Load Transfer Page Error:', error);
   }
 }
 
@@ -39,7 +38,6 @@ function getCachedUserData() {
         return parsed.data;
       }
     } catch (e) {
-      console.error('Get Cached User Data Error:', e);
       return null;
     }
   }
@@ -52,6 +50,30 @@ function setCachedUserData(data) {
     timestamp: Date.now(),
   };
   localStorage.setItem('userData', JSON.stringify(cacheEntry));
+}
+
+function getCachedNames(period) {
+  const cached = localStorage.getItem(`namesByPeriod-${period}`);
+  if (cached) {
+    try {
+      const parsed = JSON.parse(cached);
+      const now = Date.now();
+      if (now - parsed.timestamp < CACHE_DURATION) {
+        return parsed.data;
+      }
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+}
+
+function setCachedNames(period, data) {
+  const cacheEntry = {
+    data: data,
+    timestamp: Date.now(),
+  };
+  localStorage.setItem(`namesByPeriod-${period}`, JSON.stringify(cacheEntry));
 }
 
 async function getUserData() {
@@ -90,7 +112,6 @@ async function getNamesForPeriod(period) {
     }
   } catch (error) {
     showToast('Error', `Failed to load student names for period ${period}.`);
-    console.error('Get Names For Period Error:', error);
     return [];
   }
 }
@@ -180,13 +201,12 @@ function setupTransferForm(period, senderName) {
         const updatedUserData = await getUserData();
         setCachedUserData(updatedUserData);
         document.getElementById('current-balance').textContent = `$${updatedUserData.currency_balance || 0}`;
-        loadRecentTransactions(updatedUserData.transactions);
+        displayRecentTransactions(updatedUserData.transactions || []);
       } else {
         showToast('Error', result.message || 'An error occurred.');
       }
     } catch (error) {
       showToast('Network Error', 'Failed to process the request. Please try again later.');
-      console.error('Transfer Form Submit Error:', error);
     }
     recipientInput.value = '';
     amountInput.value = '';
@@ -197,17 +217,17 @@ function setupTransferForm(period, senderName) {
   });
 }
 
-function loadRecentTransactions(transactions) {
+function displayRecentTransactions(transactions) {
   const list = document.getElementById('transactions');
   list.innerHTML = '';
-  if (!transactions || transactions.length === 0) {
+  if (transactions.length === 0) {
     const li = document.createElement('li');
     li.textContent = 'No transactions to show.';
     list.appendChild(li);
   } else {
     transactions.forEach(tx => {
       const li = document.createElement('li');
-      const date = tx.timestamp ? new Date(tx.timestamp._seconds * 1000).toLocaleString() : '';
+      const date = tx.timestamp ? new Date(tx.timestamp._seconds * 1000 + tx.timestamp._nanoseconds / 1000000).toLocaleString() : '';
       li.textContent = `${tx.type === 'credit' ? '+' : '-'}$${tx.amount} ${tx.type === 'credit' ? 'from' : 'to'} ${tx.counterpart} on ${date}`;
       list.appendChild(li);
     });
