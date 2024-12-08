@@ -113,22 +113,34 @@ module.exports = async (req, res) => {
           transaction.update(senderRef, { currency_balance: updatedSenderBalance });
           transaction.update(recipientRef, { currency_balance: updatedRecipientBalance });
 
-          const senderTransactionRef = senderRef.collection('transactions').doc();
-          const recipientTransactionRef = recipientRef.collection('transactions').doc();
+          const senderTransactionsRef = senderRef.collection('transactions').doc(senderUid);
+          const recipientTransactionsRef = recipientRef.collection('transactions').doc(recipientUid);
 
-          transaction.set(senderTransactionRef, {
+          const senderTransactionsDoc = await transaction.get(senderTransactionsRef);
+          let senderTransactions = senderTransactionsDoc.exists ? senderTransactionsDoc.data().transactions || [] : [];
+          senderTransactions.unshift({
             type: 'debit',
             amount: amount,
             counterpart: recipientName,
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
           });
+          if (senderTransactions.length > 5) {
+            senderTransactions = senderTransactions.slice(0, 5);
+          }
+          transaction.set(senderTransactionsRef, { transactions: senderTransactions });
 
-          transaction.set(recipientTransactionRef, {
+          const recipientTransactionsDoc = await transaction.get(recipientTransactionsRef);
+          let recipientTransactions = recipientTransactionsDoc.exists ? recipientTransactionsDoc.data().transactions || [] : [];
+          recipientTransactions.unshift({
             type: 'credit',
             amount: amount,
             counterpart: senderData.name || 'Unknown',
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
           });
+          if (recipientTransactions.length > 5) {
+            recipientTransactions = recipientTransactions.slice(0, 5);
+          }
+          transaction.set(recipientTransactionsRef, { transactions: recipientTransactions });
         });
 
         return res.status(200).json({ message: 'Transfer successful' });
