@@ -78,10 +78,10 @@ module.exports = async (req, res) => {
         }
 
         const recipientDoc = recipientSnapshot.docs[0];
-        const recipientUid = recipientDoc.id; // Correctly define recipientUid
+        const recipientUid = recipientDoc.id;
         const recipientRef = recipientDoc.ref;
 
-        if (senderUid === recipientUid) { // Correct self-transfer check
+        if (senderUid === recipientUid) {
           return res.status(400).json({ message: 'Self-transfers are not allowed.' });
         }
 
@@ -114,11 +114,7 @@ module.exports = async (req, res) => {
           transaction.update(senderRef, { currency_balance: updatedSenderBalance });
           transaction.update(recipientRef, { currency_balance: updatedRecipientBalance });
 
-          const senderTransactionsRef = senderRef.collection('transactions').doc('transactions');
-          const recipientTransactionsRef = recipientRef.collection('transactions').doc('transactions');
-
-          const senderTransactionsDoc = await transaction.get(senderTransactionsRef);
-          let senderTransactions = senderTransactionsDoc.exists ? senderTransactionsDoc.data().transactions || [] : [];
+          const senderTransactions = senderSnapshot.data().transactions || [];
           senderTransactions.unshift({
             type: 'debit',
             amount: amount,
@@ -126,12 +122,11 @@ module.exports = async (req, res) => {
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
           });
           if (senderTransactions.length > 5) {
-            senderTransactions = senderTransactions.slice(0, 5);
+            senderTransactions.splice(5);
           }
-          transaction.update(senderTransactionsRef, { transactions: senderTransactions });
+          transaction.update(senderRef, { transactions: senderTransactions });
 
-          const recipientTransactionsDoc = await transaction.get(recipientTransactionsRef);
-          let recipientTransactions = recipientTransactionsDoc.exists ? recipientTransactionsDoc.data().transactions || [] : [];
+          const recipientTransactions = recipientSnapshot.data().transactions || [];
           recipientTransactions.unshift({
             type: 'credit',
             amount: amount,
@@ -139,9 +134,9 @@ module.exports = async (req, res) => {
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
           });
           if (recipientTransactions.length > 5) {
-            recipientTransactions = recipientTransactions.slice(0, 5);
+            recipientTransactions.splice(5);
           }
-          transaction.update(recipientTransactionsRef, { transactions: recipientTransactions });
+          transaction.update(recipientRef, { transactions: recipientTransactions });
         });
 
         return res.status(200).json({ message: 'Transfer successful' });
