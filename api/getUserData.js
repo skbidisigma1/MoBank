@@ -33,16 +33,9 @@ module.exports = async (req, res) => {
 
     const publicData = userDoc.data();
 
-    const privateDataRef = userRef.collection('privateData').doc('main');
-    const privateDoc = await privateDataRef.get();
-
-    if (!privateDoc.exists) {
-      return res.status(404).json({ message: 'Private data not found' });
-    }
-
     return res.status(200).json({
       ...publicData,
-      privateData: privateDoc.data(),
+      email: user.email,
     });
   } catch (error) {
     return res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
