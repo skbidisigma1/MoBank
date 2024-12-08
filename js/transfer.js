@@ -18,7 +18,7 @@ async function loadTransferPage() {
       return;
     }
     setupTransferForm(classPeriod, userData.name);
-    await loadRecentTransactions();
+    loadRecentTransactions(userData.transactions);
   } catch (error) {
     showToast('Error', 'Failed to load user data.');
   }
@@ -27,7 +27,6 @@ async function loadTransferPage() {
 document.addEventListener('DOMContentLoaded', loadTransferPage);
 
 const CACHE_DURATION = 10 * 60 * 1000;
-const TRANSACTION_CACHE_DURATION = 30 * 1000;
 
 function getCachedUserData() {
   const cached = localStorage.getItem('userData');
@@ -53,54 +52,6 @@ function setCachedUserData(data) {
   localStorage.setItem('userData', JSON.stringify(cacheEntry));
 }
 
-function getCachedNames(period) {
-  const cached = localStorage.getItem(`namesByPeriod-${period}`);
-  if (cached) {
-    try {
-      const parsed = JSON.parse(cached);
-      const now = Date.now();
-      if (now - parsed.timestamp < CACHE_DURATION) {
-        return parsed.data;
-      }
-    } catch (e) {
-      return null;
-    }
-  }
-  return null;
-}
-
-function setCachedNames(period, data) {
-  const cacheEntry = {
-    data: data,
-    timestamp: Date.now(),
-  };
-  localStorage.setItem(`namesByPeriod-${period}`, JSON.stringify(cacheEntry));
-}
-
-function getCachedTransactions() {
-  const cached = localStorage.getItem('transactionsData');
-  if (cached) {
-    try {
-      const parsed = JSON.parse(cached);
-      const now = Date.now();
-      if (now - parsed.timestamp < TRANSACTION_CACHE_DURATION) {
-        return parsed.data;
-      }
-    } catch (e) {
-      return null;
-    }
-  }
-  return null;
-}
-
-function setCachedTransactions(data) {
-  const cacheEntry = {
-    data: data,
-    timestamp: Date.now(),
-  };
-  localStorage.setItem('transactionsData', JSON.stringify(cacheEntry));
-}
-
 async function getUserData() {
   const token = await getToken();
   const response = await fetch('/api/getUserData', {
@@ -112,33 +63,6 @@ async function getUserData() {
     throw new Error('Failed to fetch user data.');
   }
   return response.json();
-}
-
-async function getNamesForPeriod(period) {
-  let names = getCachedNames(period);
-  if (names) {
-    return names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-  }
-  try {
-    const token = await getToken();
-    const response = await fetch(`/api/getAggregatedLeaderboard?period=${period}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const data = await response.json();
-    if (response.ok) {
-      const extractedNames = (data.leaderboardData || []).map(item => item.name);
-      setCachedNames(period, extractedNames);
-      return extractedNames.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-    } else {
-      showToast('Error', data.message || `Failed to load student names for period ${period}.`);
-      return [];
-    }
-  } catch (error) {
-    showToast('Error', `Failed to load student names for period ${period}.`);
-    return [];
-  }
 }
 
 function setupTransferForm(period, senderName) {
@@ -226,7 +150,7 @@ function setupTransferForm(period, senderName) {
         const updatedUserData = await getUserData();
         setCachedUserData(updatedUserData);
         document.getElementById('current-balance').textContent = `$${updatedUserData.currency_balance || 0}`;
-        await loadRecentTransactions(true);
+        loadRecentTransactions(updatedUserData.transactions);
       } else {
         showToast('Error', result.message || 'An error occurred.');
       }
@@ -242,33 +166,17 @@ function setupTransferForm(period, senderName) {
   });
 }
 
-async function loadRecentTransactions(forceRefresh = false) {
-  let transactions = forceRefresh ? null : getCachedTransactions();
-  if (!transactions) {
-    const token = await getToken();
-    const response = await fetch('/api/getTransactions', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const data = await response.json();
-    if (response.ok) {
-      transactions = data.transactions || [];
-      setCachedTransactions(transactions);
-    } else {
-      transactions = [];
-    }
-  }
+function loadRecentTransactions(transactions) {
   const list = document.getElementById('transactions');
   list.innerHTML = '';
-  if (transactions.length === 0) {
+  if (!transactions || transactions.length === 0) {
     const li = document.createElement('li');
     li.textContent = 'No transactions to show.';
     list.appendChild(li);
   } else {
     transactions.forEach(tx => {
       const li = document.createElement('li');
-      const date = tx.timestamp ? new Date(tx.timestamp).toLocaleString() : '';
+      const date = tx.timestamp ? new Date(tx.timestamp._seconds * 1000).toLocaleString() : '';
       li.textContent = `${tx.type === 'credit' ? '+' : '-'}$${tx.amount} ${tx.type === 'credit' ? 'from' : 'to'} ${tx.counterpart} on ${date}`;
       list.appendChild(li);
     });
