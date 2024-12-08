@@ -497,10 +497,6 @@ select:after {
     animation: spin 2s linear infinite;
 }
 
-.hidden {
-    display: none;
-}
-
 .admin-title {
     margin-bottom: 20px;
 }
