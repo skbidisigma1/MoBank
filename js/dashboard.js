@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const name = userData.name || 'User';
         const currency_balance = userData.currency_balance || 0;
         const instrument = capitalizeFirstLetter(userData.instrument || 'N/A');
-        const email = userData.privateData.email || 'N/A';
+        const email = userData.email || 'N/A';
 
         profileName.textContent = `Welcome, ${name}!`;
         profileCurrency.textContent = `MoBuck Balance: $${currency_balance}`;
