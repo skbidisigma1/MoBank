@@ -82,6 +82,7 @@ module.exports = async (req, res) => {
         }
 
         const recipientDoc = recipientSnapshot.docs[0];
+        const recipientUid = recipientDoc.id; // Correctly define recipientUid
         const recipientRef = recipientDoc.ref;
 
         const senderData = senderDoc.data();
@@ -113,8 +114,8 @@ module.exports = async (req, res) => {
           transaction.update(senderRef, { currency_balance: updatedSenderBalance });
           transaction.update(recipientRef, { currency_balance: updatedRecipientBalance });
 
-          const senderTransactionsRef = senderRef.collection('transactions').doc(senderUid);
-          const recipientTransactionsRef = recipientRef.collection('transactions').doc(recipientUid);
+          const senderTransactionsRef = senderRef.collection('transactions').doc('transactions');
+          const recipientTransactionsRef = recipientRef.collection('transactions').doc('transactions');
 
           const senderTransactionsDoc = await transaction.get(senderTransactionsRef);
           let senderTransactions = senderTransactionsDoc.exists ? senderTransactionsDoc.data().transactions || [] : [];
