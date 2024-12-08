@@ -119,7 +119,7 @@ module.exports = async (req, res) => {
             type: 'debit',
             amount: amount,
             counterpart: recipientName,
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            timestamp: admin.firestore.Timestamp.now(),
           });
           if (senderTransactions.length > 5) {
             senderTransactions.splice(5);
@@ -131,7 +131,7 @@ module.exports = async (req, res) => {
             type: 'credit',
             amount: amount,
             counterpart: senderData.name || 'Unknown',
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            timestamp: admin.firestore.Timestamp.now(),
           });
           if (recipientTransactions.length > 5) {
             recipientTransactions.splice(5);
