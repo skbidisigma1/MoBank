@@ -18,9 +18,11 @@ async function initializeUser() {
         errorData = { message: await response.text() };
       }
       console.error(`Error initializing user: ${errorData.message}. Please refresh the page.`);
+      showToast('Initialization Error', `Error initializing user: ${errorData.message}. Please refresh the page.`);
     }
   } catch (error) {
     console.error(`Error initializing user: ${error}. Please refresh the page.`);
+    showToast('Initialization Error', `Error initializing user: ${error}. Please refresh the page.`);
   }
 }
 
