@@ -40,6 +40,7 @@ module.exports = async (req, res) => {
 
     res.status(200).json({ transactions });
   } catch (error) {
+    console.error('Get Transactions Error:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
