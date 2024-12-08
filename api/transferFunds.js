@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
-
 const { admin, db } = require('../firebase');
 
 const client = jwksClient({
@@ -120,21 +119,20 @@ module.exports = async (req, res) => {
           transaction.set(senderTransactionRef, {
             type: 'debit',
             amount: amount,
-            to: recipientName,
+            counterpart: recipientName,
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
           });
 
           transaction.set(recipientTransactionRef, {
             type: 'credit',
             amount: amount,
-            from: senderData.name || 'Unknown',
+            counterpart: senderData.name || 'Unknown',
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
           });
         });
 
         return res.status(200).json({ message: 'Transfer successful' });
       } catch (error) {
-        console.error('Transfer Funds Error:', error);
         if (error.message === 'Insufficient balance') {
           return res.status(400).json({ message: 'Insufficient balance' });
         }
