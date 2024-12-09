@@ -160,12 +160,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     await Promise.all([fetchUserData(), setProfileImage()]);
 });
 
-async function logoutUser() {
-    await window.auth0Client.logout({
-        returnTo: window.location.origin,
-    });
-}
-
 function signInWithAuth0() {
     window.auth0Client.loginWithRedirect();
 }
