@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const profileImage = document.querySelector('.dashboard-profile-icon');
     const transferButton = document.getElementById('transfer-mobucks-btn');
     const logoutButton = document.getElementById('logout-btn');
-    const profileButton = document.getElementById('profile-btn')
+    const profileButton = document.getElementById('profile-btn');
 
     const placeholderPath = '/images/default_profile.svg';
     const TOKEN_COOLDOWN_MILLISECONDS = 5 * 60 * 1000;
@@ -159,3 +159,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await Promise.all([fetchUserData(), setProfileImage()]);
 });
+
+async function logoutUser() {
+    await window.auth0Client.logout({
+        returnTo: window.location.origin,
+    });
+}
+
+function signInWithAuth0() {
+    window.auth0Client.loginWithRedirect();
+}
+
+function showToast(title, message) {
+    alert(`${title}: ${message}`);
+}
