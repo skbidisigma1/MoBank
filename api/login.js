@@ -1,21 +1,5 @@
-const jwt = require('jsonwebtoken')
-const jwksClient = require('jwks-rsa')
+const fetch = require('node-fetch')
 const { admin, db } = require('../firebase')
-
-const client = jwksClient({
-  jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
-})
-
-function getKey(header, callback) {
-  client.getSigningKey(header.kid, function (err, key) {
-    if (err) {
-      callback(err)
-    } else {
-      const signingKey = key.getPublicKey()
-      callback(null, signingKey)
-    }
-  })
-}
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -29,38 +13,37 @@ module.exports = async (req, res) => {
 
   const token = authHeader.split(' ')[1]
 
-  jwt.verify(
-    token,
-    getKey,
-    {
-      audience: process.env.AUTH0_AUDIENCE,
-      issuer: `https://${process.env.AUTH0_DOMAIN}/`,
-      algorithms: ['RS256'],
-    },
-    async (err, decoded) => {
-      if (err) {
-        return res.status(401).json({ message: 'Token verification failed', error: err.toString() })
-      }
+  try {
+    const userInfoResponse = await fetch(`https://${process.env.AUTH0_DOMAIN}/userinfo`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
 
-      const uid = decoded.sub
-
-      try {
-        const userRef = db.collection('users').doc(uid)
-        const userDoc = await userRef.get()
-
-        if (!userDoc.exists) {
-          await userRef.set({
-            name: decoded.name || 'Unknown',
-            instrument: '',
-            class_period: null,
-            currency_balance: 0,
-          })
-        }
-
-        return res.status(200).json({ message: 'User initialized successfully' })
-      } catch (error) {
-        return res.status(500).json({ message: 'Internal Server Error', error: error.toString() })
-      }
+    if (!userInfoResponse.ok) {
+      return res.status(401).json({ message: 'Invalid token' })
     }
-  )
+
+    const userInfo = await userInfoResponse.json()
+
+    const uid = userInfo.sub
+    const name = userInfo.name || 'Unknown'
+
+    const userRef = db.collection('users').doc(uid)
+    const userDoc = await userRef.get()
+
+    if (!userDoc.exists) {
+      await userRef.set({
+        name: name,
+        instrument: '',
+        class_period: null,
+        currency_balance: 0,
+      })
+    }
+
+    return res.status(200).json({ message: 'User initialized successfully' })
+  } catch (error) {
+    console.error('Internal Server Error:', error)
+    return res.status(500).json({ message: 'Internal Server Error' })
+  }
 }
