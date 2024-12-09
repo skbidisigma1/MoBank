@@ -24,7 +24,6 @@ async function fetchUserData() {
     try {
         const cachedUserData = getCachedUserData();
         if (cachedUserData) {
-            console.log('Using cached user data:', cachedUserData);
             validateUserData(cachedUserData);
             populateDashboard(cachedUserData);
             return;
@@ -39,7 +38,6 @@ async function fetchUserData() {
 
         if (response.ok) {
             const userData = await response.json();
-            console.log('Fetched user data:', userData);
             validateUserData(userData);
             setCachedUserData(userData);
             populateDashboard(userData);
@@ -60,13 +58,11 @@ async function getCachedToken() {
         try {
             cachedToken = await auth0Client.getTokenSilently();
             tokenTimestamp = Date.now();
-            console.log('Fetched new token');
         } catch (error) {
             console.error('Error fetching token:', error);
             signInWithAuth0();
         }
     } else {
-        console.log('Using cached token');
     }
     return cachedToken;
 }
