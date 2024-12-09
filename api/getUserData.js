@@ -43,11 +43,6 @@ module.exports = async (req, res) => {
       }
 
       const uid = decoded.sub;
-      const email = decoded.email;
-
-      if (!email) {
-        return res.status(400).json({ message: 'Email not available in token' });
-      }
 
       try {
         const userRef = db.collection('users').doc(uid);
@@ -61,10 +56,9 @@ module.exports = async (req, res) => {
 
         return res.status(200).json({
           ...publicData,
-          email,
+          email: decoded.email,
         });
       } catch (error) {
-        console.error('Get User Data Error:', error);
         return res.status(500).json({ message: 'Internal Server Error' });
       }
     }
