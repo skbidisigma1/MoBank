@@ -3,17 +3,11 @@ async function loadHeaderFooter() {
         const headerPath = window.location.pathname.includes('/pages/') ? '../header.html' : 'header.html';
         const footerPath = window.location.pathname.includes('/pages/') ? '../footer.html' : 'footer.html';
 
-        const [headerResponse, footerResponse] = await Promise.all([
-            fetch(headerPath),
-            fetch(footerPath)
-        ]);
+        const [headerResponse, footerResponse] = await Promise.all([fetch(headerPath), fetch(footerPath)]);
 
         if (!headerResponse.ok || !footerResponse.ok) return;
 
-        const [headerContent, footerContent] = await Promise.all([
-            headerResponse.text(),
-            footerResponse.text()
-        ]);
+        const [headerContent, footerContent] = await Promise.all([headerResponse.text(), footerResponse.text()]);
 
         document.getElementById('header-placeholder').innerHTML = headerContent;
         document.getElementById('footer-placeholder').innerHTML = footerContent;
@@ -44,6 +38,12 @@ async function loadHeaderFooter() {
         const adminLinkMobile = headerPlaceholder.querySelector('#admin-link-mobile');
         if (adminLink) adminLink.style.display = isAdmin ? 'block' : 'none';
         if (adminLinkMobile) adminLinkMobile.style.display = isAdmin ? 'block' : 'none';
+
+        const leaderboardLink = headerPlaceholder.querySelector('#leaderboard-link');
+        const leaderboardLinkMobile = headerPlaceholder.querySelector('#leaderboard-link-mobile');
+
+        if (leaderboardLink) leaderboardLink.style.display = isLoggedIn ? 'block' : 'none';
+        if (leaderboardLinkMobile) leaderboardLinkMobile.style.display = isLoggedIn ? 'block' : 'none';
 
         const authLink = headerPlaceholder.querySelector('#auth-link');
         const authLinkMobile = headerPlaceholder.querySelector('#auth-link-mobile');
@@ -99,6 +99,25 @@ async function loadHeaderFooter() {
                 if (!isLoggedIn) {
                     e.preventDefault();
                     window.location.href = `/pages/login.html?redirect=/pages/dashboard.html`;
+                }
+            });
+        }
+
+        // Handle Leaderboard navigation
+        if (leaderboardLink) {
+            leaderboardLink.addEventListener('click', (e) => {
+                if (!isLoggedIn) {
+                    e.preventDefault();
+                    window.location.href = `/pages/login.html?redirect=/pages/leaderboard.html`;
+                }
+            });
+        }
+
+        if (leaderboardLinkMobile) {
+            leaderboardLinkMobile.addEventListener('click', (e) => {
+                if (!isLoggedIn) {
+                    e.preventDefault();
+                    window.location.href = `/pages/login.html?redirect=/pages/leaderboard.html`;
                 }
             });
         }
