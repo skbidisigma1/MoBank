@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
         const doc = await docRef.get()
 
         if (!doc.exists) {
-          return res.status(404).json({ message: 'Leaderboard data not found' })
+          return res.status(404).json({ message: 'User names not found' })
         }
 
         const data = doc.data()
