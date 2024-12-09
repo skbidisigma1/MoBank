@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         await fetchUserData();
         await setProfileImage();
+
+        setupButtons();
     } catch (error) {
         console.error('Error during dashboard initialization:', error);
         showToast('Error', 'Failed to initialize dashboard. Please try again later.');
@@ -14,6 +16,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         loader.classList.add('hidden');
     }
 });
+
+function setupButtons() {
+    const transferButton = document.getElementById('transfer-mobucks-btn');
+    const logoutButton = document.getElementById('logout-btn');
+    const profileButton = document.getElementById('profile-btn');
+
+    if (transferButton) {
+        transferButton.addEventListener('click', () => {
+            window.location.href = '/pages/transfer.html';
+        });
+    }
+
+    if (logoutButton) {
+        logoutButton.addEventListener('click', async () => {
+            await logoutUser();
+            window.location.href = '/pages/login.html';
+        });
+    }
+
+    if (profileButton) {
+        profileButton.addEventListener('click', () => {
+            window.location.href = '/pages/profile.html';
+        });
+    }
+}
 
 const USER_DATA_COOLDOWN_MILLISECONDS = 20 * 1000;
 const TOKEN_COOLDOWN_MILLISECONDS = 5 * 60 * 1000;
@@ -62,7 +89,6 @@ async function getCachedToken() {
             console.error('Error fetching token:', error);
             signInWithAuth0();
         }
-    } else {
     }
     return cachedToken;
 }
