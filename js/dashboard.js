@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const profileImage = document.querySelector('.dashboard-profile-icon');
     const transferButton = document.getElementById('transfer-mobucks-btn');
     const logoutButton = document.getElementById('logout-btn');
+    const profileButton = document.getElementById('profile-btn')
 
     const placeholderPath = '/images/default_profile.svg';
     const TOKEN_COOLDOWN_MILLISECONDS = 5 * 60 * 1000;
@@ -28,6 +29,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             localStorage.clear();
             await logoutUser();
             window.location.href = '/pages/login.html';
+        });
+    }
+
+    if (profileButton) {
+        profileButton.addEventListener('click', () => {
+            window.location.href = '/pages/profile.html';
         });
     }
 
