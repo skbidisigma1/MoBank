@@ -119,13 +119,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const name = userData.name || 'User';
         const currency_balance = userData.currency_balance || 0;
         const instrument = capitalizeFirstLetter(userData.instrument || 'N/A');
-        const email = userData.email || 'N/A';
 
         profileName.textContent = `Welcome, ${name}!`;
         profileCurrency.textContent = `MoBuck Balance: $${currency_balance}`;
 
         dashboardContent.innerHTML = `
-            <div class="dashboard-card"><strong>Email:</strong> ${email}</div>
             <div class="dashboard-card"><strong>Class Period:</strong> ${userData.class_period || 'N/A'}</div>
             <div class="dashboard-card"><strong>Instrument:</strong> ${instrument}</div>
         `;
