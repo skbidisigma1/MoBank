@@ -9,6 +9,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         await setProfileImage();
 
         setupButtons();
+
+        const profileSuccessful = getUrlParameter('profile_successful');
+        if (profileSuccessful === 'true') {
+            showToast('Success', 'Profile updated successfully!');
+        }
+        
     } catch (error) {
         console.error('Error during dashboard initialization:', error);
         showToast('Error', 'Failed to initialize dashboard. Please try again later.');
@@ -16,6 +22,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         loader.classList.add('hidden');
     }
 });
+
+function getUrlParameter(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+}
 
 function setupButtons() {
     const transferButton = document.getElementById('transfer-mobucks-btn');
