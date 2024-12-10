@@ -52,7 +52,7 @@
     color: #cd7f32;
 }
 
-@media screen and (max-width: 600px) {
+@media screen and (max-width: 900px) {
     .leaderboard-table thead {
         display: none;
     }
