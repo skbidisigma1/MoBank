@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const errorMessage = document.getElementById('error-message');
     const leaderboardTitle = document.getElementById('leaderboard-title');
 
-    const CACHE_DURATION = 2 * 60 * 1000;
+    const CACHE_DURATION = 60 * 1000;
 
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
@@ -34,8 +34,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     function populateLeaderboard(data, period) {
         leaderboardBody.innerHTML = '';
         leaderboardTitle.textContent = `Leaderboard - Period ${period}`;
+        
+        const filteredData = data.leaderboardData.filter(user => user.name !== 'Madison Moline');
 
-        data.leaderboardData.forEach((user, index) => {
+        filteredData.forEach((user, index) => {
             const row = document.createElement('tr');
 
             const rankCell = document.createElement('td');
@@ -81,7 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             lastUpdatedElement.setAttribute('title', '');
         }
 
-        if (data.leaderboardData.length > 0) {
+        if (filteredData.length > 0) {
             const firstRank = leaderboardBody.querySelector('tr:nth-child(1) .rank');
             const secondRank = leaderboardBody.querySelector('tr:nth-child(2) .rank');
             const thirdRank = leaderboardBody.querySelector('tr:nth-child(3) .rank');
