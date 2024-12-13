@@ -56,7 +56,6 @@
     .leaderboard-table thead {
         display: none;
     }
-
     .leaderboard-table, 
     .leaderboard-table tbody, 
     .leaderboard-table tr, 
@@ -64,17 +63,14 @@
         display: block;
         width: 100%;
     }
-
     .leaderboard-table tr {
         margin-bottom: 15px;
     }
-
     .leaderboard-table td {
         text-align: right;
         padding-left: 50%;
         position: relative;
     }
-
     .leaderboard-table td::before {
         content: attr(data-label);
         position: absolute;
@@ -165,4 +161,22 @@
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+#small-screen-warning {
+    display: none;
+    max-width: 600px;
+    margin: 10px auto;
+    padding: 10px;
+    background-color: #ffffcc;
+    color: #333;
+    text-align: center;
+    border-radius: 4px;
+    font-family: 'Poppins', sans-serif;
+}
+
+@media screen and (max-width: 1000px) {
+    #small-screen-warning {
+        display: block;
+    }
 }
