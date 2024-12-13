@@ -34,32 +34,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     function populateLeaderboard(data, period) {
         leaderboardBody.innerHTML = '';
         leaderboardTitle.textContent = `Leaderboard - Period ${period}`;
-        
         const filteredData = data.leaderboardData.filter(user => user.name !== 'Madison Moline');
-
         filteredData.forEach((user, index) => {
             const row = document.createElement('tr');
-
             const rankCell = document.createElement('td');
             rankCell.textContent = index + 1;
             rankCell.classList.add('rank');
             row.appendChild(rankCell);
-
             const nameCell = document.createElement('td');
             nameCell.textContent = user.name;
             row.appendChild(nameCell);
-
             const balanceCell = document.createElement('td');
             balanceCell.textContent = user.balance;
             row.appendChild(balanceCell);
-
             const instrumentCell = document.createElement('td');
             instrumentCell.textContent = capitalizeFirstLetter(user.instrument);
             row.appendChild(instrumentCell);
-
             leaderboardBody.appendChild(row);
         });
-
         if (data.lastUpdated && data.lastUpdated._seconds) {
             const timestamp = new Date(data.lastUpdated._seconds * 1000);
             const formatter = new Intl.DateTimeFormat('en-US', {
@@ -82,12 +74,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             lastUpdatedElement.textContent = '';
             lastUpdatedElement.setAttribute('title', '');
         }
-
         if (filteredData.length > 0) {
             const firstRank = leaderboardBody.querySelector('tr:nth-child(1) .rank');
             const secondRank = leaderboardBody.querySelector('tr:nth-child(2) .rank');
             const thirdRank = leaderboardBody.querySelector('tr:nth-child(3) .rank');
-
             if (firstRank) firstRank.style.color = 'gold';
             if (secondRank) secondRank.style.color = 'silver';
             if (thirdRank) thirdRank.style.color = '#cd7f32';
@@ -117,35 +107,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function fetchLeaderboard(period) {
         showLoader();
         hideError();
-
         leaderboardBody.innerHTML = '';
-
         const cachedData = getCachedLeaderboard(period);
         if (cachedData) {
             populateLeaderboard(cachedData, period);
             hideLoader();
             return;
         }
-
         try {
             const token = await getToken();
-
             const response = await fetch(`/api/getAggregatedLeaderboard?period=${period}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
-
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to fetch leaderboard data');
             }
-
             const data = await response.json();
             populateLeaderboard(data, period);
             setCachedLeaderboard(period, data);
         } catch (error) {
-            console.error('Error fetching leaderboard data:', error);
             showError(error.message || 'An unexpected error occurred.');
         } finally {
             hideLoader();
@@ -155,12 +138,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function handleTabClick(event) {
         const button = event.currentTarget;
         const period = button.dataset.period;
-
         periodButtons.forEach(btn => btn.classList.remove('active'));
         button.classList.add('active');
-
         hideError();
-
         await fetchLeaderboard(period);
     }
 
@@ -170,22 +150,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function initializeLeaderboard() {
         await window.auth0Promise;
-
         const isLoggedIn = await isAuthenticated();
         if (!isLoggedIn) {
             window.location.href = '/pages/login.html';
             return;
         }
-
         const user = await getUser();
         const roles = (user && (user['https://mo-classroom.us/roles'] || user.roles)) || [];
         const isAdmin = roles.includes('admin');
-
         const periodButtonsContainer = document.getElementById('period-buttons');
         if (isAdmin) {
             periodButtonsContainer.classList.remove('hidden');
         }
-
         let defaultPeriod = 5;
         try {
             const token = await getToken();
@@ -198,10 +174,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const userData = await response.json();
                 defaultPeriod = userData.class_period || 5;
             }
-        } catch (error) {
-            console.error('Error fetching user data:', error);
-        }
-
+        } catch (error) {}
         const defaultButton = document.querySelector(`.period-button[data-period="${defaultPeriod}"]`);
         if (defaultButton) {
             defaultButton.classList.add('active');
