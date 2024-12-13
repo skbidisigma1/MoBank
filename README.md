@@ -34,11 +34,6 @@ MoBank is a web-based application designed to provide an easy, efficient way for
 - **Functions**: Serverless-HTTP
 - **RBAC (Role Based Access Control)**: Auth0 Actions
 
-## Contributors
-
-- @skbidisigma1: programming and doing everything
-- @Papaya-Voldemort: emotional support
-
 ## Contact
 
 For questions, feedback, or support, feel free to reach out:
