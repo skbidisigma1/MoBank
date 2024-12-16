@@ -55,53 +55,133 @@ module.exports = async (req, res) => {
 
       const { name, period, amount } = JSON.parse(body)
 
-      if (!name || !period || typeof amount !== 'number') {
+      if (!period || typeof amount !== 'number') {
         return res.status(400).json({ message: 'Invalid input' })
       }
 
       try {
-        const usersRef = db.collection('users')
-        const query = usersRef
-          .where('class_period', '==', parseInt(period, 10))
-          .where('name', '==', name)
+        if (name) {
+          const usersRef = db.collection('users')
+          const query = usersRef
+            .where('class_period', '==', parseInt(period, 10))
+            .where('name', '==', name)
 
-        const snapshot = await query.get()
+          const snapshot = await query.get()
 
-        if (snapshot.empty) {
-          return res.status(404).json({ message: 'User not found' })
-        }
-
-        const userDoc = snapshot.docs[0]
-        const userRef = userDoc.ref
-
-        await db.runTransaction(async (transaction) => {
-          const userSnapshot = await transaction.get(userRef)
-          if (!userSnapshot.exists) {
-            throw new Error('User does not exist')
+          if (snapshot.empty) {
+            return res.status(404).json({ message: 'User not found' })
           }
 
-          const updatedBalance = (userSnapshot.data().currency_balance || 0) + amount
+          const userDoc = snapshot.docs[0]
+          const userRef = userDoc.ref
 
-          transaction.update(userRef, {
-            currency_balance: updatedBalance
+          await db.runTransaction(async (transaction) => {
+            const userSnapshot = await transaction.get(userRef)
+            if (!userSnapshot.exists) {
+              throw new Error('User does not exist')
+            }
+
+            const updatedBalance = (userSnapshot.data().currency_balance || 0) + amount
+
+            transaction.update(userRef, {
+              currency_balance: updatedBalance
+            })
+
+            const transactionEntry = {
+              type: amount >= 0 ? 'credit' : 'debit',
+              amount: Math.abs(amount),
+              counterpart: 'Admin',
+              timestamp: admin.firestore.Timestamp.now()
+            }
+
+            const existingTransactions = userSnapshot.data().transactions || []
+            existingTransactions.unshift(transactionEntry)
+            if (existingTransactions.length > 5) {
+              existingTransactions.splice(5)
+            }
+            transaction.update(userRef, { transactions: existingTransactions })
           })
 
+          const usersRef2 = db.collection('users').where('class_period', '==', parseInt(period, 10))
+          const snapshot2 = await usersRef2.get()
+          const userData = snapshot2.docs
+            .map((doc) => {
+              const data = doc.data()
+              return {
+                uid: doc.id,
+                name: data.name || 'Unknown User',
+                balance: data.currency_balance || 0,
+                instrument: data.instrument || 'N/A'
+              }
+            })
+            .filter((u) => u.name)
+          const leaderboardData = userData.sort((a, b) => b.balance - a.balance)
+          const aggregateRef = db.collection('aggregates').doc(`leaderboard_period_${period}`)
+          await aggregateRef.set(
+            {
+              leaderboardData: leaderboardData,
+              lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+            },
+            { merge: true }
+          )
+
+          return res.status(200).json({ message: 'Balance adjusted successfully' })
+        } else {
+          const usersRef = db.collection('users').where('class_period', '==', parseInt(period, 10))
+          const snapshot = await usersRef.get()
+          if (snapshot.empty) {
+            return res.status(404).json({ message: 'No users found for this period' })
+          }
+
+          const batch = db.batch()
+          const now = admin.firestore.Timestamp.now()
           const transactionEntry = {
             type: amount >= 0 ? 'credit' : 'debit',
             amount: Math.abs(amount),
             counterpart: 'Admin',
-            timestamp: admin.firestore.Timestamp.now()
+            timestamp: now
           }
 
-          const existingTransactions = userSnapshot.data().transactions || []
-          existingTransactions.unshift(transactionEntry)
-          if (existingTransactions.length > 5) {
-            existingTransactions.splice(5)
-          }
-          transaction.update(userRef, { transactions: existingTransactions })
-        })
+          snapshot.forEach((doc) => {
+            const userRef = doc.ref
+            const data = doc.data()
+            const currentTransactions = data.transactions || []
+            const newTransactions = [transactionEntry, ...currentTransactions]
+            if (newTransactions.length > 5) {
+              newTransactions.splice(5)
+            }
+            batch.update(userRef, {
+              currency_balance: admin.firestore.FieldValue.increment(amount),
+              transactions: newTransactions
+            })
+          })
 
-        return res.status(200).json({ message: 'Balance adjusted successfully' })
+          await batch.commit()
+
+          const snapshot2 = await usersRef.get()
+          const userData = snapshot2.docs
+            .map((d) => {
+              const dt = d.data()
+              return {
+                uid: d.id,
+                name: dt.name || 'Unknown User',
+                balance: dt.currency_balance || 0,
+                instrument: dt.instrument || 'N/A'
+              }
+            })
+            .filter((u) => u.name)
+          const leaderboardData = userData.sort((a, b) => b.balance - a.balance)
+          const aggregateRef = db.collection('aggregates').doc(`leaderboard_period_${period}`)
+          await aggregateRef.set(
+            {
+              leaderboardData: leaderboardData,
+              lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+            },
+            { merge: true }
+          )
+
+          return res.status(200).json({ message: 'Global balance adjusted successfully' })
+        }
       } catch (error) {
         return res.status(500).json({ message: 'Internal Server Error', error: error.toString() })
       }
