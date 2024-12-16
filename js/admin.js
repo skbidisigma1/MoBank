@@ -32,6 +32,8 @@ async function loadAdminContent() {
         }
       });
 
+      document.getElementById('update-by-class-panel').classList.remove('hidden');
+
       if (!namesCache[period]) {
         namesCache[period] = await getNamesForPeriod(period);
       }
@@ -188,6 +190,8 @@ async function loadAdminContent() {
   const activeButton = document.querySelector('.tab-button.active');
   if (activeButton) {
     activeButton.click();
+  } else {
+    document.getElementById('update-by-class-panel').classList.remove('hidden');
   }
 }
 
