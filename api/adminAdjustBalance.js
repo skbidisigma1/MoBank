@@ -180,7 +180,7 @@ module.exports = async (req, res) => {
             { merge: true }
           )
 
-          return res.status(200).json({ message: 'Global balance adjusted successfully' })
+          return res.status(200).json({ message: 'Balances updated successfully' })
         }
       } catch (error) {
         return res.status(500).json({ message: 'Internal Server Error', error: error.toString() })
