@@ -1,7 +1,7 @@
 async function loadAdminContent() {
   await window.auth0Promise;
   const user = await getUser();
-  const roles = (user && user['https://mo-classroom.us/roles']) || [];
+  const roles = (user && user['https://${process.env.AUTH0_DOMAIN}/roles']) || [];
 
   if (!roles.includes('admin')) {
     window.location.href = '/pages/dashboard.html';
@@ -160,11 +160,15 @@ async function loadAdminContent() {
     updateByClassForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const amountInput = document.getElementById('global-currency-amount');
+      const submitButton = updateByClassForm.querySelector('button[type="submit"]');
+      if (submitButton.disabled) return;
+      submitButton.disabled = true;
       const amount = parseInt(amountInput.value, 10);
       const activeTab = document.querySelector('.tab-button.active');
       const period = activeTab ? parseInt(activeTab.dataset.period, 10) : null;
       if (!period || !amount) {
         showToast('Validation Error', 'Please select a valid period and enter a valid amount.');
+        submitButton.disabled = false;
         return;
       }
       try {
@@ -176,7 +180,7 @@ async function loadAdminContent() {
         });
         const result = await response.json();
         if (response.ok) {
-          showToast('Success', result.message);
+          showToast('Success', 'Balances updated successfully');
           amountInput.value = '';
         } else {
           showToast('Error', result.message || 'An error occurred.');
@@ -184,6 +188,9 @@ async function loadAdminContent() {
       } catch (error) {
         showToast('Network Error', 'Failed to process the request. Please try again later.');
       }
+      setTimeout(() => {
+        submitButton.disabled = false;
+      }, 2000);
     });
   }
 }
