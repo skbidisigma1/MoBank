@@ -156,36 +156,47 @@ async function loadAdminContent() {
   }
 
   const updateByClassForm = document.getElementById('update-by-class-form');
-  if (updateByClassForm) {
-    updateByClassForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const amountInput = document.getElementById('global-currency-amount');
-      const amount = parseInt(amountInput.value, 10);
-      const activeTab = document.querySelector('.tab-button.active');
-      const period = activeTab ? parseInt(activeTab.dataset.period, 10) : null;
-      if (!period || !amount) {
-        showToast('Validation Error', 'Please select a valid period and enter a valid amount.');
-        return;
+if (updateByClassForm) {
+  updateByClassForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const amountInput = document.getElementById('global-currency-amount');
+    const submitButton = updateByClassForm.querySelector('button[type="submit"]'); // Reference the submit button
+    if (submitButton.disabled) return; // Prevent duplicate submissions
+    submitButton.disabled = true; // Disable the button immediately
+
+    const amount = parseInt(amountInput.value, 10);
+    const activeTab = document.querySelector('.tab-button.active');
+    const period = activeTab ? parseInt(activeTab.dataset.period, 10) : null;
+
+    if (!period || !amount) {
+      showToast('Validation Error', 'Please select a valid period and enter a valid amount.');
+      submitButton.disabled = false;
+      return;
+    }
+
+    try {
+      const token = await getToken();
+      const response = await fetch('/api/adminAdjustBalance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: null, period, amount }),
+      });
+      const result = await response.json();
+      if (response.ok) {
+        showToast('Success', result.message);
+        amountInput.value = '';
+      } else {
+        showToast('Error', result.message || 'An error occurred.');
       }
-      try {
-        const token = await getToken();
-        const response = await fetch('/api/adminAdjustBalance', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ name: null, period, amount }),
-        });
-        const result = await response.json();
-        if (response.ok) {
-          showToast('Success', result.message);
-          amountInput.value = '';
-        } else {
-          showToast('Error', result.message || 'An error occurred.');
-        }
-      } catch (error) {
-        showToast('Network Error', 'Failed to process the request. Please try again later.');
-      }
-    });
-  }
+    } catch (error) {
+      showToast('Network Error', 'Failed to process the request. Please try again later.');
+    }
+
+    setTimeout(() => {
+      submitButton.disabled = false;
+    }, 2000);
+  });
+}}
 }
 
 loadAdminContent();
