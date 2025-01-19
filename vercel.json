@@ -40,6 +40,22 @@
           "value": "fullscreen=(self)"
         },
         {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://mo-classroom.us"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        },
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
+        },
+        {
           "key": "Expect-CT",
           "value": "max-age=86400, enforce, report-uri=\"https://your-report-uri.com\""
         }
