@@ -36,6 +36,10 @@
           "value": "noopen"
         },
         {
+          "key": "Permissions-Policy",
+          "value": "fullscreen=(self)"
+        },
+        {
           "key": "Expect-CT",
           "value": "max-age=86400, enforce, report-uri=\"https://your-report-uri.com\""
         }
