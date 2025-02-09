@@ -37,7 +37,7 @@
         },
         {
           "key": "Permissions-Policy",
-          "value": "notifications=(self), fullscreen=(self)"
+          "value": "fullscreen=(self)"
         },
         {
           "key": "Access-Control-Allow-Origin",
