@@ -131,4 +131,14 @@ async function loadHeaderFooter() {
     }
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  if (!document.querySelector('link[rel="manifest"]')) {
+    const manifestLink = document.createElement("link");
+    manifestLink.rel = "manifest";
+    manifestLink.href = "/manifest.json";
+    document.head.appendChild(manifestLink);
+  }
+});
+
+
 document.addEventListener('DOMContentLoaded', loadHeaderFooter);
