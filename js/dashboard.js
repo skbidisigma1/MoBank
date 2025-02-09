@@ -4,21 +4,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         await window.auth0Promise;
+
         await fetchUserData();
         await setProfileImage();
+
         setupButtons();
 
         const profileSuccessful = getUrlParameter('profile_successful');
         if (profileSuccessful === 'true') {
             showToast('Success', 'Profile updated successfully!');
-        }
-        
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            navigator.serviceWorker.ready.then(registration => {
-                if (Notification.permission === 'granted') {
-                    subscribeForPushNotifications(registration);
-                }
-            }).catch(err => console.error('Service Worker not ready:', err));
         }
         
     } catch (error) {
@@ -175,48 +169,4 @@ async function setProfileImage() {
 
 function redirectTo(url) {
     window.location.href = url;
-}
-
-const VAPID_PUBLIC_KEY = 'BIwoGfBqRp3OKEq6tV075zrm344mYQwYnemA7W6C4-iqal5NFfTDcAEvazr5X72jPk82YdVaupgB5YFu9PSXuvk';
-
-async function subscribeForPushNotifications(registration) {
-    try {
-        const subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-        });
-        console.log('Push subscription:', subscription);
-        sendSubscriptionToServer(subscription);
-        return subscription;
-    } catch (err) {
-        console.error('Failed to subscribe for push notifications:', err);
-    }
-}
-
-async function sendSubscriptionToServer(subscription) {
-    try {
-        const response = await fetch('/api/saveSubscription', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(subscription)
-        });
-        if (!response.ok) {
-            console.error('Failed to save subscription on server.');
-        } else {
-            console.log('Subscription saved on server.');
-        }
-    } catch (error) {
-        console.error('Error sending subscription to server:', error);
-    }
-}
-
-function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
 }
