@@ -5,9 +5,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.location.href = '/pages/login.html';
     });
   }
+
   if (window.matchMedia("(display-mode: standalone)").matches) {
     return;
   }
+
   const dontAsk = await getDontAskAgain();
   if (!dontAsk) {
     window.addEventListener('beforeinstallprompt', e => {
@@ -16,17 +18,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('install-prompt').style.display = 'block';
     });
   }
+
   document.getElementById('install-yes-btn').addEventListener('click', async () => {
     if (window.deferredPrompt) {
       window.deferredPrompt.prompt();
-      await window.deferredPrompt.userChoice;
+      const choiceResult = await window.deferredPrompt.userChoice;
+      console.log(`User response: ${choiceResult.outcome}`);
       document.getElementById('install-prompt').style.display = 'none';
       window.deferredPrompt = null;
     }
   });
+
   document.getElementById('install-no-btn').addEventListener('click', () => {
     document.getElementById('install-prompt').style.display = 'none';
   });
+
   document.getElementById('install-dont-btn').addEventListener('click', async () => {
     document.getElementById('install-prompt').style.display = 'none';
     await saveDontAskAgain(true);
