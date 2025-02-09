@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const getStartedBtn = document.getElementById('get-started-btn');
   if (getStartedBtn) {
     getStartedBtn.addEventListener('click', () => {
@@ -8,15 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.matchMedia("(display-mode: standalone)").matches) {
     return;
   }
-  getDontAskAgain(flag => {
-    if (!flag) {
-      window.addEventListener('beforeinstallprompt', e => {
-        e.preventDefault();
-        window.deferredPrompt = e;
-        document.getElementById('install-prompt').style.display = 'block';
-      });
-    }
-  });
+  const dontAsk = await getDontAskAgain();
+  if (!dontAsk) {
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      window.deferredPrompt = e;
+      document.getElementById('install-prompt').style.display = 'block';
+    });
+  }
   document.getElementById('install-yes-btn').addEventListener('click', async () => {
     if (window.deferredPrompt) {
       window.deferredPrompt.prompt();
@@ -28,43 +27,56 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('install-no-btn').addEventListener('click', () => {
     document.getElementById('install-prompt').style.display = 'none';
   });
-  document.getElementById('install-dont-btn').addEventListener('click', () => {
+  document.getElementById('install-dont-btn').addEventListener('click', async () => {
     document.getElementById('install-prompt').style.display = 'none';
-    saveDontAskAgain(true);
+    await saveDontAskAgain(true);
   });
 });
 
-function getDontAskAgain(callback) {
-  const req = indexedDB.open("mobank-db", 1);
-  req.onupgradeneeded = e => {
-    const db = e.target.result;
-    if (!db.objectStoreNames.contains("preferences")) {
-      db.createObjectStore("preferences", { keyPath: "key" });
-    }
-  };
-  req.onsuccess = e => {
-    const db = e.target.result;
-    const tx = db.transaction("preferences", "readonly");
-    const store = tx.objectStore("preferences");
-    const getReq = store.get("dontAskInstall");
-    getReq.onsuccess = () => {
-      callback(getReq.result ? getReq.result.value : false);
+function openPreferencesDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("mobank-db", 1);
+    request.onupgradeneeded = event => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains("preferences")) {
+        db.createObjectStore("preferences", { keyPath: "key" });
+      }
     };
-  };
+    request.onsuccess = event => {
+      resolve(event.target.result);
+    };
+    request.onerror = event => {
+      reject(event.target.error);
+    };
+  });
 }
 
-function saveDontAskAgain(val) {
-  const req = indexedDB.open("mobank-db", 1);
-  req.onupgradeneeded = e => {
-    const db = e.target.result;
-    if (!db.objectStoreNames.contains("preferences")) {
-      db.createObjectStore("preferences", { keyPath: "key" });
-    }
-  };
-  req.onsuccess = e => {
-    const db = e.target.result;
-    const tx = db.transaction("preferences", "readwrite");
-    const store = tx.objectStore("preferences");
-    store.put({ key: "dontAskInstall", value: val });
-  };
+async function getDontAskAgain() {
+  const db = await openPreferencesDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction("preferences", "readonly");
+    const store = transaction.objectStore("preferences");
+    const req = store.get("dontAskInstall");
+    req.onsuccess = () => {
+      resolve(req.result ? req.result.value : false);
+    };
+    req.onerror = () => {
+      reject(req.error);
+    };
+  });
+}
+
+async function saveDontAskAgain(val) {
+  const db = await openPreferencesDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction("preferences", "readwrite");
+    const store = transaction.objectStore("preferences");
+    const req = store.put({ key: "dontAskInstall", value: val });
+    req.onsuccess = () => {
+      resolve(true);
+    };
+    req.onerror = () => {
+      reject(req.error);
+    };
+  });
 }
