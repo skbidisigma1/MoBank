@@ -29,14 +29,14 @@ async function initializeUser() {
 document.addEventListener('DOMContentLoaded', () => {
     const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
-    document.querySelectorAll('.legal-link').forEach(link => {
+    document.querySelectorAll('.pwa-link').forEach(link => {
         link.addEventListener('click', (event) => {
+            event.preventDefault();
+            const url = link.getAttribute('data-url');
             if (isPWA) {
-                event.preventDefault();
-                window.open(link.href, '_blank', 'noopener,noreferrer,width=800,height=600');
+                window.open(url, '_blank', 'noopener,noreferrer,width=800,height=600');
             } else {
-                link.setAttribute('target', '_blank');
-                link.setAttribute('rel', 'noopener noreferrer');
+                window.location.href = url;
             }
         });
     });
