@@ -103,7 +103,6 @@ async function loadHeaderFooter() {
             });
         }
 
-        // Handle Leaderboard navigation
         if (leaderboardLink) {
             leaderboardLink.addEventListener('click', (e) => {
                 if (!isLoggedIn) {
