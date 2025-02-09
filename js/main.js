@@ -1,3 +1,5 @@
+let deferredPrompt;
+
 document.addEventListener('DOMContentLoaded', async () => {
   const getStartedBtn = document.getElementById('get-started-btn');
   if (getStartedBtn) {
@@ -12,28 +14,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const dontAsk = await getDontAskAgain();
   if (!dontAsk) {
-    window.addEventListener('beforeinstallprompt', e => {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      console.log('beforeinstallprompt Event fired');
       e.preventDefault();
-      window.deferredPrompt = e;
+      deferredPrompt = e;
       document.getElementById('install-prompt').style.display = 'block';
     });
   }
 
   document.getElementById('install-yes-btn').addEventListener('click', async () => {
-    if (window.deferredPrompt) {
-      window.deferredPrompt.prompt();
-      const choiceResult = await window.deferredPrompt.userChoice;
+    if (deferredPrompt) {
+      console.log('Showing install prompt');
+      deferredPrompt.prompt();
+      const choiceResult = await deferredPrompt.userChoice;
       console.log(`User response: ${choiceResult.outcome}`);
       document.getElementById('install-prompt').style.display = 'none';
-      window.deferredPrompt = null;
+      deferredPrompt = null;
     }
   });
 
   document.getElementById('install-no-btn').addEventListener('click', () => {
+    console.log('User dismissed install prompt');
     document.getElementById('install-prompt').style.display = 'none';
   });
 
   document.getElementById('install-dont-btn').addEventListener('click', async () => {
+    console.log('User chose "Don\'t ask again"');
     document.getElementById('install-prompt').style.display = 'none';
     await saveDontAskAgain(true);
   });
