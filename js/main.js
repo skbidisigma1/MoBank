@@ -1,70 +1,70 @@
 document.addEventListener('DOMContentLoaded', () => {
-  var getStartedBtn = document.getElementById('get-started-btn');
-  if(getStartedBtn){
-    getStartedBtn.addEventListener('click', function(){
+  const getStartedBtn = document.getElementById('get-started-btn');
+  if (getStartedBtn) {
+    getStartedBtn.addEventListener('click', () => {
       window.location.href = '/pages/login.html';
     });
   }
-  if(window.matchMedia("(display-mode: standalone)").matches){
+  if (window.matchMedia("(display-mode: standalone)").matches) {
     return;
   }
-  getDontAskAgain(function(flag){
-    if(!flag){
-      window.addEventListener('beforeinstallprompt', function(e){
+  getDontAskAgain(flag => {
+    if (!flag) {
+      window.addEventListener('beforeinstallprompt', e => {
         e.preventDefault();
         window.deferredPrompt = e;
         document.getElementById('install-prompt').style.display = 'block';
       });
     }
   });
-  document.getElementById('install-yes-btn').addEventListener('click', async function(){
-    if(window.deferredPrompt){
+  document.getElementById('install-yes-btn').addEventListener('click', async () => {
+    if (window.deferredPrompt) {
       window.deferredPrompt.prompt();
-      var choice = await window.deferredPrompt.userChoice;
+      await window.deferredPrompt.userChoice;
       document.getElementById('install-prompt').style.display = 'none';
       window.deferredPrompt = null;
     }
   });
-  document.getElementById('install-no-btn').addEventListener('click', function(){
+  document.getElementById('install-no-btn').addEventListener('click', () => {
     document.getElementById('install-prompt').style.display = 'none';
   });
-  document.getElementById('install-dont-btn').addEventListener('click', function(){
+  document.getElementById('install-dont-btn').addEventListener('click', () => {
     document.getElementById('install-prompt').style.display = 'none';
     saveDontAskAgain(true);
   });
 });
 
-function getDontAskAgain(callback){
-  var req = indexedDB.open("mobank-db", 1);
-  req.onupgradeneeded = function(e){
-    var db = e.target.result;
-    if(!db.objectStoreNames.contains("preferences")){
-      db.createObjectStore("preferences", {keyPath:"key"});
+function getDontAskAgain(callback) {
+  const req = indexedDB.open("mobank-db", 1);
+  req.onupgradeneeded = e => {
+    const db = e.target.result;
+    if (!db.objectStoreNames.contains("preferences")) {
+      db.createObjectStore("preferences", { keyPath: "key" });
     }
   };
-  req.onsuccess = function(e){
-    var db = e.target.result;
-    var tx = db.transaction("preferences", "readonly");
-    var store = tx.objectStore("preferences");
-    var getReq = store.get("dontAskInstall");
-    getReq.onsuccess = function(){
+  req.onsuccess = e => {
+    const db = e.target.result;
+    const tx = db.transaction("preferences", "readonly");
+    const store = tx.objectStore("preferences");
+    const getReq = store.get("dontAskInstall");
+    getReq.onsuccess = () => {
       callback(getReq.result ? getReq.result.value : false);
     };
   };
 }
 
-function saveDontAskAgain(val){
-  var req = indexedDB.open("mobank-db", 1);
-  req.onupgradeneeded = function(e){
-    var db = e.target.result;
-    if(!db.objectStoreNames.contains("preferences")){
-      db.createObjectStore("preferences", {keyPath:"key"});
+function saveDontAskAgain(val) {
+  const req = indexedDB.open("mobank-db", 1);
+  req.onupgradeneeded = e => {
+    const db = e.target.result;
+    if (!db.objectStoreNames.contains("preferences")) {
+      db.createObjectStore("preferences", { keyPath: "key" });
     }
   };
-  req.onsuccess = function(e){
-    var db = e.target.result;
-    var tx = db.transaction("preferences", "readwrite");
-    var store = tx.objectStore("preferences");
-    store.put({key:"dontAskInstall", value:val});
+  req.onsuccess = e => {
+    const db = e.target.result;
+    const tx = db.transaction("preferences", "readwrite");
+    const store = tx.objectStore("preferences");
+    store.put({ key: "dontAskInstall", value: val });
   };
 }
