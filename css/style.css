@@ -665,7 +665,6 @@ select:after {
     .toast-message {
         font-size: 12px;
     }
-
     #mobileMenuToggle {
         display: flex;
         position: absolute;
@@ -674,11 +673,9 @@ select:after {
         transform: translateY(-50%);
         z-index: 1101;
     }
-
     nav ul {
         display: none;
     }
-
     .mobile-nav {
         position: fixed;
         top: 60px;
@@ -693,13 +690,11 @@ select:after {
         opacity: 0;
         overflow: hidden;
     }
-
     .mobile-nav.active {
         display: flex;
         max-height: 500px;
         opacity: 1;
     }
-
     .mobile-nav ul {
         list-style-type: none;
         padding: 0;
@@ -709,11 +704,9 @@ select:after {
         flex-direction: column;
         align-items: center;
     }
-
     .mobile-nav li {
         text-align: center;
     }
-
     .mobile-nav li a {
         display: block;
         padding: 10px;
@@ -722,22 +715,18 @@ select:after {
         background-color: transparent;
         font-weight: bold;
     }
-
     .mobile-nav li a:hover {
         background-color: rgba(0, 68, 148, 0.8);
     }
-
     header h1 {
         font-size: 1.3rem;
     }
-
     main {
         padding: 15px;
         margin: 10px auto;
         max-width: 90vw;
         text-align: left;
     }
-
     .container {
         padding: 15px;
         margin: 10px auto;
@@ -752,4 +741,46 @@ select:after {
         margin: 20px auto;
         padding: 40px;
     }
+}
+
+#install-prompt {
+  margin-top: 20px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  display: none;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+#install-prompt p {
+  font-size: 16px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.install-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.install-buttons button {
+  background-color: #0056b3;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.install-buttons button:hover {
+  background-color: #004494;
+  transform: translateY(-2px);
+}
+
+.install-buttons button:active {
+  transform: translateY(0);
 }
