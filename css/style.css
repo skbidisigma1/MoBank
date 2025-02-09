@@ -745,3 +745,61 @@ select:after {
     padding: 40px;
   }
 }
+
+#install-prompt {
+  margin-top: 40px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  text-align: center;
+  display: none;
+}
+
+#install-prompt h3 {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.install-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.install-btn {
+  background-color: #009879;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.install-btn:hover {
+  background-color: #007a65;
+  transform: translateY(-2px);
+}
+
+.dont-btn {
+  background-color: #009879;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  width: auto;
+  display: inline-block;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.dont-btn:hover {
+  background-color: #007a65;
+  transform: translateY(-2px);
+}
