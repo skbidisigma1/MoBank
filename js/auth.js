@@ -26,6 +26,21 @@ async function initializeUser() {
   }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+    if (isPWA) {
+        document.querySelectorAll('.legal-link').forEach(link => {
+            link.setAttribute('target', '_self');
+        });
+    } else {
+        document.querySelectorAll('.legal-link').forEach(link => {
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer');
+        });
+    }
+});
+
 let auth0Client = null;
 
 const protectedPages = ['dashboard.html', 'admin.html', 'transfer.html', 'leaderboard.html'];
