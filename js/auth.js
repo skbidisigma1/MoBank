@@ -29,16 +29,17 @@ async function initializeUser() {
 document.addEventListener('DOMContentLoaded', () => {
     const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
-    if (isPWA) {
-        document.querySelectorAll('.legal-link').forEach(link => {
-            link.setAttribute('target', '_self');
+    document.querySelectorAll('.legal-link').forEach(link => {
+        link.addEventListener('click', (event) => {
+            if (isPWA) {
+                event.preventDefault();
+                window.open(link.href, '_blank', 'noopener,noreferrer,width=800,height=600');
+            } else {
+                link.setAttribute('target', '_blank');
+                link.setAttribute('rel', 'noopener noreferrer');
+            }
         });
-    } else {
-        document.querySelectorAll('.legal-link').forEach(link => {
-            link.setAttribute('target', '_blank');
-            link.setAttribute('rel', 'noopener noreferrer');
-        });
-    }
+    });
 });
 
 let auth0Client = null;
