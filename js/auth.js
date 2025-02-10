@@ -41,10 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
       event.preventDefault();
       const url = link.getAttribute('data-url');
       if (!url || !isValidUrl(url)) return;
+      const safeUrl = encodeURI(url);
       if (isPWA) {
-        window.open(url, '_blank', 'noopener,noreferrer,width=800,height=600');
+        window.open(safeUrl, '_blank', 'noopener,noreferrer,width=800,height=600');
       } else {
-        window.location.href = url;
+        window.location.href = safeUrl;
       }
     });
   });
