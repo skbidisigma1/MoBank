@@ -6,10 +6,9 @@ async function initializeUser() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}`
+      }
     });
-
     if (!response.ok) {
       let errorData;
       try {
@@ -26,24 +25,32 @@ async function initializeUser() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+function isValidUrl(userUrl) {
+  try {
+    const url = new URL(userUrl, window.location.origin);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch (e) {
+    return false;
+  }
+}
 
-    document.querySelectorAll('.pwa-link').forEach(link => {
-        link.addEventListener('click', (event) => {
-            event.preventDefault();
-            const url = link.getAttribute('data-url');
-            if (isPWA) {
-                window.open(url, '_blank', 'noopener,noreferrer,width=800,height=600');
-            } else {
-                window.location.href = url;
-            }
-        });
+document.addEventListener('DOMContentLoaded', () => {
+  const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  document.querySelectorAll('.pwa-link').forEach(link => {
+    link.addEventListener('click', event => {
+      event.preventDefault();
+      const url = link.getAttribute('data-url');
+      if (!url || !isValidUrl(url)) return;
+      if (isPWA) {
+        window.open(url, '_blank', 'noopener,noreferrer,width=800,height=600');
+      } else {
+        window.location.href = url;
+      }
     });
+  });
 });
 
 let auth0Client = null;
-
 const protectedPages = ['dashboard.html', 'admin.html', 'transfer.html', 'leaderboard.html'];
 
 const auth0Promise = (async () => {
@@ -53,11 +60,9 @@ const auth0Promise = (async () => {
     redirect_uri: window.location.origin + '/pages/dashboard.html',
     audience: 'https://mo-classroom.us/api',
     cacheLocation: 'localstorage',
-    useRefreshTokens: true,
+    useRefreshTokens: true
   });
-
   await handleAuthRedirect();
-
   const currentPage = window.location.pathname.split('/').pop();
   const isProtected = protectedPages.includes(currentPage);
   const isAuthenticated = await auth0Client.isAuthenticated();
@@ -75,7 +80,7 @@ async function signInWithAuth0() {
     await auth0Client.loginWithRedirect({
       redirect_uri: window.location.origin + '/pages/dashboard.html',
       connection: 'google-oauth2',
-      prompt: 'select_account',
+      prompt: 'select_account'
     });
   } catch (error) {
     console.error('Auth0 Login Error:', error);
@@ -99,13 +104,13 @@ async function logoutUser() {
   try {
     await auth0Client.logout({
       logoutParams: {
-        returnTo: window.location.origin,
+        returnTo: window.location.origin
       },
-      federated: false,
+      federated: false
     });
     localStorage.clear();
     sessionStorage.clear();
-    document.cookie.split(';').forEach((cookie) => {
+    document.cookie.split(';').forEach(cookie => {
       const eqPos = cookie.indexOf('=');
       const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
       document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
@@ -144,7 +149,6 @@ async function getToken() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await auth0Promise;
-
   const signInButton = document.getElementById('auth0-signin');
   if (signInButton) {
     signInButton.addEventListener('click', signInWithAuth0);
