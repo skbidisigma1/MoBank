@@ -24,14 +24,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('install-yes-btn').addEventListener('click', async () => {
     if (deferredPrompt) {
-      console.log('Showing install prompt');
-      deferredPrompt.prompt();
-      const choiceResult = await deferredPrompt.userChoice;
-      console.log(`User response: ${choiceResult.outcome}`);
-      document.getElementById('install-prompt').style.display = 'none';
-      deferredPrompt = null;
+        console.log('Showing install prompt');
+        deferredPrompt.prompt();
+        const choiceResult = await deferredPrompt.userChoice;
+        console.log(`User response: ${choiceResult.outcome}`);
+        document.getElementById('install-prompt').style.display = 'none';
+        deferredPrompt = null;
+
+        if (choiceResult.outcome === 'accepted') {
+            console.log("PWA installed, redirecting to pin instructions...");
+            setTimeout(() => {
+                window.location.href = "/pages/pin.html";
+            }, 1000);
+        }
     }
-  });
+});
 
   document.getElementById('install-no-btn').addEventListener('click', () => {
     console.log('User dismissed install prompt');
