@@ -33,9 +33,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (choiceResult.outcome === 'accepted') {
             console.log("PWA installed, redirecting to pin instructions...");
-            setTimeout(() => {
-                window.location.href = "/pages/pin.html";
-            }, 1000);
         }
     }
 });
