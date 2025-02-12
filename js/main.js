@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  document.getElementById('install-yes-btn').addEventListener('click', async () => {
+document.getElementById('install-yes-btn').addEventListener('click', async () => {
     if (deferredPrompt) {
         console.log('Showing install prompt');
         deferredPrompt.prompt();
@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (choiceResult.outcome === 'accepted') {
             console.log("PWA installed, redirecting to pin instructions...");
+            setTimeout(() => {
+                window.location.href = "/pages/pin.html";
+            }, 500);
         }
     }
 });
