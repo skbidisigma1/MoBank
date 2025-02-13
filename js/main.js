@@ -32,10 +32,18 @@ document.getElementById('install-yes-btn').addEventListener('click', async () =>
         deferredPrompt = null;
 
         if (choiceResult.outcome === 'accepted') {
-            console.log("PWA installed, redirecting to pin instructions...");
-            setTimeout(() => {
-                window.location.href = "/pages/pin.html";
-            }, 500);
+            console.log("PWA installed, checking OS...");
+
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isChromeOS = userAgent.includes("cros");
+            const isWindows = userAgent.includes("windows");
+
+            if (isChromeOS || isWindows) {
+                console.log("Running on ChromeOS or Windows, redirecting to pin instructions...");
+                setTimeout(() => {
+                    window.location.href = "/pages/pin.html";
+                }, 500);
+            }
         }
     }
 });
