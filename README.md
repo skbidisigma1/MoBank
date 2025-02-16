@@ -28,5 +28,5 @@ MoBank is a web-based application that helps teachers manage and monitor student
 
 ## Contact
 For support or feedback, please reach out:
-- **Email:** [luke.c309@stu.nebo.edu](mailto:support@mo-classroom.us)
+- **Email:** [support@mo-classroom.us](mailto:support@mo-classroom.us)
 - **GitHub:** [skbidisigma1](https://github.com/skbidisigma1)
