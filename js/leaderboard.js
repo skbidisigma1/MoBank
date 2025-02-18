@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         defaultPeriod = userData.class_period || 5;
       }
     } catch (error) {
-        console.log("bro theres an error i think")
+        console.log("bro theres an error i think", error)
     }
     const defaultButton = document.querySelector(`.period-button[data-period="${defaultPeriod}"]`);
     if (defaultButton) {
