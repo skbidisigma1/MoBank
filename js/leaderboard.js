@@ -91,15 +91,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const secondRank = leaderboardBody.querySelector('tr:nth-child(2) .rank');
       const thirdRank = leaderboardBody.querySelector('tr:nth-child(3) .rank');
 
-      if (firstRank) {
-        firstRank.innerHTML = `🥇 <span style="color: gold;">1</span>`;
-      }
-      if (secondRank) {
-        secondRank.innerHTML = `🥈 <span style="color: silver;">2</span>`;
-      }
-      if (thirdRank) {
-        thirdRank.innerHTML = `🥉 <span style="color: #cd7f32;">3</span>`;
-      }
+      if (firstRank) firstRank.textContent = '🥇';
+      if (secondRank) secondRank.textContent = '🥈';
+      if (thirdRank) thirdRank.textContent = '🥉';
     }
   }
 

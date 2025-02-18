@@ -1,4 +1,5 @@
 node_modules/
 .env
 keys/mo-bank-firebase-adminsdk-ynglt-6cbe523bdc.json
-.vercel
+.vercel/
+.idea/
