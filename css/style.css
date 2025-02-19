@@ -24,8 +24,9 @@
   --font-main: 'Poppins', Arial, sans-serif;
 }
 
+
 [data-theme="dark"] {
-  --color-primary: #0a84ff;
+  --color-primary: #005fa3;
   --color-primary-dark: #0060df;
   --color-secondary: #30d158;
   --color-secondary-dark: #28b14c;
@@ -46,7 +47,7 @@
   --color-border: #555555;
   --color-disabled-bg: rgba(255, 255, 255, 0.2);
   --color-main-bg: #1f1f1f;
-  --color-footer-bg: #121212;
+  --color-footer-bg: #181818;
   --font-main: 'Poppins', Arial, sans-serif;
 }
 
