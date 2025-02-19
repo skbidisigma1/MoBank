@@ -1,3 +1,23 @@
+:root {
+    --color-primary: #0056b3;
+    --color-primary-dark: #003366;
+    --color-secondary: #009879;
+    --color-secondary-dark: #007a65;
+    --color-white: #ffffff;
+    --color-bg: #f4f6f8;
+    --color-text: #333;
+    --color-muted: #666;
+    --color-light: #f3f3f3;
+    --color-hover: #f1f1f1;
+    --color-error-bg: #ffdddd;
+    --color-error-border: #f44336;
+    --color-error-text: #a94442;
+    --color-warning-bg: #ffffcc;
+    --color-warning-text: #333;
+    --color-loader-border: #f3f3f3;
+    --color-loader-top: var(--color-primary);
+}
+
 .leaderboard-table {
     width: 100%;
     border-collapse: collapse;
@@ -8,8 +28,8 @@
 }
 
 .leaderboard-table thead tr {
-    background-color: #009879;
-    color: #ffffff;
+    background-color: var(--color-secondary);
+    color: var(--color-white);
     text-align: left;
     font-weight: bold;
 }
@@ -21,19 +41,19 @@
 }
 
 .leaderboard-table tbody tr {
-    border-bottom: 1px solid #dddddd;
+    border-bottom: 1px solid var(--color-light);
 }
 
 .leaderboard-table tbody tr:nth-of-type(even) {
-    background-color: #f3f3f3;
+    background-color: var(--color-bg);
 }
 
 .leaderboard-table tbody tr:last-of-type {
-    border-bottom: 2px solid #009879;
+    border-bottom: 2px solid var(--color-secondary);
 }
 
 .leaderboard-table tbody tr:hover {
-    background-color: #f1f1f1;
+    background-color: var(--color-hover);
 }
 
 .leaderboard-table tbody tr td.rank {
@@ -56,9 +76,9 @@
     .leaderboard-table thead {
         display: none;
     }
-    .leaderboard-table, 
-    .leaderboard-table tbody, 
-    .leaderboard-table tr, 
+    .leaderboard-table,
+    .leaderboard-table tbody,
+    .leaderboard-table tr,
     .leaderboard-table td {
         display: block;
         width: 100%;
@@ -92,8 +112,8 @@
 .period-button {
     font-family: 'Poppins', sans-serif;
     font-weight: 600;
-    background-color: #0056b3;
-    color: white;
+    background-color: var(--color-primary);
+    color: var(--color-white);
     border: none;
     padding: 10px 20px;
     border-radius: 4px;
@@ -102,7 +122,7 @@
 }
 
 .period-button:hover {
-    background-color: #004494;
+    background-color: var(--color-primary-dark);
     transform: translateY(-2px);
 }
 
@@ -111,7 +131,7 @@
 }
 
 .period-button.active {
-    background-color: #003366;
+    background-color: var(--color-primary-dark);
 }
 
 #leaderboard-title {
@@ -123,15 +143,15 @@
     margin-top: 10px;
     font-style: italic;
     font-size: 14px;
-    color: #666;
+    color: var(--color-muted);
     font-family: 'Poppins', sans-serif;
 }
 
 .loader {
     margin: 20px auto;
     z-index: 1400;
-    border: 6px solid #f3f3f3;
-    border-top: 6px solid #0056b3;
+    border: 6px solid var(--color-loader-border);
+    border-top: 6px solid var(--color-loader-top);
     border-radius: 50%;
     width: clamp(50px, 20%, 200px);
     aspect-ratio: 1 / 1;
@@ -146,9 +166,9 @@
     margin: 10px auto;
     max-width: 600px;
     padding: 10px;
-    background-color: #ffdddd;
-    border-left: 6px solid #f44336;
-    color: #a94442;
+    background-color: var(--color-error-bg);
+    border-left: 6px solid var(--color-error-border);
+    color: var(--color-error-text);
     font-family: 'Poppins', sans-serif;
     border-radius: 4px;
 }
@@ -168,8 +188,8 @@
     max-width: 600px;
     margin: 10px auto;
     padding: 10px;
-    background-color: #ffffcc;
-    color: #333;
+    background-color: var(--color-warning-bg);
+    color: var(--color-warning-text);
     text-align: center;
     border-radius: 4px;
     font-family: 'Poppins', sans-serif;
