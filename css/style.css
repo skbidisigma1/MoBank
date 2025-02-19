@@ -21,6 +21,7 @@
   --color-disabled-bg: rgba(255, 255, 255, 0.61);
   --color-main-bg: var(--color-white);
   --color-footer-bg: #333333;
+  --input-color: #F2F2F2;
   --dashboard-card-bg: var(--color-white);
   --font-main: 'Poppins', Arial, sans-serif;
 }
@@ -49,6 +50,7 @@
   --color-disabled-bg: rgba(255, 255, 255, 0.2);
   --color-main-bg: #1f1f1f;
   --color-footer-bg: #1f1f1f;
+  --input-color: #D4C9C8;
   --dashboard-card-bg: #252525;
   --font-main: 'Poppins', Arial, sans-serif;
 }
@@ -218,9 +220,11 @@ input[type="number"] {
   padding: 10px;
   margin-bottom: 15px;
   border: 1px solid var(--color-border);
+  background-color: var(--input-color);
   border-radius: 4px;
   font-size: 16px;
   width: 100%;
+  font-family: var(--font-main);
 }
 input:focus {
   border-color: var(--color-primary);
