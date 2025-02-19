@@ -23,7 +23,7 @@
   --color-footer-bg: #333333;
   --input-color: #F2F2F2;
   --suggestions-container-color: #F2F2F2;
-  --dashboard-card-bg: var(--color-white);
+  --container-color: var(--color-white);
   --font-main: 'Poppins', Arial, sans-serif;
 }
 
@@ -53,7 +53,7 @@
   --color-footer-bg: #1f1f1f;
   --input-color: #F2F2F2;
   --suggestions-container-color: var(--color-bg);
-  --dashboard-card-bg: #252525;
+  --container-color: #252525;
   --font-main: 'Poppins', Arial, sans-serif;
 }
 
@@ -191,7 +191,7 @@ main {
   padding: 40px;
   margin: 20px auto;
   text-align: center;
-  background-color: var(--color-main-bg);
+  background-color: var(--container-color);
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
@@ -458,7 +458,7 @@ select:after {
   margin: 20px;
 }
 .dashboard-card {
-  background-color: var(--dashboard-card-bg);
+  background-color: var(--container-color);
   border-radius: 8px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   padding: 20px;
