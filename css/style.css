@@ -22,6 +22,7 @@
   --color-main-bg: var(--color-white);
   --color-footer-bg: #333333;
   --input-color: #F2F2F2;
+  --suggestions-container-color: #F2F2F2;
   --dashboard-card-bg: var(--color-white);
   --font-main: 'Poppins', Arial, sans-serif;
 }
@@ -50,7 +51,8 @@
   --color-disabled-bg: rgba(255, 255, 255, 0.2);
   --color-main-bg: #1f1f1f;
   --color-footer-bg: #1f1f1f;
-  --input-color: #D4C9C8;
+  --input-color: #F2F2F2;
+  --suggestions-container-color: var(--color-bg);
   --dashboard-card-bg: #252525;
   --font-main: 'Poppins', Arial, sans-serif;
 }
@@ -563,7 +565,7 @@ select:after {
 
 .suggestions-container {
   position: absolute;
-  background-color: var(--color-white);
+  background-color: var(--suggestions-container-color);
   border: 1px solid var(--color-border);
   width: 100%;
   top: 100%;
