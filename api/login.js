@@ -1,5 +1,5 @@
 const fetch = require('node-fetch')
-const { admin, db } = require('../firebase')
+const { db } = require('../firebase')
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -38,6 +38,7 @@ module.exports = async (req, res) => {
         instrument: '',
         class_period: null,
         currency_balance: 0,
+        theme: '',
       })
     }
 
