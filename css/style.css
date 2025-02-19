@@ -21,6 +21,7 @@
   --color-disabled-bg: rgba(255, 255, 255, 0.61);
   --color-main-bg: var(--color-white);
   --color-footer-bg: #333333;
+  --dashboard-card-bg: var(--color-white);
   --font-main: 'Poppins', Arial, sans-serif;
 }
 
@@ -48,6 +49,7 @@
   --color-disabled-bg: rgba(255, 255, 255, 0.2);
   --color-main-bg: #1f1f1f;
   --color-footer-bg: #1f1f1f;
+  --dashboard-card-bg: #252525;
   --font-main: 'Poppins', Arial, sans-serif;
 }
 
@@ -450,7 +452,7 @@ select:after {
   margin: 20px;
 }
 .dashboard-card {
-  background-color: var(--color-main-bg);
+  background-color: var(--dashboard-card-bg);
   border-radius: 8px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   padding: 20px;
