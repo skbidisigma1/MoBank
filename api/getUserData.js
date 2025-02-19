@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken')
 const jwksClient = require('jwks-rsa')
-const { admin, db } = require('../firebase')
+const { db } = require('../firebase')
 
 const client = jwksClient({
   jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`

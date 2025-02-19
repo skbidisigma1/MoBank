@@ -122,7 +122,8 @@ function setCachedUserData(data) {
 function validateUserData(userData) {
     const validInstruments = ['violin', 'viola', 'cello', 'bass'];
     const validClassPeriods = [5, 6, 7];
-    if (!validInstruments.includes(userData.instrument.toLowerCase()) || !validClassPeriods.includes(userData.class_period)) {
+    const validThemes = ['light', 'dark'];
+    if (!validInstruments.includes(userData.instrument.toLowerCase()) || !validClassPeriods.includes(userData.class_period) || !validThemes.includes(userData.theme)) {
         redirectTo('/pages/profile.html');
     }
 }
