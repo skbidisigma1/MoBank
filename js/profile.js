@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem('userData', JSON.stringify(cacheEntry));
     }
 
-    async function updateProfile(classPeriod, instrument) {
+    async function updateProfile(classPeriod, instrument, theme) {
         try {
             const token = await auth0Client.getTokenSilently();
             const response = await fetch('/api/updateProfile', {
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ class_period: classPeriod, instrument }),
+                body: JSON.stringify({ class_period: classPeriod, instrument, theme }),
             });
 
             if (response.ok) {
@@ -63,9 +63,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const classPeriod = parseInt(document.getElementById('class_period').value, 10);
         const instrument = document.getElementById('instrument').value.trim().toLowerCase();
+        const theme = document.getElementById('theme').value.trim().toLowerCase();
 
         const validClassPeriods = [5, 6, 7];
         const validInstruments = ['violin', 'viola', 'cello', 'bass'];
+        const validThemes = ['light', 'dark'];
 
         if (!validClassPeriods.includes(classPeriod)) {
             showToast('Validation Error', 'Please select a valid class period (5, 6, 7).');
@@ -74,6 +76,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!validInstruments.includes(instrument)) {
             showToast('Validation Error', 'Please select a valid instrument (violin, viola, cello, bass).');
+            return;
+        }
+
+        if (!validThemes.includes(theme)) {
+            showToast('Validation Error', 'Please select a valid theme (light, dark).');
             return;
         }
 
@@ -88,6 +95,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         submitButton.disabled = true;
-        updateProfile(classPeriod, instrument);
+        updateProfile(classPeriod, instrument, theme);
     });
 });

@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
-const { admin, db } = require('../firebase');
+const { db } = require('../firebase');
 
 const client = jwksClient({
   jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
@@ -51,12 +51,18 @@ module.exports = async (req, res) => {
         });
         req.on('end', resolve);
       });
-      const requestBody = JSON.parse(body);
+      let requestBody;
+      try {
+        requestBody = JSON.parse(body);
+      } catch (error) {
+        return res.status(400).json({ message: 'Invalid JSON format' });
+      }
 
-      const { class_period, instrument } = requestBody;
+      const { class_period, instrument, theme } = requestBody;
 
       const validClassPeriods = [5, 6, 7];
       const validInstruments = ['violin', 'viola', 'cello', 'bass'];
+      const validThemes = ['light', 'dark'];
 
       if (!validClassPeriods.includes(class_period)) {
         return res.status(400).json({ message: 'Invalid class period' });
@@ -69,12 +75,17 @@ module.exports = async (req, res) => {
         return res.status(400).json({ message: 'Invalid instrument' });
       }
 
+      if (!theme || typeof theme !== 'string' || !validThemes.includes(theme.toLowerCase())) {
+        return res.status(400).json({ message: 'Invalid theme' });
+      }
+
       try {
         const userRef = db.collection('users').doc(uid);
         await userRef.set(
           {
             class_period,
             instrument: instrument.toLowerCase(),
+            theme: theme.toLowerCase(),
           },
           { merge: true }
         );
