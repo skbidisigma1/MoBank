@@ -123,7 +123,11 @@ function validateUserData(userData) {
     const validInstruments = ['violin', 'viola', 'cello', 'bass'];
     const validClassPeriods = [5, 6, 7];
     const validThemes = ['light', 'dark'];
-    if (!validInstruments.includes(userData.instrument.toLowerCase()) || !validClassPeriods.includes(userData.class_period) || !validThemes.includes(userData.theme)) {
+    if (
+        !validInstruments.includes(userData.instrument.toLowerCase()) ||
+        !validClassPeriods.includes(userData.class_period) ||
+        !validThemes.includes(userData.theme)
+    ) {
         redirectTo('/pages/profile.html');
     }
 }

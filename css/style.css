@@ -20,6 +20,28 @@
   --font-main: 'Poppins', Arial, sans-serif;
 }
 
+[data-theme="dark"] {
+  --color-primary: #0a84ff;
+  --color-primary-dark: #0060df;
+  --color-secondary: #30d158;
+  --color-secondary-dark: #28b14c;
+  --color-white: #f4f4f5;
+  --color-bg: #121212;
+  --color-text: #e0e0e0;
+  --color-muted: #a0a0a0;
+  --color-light-bg: #1f1f1f;
+  --color-hover-bg: #2c2c2c;
+  --color-nav-hover: #303030;
+  --color-error-bg: #5c1a1a;
+  --color-error-border: #f44336;
+  --color-error-text: #ffcccc;
+  --color-loader-border: #2c2c2c;
+  --color-loader-top: var(--color-primary);
+  --color-toast-bg: #333333;
+  --color-toast-border: #555555;
+  --font-main: 'Poppins', Arial, sans-serif;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
