@@ -74,7 +74,7 @@
                     const db = event.target.result;
                     if (!db.objectStoreNames.contains("themeStore")) {
                         db.close();
-                        const newRequest = indexedDB.open("mobank-db", db.version + 1);
+                        const newRequest = indexedDB.open("mobank-db", db.version + 2);
                         newRequest.onupgradeneeded = function(e) {
                             const newDb = e.target.result;
                             newDb.createObjectStore("themeStore");
