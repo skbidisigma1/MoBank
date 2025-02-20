@@ -781,6 +781,16 @@ select:after {
   transform: translateY(-2px);
 }
 
+.pwa-link, a.pwa-link {
+  color: #1A73E8;
+  text-decoration: none;
+}
+
+.pwa-link:hover {
+  text-decoration: underline;
+  color: #0F5AC6;
+}
+
 .pin-container {
   max-width: 800px;
   margin: 0 auto;
