@@ -22,7 +22,8 @@ const urlsToCache = [
   "/pages/login.html",
   "/pages/privacy.html",
   "/pages/profile.html",
-  "/pages/transfer.html"
+  "/pages/transfer.html",
+  "/pages/tos.html"
 ];
 
 self.addEventListener("install", (event) => {
