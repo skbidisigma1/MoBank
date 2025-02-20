@@ -24,7 +24,7 @@
 
     function getThemeFromIndexedDB() {
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open("mobank-db", 1);
+            const request = indexedDB.open("mobank-db", 2);
 
             request.onupgradeneeded = function(e) {
                 const db = e.target.result;
