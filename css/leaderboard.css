@@ -18,6 +18,26 @@
     --color-loader-top: var(--color-primary);
 }
 
+[data-theme="dark"] {
+    --color-primary: #005fa3;
+    --color-primary-dark: #0060df;
+    --color-secondary: #009879;
+    --color-secondary-dark: #007a65;
+    --color-white: #f4f4f5;
+    --color-bg: #121212;
+    --color-text: #e0e0e0;
+    --color-muted: #a0a0a0;
+    --color-light: #1f1f1f;
+    --color-hover: #2c2c2c;
+    --color-error-bg: #5c1a1a;
+    --color-error-border: #f44336;
+    --color-error-text: #ffcccc;
+    --color-warning-bg: #665c00;
+    --color-warning-text: #e0e0e0;
+    --color-loader-border: #2c2c2c;
+    --color-loader-top: var(--color-primary);
+}
+
 .leaderboard-table {
     width: 100%;
     border-collapse: collapse;
