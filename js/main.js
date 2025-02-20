@@ -62,7 +62,7 @@ document.getElementById('install-yes-btn').addEventListener('click', async () =>
 
 function openPreferencesDB() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open("mobank-db", 1);
+    const request = indexedDB.open("mobank-db", 2);
     request.onupgradeneeded = event => {
       const db = event.target.result;
       if (!db.objectStoreNames.contains("preferences")) {
