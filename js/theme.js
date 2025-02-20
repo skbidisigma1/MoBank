@@ -1,4 +1,4 @@
-(async function() {
+(async function () {
     function safeParse(str) {
         try {
             return JSON.parse(str);
@@ -15,8 +15,7 @@
             return userData.data.theme;
         }
         try {
-            const themeFromDB = await getThemeFromIndexedDB();
-            return themeFromDB || "light";
+            return (await getThemeFromIndexedDB()) || "light";
         } catch (e) {
             return "light";
         }
@@ -26,29 +25,29 @@
         return new Promise((resolve, reject) => {
             const request = indexedDB.open("mobank-db", 2);
 
-            request.onupgradeneeded = function(e) {
+            request.onupgradeneeded = function (e) {
                 const db = e.target.result;
                 if (!db.objectStoreNames.contains("themeStore")) {
                     db.createObjectStore("themeStore");
                 }
             };
 
-            request.onsuccess = function(event) {
+            request.onsuccess = function (event) {
                 const db = event.target.result;
                 const tx = db.transaction("themeStore", "readonly");
                 const store = tx.objectStore("themeStore");
                 const getReq = store.get("theme");
 
-                getReq.onsuccess = function() {
-                    resolve(getReq.result);
+                getReq.onsuccess = function () {
+                    resolve(getReq.result || "light");
                 };
 
-                getReq.onerror = function() {
+                getReq.onerror = function () {
                     reject(getReq.error);
                 };
             };
 
-            request.onerror = function() {
+            request.onerror = function () {
                 reject(request.error);
             };
         });
@@ -56,48 +55,32 @@
 
     function updateIndexedDBTheme(theme) {
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open("mobank-db", 1);
+            const request = indexedDB.open("mobank-db", 2);
 
-            request.onupgradeneeded = function(e) {
+            request.onupgradeneeded = function (e) {
                 const db = e.target.result;
                 if (!db.objectStoreNames.contains("themeStore")) {
                     db.createObjectStore("themeStore");
                 }
             };
 
-            request.onerror = function() {
-                reject(request.error);
+            request.onsuccess = function (event) {
+                const db = event.target.result;
+                const tx = db.transaction("themeStore", "readwrite");
+                const store = tx.objectStore("themeStore");
+                const putRequest = store.put(theme, "theme");
+
+                putRequest.onsuccess = function () {
+                    resolve();
+                };
+
+                putRequest.onerror = function () {
+                    reject(new Error("Failed to update theme in IndexedDB"));
+                };
             };
 
-            request.onsuccess = function(event) {
-                try {
-                    const db = event.target.result;
-                    if (!db.objectStoreNames.contains("themeStore")) {
-                        db.close();
-                        const newRequest = indexedDB.open("mobank-db", db.version + 2);
-                        newRequest.onupgradeneeded = function(e) {
-                            const newDb = e.target.result;
-                            newDb.createObjectStore("themeStore");
-                        };
-                        newRequest.onsuccess = function(e) {
-                            const newDb = e.target.result;
-                            const tx = newDb.transaction("themeStore", "readwrite");
-                            const store = tx.objectStore("themeStore");
-                            store.put(theme, "theme");
-                            tx.oncomplete = resolve;
-                            tx.onerror = () => reject(tx.error);
-                        };
-                        return;
-                    }
-
-                    const tx = db.transaction("themeStore", "readwrite");
-                    const store = tx.objectStore("themeStore");
-                    store.put(theme, "theme");
-                    tx.oncomplete = resolve;
-                    tx.onerror = () => reject(tx.error);
-                } catch (error) {
-                    reject(error);
-                }
+            request.onerror = function () {
+                reject(request.error);
             };
         });
     }
@@ -115,7 +98,7 @@
     function addToggleListener() {
         let toggleButton = document.getElementById("theme-toggle");
         if (toggleButton) {
-            toggleButton.addEventListener("click", async function() {
+            toggleButton.addEventListener("click", async function () {
                 const current = document.documentElement.getAttribute("data-theme");
                 const newTheme = current === "dark" ? "light" : "dark";
                 document.documentElement.setAttribute("data-theme", newTheme);
