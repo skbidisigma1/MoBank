@@ -57,26 +57,47 @@
     function updateIndexedDBTheme(theme) {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open("mobank-db", 1);
+
             request.onupgradeneeded = function(e) {
                 const db = e.target.result;
                 if (!db.objectStoreNames.contains("themeStore")) {
                     db.createObjectStore("themeStore");
                 }
             };
-            request.onsuccess = function(event) {
-                const db = event.target.result;
-                const tx = db.transaction("themeStore", "readwrite");
-                const store = tx.objectStore("themeStore");
-                store.put(theme, "theme");
-                tx.oncomplete = function() {
-                    resolve();
-                };
-                tx.onerror = function() {
-                    reject(tx.error);
-                };
-            };
+
             request.onerror = function() {
                 reject(request.error);
+            };
+
+            request.onsuccess = function(event) {
+                try {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains("themeStore")) {
+                        db.close();
+                        const newRequest = indexedDB.open("mobank-db", db.version + 1);
+                        newRequest.onupgradeneeded = function(e) {
+                            const newDb = e.target.result;
+                            newDb.createObjectStore("themeStore");
+                        };
+                        newRequest.onsuccess = function(e) {
+                            const newDb = e.target.result;
+                            const tx = newDb.transaction("themeStore", "readwrite");
+                            const store = tx.objectStore("themeStore");
+                            store.put(theme, "theme");
+                            tx.oncomplete = resolve;
+                            tx.onerror = () => reject(tx.error);
+                        };
+                        return;
+                    }
+
+                    const tx = db.transaction("themeStore", "readwrite");
+                    const store = tx.objectStore("themeStore");
+                    store.put(theme, "theme");
+                    tx.oncomplete = resolve;
+                    tx.onerror = () => reject(tx.error);
+                } catch (error) {
+                    reject(error);
+                }
             };
         });
     }
