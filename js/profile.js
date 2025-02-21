@@ -11,20 +11,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const submitButton = profileForm.querySelector('button[type="submit"]');
     const themeSelect = document.getElementById('theme');
 
-    if (!themeSelect) {
-        console.error('Theme select dropdown not found.');
-        return;
-    }
+    if (!themeSelect) return;
 
     function updateTheme() {
         const selectedTheme = themeSelect.value.trim().toLowerCase();
         if (['light', 'dark'].includes(selectedTheme)) {
+            document.documentElement.style.transition = "background-color 0.3s ease, color 0.3s ease";
             document.documentElement.setAttribute('data-theme', selectedTheme);
+            setTimeout(() => {
+                document.documentElement.style.transition = "";
+            }, 300);
         }
     }
 
     themeSelect.addEventListener('change', updateTheme);
-
     setTimeout(updateTheme, 50);
 
     function setCachedUserData(data) {
