@@ -34,11 +34,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function autofillForm(userData) {
-        if (!userData) return;
-        if (classPeriodSelect) classPeriodSelect.value = userData.class_period;
-        if (instrumentSelect) instrumentSelect.value = userData.instrument.toLowerCase();
-        if (themeSelect) themeSelect.value = userData.theme.toLowerCase();
-        document.documentElement.setAttribute('data-theme', userData.theme.toLowerCase());
+        if (!userData) {
+            return;
+        }
+
+        if (classPeriodSelect) {
+            classPeriodSelect.value = userData.class_period || '';
+        }
+
+        if (instrumentSelect) {
+            instrumentSelect.value = userData.instrument.toLowerCase() || '';
+        }
+
+        if (themeSelect) {
+            themeSelect.value = userData.theme.toLowerCase() || 'light';
+        }
+
+        document.documentElement.setAttribute('data-theme', userData.theme.toLowerCase() || 'light');
     }
 
     function setCachedUserData(data) {
