@@ -7,16 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await window.auth0Promise;
-
-    const isLoggedIn = await isAuthenticated();
-    if (!isLoggedIn) {
-        window.location.href = '/pages/login.html';
-        return;
-    }
-
     const profileForm = document.getElementById('profile-form');
+    const submitButton = profileForm.querySelector('button[type="submit"]');
     const themeSelect = document.getElementById('theme');
 
     if (!themeSelect) {
@@ -24,6 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // Function to update the theme live
     function updateTheme() {
         const selectedTheme = themeSelect.value.trim().toLowerCase();
         if (['light', 'dark'].includes(selectedTheme)) {
@@ -31,26 +24,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Listen for dropdown changes (live update)
     themeSelect.addEventListener('change', updateTheme);
 
+    // Apply the currently selected theme on page load
     updateTheme();
-});
-
-    const profileForm = document.getElementById('profile-form');
-    const themeSelect = document.getElementById('theme');
-
-    function previewTheme() {
-        const selectedTheme = themeSelect.value.trim().toLowerCase();
-        if (['light', 'dark'].includes(selectedTheme)) {
-            document.documentElement.setAttribute('data-theme', selectedTheme);
-        }
-    }
-
-    themeSelect.addEventListener('change', previewTheme);
-});
-
-    const profileForm = document.getElementById('profile-form');
-    const submitButton = profileForm.querySelector('button[type="submit"]');
 
     function setCachedUserData(data) {
         const cacheEntry = {
