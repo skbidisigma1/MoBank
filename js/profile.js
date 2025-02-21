@@ -7,24 +7,62 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    console.log("Profile.js loaded!");
-
     const profileForm = document.getElementById('profile-form');
+    const submitButton = profileForm.querySelector('button[type="submit"]');
     const classPeriodSelect = document.getElementById('class_period');
     const instrumentSelect = document.getElementById('instrument');
     const themeSelect = document.getElementById('theme');
-    const submitButton = profileForm.querySelector('button[type="submit"]');
 
-    const userData = getCachedUserData();
+    if (!themeSelect) return;
 
-    if (userData) {
-        console.log("Loaded user data:", userData);
+    async function fetchAndCacheUserData() {
+        try {
+            const token = await auth0Client.getTokenSilently();
+            const response = await fetch('/api/getUserData', {
+                method: 'GET',
+                headers: { Authorization: `Bearer ${token}` },
+            });
 
+            if (response.ok) {
+                const userData = await response.json();
+                setCachedUserData(userData);
+                autofillForm(userData);
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+        }
+    }
+
+    function autofillForm(userData) {
+        if (!userData) return;
         if (classPeriodSelect) classPeriodSelect.value = userData.class_period;
         if (instrumentSelect) instrumentSelect.value = userData.instrument.toLowerCase();
         if (themeSelect) themeSelect.value = userData.theme.toLowerCase();
+        document.documentElement.setAttribute('data-theme', userData.theme.toLowerCase());
+    }
+
+    function setCachedUserData(data) {
+        localStorage.setItem('userData', JSON.stringify({ data, timestamp: Date.now() }));
+    }
+
+    function getCachedUserData() {
+        const cached = localStorage.getItem('userData');
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            return parsed.data;
+        }
+        return null;
+    }
+
+    themeSelect.addEventListener('change', () => {
+        document.documentElement.setAttribute('data-theme', themeSelect.value.toLowerCase());
+    });
+
+    const cachedUserData = getCachedUserData();
+    if (cachedUserData) {
+        autofillForm(cachedUserData);
     } else {
-        console.log("No cached user data found.");
+        fetchAndCacheUserData();
     }
 
     profileForm.addEventListener('submit', (e) => {
@@ -66,58 +104,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         submitButton.disabled = true;
         updateProfile(classPeriod, instrument, theme);
     });
-});
 
-function getCachedUserData() {
-    const cached = localStorage.getItem('userData');
-    if (cached) {
-        const parsed = JSON.parse(cached);
-            return parsed.data;
-        }
-    }
-    return null;
-}
-
-function setCachedUserData(data) {
-    localStorage.setItem('userData', JSON.stringify({ data, timestamp: Date.now() }));
-}
-
-async function updateProfile(classPeriod, instrument, theme) {
-    try {
-        const token = await auth0Client.getTokenSilently();
-        const response = await fetch('/api/updateProfile', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ class_period: classPeriod, instrument, theme }),
-        });
-
-        if (response.ok) {
-            sessionStorage.setItem('cooldownTimestamp', Date.now().toString());
-            const userDataResponse = await fetch('/api/getUserData', {
-                method: 'GET',
-                headers: { Authorization: `Bearer ${token}` },
+    async function updateProfile(classPeriod, instrument, theme) {
+        try {
+            const token = await auth0Client.getTokenSilently();
+            const response = await fetch('/api/updateProfile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ class_period: classPeriod, instrument, theme }),
             });
-            if (userDataResponse.ok) {
-                const userData = await userDataResponse.json();
-                setCachedUserData(userData);
-            }
-            window.location.href = '/pages/dashboard.html?profile_successful=true';
-            return;
-        }
 
-        if (response.status === 429) {
-            const errorData = await response.json();
-            showToast('Error', `Please wait ${errorData.waitTime} seconds before trying again.`);
-        } else {
-            const errorData = await response.json();
-            showToast('Error', `Error updating profile: ${errorData.message}`);
+            if (response.ok) {
+                sessionStorage.setItem('cooldownTimestamp', Date.now().toString());
+                const userDataResponse = await fetch('/api/getUserData', {
+                    method: 'GET',
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (userDataResponse.ok) {
+                    const userData = await userDataResponse.json();
+                    setCachedUserData(userData);
+                }
+                window.location.href = '/pages/dashboard.html?profile_successful=true';
+                return;
+            }
+
+            if (response.status === 429) {
+                const errorData = await response.json();
+                showToast('Error', `Please wait ${errorData.waitTime} seconds before trying again.`);
+            } else {
+                const errorData = await response.json();
+                showToast('Error', `Error updating profile: ${errorData.message}`);
+            }
+        } catch (error) {
+            showToast('Error', 'An error occurred while updating your profile. Please reload the page and try again.');
+        } finally {
+            submitButton.disabled = false;
         }
-    } catch (error) {
-        showToast('Error', 'An error occurred while updating your profile. Please reload the page and try again.');
-    } finally {
-        document.querySelector('button[type="submit"]').disabled = false;
     }
-}
+});
