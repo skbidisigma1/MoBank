@@ -8,79 +8,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const profileForm = document.getElementById('profile-form');
-    const submitButton = profileForm.querySelector('button[type="submit"]');
+    const classPeriodSelect = document.getElementById('class_period');
+    const instrumentSelect = document.getElementById('instrument');
     const themeSelect = document.getElementById('theme');
+    const submitButton = profileForm.querySelector('button[type="submit"]');
 
-    if (!themeSelect) return;
+    const userData = getCachedUserData();
 
-    function updateTheme() {
-        const selectedTheme = themeSelect.value.trim().toLowerCase();
-        if (['light', 'dark'].includes(selectedTheme)) {
-            document.documentElement.style.transition = "background-color 0.3s ease, color 0.3s ease";
-            document.documentElement.setAttribute('data-theme', selectedTheme);
-            setTimeout(() => {
-                document.documentElement.style.transition = "";
-            }, 300);
-        }
-    }
-
-    themeSelect.addEventListener('change', updateTheme);
-    setTimeout(updateTheme, 50);
-
-    function setCachedUserData(data) {
-        const cacheEntry = {
-            data: data,
-            timestamp: Date.now(),
-        };
-        localStorage.setItem('userData', JSON.stringify(cacheEntry));
-    }
-
-    async function updateProfile(classPeriod, instrument, theme) {
-        try {
-            const token = await auth0Client.getTokenSilently();
-            const response = await fetch('/api/updateProfile', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ class_period: classPeriod, instrument, theme }),
-            });
-
-            if (response.ok) {
-                sessionStorage.setItem('cooldownTimestamp', Date.now().toString());
-                const userDataResponse = await fetch('/api/getUserData', {
-                    method: 'GET',
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (userDataResponse.ok) {
-                    const userData = await userDataResponse.json();
-                    setCachedUserData(userData);
-                }
-                window.location.href = '/pages/dashboard.html?profile_successful=true';
-                return;
-            }
-
-            if (response.status === 429) {
-                const errorData = await response.json();
-                showToast('Error', `Please wait ${errorData.waitTime} seconds before trying again.`);
-            } else {
-                const errorData = await response.json();
-                showToast('Error', `Error updating profile: ${errorData.message}`);
-            }
-        } catch (error) {
-            showToast('Error', 'An error occurred while updating your profile. Please reload the page and try again.');
-        } finally {
-            submitButton.disabled = false;
-        }
+    if (userData) {
+        if (classPeriodSelect) classPeriodSelect.value = userData.class_period;
+        if (instrumentSelect) instrumentSelect.value = userData.instrument.toLowerCase();
+        if (themeSelect) themeSelect.value = userData.theme.toLowerCase();
     }
 
     profileForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        const classPeriod = parseInt(document.getElementById('class_period').value, 10);
-        const instrument = document.getElementById('instrument').value.trim().toLowerCase();
-        const theme = document.getElementById('theme').value.trim().toLowerCase();
+        const classPeriod = parseInt(classPeriodSelect.value, 10);
+        const instrument = instrumentSelect.value.trim().toLowerCase();
+        const theme = themeSelect.value.trim().toLowerCase();
 
         const validClassPeriods = [5, 6, 7];
         const validInstruments = ['violin', 'viola', 'cello', 'bass'];
@@ -115,3 +61,58 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateProfile(classPeriod, instrument, theme);
     });
 });
+
+function getCachedUserData() {
+    const cached = localStorage.getItem('userData');
+    if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.timestamp < 20 * 1000) {
+            return parsed.data;
+        }
+    }
+    return null;
+}
+
+function setCachedUserData(data) {
+    localStorage.setItem('userData', JSON.stringify({ data, timestamp: Date.now() }));
+}
+
+async function updateProfile(classPeriod, instrument, theme) {
+    try {
+        const token = await auth0Client.getTokenSilently();
+        const response = await fetch('/api/updateProfile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ class_period: classPeriod, instrument, theme }),
+        });
+
+        if (response.ok) {
+            sessionStorage.setItem('cooldownTimestamp', Date.now().toString());
+            const userDataResponse = await fetch('/api/getUserData', {
+                method: 'GET',
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (userDataResponse.ok) {
+                const userData = await userDataResponse.json();
+                setCachedUserData(userData);
+            }
+            window.location.href = '/pages/dashboard.html?profile_successful=true';
+            return;
+        }
+
+        if (response.status === 429) {
+            const errorData = await response.json();
+            showToast('Error', `Please wait ${errorData.waitTime} seconds before trying again.`);
+        } else {
+            const errorData = await response.json();
+            showToast('Error', `Error updating profile: ${errorData.message}`);
+        }
+    } catch (error) {
+        showToast('Error', 'An error occurred while updating your profile. Please reload the page and try again.');
+    } finally {
+        document.querySelector('button[type="submit"]').disabled = false;
+    }
+}
