@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Function to update the theme live
     function updateTheme() {
         const selectedTheme = themeSelect.value.trim().toLowerCase();
         if (['light', 'dark'].includes(selectedTheme)) {
@@ -24,11 +23,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Listen for dropdown changes (live update)
     themeSelect.addEventListener('change', updateTheme);
 
-    // Apply the currently selected theme on page load
-    updateTheme();
+    setTimeout(updateTheme, 50);
 
     function setCachedUserData(data) {
         const cacheEntry = {
