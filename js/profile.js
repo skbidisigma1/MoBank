@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    console.log("Profile.js loaded!");
+
     const profileForm = document.getElementById('profile-form');
     const classPeriodSelect = document.getElementById('class_period');
     const instrumentSelect = document.getElementById('instrument');
@@ -16,9 +18,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const userData = getCachedUserData();
 
     if (userData) {
+        console.log("Loaded user data:", userData);
+
         if (classPeriodSelect) classPeriodSelect.value = userData.class_period;
         if (instrumentSelect) instrumentSelect.value = userData.instrument.toLowerCase();
         if (themeSelect) themeSelect.value = userData.theme.toLowerCase();
+    } else {
+        console.log("No cached user data found.");
     }
 
     profileForm.addEventListener('submit', (e) => {
