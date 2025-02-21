@@ -72,7 +72,6 @@ function getCachedUserData() {
     const cached = localStorage.getItem('userData');
     if (cached) {
         const parsed = JSON.parse(cached);
-        if (Date.now() - parsed.timestamp < 20 * 1000) {
             return parsed.data;
         }
     }
