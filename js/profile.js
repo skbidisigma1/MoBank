@@ -19,6 +19,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const profileForm = document.getElementById('profile-form');
     const themeSelect = document.getElementById('theme');
 
+    if (!themeSelect) {
+        console.error('Theme select dropdown not found.');
+        return;
+    }
+
+    function updateTheme() {
+        const selectedTheme = themeSelect.value.trim().toLowerCase();
+        if (['light', 'dark'].includes(selectedTheme)) {
+            document.documentElement.setAttribute('data-theme', selectedTheme);
+        }
+    }
+
+    themeSelect.addEventListener('change', updateTheme);
+
+    updateTheme();
+});
+
+    const profileForm = document.getElementById('profile-form');
+    const themeSelect = document.getElementById('theme');
+
     function previewTheme() {
         const selectedTheme = themeSelect.value.trim().toLowerCase();
         if (['light', 'dark'].includes(selectedTheme)) {
