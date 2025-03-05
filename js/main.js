@@ -107,7 +107,7 @@ async function saveDontAskAgain(val) {
     };
   });
 }
-
+/*
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
@@ -120,3 +120,4 @@ if ("serviceWorker" in navigator) {
       });
   });
 }
+*/
