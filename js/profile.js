@@ -78,7 +78,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     profileForm.addEventListener('submit', (e) => {
+        console.log("submitting")
         e.preventDefault();
+        console.log("prevented default")
 
         const classPeriod = parseInt(classPeriodSelect.value, 10);
         const instrument = instrumentSelect.value.trim().toLowerCase();
