@@ -1,68 +1,35 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light" dir="ltr">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="author" content="Sigma Boys">
   <title>Welcome to MoBank</title>
-  <meta name="description" content="Secure financial platform for Sigma Boys members">
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  
+  <meta name="description" content="Welcome to MoBank, the secure platform for the MoBuck currency">
+  <script src="/js/theme.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
-  
   <link rel="manifest" href="/manifest.json">
-
-  <script src="/js/theme.js" defer></script>
-  <script src="/js/headerFooter.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/headerFooter.js"></script>
+  <script src="js/main.js" defer></script>
 </head>
 <body>
-  <a href="#main-content" class="skip-link">Skip to main content</a>
-  
   <div id="header-placeholder"></div>
-  
-  <main id="main-content">
-    <h2 class="sr-only">Manage MoBucks with Ease</h2>
+  <main>
+    <h2>Manage MoBucks with Ease</h2>
     <p>MoBank is a secure and user-friendly platform for managing MoBuck transactions, built for teachers and students.</p>
     <p>Log in to view your balance, send MoBucks, and keep track of recent transactions.</p>
-    
-    <div class="cta-container">
-      <button id="get-started-btn" class="primary-cta" aria-label="Begin Sigma Boys experience">
-        Get Started
-      </button>
-    </div>
-
-    <div id="install-prompt" class="install-card" role="dialog" aria-label="Installation prompt">
+    <button id="get-started-btn">Get Started</button>
+    <div id="install-prompt">
       <h3>Install the MoBank app for a better experience</h3>
-      <div class="install-actions">
-        <button id="install-yes-btn" class="action-btn confirm" aria-label="Install app">
-          Install Now
-        </button>
-        <button id="install-no-btn" class="action-btn cancel" aria-label="Cancel installation">
-          Later
-        </button>
+      <div class="install-buttons">
+        <button id="install-yes-btn" class="install-btn">Yes</button>
+        <button id="install-no-btn" class="install-btn">No</button>
       </div>
-      <button id="install-dont-btn" class="text-btn" aria-label="Never suggest installation">
-        Don't Ask Again
-      </button>
+      <button id="install-dont-btn" class="dont-btn">Don't ask again</button>
     </div>
   </main>
-
   <div id="footer-placeholder"></div>
-
-  <script 
-    src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js" 
-    crossorigin="anonymous">
-  </script>
-  <script src="/js/auth.js" defer></script>
-  <script src="/js/main.js" defer></script>
-
-  <noscript>
-    <div class="noscript-warning">
-      <p>⚠️ JavaScript is required to use MoBank. Please enable it to continue.</p>
-    </div>
-  </noscript>
 </body>
 </html>
