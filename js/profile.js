@@ -34,23 +34,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function autofillForm(userData) {
-        if (!userData) {
-            return;
-        }
+        const defaults = {
+            class_period: 5,
+            instrument: 'violin',
+            theme: 'light'
+        };
+
+        const mergedData = { ...defaults, ...userData };
 
         if (classPeriodSelect) {
-            classPeriodSelect.value = userData.class_period || '';
+            classPeriodSelect.value = mergedData.class_period;
         }
 
         if (instrumentSelect) {
-            instrumentSelect.value = userData.instrument.toLowerCase() || '';
+            instrumentSelect.value = mergedData.instrument.toLowerCase();
         }
 
         if (themeSelect) {
-            themeSelect.value = userData.theme.toLowerCase() || 'light';
+            themeSelect.value = mergedData.theme.toLowerCase();
         }
 
-        document.documentElement.setAttribute('data-theme', userData.theme.toLowerCase() || 'light');
+        document.documentElement.setAttribute('data-theme', mergedData.theme.toLowerCase());
     }
 
     function setCachedUserData(data) {
@@ -59,11 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function getCachedUserData() {
         const cached = localStorage.getItem('userData');
-        if (cached) {
-            const parsed = JSON.parse(cached);
-            return parsed.data;
-        }
-        return null;
+        return cached ? JSON.parse(cached).data : null;
     }
 
     themeSelect.addEventListener('change', () => {
@@ -71,17 +71,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     const cachedUserData = getCachedUserData();
-    if (cachedUserData) {
-        autofillForm(cachedUserData);
-    } else {
-        fetchAndCacheUserData();
-    }
+    cachedUserData ? autofillForm(cachedUserData) : fetchAndCacheUserData();
 
     profileForm.addEventListener('submit', (e) => {
-        console.log("submitting")
         e.preventDefault();
-        console.log("prevented default")
-
+        
         const classPeriod = parseInt(classPeriodSelect.value, 10);
         const instrument = instrumentSelect.value.trim().toLowerCase();
         const theme = themeSelect.value.trim().toLowerCase();
@@ -90,29 +84,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const validInstruments = ['violin', 'viola', 'cello', 'bass'];
         const validThemes = ['light', 'dark'];
 
-        if (!validClassPeriods.includes(classPeriod)) {
-            showToast('Validation Error', 'Please select a valid class period (5, 6, 7).');
-            return;
-        }
-
-        if (!validInstruments.includes(instrument)) {
-            showToast('Validation Error', 'Please select a valid instrument (violin, viola, cello, bass).');
-            return;
-        }
-
-        if (!validThemes.includes(theme)) {
-            showToast('Validation Error', 'Please select a valid theme (light, dark).');
-            return;
-        }
+        if (!validClassPeriods.includes(classPeriod)) return showToast('Validation Error', 'Please select a valid class period (5, 6, 7).');
+        if (!validInstruments.includes(instrument)) return showToast('Validation Error', 'Please select a valid instrument (violin, viola, cello, bass).');
+        if (!validThemes.includes(theme)) return showToast('Validation Error', 'Please select a valid theme (light, dark).');
 
         const cooldownTimestamp = parseInt(sessionStorage.getItem('cooldownTimestamp'), 10) || 0;
         const now = Date.now();
         const COOLDOWN_MILLISECONDS = 15000;
 
         if (now - cooldownTimestamp < COOLDOWN_MILLISECONDS) {
-            const remainingTime = Math.ceil((COOLDOWN_MILLISECONDS - (now - cooldownTimestamp)) / 1000);
-            showToast('Error', `Please wait ${remainingTime} seconds before trying again.`);
-            return;
+            const remainingTime = Math.ceil((COOLDOWN_MILLISECONDS - (now - cooldownTimestamp)) / 1000;
+            return showToast('Error', `Please wait ${remainingTime} seconds before trying again.`);
         }
 
         submitButton.disabled = true;
@@ -137,23 +119,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     method: 'GET',
                     headers: { Authorization: `Bearer ${token}` },
                 });
-                if (userDataResponse.ok) {
-                    const userData = await userDataResponse.json();
-                    setCachedUserData(userData);
-                }
+                if (userDataResponse.ok) setCachedUserData(await userDataResponse.json());
                 window.location.href = '/pages/dashboard.html?profile_successful=true';
                 return;
             }
 
-            if (response.status === 429) {
-                const errorData = await response.json();
-                showToast('Error', `Please wait ${errorData.waitTime} seconds before trying again.`);
-            } else {
-                const errorData = await response.json();
-                showToast('Error', `Error updating profile: ${errorData.message}`);
-            }
+            const errorData = await response.json();
+            showToast('Error', response.status === 429 ? 
+                `Please wait ${errorData.waitTime} seconds before trying again.` : 
+                `Error updating profile: ${errorData.message}`);
         } catch (error) {
-            showToast('Error', 'An error occurred while updating your profile. Please reload the page and try again.');
+            showToast('Error', 'An error occurred. Please reload and try again.');
         } finally {
             submitButton.disabled = false;
         }
