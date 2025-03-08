@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const COOLDOWN_MILLISECONDS = 15000;
 
         if (now - cooldownTimestamp < COOLDOWN_MILLISECONDS) {
-            const remainingTime = Math.ceil((COOLDOWN_MILLISECONDS - (now - cooldownTimestamp)) / 1000;
+            const remainingTime = Math.ceil((COOLDOWN_MILLISECONDS - (now - cooldownTimestamp))) / 1000;
             return showToast('Error', `Please wait ${remainingTime} seconds before trying again.`);
         }
 
