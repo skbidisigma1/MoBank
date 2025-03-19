@@ -35,20 +35,20 @@ function setupButtons() {
 
     if (transferButton) {
         transferButton.addEventListener('click', () => {
-            window.location.href = '/pages/transfer.html';
+            window.location.href = 'transfer';
         });
     }
 
     if (logoutButton) {
         logoutButton.addEventListener('click', async () => {
             await logoutUser();
-            window.location.href = '/pages/login.html';
+            window.location.href = 'login';
         });
     }
 
     if (profileButton) {
         profileButton.addEventListener('click', () => {
-            window.location.href = '/pages/profile.html';
+            window.location.href = 'profile';
         });
     }
 }
@@ -80,14 +80,14 @@ async function fetchUserData() {
             setCachedUserData(userData);
             populateDashboard(userData);
         } else if (response.status === 404) {
-            redirectTo('/pages/profile.html');
+            redirectTo('profile');
         } else {
             throw new Error('Failed to fetch user data');
         }
     } catch (error) {
         console.error('Error fetching user data:', error);
         showToast('Error', 'Failed to fetch user data. Please try again later.');
-        redirectTo('/pages/profile.html');
+        redirectTo('profile');
     }
 }
 
