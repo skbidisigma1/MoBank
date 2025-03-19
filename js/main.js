@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('install-prompt').style.display = 'none';
         await saveDontAskAgain(true);
     });
+    await fetchAnnouncements();
 });
 function openPreferencesDB() {
     return new Promise((resolve, reject) => {
@@ -111,4 +112,39 @@ async function saveDontAskAgain(val) {
             reject(req.error);
         };
     });
+}
+async function fetchAnnouncements() {
+    try {
+        const response = await fetch('/data/announcements.json');
+        if (!response.ok) {
+            throw new Error('Failed to fetch announcements');
+        }
+        const announcements = await response.json();
+        const container = document.getElementById('announcements-container');
+        container.innerHTML = '';
+        announcements.sort((a, b) => new Date(b.date) - new Date(a.date));
+        announcements.forEach(announcement => {
+            const annDiv = document.createElement('div');
+            annDiv.className = 'announcement';
+            const title = document.createElement('h4');
+            title.innerHTML = announcement.title;
+            const body = document.createElement('div');
+            body.innerHTML = announcement.body;
+            const date = document.createElement('div');
+            date.className = 'announcement-date';
+            date.textContent = announcement.date;
+            annDiv.appendChild(title);
+            annDiv.appendChild(body);
+            annDiv.appendChild(date);
+            if (announcement.pinned) {
+                annDiv.classList.add('pinned');
+            }
+            annDiv.addEventListener('click', () => {
+                window.location.href = '/announcement?id=' + announcement.id;
+            });
+            container.appendChild(annDiv);
+        });
+    } catch (error) {
+        console.error(error);
+    }
 }
