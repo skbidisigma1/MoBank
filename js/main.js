@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('install-prompt').style.display = 'none';
         await saveDontAskAgain(true);
     });
-    await fetchAnnouncements();
+    await loadAnnouncements();
 });
 function openPreferencesDB() {
     return new Promise((resolve, reject) => {
@@ -113,38 +113,61 @@ async function saveDontAskAgain(val) {
         };
     });
 }
-async function fetchAnnouncements() {
+async function loadAnnouncements() {
     try {
         const response = await fetch('/data/announcements.json');
-        if (!response.ok) {
-            throw new Error('Failed to fetch announcements');
-        }
+        if (!response.ok) throw new Error('Failed to fetch announcements');
         const announcements = await response.json();
-        const container = document.getElementById('announcements-container');
-        container.innerHTML = '';
         announcements.sort((a, b) => new Date(b.date) - new Date(a.date));
-        announcements.forEach(announcement => {
-            const annDiv = document.createElement('div');
-            annDiv.className = 'announcement';
+        if (announcements.length > 0) {
+            const mainAnn = announcements[0];
+            const mainContainer = document.getElementById('main-announcement');
+            mainContainer.innerHTML = '';
             const title = document.createElement('h4');
-            title.innerHTML = announcement.title;
-            const body = document.createElement('div');
-            body.innerHTML = announcement.body;
+            title.innerHTML = mainAnn.title;
+            const description = document.createElement('p');
+            description.innerHTML = mainAnn.description;
             const date = document.createElement('div');
             date.className = 'announcement-date';
-            date.textContent = announcement.date;
-            annDiv.appendChild(title);
-            annDiv.appendChild(body);
-            annDiv.appendChild(date);
-            if (announcement.pinned) {
-                annDiv.classList.add('pinned');
-            }
-            annDiv.addEventListener('click', () => {
-                window.location.href = '/announcement?id=' + announcement.id;
+            date.textContent = mainAnn.date;
+            mainContainer.appendChild(title);
+            mainContainer.appendChild(description);
+            mainContainer.appendChild(date);
+            mainContainer.addEventListener('click', () => {
+                openAnnouncementsModal(announcements);
             });
-            container.appendChild(annDiv);
-        });
+            document.getElementById('view-all-announcements').addEventListener('click', () => {
+                openAnnouncementsModal(announcements);
+            });
+        }
     } catch (error) {
         console.error(error);
     }
 }
+function openAnnouncementsModal(announcements) {
+    const modal = document.getElementById('announcements-modal');
+    const list = document.getElementById('announcements-list');
+    list.innerHTML = '';
+    announcements.forEach(ann => {
+        const card = document.createElement('div');
+        card.className = 'announcement-card';
+        const title = document.createElement('h4');
+        title.innerHTML = ann.title;
+        const body = document.createElement('div');
+        body.innerHTML = ann.body;
+        const date = document.createElement('div');
+        date.className = 'announcement-date';
+        date.textContent = ann.date;
+        card.appendChild(title);
+        card.appendChild(body);
+        card.appendChild(date);
+        card.addEventListener('click', () => {
+            window.location.href = '/announcement?id=' + ann.id;
+        });
+        list.appendChild(card);
+    });
+    modal.classList.remove('hidden');
+}
+document.getElementById('close-announcements-modal').addEventListener('click', () => {
+    document.getElementById('announcements-modal').classList.add('hidden');
+});

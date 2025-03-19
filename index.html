@@ -21,9 +21,10 @@
   <p>MoBank is a secure and user-friendly platform for managing MoBuck transactions, built for teachers and students.</p>
   <p>Log in to view your balance, send MoBucks, and keep track of recent transactions.</p>
   <button id="get-started-btn">Get Started</button>
-  <div id="announcements-section">
+  <div id="announcements-section" class="container">
     <h3>Announcements</h3>
-    <div id="announcements-container"></div>
+    <div id="main-announcement" class="announcement-card"></div>
+    <button id="view-all-announcements" class="tab-button">View All Announcements</button>
   </div>
   <div id="install-prompt">
     <h3>Install the MoBank app for a better experience</h3>
@@ -35,5 +36,12 @@
   </div>
 </main>
 <div id="footer-placeholder"></div>
+<div id="announcements-modal" class="hidden">
+  <div id="announcements-modal-content" class="container">
+    <h3>All Announcements</h3>
+    <div id="announcements-list"></div>
+    <button id="close-announcements-modal" class="tab-button">Close</button>
+  </div>
+</div>
 </body>
 </html>
