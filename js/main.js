@@ -145,6 +145,7 @@ function openAnnouncementsModal(announcements) {
     const modal = document.getElementById('announcements-modal');
     const list = document.getElementById('announcements-list');
     list.innerHTML = '';
+
     announcements.forEach(ann => {
         const card = document.createElement('div');
         card.className = 'announcement-card';
@@ -158,16 +159,16 @@ function openAnnouncementsModal(announcements) {
         const date = document.createElement('div');
         date.className = 'announcement-date';
         date.textContent = ann.date;
+
         card.appendChild(title);
         card.appendChild(body);
         card.appendChild(date);
-        card.addEventListener('click', () => {
-            window.location.href = '/announcement?id=' + ann.id;
-        });
         list.appendChild(card);
     });
+
     modal.classList.remove('hidden');
 }
+
 function closeAnnouncementsModal() {
     document.getElementById('announcements-modal').classList.add('hidden');
 }
