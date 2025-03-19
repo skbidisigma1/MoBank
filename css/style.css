@@ -865,6 +865,9 @@ select:after {
   color: var(--color-muted);
   margin-top: 10px;
 }
+#announcements-modal.hidden {
+  display: none !important;
+}
 .highlighted-announcement {
   border: 2px solid var(--color-primary);
   background-color: rgba(0,86,179,0.1);
