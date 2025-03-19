@@ -94,6 +94,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (firstRank) firstRank.textContent = '🥇';
       if (secondRank) secondRank.textContent = '🥈';
       if (thirdRank) thirdRank.textContent = '🥉';
+
+      const devRow = Array.from(leaderboardBody.querySelectorAll('tr')).find(row => {
+        const nameCell = row.querySelector('td:nth-child(2)');
+        return nameCell && nameCell.textContent.trim() === 'Luke Collingridge';
+      });
+      if (devRow) {
+        const nameCell = devRow.querySelector('td:nth-child(2)');
+        nameCell.innerHTML = '🛠️ ' + nameCell.textContent;
+      }
     }
   }
 
