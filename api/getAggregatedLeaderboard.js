@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
       issuer: `https://${process.env.AUTH0_DOMAIN}/`,
       algorithms: ['RS256']
     },
-    async (err) => {
+    async (err, decoded) => {
       if (err) {
         return res.status(401).json({ message: 'Token verification failed', error: err.toString() })
       }
