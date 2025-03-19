@@ -43,6 +43,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         await saveDontAskAgain(true);
     });
     await loadAnnouncements();
+    document.getElementById('close-announcements-modal').addEventListener('click', closeAnnouncementsModal);
+    document.getElementById('announcements-modal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('announcements-modal')) {
+            closeAnnouncementsModal();
+        }
+    });
 });
 function openPreferencesDB() {
     return new Promise((resolve, reject) => {
@@ -136,15 +142,14 @@ async function loadAnnouncements() {
     }
 }
 function openAnnouncementsModal(announcements) {
-    document.getElementById('content').classList.add('blurred');
     const modal = document.getElementById('announcements-modal');
     const list = document.getElementById('announcements-list');
     list.innerHTML = '';
     announcements.forEach(ann => {
-        const entry = document.createElement('div');
-        entry.className = 'announcement-entry';
+        const card = document.createElement('div');
+        card.className = 'announcement-card';
         if (ann.id === 1) {
-            entry.classList.add('highlight');
+            card.classList.add('highlighted-announcement');
         }
         const title = document.createElement('h4');
         title.innerHTML = ann.title;
@@ -153,17 +158,16 @@ function openAnnouncementsModal(announcements) {
         const date = document.createElement('div');
         date.className = 'announcement-date';
         date.textContent = ann.date;
-        entry.appendChild(title);
-        entry.appendChild(body);
-        entry.appendChild(date);
-        entry.addEventListener('click', () => {
+        card.appendChild(title);
+        card.appendChild(body);
+        card.appendChild(date);
+        card.addEventListener('click', () => {
             window.location.href = '/announcement?id=' + ann.id;
         });
-        list.appendChild(entry);
+        list.appendChild(card);
     });
     modal.classList.remove('hidden');
 }
-document.getElementById('close-announcements-modal').addEventListener('click', () => {
+function closeAnnouncementsModal() {
     document.getElementById('announcements-modal').classList.add('hidden');
-    document.getElementById('content').classList.remove('blurred');
-});
+}
