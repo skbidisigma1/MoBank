@@ -206,5 +206,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  initializeLeaderboard();
+  await initializeLeaderboard();
 });
