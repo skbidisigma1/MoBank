@@ -163,6 +163,12 @@ function openAnnouncementsModal(announcements) {
         card.appendChild(title);
         card.appendChild(body);
         card.appendChild(date);
+
+        card.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openAnnouncementsModal([ann]);
+        });
+
         list.appendChild(card);
     });
 
