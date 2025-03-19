@@ -288,8 +288,6 @@ app.get('/api/getUserNames', async (req, res) => {
       return res.status(401).json({ message: 'Token verification failed' });
     }
 
-    const user = await response.json();
-
     const period = parseInt(req.query.period, 10);
 
     if (!period || ![5, 6, 7].includes(period)) {

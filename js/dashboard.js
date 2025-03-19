@@ -98,7 +98,7 @@ async function getCachedToken() {
             tokenTimestamp = Date.now();
         } catch (error) {
             console.error('Error fetching token:', error);
-            signInWithAuth0();
+            await signInWithAuth0();
         }
     }
     return cachedToken;

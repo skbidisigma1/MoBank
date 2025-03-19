@@ -25,7 +25,6 @@ async function loadHeaderFooter() {
         }
 
         const profilePicElement = document.getElementById('profile-pic');
-        const placeholderPath = '/images/default_profile.svg';
 
         await window.auth0Promise;
 

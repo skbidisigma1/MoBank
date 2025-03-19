@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     const cachedUserData = getCachedUserData();
-    cachedUserData ? autofillForm(cachedUserData) : fetchAndCacheUserData();
+    cachedUserData ? autofillForm(cachedUserData) : await fetchAndCacheUserData();
 
     profileForm.addEventListener('submit', (e) => {
         e.preventDefault();
