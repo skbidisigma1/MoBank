@@ -61,21 +61,43 @@ document.getElementById('install-yes-btn').addEventListener('click', async () =>
 });
 
 function openPreferencesDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open("mobank-db", 2);
-    request.onupgradeneeded = event => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains("preferences")) {
-        db.createObjectStore("preferences", { keyPath: "key" });
-      }
-    };
-    request.onsuccess = event => {
-      resolve(event.target.result);
-    };
-    request.onerror = event => {
-      reject(event.target.error);
-    };
-  });
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open("mobank-db", 2);
+
+        request.onupgradeneeded = event => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains("preferences")) {
+                db.createObjectStore("preferences", { keyPath: "key" });
+            }
+        };
+
+        request.onsuccess = event => {
+            const db = event.target.result;
+
+            if (!db.objectStoreNames.contains("preferences")) {
+                console.warn("Object store 'preferences' missing. Recreating DB...");
+                db.close();
+                const deleteRequest = indexedDB.deleteDatabase("mobank-db");
+
+                deleteRequest.onsuccess = () => {
+                    openPreferencesDB().then(resolve).catch(reject);
+                };
+
+                deleteRequest.onerror = () => {
+                    console.error("Failed to delete database.");
+                    reject(deleteRequest.error);
+                };
+
+                return;
+            }
+
+            resolve(db);
+        };
+
+        request.onerror = event => {
+            reject(event.target.error);
+        };
+    });
 }
 
 async function getDontAskAgain() {
