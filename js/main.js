@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dontAsk = await getDontAskAgain();
     if (!dontAsk) {
         window.addEventListener('beforeinstallprompt', (e) => {
-            console.log('beforeinstallprompt Event fired');
             e.preventDefault();
             deferredPrompt = e;
             document.getElementById('install-prompt').style.display = 'block';
@@ -20,19 +19,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     document.getElementById('install-yes-btn').addEventListener('click', async () => {
         if (deferredPrompt) {
-            console.log('Showing install prompt');
             deferredPrompt.prompt();
             const choiceResult = await deferredPrompt.userChoice;
-            console.log(`User response: ${choiceResult.outcome}`);
             document.getElementById('install-prompt').style.display = 'none';
             deferredPrompt = null;
             if (choiceResult.outcome === 'accepted') {
-                console.log("PWA installed, checking OS...");
                 const userAgent = navigator.userAgent.toLowerCase();
                 const isChromeOS = userAgent.includes("cros");
                 const isWindows = userAgent.includes("windows");
                 if (isChromeOS || isWindows) {
-                    console.log("Running on ChromeOS or Windows, redirecting to pin instructions...");
                     setTimeout(() => {
                         window.location.href = "pin";
                     }, 500);
@@ -41,11 +36,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
     document.getElementById('install-no-btn').addEventListener('click', () => {
-        console.log('User dismissed install prompt');
         document.getElementById('install-prompt').style.display = 'none';
     });
     document.getElementById('install-dont-btn').addEventListener('click', async () => {
-        console.log('User chose "Don\'t ask again"');
         document.getElementById('install-prompt').style.display = 'none';
         await saveDontAskAgain(true);
     });
@@ -66,14 +59,12 @@ function openPreferencesDB() {
         request.onsuccess = event => {
             const db = event.target.result;
             if (!db.objectStoreNames.contains("preferences")) {
-                console.warn("Object store 'preferences' missing. Recreating DB...");
                 db.close();
                 const deleteRequest = indexedDB.deleteDatabase("mobank-db");
                 deleteRequest.onsuccess = () => {
                     openPreferencesDB().then(resolve).catch(reject);
                 };
                 deleteRequest.onerror = () => {
-                    console.error("Failed to delete database.");
                     reject(deleteRequest.error);
                 };
                 return;
@@ -145,12 +136,16 @@ async function loadAnnouncements() {
     }
 }
 function openAnnouncementsModal(announcements) {
+    document.getElementById('content').classList.add('blurred');
     const modal = document.getElementById('announcements-modal');
     const list = document.getElementById('announcements-list');
     list.innerHTML = '';
     announcements.forEach(ann => {
-        const card = document.createElement('div');
-        card.className = 'announcement-card';
+        const entry = document.createElement('div');
+        entry.className = 'announcement-entry';
+        if (ann.id === 1) {
+            entry.classList.add('highlight');
+        }
         const title = document.createElement('h4');
         title.innerHTML = ann.title;
         const body = document.createElement('div');
@@ -158,16 +153,17 @@ function openAnnouncementsModal(announcements) {
         const date = document.createElement('div');
         date.className = 'announcement-date';
         date.textContent = ann.date;
-        card.appendChild(title);
-        card.appendChild(body);
-        card.appendChild(date);
-        card.addEventListener('click', () => {
+        entry.appendChild(title);
+        entry.appendChild(body);
+        entry.appendChild(date);
+        entry.addEventListener('click', () => {
             window.location.href = '/announcement?id=' + ann.id;
         });
-        list.appendChild(card);
+        list.appendChild(entry);
     });
     modal.classList.remove('hidden');
 }
 document.getElementById('close-announcements-modal').addEventListener('click', () => {
     document.getElementById('announcements-modal').classList.add('hidden');
+    document.getElementById('content').classList.remove('blurred');
 });
