@@ -128,7 +128,7 @@ function validateUserData(userData) {
         !validClassPeriods.includes(userData.class_period) ||
         !validThemes.includes(userData.theme)
     ) {
-        redirectTo('/pages/profile.html');
+        redirectTo('profile');
     }
 }
 

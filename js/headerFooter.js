@@ -77,11 +77,11 @@ async function loadHeaderFooter() {
         } else {
             if (authLink) {
                 authLink.textContent = 'Login';
-                authLink.href = '/pages/login.html';
+                authLink.href = 'login';
             }
             if (authLinkMobile) {
                 authLinkMobile.textContent = 'Login';
-                authLinkMobile.href = '/pages/login.html';
+                authLinkMobile.href = 'login';
             }
         }
 
@@ -89,7 +89,7 @@ async function loadHeaderFooter() {
             dashboardLink.addEventListener('click', (e) => {
                 if (!isLoggedIn) {
                     e.preventDefault();
-                    window.location.href = `/pages/login.html?redirect=/pages/dashboard.html`;
+                    window.location.href = `login?redirect=dashboard`;
                 }
             });
         }
@@ -98,7 +98,7 @@ async function loadHeaderFooter() {
             dashboardLinkMobile.addEventListener('click', (e) => {
                 if (!isLoggedIn) {
                     e.preventDefault();
-                    window.location.href = `/pages/login.html?redirect=/pages/dashboard.html`;
+                    window.location.href = `login?redirect=dashboard`;
                 }
             });
         }
@@ -107,7 +107,7 @@ async function loadHeaderFooter() {
             leaderboardLink.addEventListener('click', (e) => {
                 if (!isLoggedIn) {
                     e.preventDefault();
-                    window.location.href = `/pages/login.html?redirect=/pages/leaderboard.html`;
+                    window.location.href = `login?redirect=leaderboard`;
                 }
             });
         }
@@ -116,13 +116,13 @@ async function loadHeaderFooter() {
             leaderboardLinkMobile.addEventListener('click', (e) => {
                 if (!isLoggedIn) {
                     e.preventDefault();
-                    window.location.href = `/pages/login.html?redirect=/pages/leaderboard.html`;
+                    window.location.href = `login?redirect=leaderboard`;
                 }
             });
         }
 
         profilePicElement.addEventListener('click', () => {
-            window.location.href = isLoggedIn ? '/pages/dashboard.html' : '/pages/login.html';
+            window.location.href = isLoggedIn ? 'dashboard' : 'login';
         });
 
     } catch (error) {

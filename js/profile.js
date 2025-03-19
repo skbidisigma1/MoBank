@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const isLoggedIn = await isAuthenticated();
     if (!isLoggedIn) {
-        window.location.href = '/pages/login.html';
+        window.location.href = 'login';
         return;
     }
 
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 if (userDataResponse.ok) setCachedUserData(await userDataResponse.json());
-                window.location.href = '/pages/dashboard.html?profile_successful=true';
+                window.location.href = 'dashboard?profile_successful=true';
                 return;
             }
 

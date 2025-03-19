@@ -2,7 +2,7 @@ async function loadTransferPage() {
   await window.auth0Promise;
   const isLoggedIn = await isAuthenticated();
   if (!isLoggedIn) {
-    window.location.href = '/pages/login.html';
+    window.location.href = 'login';
     return;
   }
   try {

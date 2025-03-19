@@ -4,7 +4,7 @@ async function loadAdminContent() {
   const roles = (user && user['https://mo-classroom.us/roles']) || [];
 
   if (!roles.includes('admin')) {
-    window.location.href = '/pages/dashboard.html';
+    window.location.href = '/dashboard';
     return;
   }
 

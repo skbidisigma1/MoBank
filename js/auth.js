@@ -52,13 +52,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let auth0Client = null;
-const protectedPages = ['dashboard.html', 'admin.html', 'transfer.html', 'leaderboard.html'];
+const protectedPages = ['dashboard.html', 'admin.html', 'transfer.html', 'leaderboard.html', 'dashboard', 'admin', 'transfer', 'leaderboard'];
 
 const auth0Promise = (async () => {
   auth0Client = await createAuth0Client({
     domain: 'dev-nqdfwemz14t8nf7w.us.auth0.com',
     client_id: 'IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA',
-    redirect_uri: window.location.origin + '/pages/dashboard.html',
+    redirect_uri: window.location.origin + 'dashboard',
     audience: 'https://mo-classroom.us/api',
     cacheLocation: 'localstorage',
     useRefreshTokens: true
@@ -71,7 +71,7 @@ const auth0Promise = (async () => {
     if (isAuthenticated) {
       await initializeUser();
     } else {
-      window.location.href = '/pages/login.html';
+      window.location.href = 'login';
     }
   }
 })();
@@ -79,7 +79,7 @@ const auth0Promise = (async () => {
 async function signInWithAuth0() {
   try {
     await auth0Client.loginWithRedirect({
-      redirect_uri: window.location.origin + '/pages/dashboard.html',
+      redirect_uri: window.location.origin + 'dashboard',
       connection: 'google-oauth2',
       prompt: 'select_account'
     });
@@ -93,7 +93,7 @@ async function handleAuthRedirect() {
   if (query.includes('code=') && query.includes('state=')) {
     try {
       await auth0Client.handleRedirectCallback();
-      const targetUrl = '/pages/dashboard.html';
+      const targetUrl = 'dashboard';
       window.history.replaceState({}, document.title, targetUrl);
     } catch (error) {
       console.error('Auth0 Callback Error:', error);

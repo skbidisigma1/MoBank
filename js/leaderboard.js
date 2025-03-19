@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await window.auth0Promise;
     const isLoggedIn = await isAuthenticated();
     if (!isLoggedIn) {
-      window.location.href = '/pages/login.html';
+      window.location.href = 'login';
       return;
     }
     const user = await getUser();

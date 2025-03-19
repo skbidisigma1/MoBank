@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const getStartedBtn = document.getElementById('get-started-btn');
     if (getStartedBtn) {
         getStartedBtn.addEventListener('click', () => {
-            window.location.href = '/pages/login.html';
+            window.location.href = 'login';
         });
     }
     if (window.matchMedia("(display-mode: standalone)").matches) {
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (isChromeOS || isWindows) {
                     console.log("Running on ChromeOS or Windows, redirecting to pin instructions...");
                     setTimeout(() => {
-                        window.location.href = "/pages/pin.html";
+                        window.location.href = "pin";
                     }, 500);
                 }
             }
