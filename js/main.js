@@ -50,62 +50,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Notification functionality
-    const notifIcon = document.getElementById('notification-icon');
-    const notifDropdown = document.getElementById('notification-dropdown');
-    const notifCount = document.getElementById('notification-count');
-    let notifications = [];
-
-    function updateNotificationsUI(){
-        if(notifications.length > 0){
-            notifCount.textContent = notifications.length;
-            notifCount.classList.remove('hidden');
-            notifDropdown.innerHTML = '';
-            notifications.forEach(n => {
-                const p = document.createElement('p');
-                p.textContent = n;
-                p.classList.add('notification-item');
-                notifDropdown.appendChild(p);
-            });
-        } else {
-            notifCount.classList.add('hidden');
-            notifDropdown.innerHTML = '<p class="notification-empty">No new notifications</p>';
-        }
-    }
-
-    function handleNotificationToggle(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        notifDropdown.classList.toggle('hidden');
-        notifIcon.classList.toggle('active');
-    }
-
-    if (notifIcon) {
-        notifIcon.addEventListener('touchstart', handleNotificationToggle, {passive: false});
-        notifIcon.addEventListener('click', handleNotificationToggle);
-
-        if (notifCount) {
-            notifCount.addEventListener('touchstart', handleNotificationToggle, {passive: false});
-            notifCount.addEventListener('click', handleNotificationToggle);
-        }
-
-        document.addEventListener('click', (e) => {
-            if (e.target !== notifIcon && e.target !== notifCount && !notifDropdown.contains(e.target)) {
-                notifDropdown.classList.add('hidden');
-                notifIcon.classList.remove('active');
-            }
-        });
-
-        document.addEventListener('touchstart', (e) => {
-            if (e.target !== notifIcon && e.target !== notifCount && !notifDropdown.contains(e.target)) {
-                notifDropdown.classList.add('hidden');
-                notifIcon.classList.remove('active');
-            }
-        }, {passive: true});
-
-        notifications.push("Welcome to MoBank notifications");
-        updateNotificationsUI();
-    }
 });
 
 function openPreferencesDB(){
