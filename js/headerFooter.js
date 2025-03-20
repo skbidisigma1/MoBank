@@ -152,6 +152,7 @@ async function loadHeaderFooter() {
                     notifDropdown.appendChild(p);
                 });
             } else {
+                notifCount.style.display = 'none';
                 notifCount.classList.add('hidden');
                 notifDropdown.innerHTML = '<p class="notification-empty">No new notifications</p>';
             }
