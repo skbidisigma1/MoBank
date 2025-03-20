@@ -144,15 +144,10 @@ async function loadHeaderFooter() {
         function updateNotificationsUI() {
             if (notifications.length > 0) {
                 notifCount.textContent = notifications.length;
+                notifCount.style.display = '';
                 notifCount.classList.remove('hidden');
-                notifDropdown.innerHTML = '';
-                notifications.forEach(n => {
-                    const p = document.createElement('p');
-                    p.textContent = n;
-                    p.classList.add('notification-item');
-                    notifDropdown.appendChild(p);
-                });
             } else {
+                notifCount.textContent = '0';
                 notifCount.style.display = 'none';
                 notifCount.classList.add('hidden');
                 notifDropdown.innerHTML = '<p class="notification-empty">No new notifications</p>';
@@ -174,9 +169,8 @@ async function loadHeaderFooter() {
                 notifCount.addEventListener('click', handleNotificationToggle);
             }
 
-            notifIcon.addEventListener('touchstart', handleNotificationToggle, {passive: false});
-            notifIcon.addEventListener('click', handleNotificationToggle);
-
+            notifIcon.classList.remove('hidden');
+            
             document.addEventListener('click', (e) => {
                 if (e.target !== notifIcon && e.target !== notifCount && !notifDropdown.contains(e.target)) {
                     notifDropdown.classList.add('hidden');
@@ -200,11 +194,15 @@ async function loadHeaderFooter() {
 
                 if (userData && userData.notifications && Array.isArray(userData.notifications)) {
                     const unreadNotifications = userData.notifications.filter(n => !n.read);
-
                     notifications = unreadNotifications.map(n => n.message);
-
                     updateNotificationsUI();
+                } else {
+                    notifCount.style.display = 'none';
+                    notifCount.classList.add('hidden');
                 }
+            } else {
+                notifCount.style.display = 'none';
+                notifCount.classList.add('hidden');
             }
         }
 
@@ -224,3 +222,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 document.addEventListener('DOMContentLoaded', loadHeaderFooter);
+
