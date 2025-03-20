@@ -146,6 +146,15 @@ async function loadHeaderFooter() {
                 notifCount.textContent = notifications.length;
                 notifCount.style.display = '';
                 notifCount.classList.remove('hidden');
+                
+                // Clear and populate the dropdown with actual notifications
+                notifDropdown.innerHTML = '';
+                notifications.forEach(notification => {
+                    const notifItem = document.createElement('div');
+                    notifItem.className = 'notification-item';
+                    notifItem.textContent = notification;
+                    notifDropdown.appendChild(notifItem);
+                });
             } else {
                 notifCount.textContent = '0';
                 notifCount.style.display = 'none';
@@ -197,7 +206,9 @@ async function loadHeaderFooter() {
 
                 if (userData && userData.notifications && Array.isArray(userData.notifications)) {
                     const unreadNotifications = userData.notifications.filter(n => !n.read);
-                    notifications = unreadNotifications.map(n => n.message);
+
+                    notifications = unreadNotifications.map(n => n.message || n.text || "New notification");
+                    
                     updateNotificationsUI();
                 } else {
                     notifCount.style.display = 'none';
