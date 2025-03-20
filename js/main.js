@@ -80,13 +80,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         notifIcon.classList.toggle('active');
     }
 
-    function handleNotificationToggle(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        notifDropdown.classList.toggle('hidden');
-        notifIcon.classList.toggle('active');
-    }
-
     if (notifIcon) {
         notifIcon.addEventListener('touchstart', handleNotificationToggle, {passive: false});
         notifIcon.addEventListener('click', handleNotificationToggle);
