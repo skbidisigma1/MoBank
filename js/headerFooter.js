@@ -207,10 +207,6 @@ async function loadHeaderFooter() {
             }
         }
 
-        if (notifIcon) {
-            updateNotificationsFromUserData();
-        }
-
     } catch (error) {
         console.error('Error loading header and footer:', error);
     }
