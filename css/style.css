@@ -738,6 +738,9 @@ select:after {
     margin: 20px auto;
     padding: 40px;
   }
+  .header-right {
+    gap: 35px;
+  }
 }
 
 #install-prompt {
