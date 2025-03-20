@@ -157,8 +157,20 @@ module.exports = async (req, res) => {
               read: false,
             }
 
+            const recipientNotifications = recipientSnapshot.data().notifications || []
+            recipientNotifications.push(recipientNotification)
+
+            recipientNotifications.sort((a, b) =>
+                b.timestamp.seconds - a.timestamp.seconds ||
+                b.timestamp.nanoseconds - a.timestamp.nanoseconds
+            )
+
+            if (recipientNotifications.length > 10) {
+              recipientNotifications.splice(10)
+            }
+
             transaction.update(recipientRef, {
-              notifications: admin.firestore.FieldValue.arrayUnion(recipientNotification),
+              notifications: recipientNotifications
             })
           })
 
