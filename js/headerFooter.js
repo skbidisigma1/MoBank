@@ -144,16 +144,10 @@ async function loadHeaderFooter() {
             if (notifications.length > 0) {
                 notifCount.textContent = notifications.length;
                 notifCount.classList.remove('hidden');
-                notifDropdown.innerHTML = '';
-                notifications.forEach(n => {
-                    const p = document.createElement('p');
-                    p.textContent = n;
-                    p.classList.add('notification-item');
-                    notifDropdown.appendChild(p);
-                });
+                notifCount.style.display = '';
             } else {
-                notifCount.style.display = 'none';
                 notifCount.classList.add('hidden');
+                notifCount.style.display = 'none';
                 notifDropdown.innerHTML = '<p class="notification-empty">No new notifications</p>';
             }
         }
@@ -175,6 +169,8 @@ async function loadHeaderFooter() {
 
             notifIcon.addEventListener('touchstart', handleNotificationToggle, {passive: false});
             notifIcon.addEventListener('click', handleNotificationToggle);
+
+            updateNotificationsUI();
 
             document.addEventListener('click', (e) => {
                 if (e.target !== notifIcon && e.target !== notifCount && !notifDropdown.contains(e.target)) {
