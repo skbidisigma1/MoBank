@@ -187,7 +187,6 @@ async function loadHeaderFooter() {
                 }
             }, {passive: true});
 
-            notifications.push("Welcome to MoBank notifications");
             updateNotificationsUI();
         }
 
