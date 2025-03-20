@@ -1,16 +1,16 @@
 let deferredPrompt;
 document.addEventListener('DOMContentLoaded', async () => {
     const getStartedBtn = document.getElementById('get-started-btn');
-    if (getStartedBtn) {
+    if(getStartedBtn){
         getStartedBtn.addEventListener('click', () => {
             window.location.href = 'login';
         });
     }
-    if (window.matchMedia("(display-mode: standalone)").matches) {
+    if(window.matchMedia("(display-mode: standalone)").matches){
         return;
     }
     const dontAsk = await getDontAskAgain();
-    if (!dontAsk) {
+    if(!dontAsk){
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
@@ -18,16 +18,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
     document.getElementById('install-yes-btn').addEventListener('click', async () => {
-        if (deferredPrompt) {
+        if(deferredPrompt){
             deferredPrompt.prompt();
             const choiceResult = await deferredPrompt.userChoice;
             document.getElementById('install-prompt').style.display = 'none';
             deferredPrompt = null;
-            if (choiceResult.outcome === 'accepted') {
+            if(choiceResult.outcome === 'accepted'){
                 const userAgent = navigator.userAgent.toLowerCase();
                 const isChromeOS = userAgent.includes("cros");
                 const isWindows = userAgent.includes("windows");
-                if (isChromeOS || isWindows) {
+                if(isChromeOS || isWindows){
                     setTimeout(() => {
                         window.location.href = "pin";
                     }, 500);
@@ -45,26 +45,56 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadAnnouncements();
     document.getElementById('close-announcements-modal').addEventListener('click', closeAnnouncementsModal);
     document.getElementById('announcements-modal').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('announcements-modal')) {
+        if(e.target === document.getElementById('announcements-modal')){
             closeAnnouncementsModal();
         }
     });
+    const notifIcon = document.getElementById('notification-icon');
+    const notifDropdown = document.getElementById('notification-dropdown');
+    const notifCount = document.getElementById('notification-count');
+    let notifications = [];
+    function updateNotificationsUI(){
+        if(notifications.length > 0){
+            notifCount.textContent = notifications.length;
+            notifCount.classList.remove('hidden');
+            notifDropdown.innerHTML = '';
+            notifications.forEach(n => {
+                const p = document.createElement('p');
+                p.textContent = n;
+                notifDropdown.appendChild(p);
+            });
+        } else {
+            notifCount.classList.add('hidden');
+            notifDropdown.innerHTML = '<p>No new notifications</p>';
+        }
+    }
+    notifIcon.addEventListener('click', (e) => {
+        e.stopPropagation();
+        notifDropdown.classList.toggle('hidden');
+    });
+    document.addEventListener('click', () => {
+        if(!notifDropdown.classList.contains('hidden')){
+            notifDropdown.classList.add('hidden');
+        }
+    });
+    notifications.push("Welcome to MoBank notifications");
+    updateNotificationsUI();
 });
-function openPreferencesDB() {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open("mobank-db", 3);
+function openPreferencesDB(){
+    return new Promise((resolve,reject) => {
+        const request = indexedDB.open("mobank-db",3);
         request.onupgradeneeded = event => {
             const db = event.target.result;
-            if (!db.objectStoreNames.contains("preferences")) {
-                db.createObjectStore("preferences", { keyPath: "key" });
+            if(!db.objectStoreNames.contains("preferences")){
+                db.createObjectStore("preferences",{keyPath:"key"});
             }
-            if (!db.objectStoreNames.contains("themeStore")) {
+            if(!db.objectStoreNames.contains("themeStore")){
                 db.createObjectStore("themeStore");
             }
         };
         request.onsuccess = event => {
             const db = event.target.result;
-            if (!db.objectStoreNames.contains("preferences")) {
+            if(!db.objectStoreNames.contains("preferences")){
                 db.close();
                 const deleteRequest = indexedDB.deleteDatabase("mobank-db");
                 deleteRequest.onsuccess = () => {
@@ -82,10 +112,10 @@ function openPreferencesDB() {
         };
     });
 }
-async function getDontAskAgain() {
+async function getDontAskAgain(){
     const db = await openPreferencesDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction("preferences", "readonly");
+    return new Promise((resolve,reject) => {
+        const transaction = db.transaction("preferences","readonly");
         const store = transaction.objectStore("preferences");
         const req = store.get("dontAskInstall");
         req.onsuccess = () => {
@@ -96,12 +126,12 @@ async function getDontAskAgain() {
         };
     });
 }
-async function saveDontAskAgain(val) {
+async function saveDontAskAgain(val){
     const db = await openPreferencesDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction("preferences", "readwrite");
+    return new Promise((resolve,reject) => {
+        const transaction = db.transaction("preferences","readwrite");
         const store = transaction.objectStore("preferences");
-        const req = store.put({ key: "dontAskInstall", value: val });
+        const req = store.put({key:"dontAskInstall",value:val});
         req.onsuccess = () => {
             resolve(true);
         };
@@ -110,13 +140,13 @@ async function saveDontAskAgain(val) {
         };
     });
 }
-async function loadAnnouncements() {
-    try {
+async function loadAnnouncements(){
+    try{
         const response = await fetch('/data/announcements.json');
-        if (!response.ok) throw new Error('Failed to fetch announcements');
+        if(!response.ok) throw new Error('Failed to fetch announcements');
         const announcements = await response.json();
-        announcements.sort((a, b) => new Date(b.date) - new Date(a.date));
-        if (announcements.length > 0) {
+        announcements.sort((a,b)=>new Date(b.date)-new Date(a.date));
+        if(announcements.length>0){
             const mainAnn = announcements[0];
             const mainContainer = document.getElementById('main-announcement');
             mainContainer.innerHTML = '';
@@ -130,26 +160,25 @@ async function loadAnnouncements() {
             mainContainer.appendChild(title);
             mainContainer.appendChild(description);
             mainContainer.appendChild(date);
-            mainContainer.addEventListener('click', () => {
+            mainContainer.addEventListener('click', ()=>{
                 openAnnouncementsModal(announcements);
             });
-            document.getElementById('view-all-announcements').addEventListener('click', () => {
+            document.getElementById('view-all-announcements').addEventListener('click', ()=>{
                 openAnnouncementsModal(announcements);
             });
         }
-    } catch (error) {
+    } catch(error){
         console.error(error);
     }
 }
-function openAnnouncementsModal(announcements) {
+function openAnnouncementsModal(announcements){
     const modal = document.getElementById('announcements-modal');
     const list = document.getElementById('announcements-list');
     list.innerHTML = '';
-
-    announcements.forEach(ann => {
+    announcements.forEach(ann=>{
         const card = document.createElement('div');
         card.className = 'announcement-card';
-        if (ann.id === 1) {
+        if(ann.id===1){
             card.classList.add('highlighted-announcement');
         }
         const title = document.createElement('h4');
@@ -159,22 +188,17 @@ function openAnnouncementsModal(announcements) {
         const date = document.createElement('div');
         date.className = 'announcement-date';
         date.textContent = ann.date;
-
         card.appendChild(title);
         card.appendChild(body);
         card.appendChild(date);
-
-        card.addEventListener('click', (e) => {
+        card.addEventListener('click',(e)=>{
             e.stopPropagation();
             openAnnouncementsModal([ann]);
         });
-
         list.appendChild(card);
     });
-
     modal.classList.remove('hidden');
 }
-
-function closeAnnouncementsModal() {
+function closeAnnouncementsModal(){
     document.getElementById('announcements-modal').classList.add('hidden');
 }

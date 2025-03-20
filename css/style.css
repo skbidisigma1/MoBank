@@ -26,7 +26,6 @@
   --container-color: var(--color-white);
   --font-main: 'Poppins', Arial, sans-serif;
 }
-
 [data-theme="dark"] {
   --color-primary: #005fa3;
   --color-primary-dark: #0060df;
@@ -55,13 +54,11 @@
   --container-color: #252525;
   --font-main: 'Poppins', Arial, sans-serif;
 }
-
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
-
 body {
   font-family: var(--font-main);
   background-color: var(--color-bg);
@@ -72,7 +69,6 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
 }
-
 header {
   background-color: var(--color-primary);
   color: var(--color-white);
@@ -86,19 +82,16 @@ header {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   height: 60px;
 }
-
 header h1 {
   font-size: 1.5rem;
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
 }
-
 header nav {
   display: flex;
   gap: 20px;
 }
-
 #mobileMenuToggle {
   left: 20px;
   display: none;
@@ -129,7 +122,6 @@ header nav {
 .bar:nth-child(1) { top: 0; }
 .bar:nth-child(2) { top: 50%; transform: translateY(-50%); }
 .bar:nth-child(3) { top: 100%; transform: translateY(-100%); }
-
 @keyframes toXTop {
   0% { top: 0; transform: translateY(0) rotate(0deg); }
   50% { top: 50%; transform: translateY(-50%) rotate(0deg); }
@@ -156,7 +148,6 @@ header nav {
 #mobileMenuToggle:not(.active) .bar:nth-child(1) { animation: toHamburgerTop 0.3s forwards; }
 #mobileMenuToggle:not(.active) .bar:nth-child(3) { animation: toHamburgerBottom 0.3s forwards; }
 #mobileMenuToggle:not(.active) .bar:nth-child(2) { opacity: 1; }
-
 nav ul {
   list-style-type: none;
   display: flex;
@@ -173,13 +164,11 @@ nav a {
 nav a:hover {
   color: var(--color-nav-hover);
 }
-
 .header-right {
   display: flex;
   align-items: center;
   gap: 25px;
 }
-
 .notification-icon {
   width: 32px;
   height: 32px;
@@ -189,7 +178,6 @@ nav a:hover {
 .notification-icon:hover {
   opacity: 0.8;
 }
-
 main {
   flex: 1;
   padding: 40px;
@@ -201,7 +189,6 @@ main {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
 }
-
 .container {
   padding: 40px;
   margin: 20px auto;
@@ -212,7 +199,6 @@ main {
   box-sizing: border-box;
   width: 100%;
 }
-
 form {
   margin: 20px auto;
   display: flex;
@@ -248,7 +234,6 @@ input:focus {
   outline: none;
   box-shadow: 0 0 5px rgba(0, 86, 179, 0.5);
 }
-
 button {
   font-family: var(--font-main);
   background-color: var(--color-primary);
@@ -269,7 +254,6 @@ button:hover {
 button:active {
   transform: translateY(0);
 }
-
 footer {
   background-color: var(--color-footer-bg);
   color: var(--color-white);
@@ -287,7 +271,6 @@ footer a {
   text-decoration: none;
   margin-left: 5px;
 }
-
 ul#userList,
 ul#transactions {
   list-style-type: none;
@@ -303,15 +286,12 @@ ul#transactions {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   font-size: 0.9rem;
 }
-
 .hidden {
   display: none;
 }
-
 .mobile-nav {
   display: none;
 }
-
 select {
   width: 100%;
   padding: 10px;
@@ -338,7 +318,6 @@ select:after {
   font-size: 12px;
   color: var(--color-text);
 }
-
 .profile-icon {
   width: 48px;
   height: 48px;
@@ -346,7 +325,6 @@ select:after {
   object-fit: cover;
   border: 2px solid var(--color-white);
 }
-
 #auth0-signin {
   display: inline-flex;
   align-items: center;
@@ -369,7 +347,6 @@ select:after {
   height: 18px;
   margin-right: 10px;
 }
-
 .gsi-material-button {
   -moz-user-select: none;
   -webkit-user-select: none;
@@ -445,7 +422,6 @@ select:after {
   background-color: #303030;
   opacity: 8%;
 }
-
 .profile {
   display: flex;
   align-items: center;
@@ -465,7 +441,6 @@ select:after {
 #profile-pic {
   cursor: pointer;
 }
-
 .dashboard-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -497,7 +472,6 @@ select:after {
 .button-container {
   margin-top: 30px;
 }
-
 .loader {
   margin: 20px auto;
   z-index: 1400;
@@ -508,11 +482,9 @@ select:after {
   aspect-ratio: 1 / 1;
   animation: spin 2s linear infinite;
 }
-
 .admin-title {
   margin-bottom: 20px;
 }
-
 .tab-container {
   margin-top: 20px;
   padding-bottom: 20px;
@@ -541,7 +513,6 @@ select:after {
 .tab-button.active {
   background-color: var(--color-primary-dark);
 }
-
 .toast {
   position: fixed;
   top: 20px;
@@ -577,7 +548,6 @@ select:after {
   color: var(--color-white);
   font-family: var(--font-main);
 }
-
 .suggestions-container {
   position: absolute;
   background-color: var(--suggestions-container-color);
@@ -600,16 +570,13 @@ select:after {
 .suggestion-item:hover {
   background-color: var(--color-hover-bg);
 }
-
 .input-container {
   position: relative;
   text-align: left;
 }
-
 .highlighted {
   text-decoration: underline;
 }
-
 #current-balance-container {
   display: flex;
   justify-content: space-between;
@@ -620,7 +587,6 @@ select:after {
 #current-balance {
   font-weight: bold;
 }
-
 @keyframes toast-slide-in {
   from {
     opacity: 0;
@@ -641,12 +607,10 @@ select:after {
     transform: translateX(100%) scale(0.9);
   }
 }
-
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-
 @media (max-width: 768px) {
   .toast {
     width: 90%;
@@ -730,7 +694,6 @@ select:after {
     text-align: left;
   }
 }
-
 @media (min-width: 769px) {
   main,
   .container {
@@ -742,7 +705,6 @@ select:after {
     gap: 35px;
   }
 }
-
 #install-prompt {
   margin-top: 40px;
   padding: 20px;
@@ -752,21 +714,18 @@ select:after {
   text-align: center;
   display: none;
 }
-
 #install-prompt h3 {
   font-size: 20px;
   font-weight: bold;
   color: var(--color-text);
   margin-bottom: 20px;
 }
-
 .install-buttons {
   display: flex;
   justify-content: center;
   gap: 20px;
   margin-bottom: 20px;
 }
-
 .install-btn {
   background-color: var(--color-secondary);
   color: var(--color-white);
@@ -781,7 +740,6 @@ select:after {
   background-color: var(--color-secondary-dark);
   transform: translateY(-2px);
 }
-
 .dont-btn {
   background-color: var(--color-secondary);
   color: var(--color-white);
@@ -798,17 +756,14 @@ select:after {
   background-color: var(--color-secondary-dark);
   transform: translateY(-2px);
 }
-
 .pwa-link, a.pwa-link {
   color: #1A73E8;
   text-decoration: none;
 }
-
 .pwa-link:hover {
   text-decoration: underline;
   color: #0F5AC6;
 }
-
 .pin-container {
   max-width: 800px;
   margin: 0 auto;
@@ -833,7 +788,6 @@ select:after {
   font-size: 1.1rem;
   color: var(--color-text);
 }
-
 #proceed-button {
   background-color: var(--color-primary);
   color: var(--color-white);
@@ -846,7 +800,6 @@ select:after {
   width: auto;
   margin-top: 20px;
 }
-
 #announcements-modal {
   position: fixed;
   top: 0;
@@ -890,4 +843,46 @@ select:after {
 .highlighted-announcement {
   border: 2px solid var(--color-primary);
   background-color: rgba(0,86,179,0.1);
+}
+.notification-wrapper {
+  position: relative;
+}
+.notification-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  cursor: pointer;
+  position: relative;
+}
+.notification-dropdown {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  width: 200px;
+  background: var(--color-main-bg);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  padding: 10px;
+  z-index: 1000;
+  display: none;
+}
+.notification-dropdown p {
+  font-size: 14px;
+  color: var(--color-text);
+  text-align: center;
+  padding: 10px;
+}
+.show {
+  display: block;
+}
+.notification-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: red;
+  color: var(--color-white);
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: bold;
 }

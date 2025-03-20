@@ -15,7 +15,13 @@
         </ul>
     </nav>
     <div class="header-right">
-        <img id="notification-icon" class="notification-icon" src="/images/notification.svg" alt="Notifications">
+        <div class="notification-wrapper">
+            <img id="notification-icon" class="notification-icon" src="/images/notification.svg" alt="Notifications">
+            <span id="notification-count" class="notification-count hidden">0</span>
+            <div id="notification-dropdown" class="notification-dropdown hidden">
+                <p>No new notifications</p>
+            </div>
+        </div>
         <img id="profile-pic" class="profile-icon" src="/images/default_profile.svg" alt="Profile Picture">
     </div>
     <div class="mobile-nav">
