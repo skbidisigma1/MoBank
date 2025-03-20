@@ -162,6 +162,9 @@ async function loadHeaderFooter() {
         }
 
         if (notifIcon) {
+            notifIcon.addEventListener('touchstart', handleNotificationToggle, {passive: false});
+            notifIcon.addEventListener('click', handleNotificationToggle);
+            
             if (notifCount) {
                 notifCount.classList.add('hidden');
                 notifCount.style.display = 'none';
