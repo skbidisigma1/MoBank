@@ -859,22 +859,53 @@ select:after {
 .notification-dropdown {
   position: absolute;
   top: 40px;
-  right: 0;
-  width: 200px;
+  right: -80px;
+  width: 320px;
+  max-width: 85vw;
   background: var(--color-main-bg);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-  padding: 10px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  padding: 15px;
   z-index: 1000;
+  max-height: 400px;
+  overflow-y: auto;
 }
-.notification-dropdown p {
+.notification-dropdown p.notification-empty {
   font-size: 14px;
-  color: var(--color-text);
+  color: var(--color-muted);
   text-align: center;
-  padding: 10px;
+  padding: 15px 10px;
 }
-.show {
+.notification-item {
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-text);
+  background-color: var(--color-light-bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: left;
+}
+.notification-item:last-child {
+  margin-bottom: 0;
+}
+.notification-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  background-color: var(--color-hover-bg);
+}
+.notification-item.unread {
+  border-left: 3px solid var(--color-primary);
+}
+.notification-item .notification-time {
+  font-size: 12px;
+  color: var(--color-muted);
   display: block;
+  margin-top: 5px;
 }
 .notification-count {
   position: absolute;
@@ -891,4 +922,40 @@ select:after {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+.notification-header h4 {
+  margin: 0;
+  font-size: 16px;
+}
+.notification-clear {
+  font-size: 12px;
+  color: var(--color-primary);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 5px;
+  width: auto;
+  margin: 0;
+}
+.notification-clear:hover {
+  text-decoration: underline;
+}
+@media (max-width: 768px) {
+  .notification-dropdown {
+    right: -25px;
+    width: 280px;
+    max-height: 350px;
+  }
+  .notification-item {
+    padding: 10px;
+    font-size: 13px;
+  }
 }

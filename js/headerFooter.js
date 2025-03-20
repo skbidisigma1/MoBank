@@ -146,15 +146,44 @@ async function loadHeaderFooter() {
                 notifCount.textContent = notifications.length;
                 notifCount.style.display = '';
                 notifCount.classList.remove('hidden');
+
+                notifDropdown.innerHTML = `
+                    <div class="notification-header">
+                        <h4>Notifications (${notifications.length})</h4>
+                        <button class="notification-clear">Clear all</button>
+                    </div>
+                `;
                 
-                // Clear and populate the dropdown with actual notifications
-                notifDropdown.innerHTML = '';
-                notifications.forEach(notification => {
+                notifications.forEach((notification, index) => {
                     const notifItem = document.createElement('div');
                     notifItem.className = 'notification-item';
-                    notifItem.textContent = notification;
+                    if (index < 3) {
+                        notifItem.classList.add('unread');
+                    }
+                    
+                    const message = document.createElement('div');
+                    message.textContent = notification;
+                    
+                    const time = document.createElement('span');
+                    time.className = 'notification-time';
+                    // Generate a random recent time for demo purposes
+                    const randomTime = new Date();
+                    randomTime.setMinutes(randomTime.getMinutes() - Math.floor(Math.random() * 60));
+                    time.textContent = randomTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    notifItem.appendChild(message);
+                    notifItem.appendChild(time);
                     notifDropdown.appendChild(notifItem);
                 });
+
+                const clearBtn = notifDropdown.querySelector('.notification-clear');
+                if (clearBtn) {
+                    clearBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        notifications = [];
+                        updateNotificationsUI();
+                    });
+                }
             } else {
                 notifCount.textContent = '0';
                 notifCount.style.display = 'none';
