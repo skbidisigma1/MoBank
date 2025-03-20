@@ -51,6 +51,7 @@ async function loadHeaderFooter() {
 
         function getCachedUserData() {
             const cached = localStorage.getItem('userData');
+            const USER_DATA_COOLDOWN_MILLISECONDS = 20 * 1000; // 20 seconds
             if (cached) {
                 const parsed = JSON.parse(cached);
                 if (Date.now() - parsed.timestamp < USER_DATA_COOLDOWN_MILLISECONDS) {
