@@ -49,6 +49,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             closeAnnouncementsModal();
         }
     });
+
+    // Notification functionality
     const notifIcon = document.getElementById('notification-icon');
     const notifDropdown = document.getElementById('notification-dropdown');
     const notifCount = document.getElementById('notification-count');
@@ -72,38 +74,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function handleNotificationToggle(e) {
+        e.preventDefault();
         e.stopPropagation();
         notifDropdown.classList.toggle('hidden');
         notifIcon.classList.toggle('active');
     }
 
-    notifIcon.addEventListener('click', handleNotificationToggle);
-    notifIcon.addEventListener('touchend', function(e) {
-        e.preventDefault();s
-        handleNotificationToggle(e);
-    });
+    if (notifIcon) {
+        notifIcon.addEventListener('touchstart', handleNotificationToggle, {passive: false});
+        notifIcon.addEventListener('click', handleNotificationToggle);
 
-    document.addEventListener('click', (e) => {
-        if (e.target !== notifIcon) {
-            if(!notifDropdown.classList.contains('hidden')){
+        document.addEventListener('click', (e) => {
+            if (e.target !== notifIcon && !notifDropdown.contains(e.target)) {
                 notifDropdown.classList.add('hidden');
                 notifIcon.classList.remove('active');
             }
-        }
-    });
+        });
 
-    document.addEventListener('touchend', function(e) {
-        if (e.target !== notifIcon) {
-            if(!notifDropdown.classList.contains('hidden')){
+        document.addEventListener('touchstart', (e) => {
+            if (e.target !== notifIcon && !notifDropdown.contains(e.target)) {
                 notifDropdown.classList.add('hidden');
                 notifIcon.classList.remove('active');
             }
-        }
-    });
+        }, {passive: true});
 
-    notifications.push("Welcome to MoBank notifications");
-    updateNotificationsUI();
+        notifications.push("Welcome to MoBank notifications");
+        updateNotificationsUI();
+    }
 });
+
 function openPreferencesDB(){
     return new Promise((resolve,reject) => {
         const request = indexedDB.open("mobank-db",3);
@@ -136,6 +135,7 @@ function openPreferencesDB(){
         };
     });
 }
+
 async function getDontAskAgain(){
     const db = await openPreferencesDB();
     return new Promise((resolve,reject) => {
@@ -150,6 +150,7 @@ async function getDontAskAgain(){
         };
     });
 }
+
 async function saveDontAskAgain(val){
     const db = await openPreferencesDB();
     return new Promise((resolve,reject) => {
@@ -164,6 +165,7 @@ async function saveDontAskAgain(val){
         };
     });
 }
+
 async function loadAnnouncements(){
     try{
         const response = await fetch('/data/announcements.json');
@@ -195,6 +197,7 @@ async function loadAnnouncements(){
         console.error(error);
     }
 }
+
 function openAnnouncementsModal(announcements){
     const modal = document.getElementById('announcements-modal');
     const list = document.getElementById('announcements-list');
@@ -223,6 +226,7 @@ function openAnnouncementsModal(announcements){
     });
     modal.classList.remove('hidden');
 }
+
 function closeAnnouncementsModal(){
     document.getElementById('announcements-modal').classList.add('hidden');
 }
