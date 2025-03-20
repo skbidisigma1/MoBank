@@ -80,19 +80,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         notifIcon.classList.toggle('active');
     }
 
+    function handleNotificationToggle(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        notifDropdown.classList.toggle('hidden');
+        notifIcon.classList.toggle('active');
+    }
+
     if (notifIcon) {
         notifIcon.addEventListener('touchstart', handleNotificationToggle, {passive: false});
         notifIcon.addEventListener('click', handleNotificationToggle);
 
+        if (notifCount) {
+            notifCount.addEventListener('touchstart', handleNotificationToggle, {passive: false});
+            notifCount.addEventListener('click', handleNotificationToggle);
+        }
+
         document.addEventListener('click', (e) => {
-            if (e.target !== notifIcon && !notifDropdown.contains(e.target)) {
+            if (e.target !== notifIcon && e.target !== notifCount && !notifDropdown.contains(e.target)) {
                 notifDropdown.classList.add('hidden');
                 notifIcon.classList.remove('active');
             }
         });
 
         document.addEventListener('touchstart', (e) => {
-            if (e.target !== notifIcon && !notifDropdown.contains(e.target)) {
+            if (e.target !== notifIcon && e.target !== notifCount && !notifDropdown.contains(e.target)) {
                 notifDropdown.classList.add('hidden');
                 notifIcon.classList.remove('active');
             }
