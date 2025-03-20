@@ -49,6 +49,17 @@ async function loadHeaderFooter() {
         const dashboardLink = headerPlaceholder.querySelector('#dashboard-link');
         const dashboardLinkMobile = headerPlaceholder.querySelector('#dashboard-link-mobile');
 
+        function getCachedUserData() {
+            const cached = localStorage.getItem('userData');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Date.now() - parsed.timestamp < USER_DATA_COOLDOWN_MILLISECONDS) {
+                    return parsed.data;
+                }
+            }
+            return null;
+        }
+
         if (isLoggedIn) {
             if (authLink) {
                 authLink.textContent = 'Logout';
