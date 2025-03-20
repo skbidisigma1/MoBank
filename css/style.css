@@ -864,7 +864,6 @@ select:after {
   border-radius: 6px;
   padding: 10px;
   z-index: 1000;
-  display: none;
 }
 .notification-dropdown p {
   font-size: 14px;
