@@ -21,170 +21,163 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' })
   }
-
   const authHeader = req.headers.authorization
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ message: 'Unauthorized' })
   }
-
   const token = authHeader.split(' ')[1]
-
   jwt.verify(
-    token,
-    getKey,
-    {
-      audience: process.env.AUTH0_AUDIENCE,
-      issuer: `https://${process.env.AUTH0_DOMAIN}/`,
-      algorithms: ['RS256']
-    },
-    async (err, decoded) => {
-      if (err) {
-        return res.status(401).json({ message: 'Token verification failed', error: err.toString() })
-      }
-
-      const roles = decoded['https://mo-classroom.us/roles'] || []
-      if (!roles.includes('admin')) {
-        return res.status(403).json({ message: 'Forbidden: Admins only' })
-      }
-
-      let body = ''
-      await new Promise((resolve) => {
-        req.on('data', (chunk) => { body += chunk })
-        req.on('end', resolve)
-      })
-
-      const { name, period, amount } = JSON.parse(body)
-
-      if (!period || typeof amount !== 'number') {
-        return res.status(400).json({ message: 'Invalid input' })
-      }
-
-      try {
-        if (name) {
-          const usersRef = db.collection('users')
-          const query = usersRef
-            .where('class_period', '==', parseInt(period, 10))
-            .where('name', '==', name)
-
-          const snapshot = await query.get()
-
-          if (snapshot.empty) {
-            return res.status(404).json({ message: 'User not found' })
-          }
-
-          const userDoc = snapshot.docs[0]
-          const userRef = userDoc.ref
-
-          await db.runTransaction(async (transaction) => {
-            const userSnapshot = await transaction.get(userRef)
-            if (!userSnapshot.exists) {
-              throw new Error('User does not exist')
+      token,
+      getKey,
+      {
+        audience: process.env.AUTH0_AUDIENCE,
+        issuer: `https://${process.env.AUTH0_DOMAIN}/`,
+        algorithms: ['RS256']
+      },
+      async (err, decoded) => {
+        if (err) {
+          return res.status(401).json({ message: 'Token verification failed', error: err.toString() })
+        }
+        const roles = decoded['https://mo-classroom.us/roles'] || []
+        if (!roles.includes('admin')) {
+          return res.status(403).json({ message: 'Forbidden: Admins only' })
+        }
+        let body = ''
+        await new Promise((resolve) => {
+          req.on('data', (chunk) => { body += chunk })
+          req.on('end', resolve)
+        })
+        const { name, period, amount } = JSON.parse(body)
+        if (!period || typeof amount !== 'number') {
+          return res.status(400).json({ message: 'Invalid input' })
+        }
+        try {
+          if (name) {
+            const usersRef = db.collection('users')
+            const query = usersRef
+                .where('class_period', '==', parseInt(period, 10))
+                .where('name', '==', name)
+            const snapshot = await query.get()
+            if (snapshot.empty) {
+              return res.status(404).json({ message: 'User not found' })
             }
-
-            const updatedBalance = (userSnapshot.data().currency_balance || 0) + amount
-
-            transaction.update(userRef, {
-              currency_balance: updatedBalance
+            const userDoc = snapshot.docs[0]
+            const userRef = userDoc.ref
+            await db.runTransaction(async (transaction) => {
+              const userSnapshot = await transaction.get(userRef)
+              if (!userSnapshot.exists) {
+                throw new Error('User does not exist')
+              }
+              const updatedBalance = (userSnapshot.data().currency_balance || 0) + amount
+              transaction.update(userRef, {
+                currency_balance: updatedBalance
+              })
+              const transactionEntry = {
+                type: amount >= 0 ? 'credit' : 'debit',
+                amount: Math.abs(amount),
+                counterpart: 'Admin',
+                timestamp: admin.firestore.Timestamp.now()
+              }
+              const existingTransactions = userSnapshot.data().transactions || []
+              existingTransactions.unshift(transactionEntry)
+              if (existingTransactions.length > 5) {
+                existingTransactions.splice(5)
+              }
+              transaction.update(userRef, { transactions: existingTransactions })
+              const notification = {
+                message: amount >= 0 ? `You received ${amount} MoBucks from Admin` : `You were charged ${Math.abs(amount)} MoBucks by Admin`,
+                type: 'admin_transfer',
+                timestamp: admin.firestore.Timestamp.now(),
+                read: false
+              }
+              transaction.update(userRef, {
+                notifications: admin.firestore.FieldValue.arrayUnion(notification)
+              })
             })
-
+            const usersRef2 = db.collection('users').where('class_period', '==', parseInt(period, 10))
+            const snapshot2 = await usersRef2.get()
+            const userData = snapshot2.docs
+                .map((doc) => {
+                  const data = doc.data()
+                  return {
+                    uid: doc.id,
+                    name: data.name || 'Unknown User',
+                    balance: data.currency_balance || 0,
+                    instrument: data.instrument || 'N/A'
+                  }
+                })
+                .filter((u) => u.name)
+            const leaderboardData = userData.sort((a, b) => b.balance - a.balance)
+            const aggregateRef = db.collection('aggregates').doc(`leaderboard_period_${period}`)
+            await aggregateRef.set(
+                {
+                  leaderboardData: leaderboardData,
+                  lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+                },
+                { merge: true }
+            )
+            return res.status(200).json({ message: 'Balance adjusted successfully' })
+          } else {
+            const usersRef = db.collection('users').where('class_period', '==', parseInt(period, 10))
+            const snapshot = await usersRef.get()
+            if (snapshot.empty) {
+              return res.status(404).json({ message: 'No users found for this period' })
+            }
+            const batch = db.batch()
+            const now = admin.firestore.Timestamp.now()
             const transactionEntry = {
               type: amount >= 0 ? 'credit' : 'debit',
               amount: Math.abs(amount),
               counterpart: 'Admin',
-              timestamp: admin.firestore.Timestamp.now()
+              timestamp: now
             }
-
-            const existingTransactions = userSnapshot.data().transactions || []
-            existingTransactions.unshift(transactionEntry)
-            if (existingTransactions.length > 5) {
-              existingTransactions.splice(5)
+            const notification = {
+              message: amount >= 0 ? `Your balance was increased by ${amount} MoBucks by Admin` : `Your balance was decreased by ${Math.abs(amount)} MoBucks by Admin`,
+              type: 'admin_transfer',
+              timestamp: now,
+              read: false
             }
-            transaction.update(userRef, { transactions: existingTransactions })
-          })
-
-          const usersRef2 = db.collection('users').where('class_period', '==', parseInt(period, 10))
-          const snapshot2 = await usersRef2.get()
-          const userData = snapshot2.docs
-            .map((doc) => {
+            snapshot.forEach((doc) => {
+              const userRef = doc.ref
               const data = doc.data()
-              return {
-                uid: doc.id,
-                name: data.name || 'Unknown User',
-                balance: data.currency_balance || 0,
-                instrument: data.instrument || 'N/A'
+              const currentTransactions = data.transactions || []
+              const newTransactions = [transactionEntry, ...currentTransactions]
+              if (newTransactions.length > 5) {
+                newTransactions.splice(5)
               }
+              batch.update(userRef, {
+                currency_balance: admin.firestore.FieldValue.increment(amount),
+                transactions: newTransactions,
+                notifications: admin.firestore.FieldValue.arrayUnion(notification)
+              })
             })
-            .filter((u) => u.name)
-          const leaderboardData = userData.sort((a, b) => b.balance - a.balance)
-          const aggregateRef = db.collection('aggregates').doc(`leaderboard_period_${period}`)
-          await aggregateRef.set(
-            {
-              leaderboardData: leaderboardData,
-              lastUpdated: admin.firestore.FieldValue.serverTimestamp()
-            },
-            { merge: true }
-          )
-
-          return res.status(200).json({ message: 'Balance adjusted successfully' })
-        } else {
-          const usersRef = db.collection('users').where('class_period', '==', parseInt(period, 10))
-          const snapshot = await usersRef.get()
-          if (snapshot.empty) {
-            return res.status(404).json({ message: 'No users found for this period' })
+            await batch.commit()
+            const snapshot2 = await usersRef.get()
+            const userData = snapshot2.docs
+                .map((d) => {
+                  const dt = d.data()
+                  return {
+                    uid: d.id,
+                    name: dt.name || 'Unknown User',
+                    balance: dt.currency_balance || 0,
+                    instrument: dt.instrument || 'N/A'
+                  }
+                })
+                .filter((u) => u.name)
+            const leaderboardData = userData.sort((a, b) => b.balance - a.balance)
+            const aggregateRef = db.collection('aggregates').doc(`leaderboard_period_${period}`)
+            await aggregateRef.set(
+                {
+                  leaderboardData: leaderboardData,
+                  lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+                },
+                { merge: true }
+            )
+            return res.status(200).json({ message: 'Balances updated successfully' })
           }
-
-          const batch = db.batch()
-          const now = admin.firestore.Timestamp.now()
-          const transactionEntry = {
-            type: amount >= 0 ? 'credit' : 'debit',
-            amount: Math.abs(amount),
-            counterpart: 'Admin',
-            timestamp: now
-          }
-
-          snapshot.forEach((doc) => {
-            const userRef = doc.ref
-            const data = doc.data()
-            const currentTransactions = data.transactions || []
-            const newTransactions = [transactionEntry, ...currentTransactions]
-            if (newTransactions.length > 5) {
-              newTransactions.splice(5)
-            }
-            batch.update(userRef, {
-              currency_balance: admin.firestore.FieldValue.increment(amount),
-              transactions: newTransactions
-            })
-          })
-
-          await batch.commit()
-
-          const snapshot2 = await usersRef.get()
-          const userData = snapshot2.docs
-            .map((d) => {
-              const dt = d.data()
-              return {
-                uid: d.id,
-                name: dt.name || 'Unknown User',
-                balance: dt.currency_balance || 0,
-                instrument: dt.instrument || 'N/A'
-              }
-            })
-            .filter((u) => u.name)
-          const leaderboardData = userData.sort((a, b) => b.balance - a.balance)
-          const aggregateRef = db.collection('aggregates').doc(`leaderboard_period_${period}`)
-          await aggregateRef.set(
-            {
-              leaderboardData: leaderboardData,
-              lastUpdated: admin.firestore.FieldValue.serverTimestamp()
-            },
-            { merge: true }
-          )
-
-          return res.status(200).json({ message: 'Balances updated successfully' })
+        } catch (error) {
+          return res.status(500).json({ message: 'Internal Server Error', error: error.toString() })
         }
-      } catch (error) {
-        return res.status(500).json({ message: 'Internal Server Error', error: error.toString() })
       }
-    }
   )
 }
