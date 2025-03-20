@@ -194,9 +194,14 @@ async function loadAnnouncements(){
             mainContainer.addEventListener('click', ()=>{
                 openAnnouncementsModal(announcements);
             });
-            document.getElementById('view-all-announcements').addEventListener('click', ()=>{
+            const viewAllBtn = document.getElementById('view-all-announcements');
+            viewAllBtn.addEventListener('click', ()=>{
                 openAnnouncementsModal(announcements);
             });
+            viewAllBtn.addEventListener('touchstart', (e)=>{
+                e.preventDefault();
+                openAnnouncementsModal(announcements);
+            }, {passive: false});
         }
     } catch(error){
         console.error(error);
