@@ -162,14 +162,25 @@ async function loadHeaderFooter() {
                     }
                     
                     const message = document.createElement('div');
-                    message.textContent = notification;
+                    message.textContent = notification.message || notification;
                     
                     const time = document.createElement('span');
                     time.className = 'notification-time';
-                    // Generate a random recent time for demo purposes
-                    const randomTime = new Date();
-                    randomTime.setMinutes(randomTime.getMinutes() - Math.floor(Math.random() * 60));
-                    time.textContent = randomTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+                    if (notification.timestamp) {
+                        try {
+
+                            const timestamp = notification.timestamp.seconds ? 
+                                new Date(notification.timestamp.seconds * 1000) : 
+                                new Date(notification.timestamp);
+                            
+                            time.textContent = timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        } catch (e) {
+                            time.textContent = "Invalid Timestamp";
+                        }
+                    } else {
+                        time.textContent = "Invalid Timestamp";
+                    }
                     
                     notifItem.appendChild(message);
                     notifItem.appendChild(time);
@@ -236,7 +247,7 @@ async function loadHeaderFooter() {
                 if (userData && userData.notifications && Array.isArray(userData.notifications)) {
                     const unreadNotifications = userData.notifications.filter(n => !n.read);
 
-                    notifications = unreadNotifications.map(n => n.message || n.text || "New notification");
+                    notifications = unreadNotifications;
                     
                     updateNotificationsUI();
                 } else {
