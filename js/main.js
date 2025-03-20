@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const notifDropdown = document.getElementById('notification-dropdown');
     const notifCount = document.getElementById('notification-count');
     let notifications = [];
+
     function updateNotificationsUI(){
         if(notifications.length > 0){
             notifCount.textContent = notifications.length;
@@ -61,22 +62,45 @@ document.addEventListener('DOMContentLoaded', async () => {
             notifications.forEach(n => {
                 const p = document.createElement('p');
                 p.textContent = n;
+                p.classList.add('notification-item');
                 notifDropdown.appendChild(p);
             });
         } else {
             notifCount.classList.add('hidden');
-            notifDropdown.innerHTML = '<p>No new notifications</p>';
+            notifDropdown.innerHTML = '<p class="notification-empty">No new notifications</p>';
         }
     }
-    notifIcon.addEventListener('click', (e) => {
+
+    function handleNotificationToggle(e) {
         e.stopPropagation();
         notifDropdown.classList.toggle('hidden');
+        notifIcon.classList.toggle('active');
+    }
+
+    notifIcon.addEventListener('click', handleNotificationToggle);
+    notifIcon.addEventListener('touchend', function(e) {
+        e.preventDefault();s
+        handleNotificationToggle(e);
     });
-    document.addEventListener('click', () => {
-        if(!notifDropdown.classList.contains('hidden')){
-            notifDropdown.classList.add('hidden');
+
+    document.addEventListener('click', (e) => {
+        if (e.target !== notifIcon) {
+            if(!notifDropdown.classList.contains('hidden')){
+                notifDropdown.classList.add('hidden');
+                notifIcon.classList.remove('active');
+            }
         }
     });
+
+    document.addEventListener('touchend', function(e) {
+        if (e.target !== notifIcon) {
+            if(!notifDropdown.classList.contains('hidden')){
+                notifDropdown.classList.add('hidden');
+                notifIcon.classList.remove('active');
+            }
+        }
+    });
+
     notifications.push("Welcome to MoBank notifications");
     updateNotificationsUI();
 });
