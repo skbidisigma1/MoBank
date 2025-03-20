@@ -95,10 +95,22 @@ module.exports = async (req, res) => {
                 read: false
               };
 
+              const userNotifications = userSnapshot.data().notifications || [];
+              userNotifications.push(notification);
+
+              userNotifications.sort((a, b) =>
+                  b.timestamp.seconds - a.timestamp.seconds ||
+                  b.timestamp.nanoseconds - a.timestamp.nanoseconds
+              );
+
+              if (userNotifications.length > 10) {
+                userNotifications.splice(10);
+              }
+
               transaction.update(userRef, {
                 currency_balance: updatedBalance,
                 transactions: existingTransactions,
-                notifications: admin.firestore.FieldValue.arrayUnion(notification)
+                notifications: userNotifications
               });
             });
 
@@ -132,7 +144,10 @@ module.exports = async (req, res) => {
             if (snapshot.empty) {
               return res.status(404).json({ message: 'No users found for this period' })
             }
-            const batch = db.batch()
+
+            const formattedAmount = Math.abs(amount);
+            const moBucksText = formattedAmount === 1 ? 'MoBuck' : 'MoBucks';
+
             const now = admin.firestore.Timestamp.now()
             const transactionEntry = {
               type: amount >= 0 ? 'credit' : 'debit',
@@ -140,9 +155,6 @@ module.exports = async (req, res) => {
               counterpart: 'Admin',
               timestamp: now
             }
-
-            const formattedAmount = Math.abs(amount);
-            const moBucksText = formattedAmount === 1 ? 'MoBuck' : 'MoBucks';
 
             const notification = {
               message: amount >= 0
@@ -152,21 +164,45 @@ module.exports = async (req, res) => {
               timestamp: now,
               read: false
             }
-            snapshot.forEach((doc) => {
-              const userRef = doc.ref
-              const data = doc.data()
-              const currentTransactions = data.transactions || []
-              const newTransactions = [transactionEntry, ...currentTransactions]
-              if (newTransactions.length > 5) {
-                newTransactions.splice(5)
-              }
-              batch.update(userRef, {
-                currency_balance: admin.firestore.FieldValue.increment(amount),
-                transactions: newTransactions,
-                notifications: admin.firestore.FieldValue.arrayUnion(notification)
-              })
-            })
-            await batch.commit()
+
+            // Need to use separate transactions for each user since we need to fetch notifications
+            const promises = snapshot.docs.map(async (doc) => {
+              const userRef = doc.ref;
+              const userData = doc.data();
+
+              return db.runTransaction(async (transaction) => {
+                const docSnapshot = await transaction.get(userRef);
+
+                // Handle transactions
+                const currentTransactions = docSnapshot.data().transactions || [];
+                const newTransactions = [transactionEntry, ...currentTransactions];
+                if (newTransactions.length > 5) {
+                  newTransactions.splice(5);
+                }
+
+                // Handle notifications
+                const userNotifications = docSnapshot.data().notifications || [];
+                userNotifications.push(notification);
+
+                userNotifications.sort((a, b) =>
+                    b.timestamp.seconds - a.timestamp.seconds ||
+                    b.timestamp.nanoseconds - a.timestamp.nanoseconds
+                );
+
+                if (userNotifications.length > 10) {
+                  userNotifications.splice(10);
+                }
+
+                transaction.update(userRef, {
+                  currency_balance: admin.firestore.FieldValue.increment(amount),
+                  transactions: newTransactions,
+                  notifications: userNotifications
+                });
+              });
+            });
+
+            await Promise.all(promises);
+
             const snapshot2 = await usersRef.get()
             const userData = snapshot2.docs
                 .map((d) => {
