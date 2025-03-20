@@ -166,13 +166,15 @@ async function loadHeaderFooter() {
         }
 
         if (notifIcon) {
-            notifIcon.addEventListener('touchstart', handleNotificationToggle, {passive: false});
-            notifIcon.addEventListener('click', handleNotificationToggle);
-
             if (notifCount) {
+                notifCount.classList.add('hidden');
+                notifCount.style.display = 'none';
                 notifCount.addEventListener('touchstart', handleNotificationToggle, {passive: false});
                 notifCount.addEventListener('click', handleNotificationToggle);
             }
+
+            notifIcon.addEventListener('touchstart', handleNotificationToggle, {passive: false});
+            notifIcon.addEventListener('click', handleNotificationToggle);
 
             document.addEventListener('click', (e) => {
                 if (e.target !== notifIcon && e.target !== notifCount && !notifDropdown.contains(e.target)) {
@@ -188,7 +190,7 @@ async function loadHeaderFooter() {
                 }
             }, {passive: true});
 
-            updateNotificationsUI();
+            updateNotificationsFromUserData();
         }
 
         function updateNotificationsFromUserData() {
