@@ -114,8 +114,12 @@ module.exports = async (req, res) => {
               throw new Error('Insufficient balance')
             }
 
-            transaction.update(senderRef, { currency_balance: updatedSenderBalance })
-            transaction.update(recipientRef, { currency_balance: updatedRecipientBalance })
+            transaction.update(senderRef, {
+              currency_balance: updatedSenderBalance,
+            })
+            transaction.update(recipientRef, {
+              currency_balance: updatedRecipientBalance,
+            })
 
             const formattedAmount = Math.abs(amount)
             const moBucksText = formattedAmount === 1 ? 'MoBuck' : 'MoBucks'
@@ -144,21 +148,15 @@ module.exports = async (req, res) => {
             }
             transaction.update(recipientRef, { transactions: recipientTransactions })
 
-            const senderNotification = {
-              message: `You were charged ${formattedAmount} ${moBucksText} by Admin`,
-              type: 'transfer_sent',
-              timestamp: admin.firestore.Timestamp.now(),
-              read: false,
-            }
             const recipientNotification = {
-              message: `You received ${formattedAmount} ${moBucksText} from Admin`,
+              message: `You received ${formattedAmount} ${moBucksText} from ${
+                  senderData.name ?? 'Unknown Sender'
+              }`,
               type: 'transfer_received',
               timestamp: admin.firestore.Timestamp.now(),
               read: false,
             }
-            transaction.update(senderRef, {
-              notifications: admin.firestore.FieldValue.arrayUnion(senderNotification),
-            })
+
             transaction.update(recipientRef, {
               notifications: admin.firestore.FieldValue.arrayUnion(recipientNotification),
             })
