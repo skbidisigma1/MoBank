@@ -1,42 +1,42 @@
 [
   {
     "id": 1,
-    "title": "🚀 <span style='color:#ffcc00;'>Welcome to the MoBank Announcement System!</span>",
-    "body": "<p>We've added an <strong>official announcements panel!</strong> 🎉 Stay updated with the latest MoBank changes, events, and major flex moments.</p><p>Here’s how it works:</p><ul><li>📌 Pinned announcements appear first.</li><li>📰 New announcements are posted here.</li><li>🛠️ <a href='/profile'>Click here</a> to view your MoBank profile.</li></ul>",
-    "description": "Click here to view your MoBank profile.",
+    "title": "🚀 <span style='color:#ffcc00;'>skibidi</span>",
+    "body": "<p>eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee</li><li>📰 New announcements are posted here.</li><li>🛠️ <a href='/profile'>Click here</a> to view your MoBank profile.</li></ul>",
+    "description": "eeeeeeeeeeeeeeeeeeeeeeeeee.",
     "date": "2025-03-19",
-    "pinned": true
+    "pinned": false
   },
   {
     "id": 2,
-    "title": "🎉 MoBank Giveaway Results!",
-    "body": "<p><strong>Luke Collingridge</strong> went absolutely crazy and <span style='color:#00ff00;'>gave away 400 MoBucks!</span> 💰</p><p>Winners have been notified. Enjoy your new wealth!</p><img src='/images/pin/step1.webp' alt='Giveaway Winners' style='max-width:100%;border-radius:8px;'>",
-    "description": "Winners have been notified. Enjoy your new wealth!",
+    "title": "🎉                                      ",
+    "body": "<p>yes</p>",
+    "description": "!!!!!!!!!!!!!!!!",
     "date": "2025-03-18",
     "pinned": false
   },
   {
     "id": 3,
-    "title": "🔧 Developer Badge Officially Added",
-    "body": "<p>To ensure that absolute power is recognized, <strong>Luke Collingridge</strong> now has an official 🛠️ next to his name in the leaderboard.</p><p>Check it out in <a href='/leaderboard'>the leaderboard</a> now!</p>",
-    "description": "Check it out in the leaderboard now!",
-    "date": "2025-03-17",
+    "title": "🔧 ",
+    "body": "<p>T</p>",
+    "description": "hey",
+    "date": "2025-03-174673847634",
     "pinned": false
   },
   {
     "id": 4,
-    "title": "📈 MoBank Economy Update",
-    "body": "<p>With the recent MoBuck giveaway, we’ve seen an <span style='color:#ff5733;'>inflation spike of 2000%.</span></p><p>What does this mean for the future? Probably nothing. But it sounds cool.</p>",
-    "description": "What does this mean for the future? Probably nothing. But it sounds cool.",
-    "date": "2025-03-16",
+    "title": "📈",
+    "body": "<p>\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8</p>",
+    "description": "yes",
+    "date": "2025-53-16",
     "pinned": false
   },
   {
     "id": 5,
-    "title": "🛡️ Security Patch: No More Exploits",
-    "body": "<p>After some <em>\"testing\"</em> (not hacking, I swear), we’ve patched a major exploit that allowed infinite MoBuck farming. <strong>If you were using it, no you weren’t.</strong> 😂</p>",
-    "description": "If you were using it, no you weren’t.",
-    "date": "2025-03-15",
+    "title": "🛡️",
+    "body": "<p>\uFE0F</p>",
+    "description": "\uFE0F.",
+    "date": "2026-03-15",
     "pinned": false
   }
 ]
