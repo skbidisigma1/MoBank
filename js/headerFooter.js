@@ -180,6 +180,24 @@ async function loadHeaderFooter() {
             updateNotificationsUI();
         }
 
+        function updateNotificationsFromUserData() {
+            if (isAuthenticated()) {
+                const userData = getCachedUserData();
+
+                if (userData && userData.notifications && Array.isArray(userData.notifications)) {
+                    const unreadNotifications = userData.notifications.filter(n => !n.read);
+
+                    notifications = unreadNotifications.map(n => n.message);
+
+                    updateNotificationsUI();
+                }
+            }
+        }
+
+        if (notifIcon) {
+            updateNotificationsFromUserData();
+        }
+
     } catch (error) {
         console.error('Error loading header and footer:', error);
     }
