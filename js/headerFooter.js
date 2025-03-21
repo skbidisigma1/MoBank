@@ -256,22 +256,26 @@ async function loadHeaderFooter() {
                         e.stopPropagation();
                         
                         try {
-                            const token = await getCachedToken();
-                            const response = await fetch('/api/notifications', {
-                                method: 'POST',
-                                headers: { 
-                                    'Authorization': `Bearer ${token}`,
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({ action: 'clearAll' })
-                            });
-                            
-                            if (response.ok) {
-                                notifications = [];
-                                unreadCount = 0;
-                                updateNotificationsUI();
-                            } else {
-                                console.error('Failed to clear notifications');
+                            if (notifications.length > 0) {
+                                const token = await getCachedToken();
+                                const response = await fetch('/api/notifications', {
+                                    method: 'POST',
+                                    headers: { 
+                                        'Authorization': `Bearer ${token}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ action: 'clearAll' })
+                                });
+                                
+                                if (response.ok) {
+                                    notifications = [];
+                                    unreadCount = 0;
+                                    updateNotificationsUI();
+
+                                    localStorage.removeItem('userData');
+                                } else {
+                                    console.error('Failed to clear notifications');
+                                }
                             }
                         } catch (error) {
                             console.error('Error clearing notifications:', error);
@@ -390,3 +394,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 document.addEventListener('DOMContentLoaded', loadHeaderFooter);
+
