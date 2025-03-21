@@ -186,7 +186,9 @@ async function loadHeaderFooter() {
                             }
 
                             if (!isNaN(timestamp.getTime())) {
-                                time.textContent = timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                                const dateStr = `${timestamp.getMonth() + 1}/${timestamp.getDate()}/${String(timestamp.getFullYear()).slice(-2)}`;
+                                const timeStr = timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                                time.textContent = `${dateStr} ${timeStr}`;
                             } else {
                                 time.textContent = "Unknown";
                             }
