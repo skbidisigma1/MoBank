@@ -169,17 +169,33 @@ async function loadHeaderFooter() {
 
                     if (notification.timestamp) {
                         try {
+                            let timestamp;
 
-                            const timestamp = notification.timestamp.seconds ? 
-                                new Date(notification.timestamp.seconds * 1000) : 
-                                new Date(notification.timestamp);
-                            
-                            time.textContent = timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            if (notification.timestamp.seconds) {
+                                timestamp = new Date(notification.timestamp.seconds * 1000);
+                            } else if (notification.timestamp._seconds) {
+                                timestamp = new Date(notification.timestamp._seconds * 1000);
+                            } else if (notification.timestamp.toDate) {
+                                timestamp = notification.timestamp.toDate();
+                            } else if (typeof notification.timestamp === 'string') {
+                                timestamp = new Date(notification.timestamp);
+                            } else if (typeof notification.timestamp === 'number') {
+                                timestamp = new Date(notification.timestamp);
+                            } else {
+                                timestamp = new Date(notification.timestamp);
+                            }
+
+                            if (!isNaN(timestamp.getTime())) {
+                                time.textContent = timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            } else {
+                                time.textContent = "Unknown";
+                            }
                         } catch (e) {
-                            time.textContent = "Invalid Timestamp";
+                            console.error("Error parsing timestamp:", e, notification.timestamp);
+                            time.textContent = "Unknown";
                         }
                     } else {
-                        time.textContent = "Invalid Timestamp";
+                        time.textContent = "Unknown";
                     }
                     
                     notifItem.appendChild(message);
