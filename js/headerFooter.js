@@ -184,24 +184,25 @@ async function loadHeaderFooter() {
         const notifDropdown = document.getElementById('notification-dropdown');
         const notifCount = document.getElementById('notification-count');
         let notifications = [];
+        let unreadCount = 0;
 
         function updateNotificationsUI() {
             if (notifications.length > 0) {
-                notifCount.textContent = notifications.length;
-                notifCount.style.display = '';
-                notifCount.classList.remove('hidden');
+                notifCount.textContent = unreadCount;
+                notifCount.style.display = unreadCount > 0 ? '' : 'none';
+                notifCount.classList.toggle('hidden', unreadCount === 0);
 
                 notifDropdown.innerHTML = `
                     <div class="notification-header">
-                        <h4>Notifications (${notifications.length})</h4>
+                        <h4>Notifications (${unreadCount} unread)</h4>
                         <button class="notification-clear">Clear all</button>
                     </div>
                 `;
                 
-                notifications.forEach((notification, index) => {
+                notifications.forEach((notification) => {
                     const notifItem = document.createElement('div');
                     notifItem.className = 'notification-item';
-                    if (index < 3) {
+                    if (!notification.read) {
                         notifItem.classList.add('unread');
                     }
                     
@@ -267,6 +268,7 @@ async function loadHeaderFooter() {
                             
                             if (response.ok) {
                                 notifications = [];
+                                unreadCount = 0;
                                 updateNotificationsUI();
                             } else {
                                 console.error('Failed to clear notifications');
@@ -280,7 +282,7 @@ async function loadHeaderFooter() {
                 notifCount.textContent = '0';
                 notifCount.style.display = 'none';
                 notifCount.classList.add('hidden');
-                notifDropdown.innerHTML = '<p class="notification-empty">No new notifications</p>';
+                notifDropdown.innerHTML = '<p class="notification-empty">No notifications</p>';
             }
         }
 
@@ -293,8 +295,7 @@ async function loadHeaderFooter() {
             notifDropdown.classList.toggle('hidden');
             notifIcon.classList.toggle('active');
             
-            // If dropdown was hidden and is now visible, mark notifications as read
-            if (wasHidden && isLoggedIn && notifications.length > 0) {
+            if (wasHidden && isLoggedIn && unreadCount > 0) {
                 try {
                     const token = await getCachedToken();
                     const response = await fetch('/api/notifications', {
@@ -311,7 +312,8 @@ async function loadHeaderFooter() {
                             ...notif,
                             read: true
                         }));
-
+                        unreadCount = 0;
+                        updateNotificationsUI();
                         fetchUserData();
                     }
                 } catch (error) {
@@ -359,8 +361,8 @@ async function loadHeaderFooter() {
                 }
 
                 if (userData && userData.notifications && Array.isArray(userData.notifications)) {
-                    const unreadNotifications = userData.notifications.filter(n => !n.read);
-                    notifications = unreadNotifications;
+                    notifications = userData.notifications;
+                    unreadCount = notifications.filter(n => !n.read).length;
                     updateNotificationsUI();
                 } else {
                     notifCount.style.display = 'none';
@@ -388,4 +390,3 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 document.addEventListener('DOMContentLoaded', loadHeaderFooter);
-
