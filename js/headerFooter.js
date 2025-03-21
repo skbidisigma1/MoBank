@@ -61,6 +61,50 @@ async function loadHeaderFooter() {
             return null;
         }
 
+        const TOKEN_COOLDOWN_MILLISECONDS = 5 * 60 * 1000; // 5 minutes
+        let cachedToken = null;
+        let tokenTimestamp = 0;
+
+        async function getCachedToken() {
+            if (!cachedToken || Date.now() - tokenTimestamp > TOKEN_COOLDOWN_MILLISECONDS) {
+                try {
+                    cachedToken = await auth0Client.getTokenSilently();
+                    tokenTimestamp = Date.now();
+                } catch (error) {
+                    console.error('Error fetching token:', error);
+                    await signInWithAuth0();
+                }
+            }
+            return cachedToken;
+        }
+        
+        function setCachedUserData(data) {
+            localStorage.setItem('userData', JSON.stringify({ data, timestamp: Date.now() }));
+        }
+
+        async function fetchUserData() {
+            try {
+                const token = await getCachedToken();
+                
+                const response = await fetch('/api/getUserData', {
+                    method: 'GET',
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    setCachedUserData(userData);
+                    return userData;
+                } else {
+                    console.error('Failed to fetch user data, status:', response.status);
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                return null;
+            }
+        }
+
         if (isLoggedIn) {
             if (authLink) {
                 authLink.textContent = 'Logout';
@@ -258,15 +302,17 @@ async function loadHeaderFooter() {
             updateNotificationsFromUserData();
         }
 
-        function updateNotificationsFromUserData() {
+        async function updateNotificationsFromUserData() {
             if (isAuthenticated()) {
-                const userData = getCachedUserData();
+                let userData = getCachedUserData();
+
+                if (!userData) {
+                    userData = await fetchUserData();
+                }
 
                 if (userData && userData.notifications && Array.isArray(userData.notifications)) {
                     const unreadNotifications = userData.notifications.filter(n => !n.read);
-
                     notifications = unreadNotifications;
-                    
                     updateNotificationsUI();
                 } else {
                     notifCount.style.display = 'none';
@@ -294,4 +340,3 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 document.addEventListener('DOMContentLoaded', loadHeaderFooter);
-
