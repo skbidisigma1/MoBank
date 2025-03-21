@@ -161,7 +161,9 @@ async function loadAnnouncements(){
             mainContainer.appendChild(title);
             mainContainer.appendChild(description);
             mainContainer.appendChild(date);
-            mainContainer.addEventListener('click', ()=>{
+            mainContainer.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 openAnnouncementsModal(announcements);
             });
         }
@@ -190,7 +192,8 @@ function openAnnouncementsModal(announcements){
         card.appendChild(title);
         card.appendChild(body);
         card.appendChild(date);
-        card.addEventListener('click',(e)=>{
+        card.addEventListener('click', (e) => {
+            e.preventDefault();
             e.stopPropagation();
             openAnnouncementsModal([ann]);
         });
@@ -202,4 +205,3 @@ function openAnnouncementsModal(announcements){
 function closeAnnouncementsModal(){
     document.getElementById('announcements-modal').classList.add('hidden');
 }
-
