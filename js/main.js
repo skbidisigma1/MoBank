@@ -6,16 +6,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.location.href = 'login';
         });
     }
-    if(window.matchMedia("(display-mode: standalone)").matches){
-        return;
-    }
-    const dontAsk = await getDontAskAgain();
-    if(!dontAsk){
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('install-prompt').style.display = 'block';
-        });
+    if(!window.matchMedia("(display-mode: standalone)").matches){
+        const dontAsk = await getDontAskAgain();
+        if(!dontAsk){
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                document.getElementById('install-prompt').style.display = 'block';
+            });
+        }
     }
     document.getElementById('install-yes-btn').addEventListener('click', async () => {
         if(deferredPrompt){
