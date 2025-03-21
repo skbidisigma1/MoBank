@@ -42,15 +42,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('install-prompt').style.display = 'none';
         await saveDontAskAgain(true);
     });
-    await loadAnnouncements();
+
+    const viewAllBtn = document.getElementById('view-all-announcements');
+    if (viewAllBtn) {
+        viewAllBtn.addEventListener('click', handleViewAllAnnouncements);
+        viewAllBtn.addEventListener('touchend', handleViewAllAnnouncements);
+    }
+    
     document.getElementById('close-announcements-modal').addEventListener('click', closeAnnouncementsModal);
     document.getElementById('announcements-modal').addEventListener('click', (e) => {
         if(e.target === document.getElementById('announcements-modal')){
             closeAnnouncementsModal();
         }
     });
-
+    
+    await loadAnnouncements();
 });
+
+function handleViewAllAnnouncements(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    loadAndOpenAllAnnouncements();
+    return false;
+}
+
+async function loadAndOpenAllAnnouncements() {
+    try {
+        const response = await fetch('/data/announcements.json');
+        if(!response.ok) throw new Error('Failed to fetch announcements');
+        const announcements = await response.json();
+        announcements.sort((a,b) => new Date(b.date) - new Date(a.date));
+        openAnnouncementsModal(announcements);
+    } catch(error) {
+        console.error("Error loading all announcements:", error);
+    }
+}
 
 function openPreferencesDB(){
     return new Promise((resolve,reject) => {
@@ -138,14 +164,6 @@ async function loadAnnouncements(){
             mainContainer.addEventListener('click', ()=>{
                 openAnnouncementsModal(announcements);
             });
-            const viewAllBtn = document.getElementById('view-all-announcements');
-            viewAllBtn.addEventListener('click', ()=>{
-                openAnnouncementsModal(announcements);
-            });
-            viewAllBtn.addEventListener('touchstart', (e)=>{
-                e.preventDefault();
-                openAnnouncementsModal(announcements);
-            }, {passive: false});
         }
     } catch(error){
         console.error(error);
@@ -184,3 +202,4 @@ function openAnnouncementsModal(announcements){
 function closeAnnouncementsModal(){
     document.getElementById('announcements-modal').classList.add('hidden');
 }
+
