@@ -45,8 +45,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const viewAllBtn = document.getElementById('view-all-announcements');
     if (viewAllBtn) {
+        viewAllBtn.removeEventListener('click', handleViewAllAnnouncements);
+        viewAllBtn.removeEventListener('touchend', handleViewAllAnnouncements);
+
         viewAllBtn.addEventListener('click', handleViewAllAnnouncements);
-        viewAllBtn.addEventListener('touchend', handleViewAllAnnouncements);
+        viewAllBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            loadAndOpenAllAnnouncements();
+        });
     }
     
     document.getElementById('close-announcements-modal').addEventListener('click', closeAnnouncementsModal);
@@ -62,12 +68,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 function handleViewAllAnnouncements(e) {
     e.preventDefault();
     e.stopPropagation();
+    console.log("View all announcements clicked");
     loadAndOpenAllAnnouncements();
     return false;
 }
 
 async function loadAndOpenAllAnnouncements() {
     try {
+        console.log("Loading all announcements");
         const response = await fetch('/data/announcements.json');
         if(!response.ok) throw new Error('Failed to fetch announcements');
         const announcements = await response.json();
@@ -205,3 +213,4 @@ function openAnnouncementsModal(announcements){
 function closeAnnouncementsModal(){
     document.getElementById('announcements-modal').classList.add('hidden');
 }
+
