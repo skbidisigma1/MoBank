@@ -251,10 +251,29 @@ async function loadHeaderFooter() {
 
                 const clearBtn = notifDropdown.querySelector('.notification-clear');
                 if (clearBtn) {
-                    clearBtn.addEventListener('click', (e) => {
+                    clearBtn.addEventListener('click', async (e) => {
                         e.stopPropagation();
-                        notifications = [];
-                        updateNotificationsUI();
+                        
+                        try {
+                            const token = await getCachedToken();
+                            const response = await fetch('/api/notifications', {
+                                method: 'POST',
+                                headers: { 
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ action: 'clearAll' })
+                            });
+                            
+                            if (response.ok) {
+                                notifications = [];
+                                updateNotificationsUI();
+                            } else {
+                                console.error('Failed to clear notifications');
+                            }
+                        } catch (error) {
+                            console.error('Error clearing notifications:', error);
+                        }
                     });
                 }
             } else {
@@ -265,11 +284,40 @@ async function loadHeaderFooter() {
             }
         }
 
-        function handleNotificationToggle(e) {
+        async function handleNotificationToggle(e) {
             e.preventDefault();
             e.stopPropagation();
+            
+            const wasHidden = notifDropdown.classList.contains('hidden');
+            
             notifDropdown.classList.toggle('hidden');
             notifIcon.classList.toggle('active');
+            
+            // If dropdown was hidden and is now visible, mark notifications as read
+            if (wasHidden && isLoggedIn && notifications.length > 0) {
+                try {
+                    const token = await getCachedToken();
+                    const response = await fetch('/api/notifications', {
+                        method: 'POST',
+                        headers: { 
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ action: 'markAsRead' })
+                    });
+                    
+                    if (response.ok) {
+                        notifications = notifications.map(notif => ({
+                            ...notif,
+                            read: true
+                        }));
+
+                        fetchUserData();
+                    }
+                } catch (error) {
+                    console.error('Error marking notifications as read:', error);
+                }
+            }
         }
 
         if (notifIcon) {
@@ -340,3 +388,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 document.addEventListener('DOMContentLoaded', loadHeaderFooter);
+
