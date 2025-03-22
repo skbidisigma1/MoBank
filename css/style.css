@@ -63,6 +63,14 @@
   --heading-gradient-from: #5ea2ff;
   --heading-gradient-to: #e0e0e0;
 }
+#particles-js {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
 * {
   box-sizing: border-box;
   margin: 0;
