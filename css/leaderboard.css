@@ -1,37 +1,37 @@
 :root {
-    --color-primary: #0056b3;
-    --color-primary-dark: #003366;
-    --color-secondary: #009879;
-    --color-secondary-dark: #007a65;
+    --color-primary: #0066cc;
+    --color-primary-dark: #004c99;
+    --color-secondary: #00b894;
+    --color-secondary-dark: #00a383;
     --color-white: #ffffff;
     --color-bg: #f4f6f8;
-    --color-text: #333;
-    --color-muted: #666;
-    --color-light: #f3f3f3;
-    --color-hover: #f1f1f1;
+    --color-text: #333333;
+    --color-muted: #666666;
+    --color-light-bg: #f3f3f3;
+    --color-hover-bg: #f1f1f1;
     --color-error-bg: #ffdddd;
     --color-error-border: #f44336;
     --color-error-text: #a94442;
     --color-warning-bg: #ffffcc;
-    --color-warning-text: #333;
+    --color-warning-text: #333333;
     --color-loader-border: #f3f3f3;
     --color-loader-top: var(--color-primary);
 }
 
 [data-theme="dark"] {
     --color-primary: #005fa3;
-    --color-primary-dark: #0060df;
-    --color-secondary: #009879;
-    --color-secondary-dark: #007a65;
-    --color-white: #f4f4f5;
+    --color-primary-dark: #004c99;
+    --color-secondary: #00d1a7;
+    --color-secondary-dark: #00b894;
+    --color-white: #ffffff;
     --color-bg: #121212;
-    --color-text: #e0e0e0;
-    --color-muted: #a0a0a0;
-    --color-light: #1f1f1f;
-    --color-hover: #2c2c2c;
-    --color-error-bg: #5c1a1a;
-    --color-error-border: #f44336;
-    --color-error-text: #ffcccc;
+    --color-text: #f0f0f0;
+    --color-muted: #b0b0b0;
+    --color-light-bg: #1e1e1e;
+    --color-hover-bg: #2a2a2a;
+    --color-error-bg: #3d1a1a;
+    --color-error-border: #ff5252;
+    --color-error-text: #ffb3b3;
     --color-warning-bg: #665c00;
     --color-warning-text: #e0e0e0;
     --color-loader-border: #2c2c2c;
@@ -61,7 +61,7 @@
 }
 
 .leaderboard-table tbody tr {
-    border-bottom: 1px solid var(--color-light);
+    border-bottom: 1px solid var(--color-light-bg);
 }
 
 .leaderboard-table tbody tr:nth-of-type(even) {
@@ -73,7 +73,7 @@
 }
 
 .leaderboard-table tbody tr:hover {
-    background-color: var(--color-hover);
+    background-color: var(--color-hover-bg);
 }
 
 .leaderboard-table tbody tr td.rank {
