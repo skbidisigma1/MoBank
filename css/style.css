@@ -29,6 +29,8 @@
   --font-tech: 'Orbitron', sans-serif;
   --typing-text-color: var(--color-primary-dark);
   --typing-cursor-color: var(--color-secondary);
+  --heading-gradient-from: #2a4d69;
+  --heading-gradient-to: #4b6cb7;
 }
 [data-theme="dark"] {
   --color-primary: #005fa3;
@@ -61,6 +63,8 @@
   --font-tech: 'Orbitron', sans-serif;
   --typing-text-color: #aad4ff;
   --typing-cursor-color: var(--color-secondary);
+  --heading-gradient-from: #8ab4f8;
+  --heading-gradient-to: #aecbfa;
 }
 * {
   box-sizing: border-box;
@@ -972,11 +976,11 @@ select:after {
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 1.5rem;
-  background: linear-gradient(45deg, var(--color-primary), var(--color-secondary));
+  background: linear-gradient(120deg, var(--heading-gradient-from), var(--heading-gradient-to));
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  text-shadow: 0 1px 5px rgba(0,0,0,0.05);
   letter-spacing: 0.5px;
 }
 
@@ -1011,3 +1015,4 @@ select:after {
     font-size: 1.8rem;
   }
 }
+
