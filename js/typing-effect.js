@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const words = ['Ease', 'Speed', 'Efficiency', 'Trust', 'Confidence'];
     let wordIndex = 0, charIndex = 0, isDeleting = false;
-    let typingSpeed = 100, delayAfterWord = 2000, delayBeforeDelete = 1000;
+    let typingSpeed = 100, delayAfterWord = 120, delayBeforeDelete = 1000;
     let chaosActivated = false;
     
     const typingElement = document.getElementById('typing-text');
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isDeleting && charIndex === 0) {
             isDeleting = false;
             wordIndex = (wordIndex + 1) % words.length;
-            typingSpeed = delayAfterWord * 0;
+            typingSpeed = delayAfterWord;
         }
 
         setTimeout(typeEffect, typingSpeed);
@@ -61,7 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function activateChaosMode() {
         chaosActivated = true;
-        console.log('CHAOS MODE ACTIVATED!');
         
         if (typingElement) {
             typingElement.textContent = "";
