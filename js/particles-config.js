@@ -1,16 +1,25 @@
 (function() {
+  let pJSInstance = null;
+  let retryCount = 0;
+  const MAX_RETRIES = 5;
 
   function initParticles() {
+    if (retryCount >= MAX_RETRIES) {
+      console.warn(`Particles.js initialization failed after ${MAX_RETRIES} attempts. Giving up.`);
+      return;
+    }
+
+    retryCount++;
     const particlesContainer = document.getElementById('particles-js');
     
     if (!particlesContainer) {
-      console.warn('Particles container not found, will retry in 500 ms');
+      console.warn(`Particles container not found, will retry in 500 ms (attempt ${retryCount}/${MAX_RETRIES})`);
       setTimeout(initParticles, 500);
       return;
     }
     
     if (typeof particlesJS === 'undefined') {
-      console.warn('particlesJS library not loaded yet, will retry in 500 ms');
+      console.warn(`particlesJS library not loaded yet, will retry in 500 ms (attempt ${retryCount}/${MAX_RETRIES})`);
       setTimeout(initParticles, 500);
       return;
     }
@@ -42,11 +51,11 @@
           },
           "opacity": {
             "value": 0.3,
-            "random": false,
+            "random": true,
             "anim": {
-              "enable": false,
-              "speed": 0.8,
-              "opacity_min": 0.1,
+              "enable": true,
+              "speed": 0.5,
+              "opacity_min": 0.25,
               "sync": false
             }
           },
@@ -62,9 +71,9 @@
           },
           "line_linked": {
             "enable": true,
-            "distance": 160,
+            "distance": 150,
             "color": "#0066cc",
-            "opacity": 0.3,
+            "opacity": 0.4,
             "width": 1
           },
           "move": {
@@ -83,7 +92,7 @@
           }
         },
         "interactivity": {
-          "detect_on": "canvas",
+          "detect_on": "window",
           "events": {
             "onhover": {
               "enable": true,
@@ -97,9 +106,9 @@
           },
           "modes": {
             "grab": {
-              "distance": 140,
+              "distance": 120,
               "line_linked": {
-                "opacity": 1
+                "opacity": 0.5
               }
             },
             "bubble": {
@@ -114,7 +123,7 @@
               "duration": 0.4
             },
             "push": {
-              "particles_nb": 4
+              "particles_nb": 1
             },
             "remove": {
               "particles_nb": 2
@@ -123,41 +132,47 @@
         },
         "retina_detect": true
       });
-
-      setTimeout(() => {
-        const canvas = document.querySelector('#particles-js canvas');
-        if (!canvas) {
-            console.error('Canvas element was not created. Something is wrong with particles.js initialization.');
-        
-            if (!document.querySelector('#particles-js canvas.fallback')) {  
-              const canvasFallback = Object.assign(document.createElement('canvas'), {
-                className: 'fallback',
-                style: `
-                  width: 100%;
-                  height: 100%;
-                  position: absolute;
-                  top: 0;
-                  left: 0;
-                  z-index: -1;
-                `
-              });
-        
-              particlesContainer.appendChild(canvasFallback);
-            }
-        }
-        }, 500);
     } catch (error) {
       console.error('Error initializing particles.js:', error);
     }
   }
 
-  initParticles();
-
-  window.addEventListener('load', function() {
-    const canvas = document.querySelector('#particles-js canvas');
-    if (!canvas) {
-      console.log('No particles canvas found on window load, reinitializing');
-      initParticles();
+  function setupClickHandler() {
+    if (typeof pJSDom !== 'undefined' && pJSDom.length > 0 && pJSDom[0].pJS) {
+      document.body.addEventListener('click', function(e) {
+        const pos = {
+          x: e.clientX,
+          y: e.clientY
+        };
+        
+        try {
+          pJSDom[0].pJS.interactivity.mouse.click_pos.x = pos.x;
+          pJSDom[0].pJS.interactivity.mouse.click_pos.y = pos.y;
+          pJSDom[0].pJS.interactivity.mouse.click_time = new Date().getTime();
+          pJSDom[0].pJS.fn.modes.pushParticles(4, pos);
+        } catch (err) {
+          console.warn('Could not add particles on click', err);
+        }
+      });
+      console.log('Global click handler for particles attached to body');
+      return true;
     }
+    return false;
+  }
+
+  initParticles();
+  
+  function checkAndSetupParticles() {
+    if (typeof pJSDom !== 'undefined' && pJSDom.length > 0) {
+      if (setupClickHandler()) {
+        console.log('Particles click handler initialized successfully');
+      }
+    } else {
+      setTimeout(checkAndSetupParticles, 1000);
+    }
+  }
+  
+  window.addEventListener('load', function() {
+    checkAndSetupParticles();
   });
 })();
