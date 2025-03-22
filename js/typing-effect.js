@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Words to cycle through
-    const words = ['Ease', 'Speed', 'Efficiency', 'Security', 'Confidence'];
+
+    const words = ['Ease', 'Speed', 'Efficiency', 'Trust', 'Confidence'];
     let wordIndex = 0;
     let charIndex = 0;
     let isDeleting = false;
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isDeleting) {
             typingElement.textContent = currentWord.substring(0, charIndex - 1);
             charIndex--;
-            typingSpeed = 60;
+            typingSpeed = 80;
         } else {
             typingElement.textContent = currentWord.substring(0, charIndex + 1);
             charIndex++;
