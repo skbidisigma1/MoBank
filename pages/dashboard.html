@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,26 +11,29 @@
     <script src="../js/auth.js"></script>
     <script src="../js/headerFooter.js" defer></script>
     <script src="../js/toast.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="/js/particles-config.js"></script>
     <script src="../js/dashboard.js" defer></script>
 </head>
 <body>
+    <div id="particles-js"></div>
     <div id="header-placeholder"></div>
 
     <main>
         <div class="profile">
             <img src="/images/default_profile.svg" alt="Profile Picture" class="dashboard-profile-icon">
             <div>
-                <h2 id="profile-name">Welcome, User!</h2>
-                <p id="profile-currency"><strong>MoBuck Balance:</strong> $0</p>
+                <h2 id="profile-name" class="hero-heading">Welcome, User!</h2>
+                <p id="profile-currency" class="balance-text"><strong>MoBuck Balance:</strong> $0</p>
             </div>
         </div>
         <div id="loader" class="loader"></div>
         <div class="dashboard-grid" id="dashboard-content"></div>
 
         <div class="dashboard-actions">
-            <button id="transfer-mobucks-btn">Transfer MoBucks</button>
-            <button id="profile-btn">Account</button>
-            <button id="logout-btn">Logout</button>
+            <button id="transfer-mobucks-btn" class="action-button primary">Transfer MoBucks</button>
+            <button id="profile-btn" class="action-button secondary">Account</button>
+            <button id="logout-btn" class="action-button danger">Logout</button>
         </div>
     </main>
 

@@ -40,11 +40,15 @@
 
 .leaderboard-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     margin: 20px 0;
-    font-size: 16px;
-    min-width: 400px;
-    font-family: 'Poppins', Arial, sans-serif;
+    background-color: rgba(var(--container-color), var(--container-bg-opacity));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .leaderboard-table thead tr {
@@ -56,12 +60,26 @@
 
 .leaderboard-table th,
 .leaderboard-table td {
-    padding: 12px 15px;
-    text-align: center;
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid rgba(var(--color-border), 0.1);
+}
+
+.leaderboard-table th {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+.leaderboard-table tr:last-child td {
+    border-bottom: none;
 }
 
 .leaderboard-table tbody tr {
-    border-bottom: 1px solid var(--color-light-bg);
+    transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
 .leaderboard-table tbody tr:nth-of-type(even) {
@@ -73,7 +91,8 @@
 }
 
 .leaderboard-table tbody tr:hover {
-    background-color: var(--color-hover-bg);
+    transform: translateY(-2px);
+    background-color: rgba(var(--color-hover-bg), 0.1);
 }
 
 .leaderboard-table tbody tr td.rank {
@@ -123,22 +142,22 @@
 }
 
 #period-buttons {
+    margin-bottom: 30px;
     display: flex;
     justify-content: center;
-    margin-bottom: 20px;
     gap: 10px;
 }
 
 .period-button {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
     background-color: var(--color-primary);
     color: var(--color-white);
     border: none;
     padding: 10px 20px;
     border-radius: 4px;
     cursor: pointer;
+    font-weight: 600;
     transition: background-color 0.3s, transform 0.2s;
+    margin: 0 5px;
 }
 
 .period-button:hover {
@@ -151,20 +170,26 @@
 }
 
 .period-button.active {
-    background-color: var(--color-primary-dark);
+    background-color: var(--color-secondary);
 }
 
 #leaderboard-title {
-    margin-bottom: 20px;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-tech);
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    background: linear-gradient(120deg, var(--heading-gradient-from), var(--heading-gradient-to));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 1px 5px rgba(0,0,0,0.05);
 }
 
 .last-updated {
-    margin-top: 10px;
-    font-style: italic;
-    font-size: 14px;
+    font-size: 0.9rem;
     color: var(--color-muted);
-    font-family: 'Poppins', sans-serif;
+    text-align: right;
+    margin-top: 20px;
 }
 
 .loader {
@@ -204,19 +229,45 @@
 }
 
 #small-screen-warning {
-    display: none;
-    max-width: 600px;
-    margin: 10px auto;
+    background-color: var(--color-error-bg);
+    color: var(--color-error-text);
     padding: 10px;
-    background-color: var(--color-warning-bg);
-    color: var(--color-warning-text);
-    text-align: center;
     border-radius: 4px;
-    font-family: 'Poppins', sans-serif;
+    margin-bottom: 20px;
+    display: none;
 }
 
 @media screen and (max-width: 1000px) {
     #small-screen-warning {
         display: block;
+    }
+}
+
+@media (max-width: 768px) {
+    #small-screen-warning {
+        display: block;
+    }
+
+    .leaderboard-table {
+        font-size: 0.9rem;
+    }
+
+    .leaderboard-table th,
+    .leaderboard-table td {
+        padding: 10px;
+    }
+
+    #leaderboard-title {
+        font-size: 2rem;
+    }
+
+    #period-buttons {
+        flex-wrap: wrap;
+    }
+
+    .period-button {
+        width: calc(33.33% - 10px);
+        padding: 8px 12px;
+        font-size: 0.9rem;
     }
 }

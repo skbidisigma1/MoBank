@@ -1,67 +1,99 @@
+@import url('style.css');
+
 body {
-    font-family: 'Poppins', Arial, sans-serif;
-    background-color: #f4f6f8;
-    color: #333;
-    line-height: 1.6;
+    font-family: var(--font-main);
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    background-image: var(--gradient-overlay);
+    background-attachment: fixed;
     margin: 0;
-    padding: 0;
-    padding-left: 24px;
+    padding: 20px;
 }
 
 .container {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 40px auto;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    background-color: rgba(var(--container-color), var(--container-bg-opacity));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    line-height: 1.6;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(var(--color-border), 0.1);
 }
 
-h1, h2, h3 {
-    color: #0056b3;
-    margin-bottom: 10px;
-    margin-top: 10px;
-    line-height: 1.4;
+h1, h2, h3, h4 {
+    color: var(--color-text);
+    margin-top: 1.5em;
+    margin-bottom: 0.8em;
 }
 
 h1 {
-    font-size: 2rem;
+    font-size: 2.5rem;
     text-align: center;
-    margin-bottom: 20px;
+    margin-top: 0;
 }
 
 h2 {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
+    border-bottom: 2px solid var(--color-primary);
+    padding-bottom: 0.3em;
 }
 
 h3 {
+    font-size: 1.4rem;
+    color: var(--color-primary);
+}
+
+h4 {
     font-size: 1.2rem;
 }
 
 p {
-    margin-bottom: 15px;
-    color: #555;
+    margin-bottom: 1em;
 }
 
 ul {
-    margin: 15px 0;
-    padding-left: 20px;
-    list-style-type: disc;
+    padding-left: 2em;
+    margin-bottom: 1em;
 }
 
 li {
-    margin-bottom: 10px;
+    margin-bottom: 0.5em;
 }
 
 a {
-    color: #0056b3;
+    color: var(--color-primary);
     text-decoration: none;
-    transition: color 0.3s;
+    transition: color 0.2s ease;
 }
 
 a:hover {
-    color: #004494;
+    color: var(--color-primary-dark);
     text-decoration: underline;
+}
+
+strong {
+    color: var(--color-primary);
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+        margin: 20px;
+        font-size: 0.95rem;
+    }
+
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.2rem; }
+    h4 { font-size: 1.1rem; }
+
+    body {
+        padding: 10px;
+    }
 }
 
 footer {
