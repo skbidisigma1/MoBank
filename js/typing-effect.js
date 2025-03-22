@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-
     const words = ['Ease', 'Speed', 'Efficiency', 'Trust', 'Confidence'];
     let wordIndex = 0;
     let charIndex = 0;
@@ -9,16 +8,21 @@ document.addEventListener('DOMContentLoaded', () => {
     let delayBeforeDelete = 1000;
 
     const typingElement = document.getElementById('typing-text');
-
+    if (!typingElement) return;
+    
+    // Create basic elements
+    typingElement.innerHTML = '<span class="typing-text-content"></span><span class="typing-cursor">|</span>';
+    const textContent = typingElement.querySelector('.typing-text-content');
+    
     function typeEffect() {
         const currentWord = words[wordIndex];
 
         if (isDeleting) {
-            typingElement.textContent = currentWord.substring(0, charIndex - 1);
+            textContent.textContent = currentWord.substring(0, charIndex - 1);
             charIndex--;
             typingSpeed = 80;
         } else {
-            typingElement.textContent = currentWord.substring(0, charIndex + 1);
+            textContent.textContent = currentWord.substring(0, charIndex + 1);
             charIndex++;
             typingSpeed = 120;
         }

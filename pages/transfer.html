@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,36 +11,46 @@
     <script src="../js/auth.js"></script>
     <script src="../js/headerFooter.js"></script>
     <script src="../js/toast.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="/js/particles-config.js"></script>
     <script src="../js/transfer.js" defer></script>
 </head>
 <body>
+    <div id="particles-js"></div>
     <div id="header-placeholder"></div>
 
     <main>
-        <h2>Transfer MoBucks</h2>
+        <h2 class="hero-heading">Transfer MoBucks</h2>
         
-        <section id="user-balance" class="container">
+        <section class="balance-card">
             <div id="current-balance-container">
-                <strong>Current Balance:</strong> <span id="current-balance">$0</span>
+                <strong>Current Balance:</strong> 
+                <span id="current-balance" class="balance-amount">$0</span>
             </div>
         </section>
 
         <form id="transfer-form" class="container">
-            <div class="input-container">
-                <input type="text" id="recipient-name" placeholder="Enter Recipient Name" required autocomplete="off">
-                <div class="suggestions-container"></div>
+            <div class="form-group">
+                <div class="input-container">
+                    <label for="recipient-name">Recipient Name</label>
+                    <input type="text" id="recipient-name" placeholder="Enter recipient's name" required autocomplete="off">
+                    <div class="suggestions-container"></div>
+                </div>
+                <div class="input-container">
+                    <label for="transfer-amount">Amount to Transfer</label>
+                    <input type="number" id="transfer-amount" placeholder="Enter amount" required min="1" step="1">
+                </div>
             </div>
-            <div class="input-container">
-                <input type="number" id="transfer-amount" placeholder="Amount to Transfer" required min="1" step="1">
-            </div>
-            <button type="submit">Send Currency</button>
+            <button type="submit" class="action-button primary">Send MoBucks</button>
         </form>
 
         <section id="transaction-history" class="container">
             <h3>Recent Transactions</h3>
-            <ul id="transactions">
-                <li>No transactions to show.</li>
-            </ul>
+            <div class="transactions-container">
+                <ul id="transactions">
+                    <li class="transaction-empty">No transactions to show.</li>
+                </ul>
+            </div>
         </section>
     </main>
 
