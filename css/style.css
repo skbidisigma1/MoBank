@@ -1,8 +1,8 @@
 :root {
-  --color-primary: #0056b3;
-  --color-primary-dark: #003366;
-  --color-secondary: #009879;
-  --color-secondary-dark: #007a65;
+  --color-primary: #0066cc;
+  --color-primary-dark: #004c99;
+  --color-secondary: #00b894;
+  --color-secondary-dark: #00a383;
   --color-white: #ffffff;
   --color-bg: #f4f6f8;
   --color-text: #333333;
@@ -33,38 +33,35 @@
   --heading-gradient-to: #4b6cb7;
 }
 [data-theme="dark"] {
-  --color-primary: #005fa3;
-  --color-primary-dark: #0060df;
-  --color-secondary: #009879;
-  --color-secondary-dark: #007a65;
-  --color-white: #f4f4f5;
-  --color-bg: #121212;
-  --color-text: #e0e0e0;
-  --color-muted: #a0a0a0;
-  --color-light-bg: #1f1f1f;
-  --color-hover-bg: #2c2c2c;
-  --color-nav-hover: #aad4ff;
-  --color-error-bg: #5c1a1a;
-  --color-error-border: #f44336;
-  --color-error-text: #ffcccc;
-  --color-loader-border: #2c2c2c;
+  --color-primary: #4d8edb;
+  --color-primary-dark: #2b78e4;
+  --color-secondary: #00b894;
+  --color-secondary-dark: #00a383;
+  --color-white: #f8f8f8;
+  --color-bg: #1e1e2e;
+  --color-text: #e4e4e5;
+  --color-muted: #a0a0b0;
+  --color-light-bg: #2d2d3a;
+  --color-hover-bg: #383846;
+  --color-nav-hover: #c8e1fd;
+  --color-error-bg: #6b2d2d;
+  --color-error-border: #ff5252;
+  --color-error-text: #ffd2d2;
+  --color-loader-border: #383846;
   --color-loader-top: var(--color-primary);
-  --color-toast-bg: #333333;
-  --color-toast-border: #555555;
-  --color-border: #555555;
-  --color-disabled-bg: rgba(255, 255, 255, 0.2);
-  --color-main-bg: #1f1f1f;
-  --color-footer-bg: #1f1f1f;
-  --input-color: #F2F2F2;
-  --suggestions-container-color: var(--color-bg);
-  --container-color: #252525;
-  --font-main: 'Poppins', Arial, sans-serif;
-  --font-heading: 'Montserrat', sans-serif;
-  --font-tech: 'Orbitron', sans-serif;
-  --typing-text-color: #aad4ff;
+  --color-toast-bg: #2d2d3a;
+  --color-toast-border: #444455;
+  --color-border: #444455;
+  --color-disabled-bg: rgba(255, 255, 255, 0.15);
+  --color-main-bg: #252536;
+  --color-footer-bg: #252536;
+  --input-color: #383846;
+  --suggestions-container-color: #2d2d3a;
+  --container-color: #2a2a3a;
+  --typing-text-color: #78b6ff;
   --typing-cursor-color: var(--color-secondary);
-  --heading-gradient-from: #8ab4f8;
-  --heading-gradient-to: #aecbfa;
+  --heading-gradient-from: #78b6ff;
+  --heading-gradient-to: #c8e1fd;
 }
 * {
   box-sizing: border-box;
