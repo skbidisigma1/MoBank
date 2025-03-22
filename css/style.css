@@ -27,6 +27,8 @@
   --font-main: 'Poppins', Arial, sans-serif;
   --font-heading: 'Montserrat', sans-serif;
   --font-tech: 'Orbitron', sans-serif;
+  --typing-text-color: var(--color-primary-dark);
+  --typing-cursor-color: var(--color-secondary);
 }
 [data-theme="dark"] {
   --color-primary: #005fa3;
@@ -57,6 +59,8 @@
   --font-main: 'Poppins', Arial, sans-serif;
   --font-heading: 'Montserrat', sans-serif;
   --font-tech: 'Orbitron', sans-serif;
+  --typing-text-color: #aad4ff;
+  --typing-cursor-color: var(--color-secondary);
 }
 * {
   box-sizing: border-box;
@@ -979,6 +983,11 @@ select:after {
 #typing-text {
   position: relative;
   font-weight: 800;
+  background: none;
+  background-clip: initial;
+  -webkit-background-clip: initial;
+  -webkit-text-fill-color: var(--typing-text-color);
+  color: var(--typing-text-color);
 }
 
 .typing-cursor {
@@ -987,7 +996,8 @@ select:after {
   animation: blink 0.7s infinite;
   margin-left: 2px;
   font-weight: 700;
-  -webkit-text-fill-color: var(--color-secondary);
+  -webkit-text-fill-color: var(--typing-cursor-color);
+  color: var(--typing-cursor-color);
 }
 
 @keyframes blink {
