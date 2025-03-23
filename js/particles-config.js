@@ -24,8 +24,8 @@
 
     function getResponsiveParticleCount() {
         const width = window.innerWidth;
-        if (width >= BREAKPOINTS.WIDE_2K) return 45;
-        if (width >= BREAKPOINTS.FULL_HD) return 40;
+        if (width >= BREAKPOINTS.WIDE_2K) return 50;
+        if (width >= BREAKPOINTS.FULL_HD) return 45;
         return 35;
     }
 
