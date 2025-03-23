@@ -149,7 +149,6 @@
             
             await updateIndexedDBTheme(newTheme);
             
-            // Dispatch event for other components that might need to react to theme changes
             window.dispatchEvent(new CustomEvent('themechange', { 
                 detail: { theme: newTheme }
             }));
@@ -170,17 +169,14 @@
             await updateTheme(newTheme);
         });
 
-        // Listen for system theme changes
         mediaQuery.addListener(async (e) => {
             const userData = safeParse(localStorage.getItem('userData'));
-            // Only auto-switch if user hasn't set a preference
             if (!userData?.data?.theme) {
                 const newTheme = e.matches ? THEME.DARK : THEME.LIGHT;
                 await updateTheme(newTheme);
             }
         });
 
-        // Add keyboard support
         toggleButton.addEventListener('keydown', async function(e) {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
@@ -203,7 +199,6 @@
         }
     } catch (e) {
         console.error('Failed to initialize theme:', e);
-        // Fallback to light theme
         document.documentElement.setAttribute('data-theme', THEME.LIGHT);
     }
 })();
