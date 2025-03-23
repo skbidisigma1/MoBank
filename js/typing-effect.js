@@ -14,7 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
             chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:',.<>?/`~",
             sizeRange: { min: 14, max: 20 }
         },
-        konamiCode: ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']
+        effects: {
+            glowColors: ['#0066cc', '#00b894', '#ff6b6b', '#ffd93d']
+        },
+        konamiCode: ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'],
+        morseCode: ['...', '---', '...'],
+        spacebarClicks: 3
     };
 
     let state = {
@@ -22,12 +27,27 @@ document.addEventListener('DOMContentLoaded', () => {
         charIndex: 0,
         isDeleting: false,
         chaosActivated: false,
-        konamiIndex: 0
+        konamiIndex: 0,
+        morseIndex: 0,
+        currentGlowIndex: 0,
+        glowInterval: null,
+        spacebarCount: 0,
+        lastSpacebarTime: 0
     };
 
     const typingElement = document.getElementById('typing-text');
-    
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function startGlowEffect() {
+        if (state.glowInterval) return;
+        
+        const glowColors = CONFIG.effects.glowColors;
+        state.glowInterval = setInterval(() => {
+            if (!typingElement) return;
+            state.currentGlowIndex = (state.currentGlowIndex + 1) % glowColors.length;
+            typingElement.style.textShadow = `0 0 10px ${glowColors[state.currentGlowIndex]}40`;
+        }, 2000);
+    }
 
     function typeEffect() {
         if (state.chaosActivated) return;
@@ -71,21 +91,72 @@ document.addEventListener('DOMContentLoaded', () => {
             display: 'inline-block',
             wordBreak: 'break-word',
             whiteSpace: 'normal',
-            maxWidth: '100%'
+            maxWidth: '100%',
+            transition: 'text-shadow 0.5s ease'
         });
 
+        typingElement.style.padding = '0 5px';
+        
         typeEffect();
+        startGlowEffect();
     }
 
     function konamiHandler(e) {
         if (e.key.toLowerCase() === CONFIG.konamiCode[state.konamiIndex].toLowerCase()) {
             state.konamiIndex++;
+            if (!prefersReducedMotion) {
+                typingElement.style.transform = 'scale(1.05)';
+                setTimeout(() => typingElement.style.transform = '', 200);
+            }
             if (state.konamiIndex === CONFIG.konamiCode.length) {
                 activateChaosMode();
+            }
+        } else if (e.key === ' ') {
+            const currentTime = Date.now();
+            if (currentTime - state.lastSpacebarTime > 1000) {
+                state.spacebarCount = 1;
+            } else {
+                state.spacebarCount++;
+            }
+            state.lastSpacebarTime = currentTime;
+            
+            if (state.spacebarCount === CONFIG.spacebarClicks) {
+                state.spacebarCount = 0;
+                handleMorseCode();
             }
         } else {
             state.konamiIndex = 0;
         }
+    }
+
+    function handleMorseCode() {
+        if (state.morseIndex >= CONFIG.morseCode.length) {
+            state.morseIndex = 0;
+            return;
+        }
+
+        const morsePattern = CONFIG.morseCode[state.morseIndex];
+        let patternIndex = 0;
+
+        function flashText() {
+            if (patternIndex >= morsePattern.length) {
+                state.morseIndex++;
+                return;
+            }
+
+            if (morsePattern[patternIndex] === '.') {
+                typingElement.style.opacity = '0';
+                setTimeout(() => typingElement.style.opacity = '1', 100);
+            } else {
+                typingElement.style.opacity = '0';
+                setTimeout(() => typingElement.style.opacity = '1', 300);
+            }
+
+            patternIndex++;
+            setTimeout(flashText, 400);
+        }
+
+        flashText();
     }
 
     document.removeEventListener('keydown', konamiHandler);
@@ -115,7 +186,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 fontWeight: Math.random() > 0.5 ? 'bold' : 'normal',
                 fontStyle: Math.random() > 0.5 ? 'italic' : 'normal',
                 textDecoration: getRandomFromArray(['none', 'underline', 'line-through']),
-                textTransform: getRandomFromArray(['none', 'uppercase', 'lowercase', 'capitalize'])
+                textTransform: getRandomFromArray(['none', 'uppercase', 'lowercase', 'capitalize']),
+                transition: 'transform 0.3s ease',
+                display: 'inline-block'
+            });
+
+            span.addEventListener('mouseover', () => {
+                if (!prefersReducedMotion) {
+                    span.style.transform = `rotate(${Math.random() * 360}deg) scale(1.2)`;
+                }
+            });
+            span.addEventListener('mouseout', () => {
+                span.style.transform = '';
             });
 
             return span;
@@ -145,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('unload', () => {
         const timeoutId = typingElement?.dataset.timeoutId;
         if (timeoutId) clearTimeout(Number(timeoutId));
+        if (state.glowInterval) clearInterval(state.glowInterval);
         document.removeEventListener('keydown', konamiHandler);
     });
 });
