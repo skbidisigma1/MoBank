@@ -3,11 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoBank - Login</title>
+    <meta name="theme-color" content="#ffffff">
+    <title>Login to MoBank</title>
+    <meta name="description" content="Log in to MoBank to manage your MoBucks, view your balance, and make transactions.">
+
     <script src="../js/theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
+
     <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <script src="../js/auth.js" defer></script>
@@ -18,26 +23,77 @@
     <div id="particles-js"></div>
     <div id="header-placeholder"></div>
 
-    <main>
-        <h2>Login</h2>
-        <p>Sign in with Google below to continue to MoBank.</p>
-        <p>NOTE: Please log in with a school account.</p>
+    <main class="main-container">
+        <!-- Wave decoration at the top -->
+        <div class="wave-decoration"></div>
 
-        <div class="button-container">
-            <button class="gsi-material-button" id="auth0-signin">
-                <div class="gsi-material-button-state"></div>
-                <div class="gsi-material-button-content-wrapper">
-                    <div class="gsi-material-button-icon">
-                        <img src="/images/google-icon.svg" alt="Google Icon" width="24" height="24">
+        <section class="login-section">
+            <h1 class="login-heading">Welcome Back</h1>
+            
+            <div class="login-content">
+                <p class="login-description">Sign in with Google to access your MoBank account and manage your MoBucks.</p>
+                <p class="login-note">Please use your school account to sign in.</p>
+
+                <!-- Trust badges -->
+                <div class="trust-badges">
+                    <div class="badge">
+                        <svg class="badge-icon" viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"></path>
+                        </svg>
+                        <span>Secure Google Sign-in</span>
                     </div>
-                    <span class="gsi-material-button-contents">Sign in with Google</span>
+                    <div class="badge">
+                        <svg class="badge-icon" viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M12 3L1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"></path>
+                        </svg>
+                        <span>School Account Required</span>
+                    </div>
                 </div>
-            </button>
-        </div>
 
-        <p><a href="#" class="pwa-link" data-url="privacy">Privacy Policy</a></p>
-        <p><a href="#" class="pwa-link" data-url="tos">Terms of Service</a></p>
+                <div class="login-button-container">
+                    <button class="gsi-material-button" id="auth0-signin">
+                        <div class="gsi-material-button-state"></div>
+                        <div class="gsi-material-button-content-wrapper">
+                            <div class="gsi-material-button-icon">
+                                <img src="/images/google-icon.svg" alt="Google Icon" width="24" height="24">
+                            </div>
+                            <span class="gsi-material-button-contents">Sign in with Google</span>
+                        </div>
+                    </button>
+                </div>
 
+                <div class="login-links">
+                    <a href="#" class="pwa-link" data-url="privacy">Privacy Policy</a>
+                    <span class="separator">•</span>
+                    <a href="#" class="pwa-link" data-url="tos">Terms of Service</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- How it Works Section -->
+        <section class="how-it-works">
+            <h2>How MoBank Works</h2>
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Sign In</h3>
+                    <p>Use your school Google account to access MoBank securely</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Complete Profile</h3>
+                    <p>Select your class period and instrument</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Start Managing</h3>
+                    <p>View your balance and make MoBuck transactions</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Wave decoration at the bottom -->
+        <div class="wave-decoration bottom"></div>
     </main>
 
     <div id="footer-placeholder"></div>
