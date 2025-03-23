@@ -4,7 +4,6 @@
     { "source": "/admin", "destination": "/pages/admin.html" },
     { "source": "/dashboard", "destination": "/pages/dashboard.html" },
     { "source": "/leaderboard", "destination": "/pages/leaderboard.html" },
-    { "source": "/new-tos", "destination": "/pages/new-tos.html" },
     { "source": "/pin", "destination": "/pages/pin.html" },
     { "source": "/privacy", "destination": "/pages/privacy.html" },
     { "source": "/profile", "destination": "/pages/profile.html" },
