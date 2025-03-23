@@ -338,7 +338,7 @@ footer a {
   height: 16px;
   vertical-align: middle;
 }
-/* Footer-related media queries */
+
 @media (max-width: 768px) {
   .footer-content {
     flex-direction: column;
@@ -1405,7 +1405,6 @@ select:after {
   }
 }
 
-/* Wave decoration */
 .wave-decoration {
   position: relative;
   height: 50px;
@@ -1421,7 +1420,6 @@ select:after {
   margin-bottom: 0;
 }
 
-/* Trust badges */
 .trust-badges {
   display: flex;
   justify-content: center;
@@ -1450,7 +1448,6 @@ select:after {
   color: var(--color-primary);
 }
 
-/* How it works section */
 .how-it-works {
   padding: 4rem 2rem;
   margin: 2rem auto;
@@ -1510,7 +1507,6 @@ select:after {
   line-height: 1.5;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .trust-badges {
     flex-direction: column;
@@ -1538,7 +1534,6 @@ select:after {
   }
 }
 
-/* Dashboard Overview */
 .dashboard-overview {
   background: linear-gradient(
     to bottom,
@@ -1642,7 +1637,6 @@ select:after {
   height: 20px;
 }
 
-/* Transactions Section */
 .transactions-section {
   background: var(--color-main-bg);
   border-radius: 1.5rem;
@@ -1756,7 +1750,6 @@ select:after {
   }
 }
 
-/* Profile Section Styles */
 .profile-section {
   max-width: 600px;
   margin: 0 auto;
@@ -1798,6 +1791,7 @@ select:after {
   border-radius: 1rem;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
 }
 
 .form-group:hover {
@@ -1833,11 +1827,8 @@ select:after {
   cursor: pointer;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23666' d='M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.7rem center;
-  background-size: 1.5rem;
   padding-right: 2.5rem;
+  position: relative;
 }
 
 .form-group select:focus {
@@ -1852,6 +1843,22 @@ select:after {
 
 .form-group select option {
   padding: 0.5rem;
+}
+
+.form-group::after {
+  content: "▼";
+  position: absolute;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  pointer-events: none;
+  font-size: 0.8rem;
+  color: var(--color-text);
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+}
+
+.form-group:hover::after {
+  transform: translateY(2px);
 }
 
 .profile-submit {
