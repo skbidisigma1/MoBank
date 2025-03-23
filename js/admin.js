@@ -15,6 +15,77 @@ async function loadAdminContent() {
   const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
   const namesCache = {};
 
+  // Create modal elements
+  const modalOverlay = document.createElement('div');
+  modalOverlay.className = 'confirmation-modal-overlay';
+  
+  const modalContent = document.createElement('div');
+  modalContent.className = 'confirmation-modal';
+  
+  const modalMessage = document.createElement('div');
+  modalMessage.className = 'confirmation-modal-message';
+  
+  const modalButtons = document.createElement('div');
+  modalButtons.className = 'confirmation-modal-buttons';
+  
+  const confirmButton = document.createElement('button');
+  confirmButton.className = 'confirmation-modal-button confirm';
+  confirmButton.textContent = 'Yes';
+  
+  const cancelButton = document.createElement('button');
+  cancelButton.className = 'confirmation-modal-button cancel';
+  cancelButton.textContent = 'No';
+  
+  modalButtons.appendChild(confirmButton);
+  modalButtons.appendChild(cancelButton);
+  modalContent.appendChild(modalMessage);
+  modalContent.appendChild(modalButtons);
+  modalOverlay.appendChild(modalContent);
+  document.body.appendChild(modalOverlay);
+
+  function showConfirmationModal(message) {
+    return new Promise((resolve) => {
+      modalMessage.textContent = message;
+      modalOverlay.classList.add('active');
+
+      const handleConfirm = () => {
+        modalOverlay.classList.remove('active');
+        cleanup();
+        resolve(true);
+      };
+
+      const handleCancel = () => {
+        modalOverlay.classList.remove('active');
+        cleanup();
+        resolve(false);
+      };
+
+      const handleOutsideClick = (e) => {
+        if (e.target === modalOverlay) {
+          handleCancel();
+        }
+      };
+
+      const cleanup = () => {
+        confirmButton.removeEventListener('click', handleConfirm);
+        cancelButton.removeEventListener('click', handleCancel);
+        modalOverlay.removeEventListener('click', handleOutsideClick);
+      };
+
+      confirmButton.addEventListener('click', handleConfirm);
+      cancelButton.addEventListener('click', handleCancel);
+      modalOverlay.addEventListener('click', handleOutsideClick);
+    });
+  }
+
+  function formatConfirmationMessage(amount, target, action = 'add', preposition = 'to') {
+    const absAmount = Math.abs(amount);
+    const mobucks = absAmount === 1 ? 'MoBuck' : 'MoBucks';
+    action = amount < 0 ? 'remove' : action;
+    preposition = amount < 0 ? 'from' : preposition;
+    return `Are you sure you want to ${action} ${absAmount} ${mobucks} ${preposition} ${target}?`;
+  }
+
   tabButtons.forEach((button) => {
     button.addEventListener('click', async () => {
       const period = button.dataset.period;
@@ -147,6 +218,12 @@ async function loadAdminContent() {
         submitButton.disabled = false;
         return;
       }
+
+      const confirmed = await showConfirmationModal(formatConfirmationMessage(amount, studentName));
+      if (!confirmed) {
+        submitButton.disabled = false;
+        return;
+      }
       
       try {
         const token = await getToken();
@@ -204,8 +281,10 @@ async function loadAdminContent() {
         submitButton.disabled = false;
         return;
       }
-      
-      if (!confirm(`Are you sure you want to add ${amount} MoBucks to all ${instrument} players in period ${period}?`)) {
+
+      const target = `all ${instrument} players in period ${period}`;
+      const confirmed = await showConfirmationModal(formatConfirmationMessage(amount, target));
+      if (!confirmed) {
         submitButton.disabled = false;
         return;
       }
@@ -259,8 +338,10 @@ async function loadAdminContent() {
         submitButton.disabled = false;
         return;
       }
-      
-      if (!confirm(`Are you sure you want to add ${amount} MoBucks to all students ${period !== 'all' ? `in period ${period}` : ''}?`)) {
+
+      const target = period !== 'all' ? `all students in period ${period}` : 'all students';
+      const confirmed = await showConfirmationModal(formatConfirmationMessage(amount, target));
+      if (!confirmed) {
         submitButton.disabled = false;
         return;
       }

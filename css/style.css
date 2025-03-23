@@ -2210,3 +2210,103 @@ select:after {
   }
 }
 
+.confirmation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.confirmation-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.confirmation-modal {
+  background: var(--color-main-bg);
+  border-radius: 12px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  transform: translateY(-20px);
+  transition: transform 0.3s ease;
+}
+
+.confirmation-modal-overlay.active .confirmation-modal {
+  transform: translateY(0);
+}
+
+.confirmation-modal-message {
+  font-size: 1.1rem;
+  color: var(--color-text);
+  text-align: center;
+  margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+.confirmation-modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.confirmation-modal-button {
+  padding: 0.8rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  border: none;
+}
+
+.confirmation-modal-button.confirm {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.confirmation-modal-button.confirm:hover {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-2px);
+}
+
+.confirmation-modal-button.cancel {
+  background-color: transparent;
+  border: 2px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.confirmation-modal-button.cancel:hover {
+  background-color: var(--color-hover-bg);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .confirmation-modal {
+    padding: 1.5rem;
+  }
+
+  .confirmation-modal-message {
+    font-size: 1rem;
+  }
+
+  .confirmation-modal-buttons {
+    flex-direction: column;
+  }
+
+  .confirmation-modal-button {
+    width: 100%;
+  }
+}
+
