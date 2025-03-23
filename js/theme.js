@@ -1,4 +1,10 @@
 (async function () {
+    document.querySelectorAll('link[data-font-href]').forEach(link => {
+        if (link.media === 'print') {
+            link.media = 'all';
+        }
+    });
+
     function safeParse(str) {
         try {
             return JSON.parse(str);
