@@ -185,21 +185,18 @@ module.exports = async (req, res) => {
             read: false
           }
 
-          // Need to use separate transactions for each user
           const promises = snapshot.docs.map(async (doc) => {
             const userRef = doc.ref
 
             return db.runTransaction(async (transaction) => {
               const docSnapshot = await transaction.get(userRef)
 
-              // Handle transactions
               const currentTransactions = docSnapshot.data().transactions || []
               const newTransactions = [transactionEntry, ...currentTransactions]
               if (newTransactions.length > 5) {
                 newTransactions.splice(5)
               }
 
-              // Handle notifications
               const userNotifications = docSnapshot.data().notifications || []
               userNotifications.push(notification)
 
@@ -222,9 +219,9 @@ module.exports = async (req, res) => {
 
           await Promise.all(promises)
 
-          // Update leaderboard
-          const snapshot2 = await usersRef.get()
-          const userData = snapshot2.docs
+          const allUsersInPeriodRef = db.collection('users').where('class_period', '==', parseInt(period, 10))
+          const allUsersSnapshot = await allUsersInPeriodRef.get()
+          const userData = allUsersSnapshot.docs
             .map((d) => {
               const dt = d.data()
               return {
@@ -248,7 +245,6 @@ module.exports = async (req, res) => {
 
           return res.status(200).json({ message: 'Balances updated successfully' })
         } else {
-          // Class-wide update
           const usersRef = db.collection('users').where('class_period', '==', parseInt(period, 10))
           const snapshot = await usersRef.get()
 
@@ -276,21 +272,18 @@ module.exports = async (req, res) => {
             read: false
           }
 
-          // Need to use separate transactions for each user
           const promises = snapshot.docs.map(async (doc) => {
             const userRef = doc.ref
 
             return db.runTransaction(async (transaction) => {
               const docSnapshot = await transaction.get(userRef)
 
-              // Handle transactions
               const currentTransactions = docSnapshot.data().transactions || []
               const newTransactions = [transactionEntry, ...currentTransactions]
               if (newTransactions.length > 5) {
                 newTransactions.splice(5)
               }
 
-              // Handle notifications
               const userNotifications = docSnapshot.data().notifications || []
               userNotifications.push(notification)
 
@@ -313,7 +306,6 @@ module.exports = async (req, res) => {
 
           await Promise.all(promises)
 
-          // Update leaderboard
           const snapshot2 = await usersRef.get()
           const userData = snapshot2.docs
             .map((d) => {
