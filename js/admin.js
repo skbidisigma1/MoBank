@@ -40,6 +40,7 @@ async function loadAdminContent() {
       }
       
       setupFormForPeriod(period, namesCache[period]);
+      setupInstrumentFormForPeriod(period);
     });
   });
 
@@ -160,6 +161,9 @@ async function loadAdminContent() {
         if (response.ok) {
           showToast('Success', result.message || `Successfully updated ${studentName}'s balance by ${amount}`);
           addAdminLog(`Updated ${studentName}'s balance by ${amount > 0 ? '+' : ''}${amount} MoBucks`);
+          studentNameInput.value = '';
+          amountInput.value = '';
+          suggestionsContainer.innerHTML = '';
         } else {
           showToast('Error', result.message || 'An error occurred.');
         }
@@ -167,9 +171,71 @@ async function loadAdminContent() {
         showToast('Network Error', 'Failed to process the request. Please try again later.');
       }
       
-      studentNameInput.value = '';
-      amountInput.value = '';
-      suggestionsContainer.innerHTML = '';
+      setTimeout(() => {
+        submitButton.disabled = false;
+      }, 1500);
+    });
+  }
+
+  function setupInstrumentFormForPeriod(period) {
+    const form = document.getElementById(`period-${period}-instrument-form`);
+    if (!form) return;
+    
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitButton = form.querySelector('button[type="submit"]');
+      if (submitButton.disabled) return;
+      
+      submitButton.disabled = true;
+      
+      const instrumentSelect = form.querySelector(`#period-${period}-instrument`);
+      const amountInput = form.querySelector(`#period-${period}-instrument-amount`);
+      
+      const instrument = instrumentSelect.value;
+      const amount = parseInt(amountInput.value, 10);
+      
+      if (!instrument) {
+        showToast('Validation Error', 'Please select an instrument.');
+        submitButton.disabled = false;
+        return;
+      }
+      
+      if (isNaN(amount)) {
+        showToast('Validation Error', 'Please enter a valid integer for the amount.');
+        submitButton.disabled = false;
+        return;
+      }
+      
+      if (!confirm(`Are you sure you want to add ${amount} MoBucks to all ${instrument} players in period ${period}?`)) {
+        submitButton.disabled = false;
+        return;
+      }
+      
+      try {
+        const token = await getToken();
+        const response = await fetch('/api/adminAdjustBalance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ 
+            period: parseInt(period, 10),
+            amount,
+            instrument: instrument
+          }),
+        });
+        
+        const result = await response.json();
+        if (response.ok) {
+          showToast('Success', result.message || `Successfully updated balances for ${instrument} players in period ${period}`);
+          addAdminLog(`Applied ${amount > 0 ? '+' : ''}${amount} MoBucks to all ${instrument} players in period ${period}`);
+          instrumentSelect.value = '';
+          amountInput.value = '';
+        } else {
+          showToast('Error', result.message || 'An error occurred.');
+        }
+      } catch (error) {
+        showToast('Network Error', 'Failed to process the request. Please try again later.');
+      }
       
       setTimeout(() => {
         submitButton.disabled = false;
