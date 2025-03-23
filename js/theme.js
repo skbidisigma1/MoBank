@@ -1,4 +1,20 @@
 (async function () {
+    const THEME = {
+        LIGHT: 'light',
+        DARK: 'dark'
+    };
+
+    const DB = {
+        NAME: 'mobank-db',
+        VERSION: 3,
+        STORES: {
+            THEME: 'themeStore',
+            PREFERENCES: 'preferences'
+        }
+    };
+
+    let themeCache = null;
+    let dbInstance = null;
 
     function safeParse(str) {
         try {
@@ -7,97 +23,187 @@
             return null;
         }
     }
+
     async function getStoredTheme() {
-        const userDataStr = localStorage.getItem("userData");
+        if (themeCache) return themeCache;
+
+        const userDataStr = localStorage.getItem('userData');
         const userData = safeParse(userDataStr);
-        if (userData && userData.data && typeof userData.data.theme === "string") {
-            await updateIndexedDBTheme(userData.data.theme);
-            return userData.data.theme;
+        
+        if (userData?.data?.theme) {
+            const theme = userData.data.theme;
+            if (isValidTheme(theme)) {
+                await updateIndexedDBTheme(theme);
+                themeCache = theme;
+                return theme;
+            }
         }
+
         try {
-            return (await getThemeFromIndexedDB()) || "light";
+            const theme = await getThemeFromIndexedDB();
+            themeCache = theme;
+            return theme;
         } catch (e) {
-            return "light";
+            console.warn('Failed to get theme from IndexedDB:', e);
+            return getDefaultTheme();
         }
     }
+
+    function isValidTheme(theme) {
+        return theme === THEME.LIGHT || theme === THEME.DARK;
+    }
+
+    function getDefaultTheme() {
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            return THEME.DARK;
+        }
+        return THEME.LIGHT;
+    }
+
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            if (dbInstance) {
+                resolve(dbInstance);
+                return;
+            }
+
+            const request = indexedDB.open(DB.NAME, DB.VERSION);
+            
+            request.onupgradeneeded = function (e) {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(DB.STORES.THEME)) {
+                    db.createObjectStore(DB.STORES.THEME);
+                }
+                if (!db.objectStoreNames.contains(DB.STORES.PREFERENCES)) {
+                    db.createObjectStore(DB.STORES.PREFERENCES, { keyPath: 'key' });
+                }
+            };
+
+            request.onsuccess = function (event) {
+                dbInstance = event.target.result;
+                resolve(dbInstance);
+            };
+
+            request.onerror = function () {
+                console.error('Failed to open IndexedDB:', request.error);
+                reject(request.error);
+            };
+        });
+    }
+
     function getThemeFromIndexedDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open("mobank-db", 3);
-            request.onupgradeneeded = function (e) {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains("themeStore")) {
-                    db.createObjectStore("themeStore");
-                }
-                if (!db.objectStoreNames.contains("preferences")) {
-                    db.createObjectStore("preferences", { keyPath: "key" });
-                }
-            };
-            request.onsuccess = function (event) {
-                const db = event.target.result;
-                const tx = db.transaction("themeStore", "readonly");
-                const store = tx.objectStore("themeStore");
-                const getReq = store.get("theme");
+        return new Promise(async (resolve, reject) => {
+            try {
+                const db = await initDB();
+                const tx = db.transaction(DB.STORES.THEME, 'readonly');
+                const store = tx.objectStore(DB.STORES.THEME);
+                const getReq = store.get('theme');
+                
                 getReq.onsuccess = function () {
-                    resolve(getReq.result || "light");
+                    const theme = getReq.result;
+                    resolve(isValidTheme(theme) ? theme : getDefaultTheme());
                 };
+                
                 getReq.onerror = function () {
-                    reject(getReq.error);
+                    console.warn('Failed to get theme from IndexedDB:', getReq.error);
+                    resolve(getDefaultTheme());
                 };
-            };
-            request.onerror = function () {
-                reject(request.error);
-            };
+            } catch (e) {
+                console.warn('IndexedDB error:', e);
+                resolve(getDefaultTheme());
+            }
         });
     }
-    function updateIndexedDBTheme(theme) {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open("mobank-db", 3);
-            request.onupgradeneeded = function (e) {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains("themeStore")) {
-                    db.createObjectStore("themeStore");
-                }
-                if (!db.objectStoreNames.contains("preferences")) {
-                    db.createObjectStore("preferences", { keyPath: "key" });
-                }
-            };
-            request.onsuccess = function (event) {
-                const db = event.target.result;
-                const tx = db.transaction("themeStore", "readwrite");
-                const store = tx.objectStore("themeStore");
-                const putRequest = store.put(theme, "theme");
-                putRequest.onsuccess = function () {
-                    resolve();
-                };
-                putRequest.onerror = function () {
-                    reject(new Error("Failed to update theme in IndexedDB"));
-                };
-            };
-            request.onerror = function () {
-                reject(request.error);
-            };
-        });
-    }
-    const theme = await getStoredTheme();
-    document.documentElement.setAttribute("data-theme", theme);
-    document.documentElement.style.transition = "background-color 0.3s, color 0.3s";
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", addToggleListener);
-    } else {
-        addToggleListener();
-    }
-    function addToggleListener() {
-        let toggleButton = document.getElementById("theme-toggle");
-        if (toggleButton) {
-            toggleButton.addEventListener("click", async function () {
-                const current = document.documentElement.getAttribute("data-theme");
-                const newTheme = current === "dark" ? "light" : "dark";
-                document.documentElement.setAttribute("data-theme", newTheme);
-                let userData = safeParse(localStorage.getItem("userData")) || { data: {} };
-                userData.data.theme = newTheme;
-                localStorage.setItem("userData", JSON.stringify(userData));
-                await updateIndexedDBTheme(newTheme);
-            });
+
+    async function updateIndexedDBTheme(theme) {
+        if (!isValidTheme(theme)) {
+            console.warn('Invalid theme value:', theme);
+            return;
         }
+
+        try {
+            const db = await initDB();
+            const tx = db.transaction(DB.STORES.THEME, 'readwrite');
+            const store = tx.objectStore(DB.STORES.THEME);
+            await new Promise((resolve, reject) => {
+                const putRequest = store.put(theme, 'theme');
+                putRequest.onsuccess = resolve;
+                putRequest.onerror = () => reject(putRequest.error);
+            });
+            themeCache = theme;
+        } catch (e) {
+            console.error('Failed to update theme in IndexedDB:', e);
+            throw e;
+        }
+    }
+
+    async function updateTheme(newTheme) {
+        if (!isValidTheme(newTheme)) return;
+
+        try {
+            document.documentElement.setAttribute('data-theme', newTheme);
+            
+            const userData = safeParse(localStorage.getItem('userData')) || { data: {} };
+            userData.data.theme = newTheme;
+            localStorage.setItem('userData', JSON.stringify(userData));
+            
+            await updateIndexedDBTheme(newTheme);
+            
+            // Dispatch event for other components that might need to react to theme changes
+            window.dispatchEvent(new CustomEvent('themechange', { 
+                detail: { theme: newTheme }
+            }));
+        } catch (e) {
+            console.error('Failed to update theme:', e);
+        }
+    }
+
+    function addToggleListener() {
+        const toggleButton = document.getElementById('theme-toggle');
+        if (!toggleButton) return;
+
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        
+        toggleButton.addEventListener('click', async function() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const newTheme = current === THEME.DARK ? THEME.LIGHT : THEME.DARK;
+            await updateTheme(newTheme);
+        });
+
+        // Listen for system theme changes
+        mediaQuery.addListener(async (e) => {
+            const userData = safeParse(localStorage.getItem('userData'));
+            // Only auto-switch if user hasn't set a preference
+            if (!userData?.data?.theme) {
+                const newTheme = e.matches ? THEME.DARK : THEME.LIGHT;
+                await updateTheme(newTheme);
+            }
+        });
+
+        // Add keyboard support
+        toggleButton.addEventListener('keydown', async function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                const current = document.documentElement.getAttribute('data-theme');
+                const newTheme = current === THEME.DARK ? THEME.LIGHT : THEME.DARK;
+                await updateTheme(newTheme);
+            }
+        });
+    }
+
+    try {
+        const theme = await getStoredTheme();
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.style.transition = 'background-color 0.3s, color 0.3s';
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', addToggleListener);
+        } else {
+            addToggleListener();
+        }
+    } catch (e) {
+        console.error('Failed to initialize theme:', e);
+        // Fallback to light theme
+        document.documentElement.setAttribute('data-theme', THEME.LIGHT);
     }
 })();
