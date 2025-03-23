@@ -219,12 +219,6 @@ async function loadAdminContent() {
         submitButton.disabled = false;
         return;
       }
-
-      const confirmed = await showConfirmationModal(formatConfirmationMessage(amount, studentName));
-      if (!confirmed) {
-        submitButton.disabled = false;
-        return;
-      }
       
       try {
         const token = await getToken();
