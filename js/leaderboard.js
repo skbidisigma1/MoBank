@@ -7,7 +7,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   const errorMessage = document.getElementById('error-message');
   const leaderboardTitle = document.getElementById('leaderboard-title');
 
-  const CACHE_DURATION = 60 * 1000;
+  const CACHE_DURATION = 60 * 1000; // 1 minute cache
+
+  const instrumentIcons = {
+    violin: `<svg class="instrument-icon" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
+            </svg>`,
+    viola: `<svg class="instrument-icon" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
+           </svg>`,
+    cello: `<svg class="instrument-icon" viewBox="0 0 24 24">
+             <path fill="currentColor" d="M19,3V19H18V13H16V19H5V13H3V19H2V3H3V11H5V3H16V11H18V3H19M8,5V9H6V5H8M16,5V9H14V5H16M11,7V8H13V7H11M11,11V13H13V11H11Z"/>
+           </svg>`,
+    bass: `<svg class="instrument-icon" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M19,3V19H18V13H16V19H5V13H3V19H2V3H3V11H5V3H16V11H18V3H19M8,5V9H6V5H8M16,5V9H14V5H16M11,7V8H13V7H11M11,11V13H13V11H11Z"/>
+          </svg>`
+  };
 
   function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
@@ -33,28 +48,43 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function populateLeaderboard(data, period) {
     leaderboardBody.innerHTML = '';
-    leaderboardTitle.textContent = `Leaderboard - Period ${period}`;
+    leaderboardTitle.querySelector('span').textContent = `Leaderboard - Period ${period}`;
+    
     const filteredData = data.leaderboardData.filter(
       user => user.name !== 'Madison Moline'
     );
+
     filteredData.forEach((user, index) => {
       const row = document.createElement('tr');
+      const rank = index + 1;
 
       const rankCell = document.createElement('td');
-      rankCell.textContent = index + 1;
-      rankCell.classList.add('rank');
+      rankCell.className = 'rank-cell';
+      if (rank <= 3) {
+        rankCell.classList.add(`rank-${rank}`);
+        rankCell.innerHTML = rank === 1 ? '🏆' : rank === 2 ? '🥈' : '🥉';
+      } else {
+        rankCell.textContent = `#${rank}`;
+      }
       row.appendChild(rankCell);
 
       const nameCell = document.createElement('td');
+      nameCell.className = 'name-cell';
       nameCell.textContent = user.name;
+      if (user.name === 'Luke Collingridge') {
+        nameCell.innerHTML = '🛠️ ' + user.name;
+      }
       row.appendChild(nameCell);
 
       const balanceCell = document.createElement('td');
+      balanceCell.className = 'balance-cell';
       balanceCell.textContent = user.balance;
       row.appendChild(balanceCell);
 
       const instrumentCell = document.createElement('td');
-      instrumentCell.textContent = capitalizeFirstLetter(user.instrument);
+      instrumentCell.className = 'instrument-cell';
+      const instrumentIcon = instrumentIcons[user.instrument.toLowerCase()] || '';
+      instrumentCell.innerHTML = `${instrumentIcon}${capitalizeFirstLetter(user.instrument)}`;
       row.appendChild(instrumentCell);
 
       leaderboardBody.appendChild(row);
@@ -84,25 +114,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
       lastUpdatedElement.textContent = '';
       lastUpdatedElement.setAttribute('title', '');
-    }
-
-    if (filteredData.length > 0) {
-      const firstRank = leaderboardBody.querySelector('tr:nth-child(1) .rank');
-      const secondRank = leaderboardBody.querySelector('tr:nth-child(2) .rank');
-      const thirdRank = leaderboardBody.querySelector('tr:nth-child(3) .rank');
-
-      if (firstRank) firstRank.textContent = '🥇';
-      if (secondRank) secondRank.textContent = '🥈';
-      if (thirdRank) thirdRank.textContent = '🥉';
-
-      const devRow = Array.from(leaderboardBody.querySelectorAll('tr')).find(row => {
-        const nameCell = row.querySelector('td:nth-child(2)');
-        return nameCell && nameCell.textContent.trim() === 'Luke Collingridge';
-      });
-      if (devRow) {
-        const nameCell = devRow.querySelector('td:nth-child(2)');
-        nameCell.innerHTML = '🛠️ ' + nameCell.textContent;
-      }
     }
   }
 
