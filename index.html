@@ -3,50 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  
   <title>Welcome to MoBank</title>
-  <meta name="description" content="Welcome to MoBank, the secure platform for the MoBuck currency">
+  <meta name="description" content="Welcome to MoBank, the secure platform for the MoBuck currency. Manage your MoBucks easily and securely.">
+  
+  <meta property="og:title" content="Welcome to MoBank">
+  <meta property="og:description" content="Welcome to MoBank, the secure platform for the MoBuck currency. Manage your MoBucks easily and securely.">
+  <meta property="og:type" content="website">
+  
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/images/favicon_192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="/images/favicon_192.png">
+  
+  <link rel="preload" href="/js/theme.js" as="script">
+  <link rel="preload" href="/css/style.css" as="style">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
   <script src="/js/theme.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  
   <link rel="stylesheet" href="/css/style.css">
   <link rel="manifest" href="/manifest.json">
-  <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/headerFooter.js"></script>
-  <script src="js/typing-effect.js"></script>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js" crossorigin="anonymous"></script>
+  
+  <script src="js/auth.js" defer></script>
+  <script src="js/headerFooter.js" defer></script>
+  <script src="js/typing-effect.js" defer></script>
   <script src="js/particles-config.js" defer></script>
   <script src="js/main.js" defer></script>
 </head>
 <body>
-<div id="particles-js"></div>
-<div id="header-placeholder"></div>
-<main>
-  <h2 class="hero-heading">Manage MoBucks with <span id="typing-text">Ease</span><span class="typing-cursor">|</span></h2>
-  <p>MoBank is a secure and user-friendly platform for managing MoBuck transactions, built for teachers and students.</p>
-  <p>Log in to view your balance, send MoBucks, and keep track of recent transactions.</p>
-  <button id="get-started-btn">Get Started</button>
-  <div id="announcements-section" class="container">
-    <h3>Announcements</h3>
-    <div id="main-announcement" class="announcement-card"></div>
-    <button id="view-all-announcements" class="tab-button">View All Announcements</button>
-  </div>
-  <div id="install-prompt">
-    <h3>Install the MoBank app for a better experience</h3>
-    <div class="install-buttons">
-      <button id="install-yes-btn" class="install-btn">Yes</button>
-      <button id="install-no-btn" class="install-btn">No</button>
+  <div id="particles-js" aria-hidden="true"></div>
+  <div id="header-placeholder" role="banner"></div>
+  
+  <main id="main-content" class="main-container">
+    <section class="hero-section">
+      <h1 class="hero-heading" aria-label="Manage MoBucks with different features">
+        Manage MoBucks with <span id="typing-text" aria-live="polite">Ease</span><span class="typing-cursor" aria-hidden="true">|</span>
+      </h1>
+      <p class="hero-description">MoBank is a secure and user-friendly platform for managing MoBuck transactions, built for teachers and students.</p>
+      <p class="hero-cta">Log in to view your balance, send MoBucks, and keep track of recent transactions.</p>
+      <button id="get-started-btn" class="primary-button" aria-label="Get started with MoBank">Get Started</button>
+    </section>
+
+    <section id="announcements-section" class="container" aria-labelledby="announcements-heading">
+      <h2 id="announcements-heading">Announcements</h2>
+      <div id="main-announcement" class="announcement-card" role="article" aria-live="polite"></div>
+      <button id="view-all-announcements" class="tab-button" aria-expanded="false">
+        View All Announcements
+      </button>
+    </section>
+
+    <section id="install-prompt" class="install-section" aria-labelledby="install-heading" hidden>
+      <h2 id="install-heading">Install the MoBank app for a better experience</h2>
+      <div class="install-buttons" role="group" aria-label="Installation options">
+        <button id="install-yes-btn" class="install-btn primary-button">Yes, Install</button>
+        <button id="install-no-btn" class="install-btn secondary-button">Not Now</button>
+      </div>
+      <button id="install-dont-btn" class="dont-btn text-button">Don't ask again</button>
+    </section>
+  </main>
+
+  <div id="footer-placeholder" role="contentinfo"></div>
+
+  <div id="announcements-modal" class="modal hidden" role="dialog" aria-labelledby="modal-heading" aria-hidden="true">
+    <div id="announcements-modal-content" class="modal-content">
+      <h2 id="modal-heading">All Announcements</h2>
+      <div id="announcements-list" role="list" aria-label="List of all announcements"></div>
+      <button id="close-announcements-modal" class="tab-button" aria-label="Close announcements">
+        Close
+      </button>
     </div>
-    <button id="install-dont-btn" class="dont-btn">Don't ask again</button>
   </div>
-</main>
-<div id="footer-placeholder"></div>
-<div id="announcements-modal" class="hidden">
-  <div id="announcements-modal-content">
-    <h3>All Announcements</h3>
-    <div id="announcements-list"></div>
-    <button id="close-announcements-modal" class="tab-button">Close</button>
+
+  <div id="loading-indicator" class="loading-spinner" role="status" aria-hidden="true">
+    <span class="sr-only">Loading...</span>
   </div>
-</div>
 </body>
 </html>
