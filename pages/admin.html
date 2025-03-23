@@ -31,7 +31,6 @@
                 <button class="tab-button active" data-period="5">Period 5</button>
                 <button class="tab-button" data-period="6">Period 6</button>
                 <button class="tab-button" data-period="7">Period 7</button>
-                <button class="tab-button" data-period="all">All Classes</button>
             </div>
 
             <div id="tab-content">
@@ -104,6 +103,27 @@
                                     <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
                                 </svg>
                                 Apply to Selected Instrument
+                            </button>
+                        </form>
+                    </div>
+                    <div class="admin-card">
+                        <h3 class="admin-card-title">Update By Class Period</h3>
+                        <form id="update-by-class-form-5" class="admin-form">
+                            <div class="form-group">
+                                <label for="period-5-class-amount">
+                                    <svg class="input-icon" viewBox="0 0 24 24">
+                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                                    </svg>
+                                    Amount
+                                </label>
+                                <input type="number" id="period-5-class-amount" placeholder="Enter amount to adjust balance" required>
+                            </div>
+
+                            <button type="submit" class="submit-button">
+                                <svg class="button-icon" viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M18,8H8A2,2 0 0,0 6,10V20A2,2 0 0,0 8,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M18,20H8V10H18V20M14,15H10V17H14V15M16,11H13V13H16V11M12,11H9V13H12V11Z"/>
+                                </svg>
+                                Apply to All Students
                             </button>
                         </form>
                     </div>
@@ -181,6 +201,27 @@
                             </button>
                         </form>
                     </div>
+                    <div class="admin-card">
+                        <h3 class="admin-card-title">Update By Class Period</h3>
+                        <form id="update-by-class-form-6" class="admin-form">
+                            <div class="form-group">
+                                <label for="period-6-class-amount">
+                                    <svg class="input-icon" viewBox="0 0 24 24">
+                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                                    </svg>
+                                    Amount
+                                </label>
+                                <input type="number" id="period-6-class-amount" placeholder="Enter amount to adjust balance" required>
+                            </div>
+
+                            <button type="submit" class="submit-button">
+                                <svg class="button-icon" viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M18,8H8A2,2 0 0,0 6,10V20A2,2 0 0,0 8,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M18,20H8V10H18V20M14,15H10V17H14V15M16,11H13V13H16V11M12,11H9V13H12V11Z"/>
+                                </svg>
+                                Apply to All Students
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
                 <div class="tab-panel hidden" id="period-7-panel">
@@ -255,23 +296,20 @@
                             </button>
                         </form>
                     </div>
-                </div>
-
-                <div class="tab-panel hidden" id="all-classes-panel">
                     <div class="admin-card">
-                        <h3 class="admin-card-title">Update All Students</h3>
-                        <form id="update-by-class-form" class="admin-form">
+                        <h3 class="admin-card-title">Update By Class Period</h3>
+                        <form id="update-by-class-form-7" class="admin-form">
                             <div class="form-group">
-                                <label for="global-currency-amount">
+                                <label for="period-7-class-amount">
                                     <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M13,13.5H10.5V15H13V16.5H10.5V18H13V19.5H9V11H13V13.5M14,11V19.5H15.5V16.5H17V19.5H18.5V11H17V15H15.5V11H14M7,19.5H8.5V11H7V19.5M4.5,19.5H6V19.5H4.5V19.5M19.5,4.5V6H4.5V4.5H19.5M19.5,7.5V9H4.5V7.5H19.5Z"/>
+                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
                                     </svg>
-                                    Global Amount
+                                    Amount
                                 </label>
-                                <input type="number" id="global-currency-amount" placeholder="Amount to apply to all students" required>
+                                <input type="number" id="period-7-class-amount" placeholder="Enter amount to adjust balance" required>
                             </div>
 
-                            <button type="submit" id="apply-global-currency" class="submit-button">
+                            <button type="submit" class="submit-button">
                                 <svg class="button-icon" viewBox="0 0 24 24">
                                     <path fill="currentColor" d="M18,8H8A2,2 0 0,0 6,10V20A2,2 0 0,0 8,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M18,20H8V10H18V20M14,15H10V17H14V15M16,11H13V13H16V11M12,11H9V13H12V11Z"/>
                                 </svg>

@@ -111,6 +111,7 @@ async function loadAdminContent() {
       
       setupFormForPeriod(period, namesCache[period]);
       setupInstrumentFormForPeriod(period);
+      setupClassPeriodForm(period);
     });
   });
 
@@ -313,6 +314,62 @@ async function loadAdminContent() {
         showToast('Network Error', 'Failed to process the request. Please try again later.');
       }
       
+      setTimeout(() => {
+        submitButton.disabled = false;
+      }, 1500);
+    });
+  }
+
+  function setupClassPeriodForm(period) {
+    const form = document.getElementById(`update-by-class-form-${period}`);
+    if (!form) return;
+    
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitButton = form.querySelector('button[type="submit"]');
+      if (submitButton.disabled) return;
+      
+      submitButton.disabled = true;
+      const amountInput = form.querySelector(`#period-${period}-class-amount`);
+      const amount = parseInt(amountInput.value, 10);
+      
+      if (isNaN(amount)) {
+        showToast('Validation Error', 'Please enter a valid amount.');
+        submitButton.disabled = false;
+        return;
+      }
+
+      const target = `all students in period ${period}`;
+      const confirmed = await showConfirmationModal(formatConfirmationMessage(amount, target));
+      if (!confirmed) {
+        submitButton.disabled = false;
+        return;
+      }
+      
+      try {
+        const token = await getToken();
+        const response = await fetch('/api/adminAdjustBalance', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ 
+            name: null, 
+            period: parseInt(period, 10), 
+            amount 
+          }),
+        });
+        
+        const result = await response.json();
+        if (response.ok) {
+          showToast('Success', `Successfully updated balances for students in period ${period} by ${amount}`);
+          amountInput.value = '';
+        } else {
+          showToast('Error', result.message || 'An error occurred.');
+        }
+      } catch (error) {
+        showToast('Network Error', 'Failed to process the request. Please try again later.');
+      }
+
       setTimeout(() => {
         submitButton.disabled = false;
       }, 1500);
