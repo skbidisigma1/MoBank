@@ -288,6 +288,67 @@ footer a {
   text-decoration: none;
   margin-left: 5px;
 }
+.site-footer {
+  background-color: var(--color-footer-bg);
+  color: var(--color-white);
+  padding: 0.75rem 1rem;
+  margin-top: auto;
+}
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+.footer-bottom {
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.copyright {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+.footer-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.footer-nav a {
+  color: var(--color-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+.footer-nav a:hover {
+  color: var(--color-white);
+}
+.separator {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+.github-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+}
+/* Footer-related media queries */
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  .footer-nav {
+    justify-content: center;
+  }
+}
 ul#userList,
 ul#transactions {
   list-style-type: none;
