@@ -977,6 +977,7 @@ select:after {
   }
 }
 .hero-heading {
+  min-height: 3.2em;
   font-family: var(--font-tech);
   font-size: 2.5rem;
   font-weight: 700;
