@@ -369,6 +369,8 @@ select:after {
   -webkit-user-select: none;
   -ms-user-select: none;
   -webkit-appearance: none;
+  user-select: none;
+  appearance: none;
   background-color: var(--color-white);
   border: 1px solid #747775;
   border-radius: 4px;
@@ -1020,5 +1022,31 @@ select:after {
   .hero-heading {
     font-size: 1.8rem;
   }
+}
+
+#loading-indicator {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1400;
+    border: 6px solid var(--color-loader-border);
+    border-top: 6px solid var(--color-loader-top);
+    border-radius: 50%;
+    width: clamp(50px, 20%, 200px);
+    aspect-ratio: 1 / 1;
+    animation: spin 2s linear infinite;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
