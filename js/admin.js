@@ -14,7 +14,6 @@ async function loadAdminContent() {
   const tabPanels = document.querySelectorAll('.tab-panel');
   const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
   const namesCache = {};
-  let adminLogs = [];
 
   tabButtons.forEach((button) => {
     button.addEventListener('click', async () => {
@@ -160,7 +159,6 @@ async function loadAdminContent() {
         const result = await response.json();
         if (response.ok) {
           showToast('Success', result.message || `Successfully updated ${studentName}'s balance by ${amount}`);
-          addAdminLog(`Updated ${studentName}'s balance by ${amount > 0 ? '+' : ''}${amount} MoBucks`);
           studentNameInput.value = '';
           amountInput.value = '';
           suggestionsContainer.innerHTML = '';
@@ -227,7 +225,6 @@ async function loadAdminContent() {
         const result = await response.json();
         if (response.ok) {
           showToast('Success', result.message || `Successfully updated balances for ${instrument} players in period ${period}`);
-          addAdminLog(`Applied ${amount > 0 ? '+' : ''}${amount} MoBucks to all ${instrument} players in period ${period}`);
           instrumentSelect.value = '';
           amountInput.value = '';
         } else {
@@ -241,54 +238,6 @@ async function loadAdminContent() {
         submitButton.disabled = false;
       }, 1500);
     });
-  }
-
-  function addAdminLog(message) {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString();
-    const dateStr = now.toLocaleDateString();
-    
-    adminLogs.unshift({
-      message,
-      time: `${dateStr} ${timeStr}`
-    });
-    
-    if (adminLogs.length > 50) {
-      adminLogs = adminLogs.slice(0, 50);
-    }
-    
-    updateAdminLogs();
-    
-    localStorage.setItem('adminLogs', JSON.stringify(adminLogs));
-  }
-
-  function updateAdminLogs() {
-    const logsContainer = document.getElementById('admin-logs');
-    if (!logsContainer) return;
-    
-    if (adminLogs.length === 0) {
-      logsContainer.innerHTML = '<li class="admin-log-empty">No recent actions to display</li>';
-      return;
-    }
-    
-    logsContainer.innerHTML = adminLogs.map(log => `
-      <li>
-        <div class="log-content">
-          <div class="log-message">${log.message}</div>
-          <div class="log-time">${log.time}</div>
-        </div>
-      </li>
-    `).join('');
-  }
-
-  try {
-    const storedLogs = localStorage.getItem('adminLogs');
-    if (storedLogs) {
-      adminLogs = JSON.parse(storedLogs);
-      updateAdminLogs();
-    }
-  } catch (error) {
-    console.error('Failed to load admin logs:', error);
   }
 
   const updateByClassForm = document.getElementById('update-by-class-form');
@@ -331,7 +280,6 @@ async function loadAdminContent() {
         const result = await response.json();
         if (response.ok) {
           showToast('Success', `Successfully updated balances for ${period === 'all' ? 'all students' : `students in period ${period}`} by ${amount}`);
-          addAdminLog(`Applied ${amount > 0 ? '+' : ''}${amount} MoBucks to ${period === 'all' ? 'all students' : `period ${period}`}`);
           amountInput.value = '';
         } else {
           showToast('Error', result.message || 'An error occurred.');
