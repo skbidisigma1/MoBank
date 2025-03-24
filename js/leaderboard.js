@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const errorMessage = document.getElementById('error-message');
   const leaderboardTitle = document.getElementById('leaderboard-title');
 
-  const CACHE_DURATION = 60 * 1000; // 1 minute cache
+  const CACHE_DURATION = 30 * 1000; // 30 seconds
 
   function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     card.className = 'leaderboard-card';
 
     const rankDisplay = rank <= 3 ? 
-      (rank === 1 ? '🏆' : rank === 2 ? '🥈' : '🥉') : 
+      (rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉') : 
       `#${rank}`;
 
     card.innerHTML = `
@@ -61,7 +61,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       user => user.name !== 'Madison Moline'
     );
 
-    // Populate table view
     filteredData.forEach((user, index) => {
       const row = document.createElement('tr');
       const rank = index + 1;
@@ -70,7 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       rankCell.className = 'rank-cell';
       if (rank <= 3) {
         rankCell.classList.add(`rank-${rank}`);
-        rankCell.innerHTML = rank === 1 ? '🏆' : rank === 2 ? '🥈' : '🥉';
+        rankCell.innerHTML = rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉';
       } else {
         rankCell.textContent = `#${rank}`;
       }
@@ -97,7 +96,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       leaderboardBody.appendChild(row);
     });
 
-    // Populate card view
     filteredData.forEach((user, index) => {
       const card = createCard(user, index);
       leaderboardCards.appendChild(card);

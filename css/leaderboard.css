@@ -89,6 +89,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    white-space: nowrap;
+    min-width: 100px;
 }
 
 .period-button:hover {
@@ -232,11 +234,14 @@
 
     .period-controls {
         width: 100%;
+        display: flex;
         justify-content: space-between;
+        gap: 8px;
     }
 
     .period-button {
         flex: 1;
+        min-width: 0;
         text-align: center;
         padding: 8px;
         font-size: 0.85rem;
@@ -275,6 +280,12 @@
 @media (max-width: 1220px) {
     .leaderboard-table-container {
         display: none;
+    }
+
+    #leaderboard-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
     }
 
     .scroll-wrapper {
