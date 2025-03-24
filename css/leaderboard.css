@@ -221,6 +221,10 @@
     position: relative;
 }
 
+.leaderboard-cards {
+    display: none;
+}
+
 @media (max-width: 768px) {
     .leaderboard-container {
         padding: 16px;
@@ -282,16 +286,14 @@
         display: none;
     }
 
-    #leaderboard-cards {
+    .leaderboard-cards {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 1rem;
     }
 
     .scroll-wrapper {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 1rem;
+        overflow-x: visible;
     }
 
     .leaderboard-card {
