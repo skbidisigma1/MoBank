@@ -2129,3 +2129,143 @@ select:after {
   }
 }
 
+/* Admin Panel Styles */
+.admin-section {
+  max-width: 800px;
+  margin: 0 auto 2rem;
+  padding: 2rem;
+  background: linear-gradient(
+    to bottom,
+    var(--color-bg) 0%,
+    var(--color-light-bg) 100%
+  );
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.admin-card {
+  background: var(--color-main-bg);
+  padding: 1.5rem;
+  border-radius: 1rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.admin-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.admin-card-title {
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+  color: var(--color-text);
+  font-family: var(--font-main);
+  font-weight: 600;
+}
+
+.admin-form {
+  margin: 0 auto;
+  max-width: 500px;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.admin-logs-section {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background-color: var(--container-color);
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.admin-logs-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.admin-logs-container {
+  background: var(--color-light-bg);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.admin-logs-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.admin-logs-list li {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: background-color 0.2s ease;
+}
+
+.admin-logs-list li:last-child {
+  border-bottom: none;
+}
+
+.admin-logs-list li:hover {
+  background-color: var(--color-hover-bg);
+}
+
+.admin-log-empty {
+  text-align: center;
+  color: var(--color-muted);
+  padding: 2rem !important;
+}
+
+.tab-button[data-period="all"] {
+  background-color: var(--color-secondary);
+}
+
+.tab-button[data-period="all"]:hover {
+  background-color: var(--color-secondary-dark);
+}
+
+.tab-button[data-period="all"].active {
+  background-color: var(--color-secondary-dark);
+}
+
+@media (max-width: 768px) {
+  .admin-section {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .admin-card {
+    padding: 1rem;
+  }
+  
+  .admin-card-title {
+    font-size: 1.1rem;
+  }
+  
+  .admin-logs-section {
+    margin: 1rem;
+    padding: 1rem;
+  }
+  
+  .tab-container {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .tab-button {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+}
+
