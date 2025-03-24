@@ -1978,7 +1978,7 @@ select:after {
 
 .page-description {
   font-size: 1.1rem;
-  color: var(--color-text);
+  color: var (--color-text);
   margin-bottom: 2rem;
   text-align: center;
   font-family: var(--font-main);
@@ -2470,5 +2470,24 @@ select:after {
 
 .action-button.success:hover {
   background-color: var(--color-success-dark);
+}
+
+@keyframes notification-fadeout {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+.notification-item.fadeout {
+    animation: notification-fadeout 0.3s ease forwards;
+}
+
+.notification-item.fadeout {
+    animation-delay: calc(var(--item-index, 0) * 0.05s);
 }
 

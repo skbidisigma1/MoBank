@@ -281,8 +281,15 @@ async function loadHeaderFooter() {
                     clearBtn.addEventListener('click', async (e) => {
                         e.stopPropagation();
                         
-                        try {
-                            if (notifications.length > 0) {
+                        if (notifications.length > 0) {
+                            // Add fadeout animation to all notification items
+                            const notifItems = notifDropdown.querySelectorAll('.notification-item');
+                            notifItems.forEach(item => item.classList.add('fadeout'));
+
+                            // Wait for the animation to complete
+                            await new Promise(resolve => setTimeout(resolve, 500));
+
+                            try {
                                 const token = await getCachedToken();
                                 const response = await fetch('/api/notifications', {
                                     method: 'POST',
@@ -297,14 +304,13 @@ async function loadHeaderFooter() {
                                     notifications = [];
                                     unreadCount = 0;
                                     updateNotificationsUI();
-
                                     localStorage.removeItem('userData');
                                 } else {
                                     console.error('Failed to clear notifications');
                                 }
+                            } catch (error) {
+                                console.error('Error clearing notifications:', error);
                             }
-                        } catch (error) {
-                            console.error('Error clearing notifications:', error);
                         }
                     });
                 }
