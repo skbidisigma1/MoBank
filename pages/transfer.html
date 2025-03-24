@@ -6,6 +6,7 @@
     <title>Transfer MoBucks - MoBank</title>
     <script src="../js/theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
@@ -19,32 +20,66 @@
     <div id="particles-js"></div>
     <div id="header-placeholder"></div>
 
-    <main>
-        <h2>Transfer MoBucks</h2>
+    <main class="main-container">
+        <div class="wave-decoration"></div>
         
-        <section id="user-balance" class="container">
-            <div id="current-balance-container">
-                <strong>Current Balance:</strong> <span id="current-balance">$0</span>
+        <section class="transfer-section">
+            <h1 class="page-heading">Transfer MoBucks</h1>
+            <p class="page-description">Send MoBucks to your classmates securely</p>
+            
+            <div class="balance-card">
+                <svg class="balance-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M21,18V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H19A2,2 0 0,1 21,5V6H12C10.89,6 10,6.89 10,8V16C10,17.11 10.89,18 12,18H21M12,16H22V8H12V16M16,13.5C15.17,13.5 14.5,12.83 14.5,12C14.5,11.17 15.17,10.5 16,10.5C16.83,10.5 17.5,11.17 17.5,12C17.5,12.83 16.83,13.5 16,13.5Z"/>
+                </svg>
+                <div class="balance-info">
+                    <h3>Current Balance</h3>
+                    <span id="current-balance" class="balance-amount">$0</span>
+                </div>
+            </div>
+
+            <form id="transfer-form">
+                <div class="form-group">
+                    <label for="recipient-name">
+                        <svg class="input-icon" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+                        </svg>
+                        Recipient
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" id="recipient-name" placeholder="Enter recipient's name" required autocomplete="off">
+                        <div class="suggestions-container"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="transfer-amount">
+                        <svg class="input-icon" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                        </svg>
+                        Amount
+                    </label>
+                    <input type="number" id="transfer-amount" placeholder="Enter amount to transfer" required min="1" step="1">
+                </div>
+
+                <button type="submit" class="submit-button">
+                    <svg class="button-icon" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/>
+                    </svg>
+                    Send MoBucks
+                </button>
+            </form>
+        </section>
+        
+        <section class="transactions-section">
+            <h2>Recent Transactions</h2>
+            <div class="transactions-container">
+                <ul id="transactions" class="transactions-list">
+                    <li class="transaction-empty">No transactions to show</li>
+                </ul>
             </div>
         </section>
-
-        <form id="transfer-form" class="container">
-            <div class="input-container">
-                <input type="text" id="recipient-name" placeholder="Enter Recipient Name" required autocomplete="off">
-                <div class="suggestions-container"></div>
-            </div>
-            <div class="input-container">
-                <input type="number" id="transfer-amount" placeholder="Amount to Transfer" required min="1" step="1">
-            </div>
-            <button type="submit">Send Currency</button>
-        </form>
-
-        <section id="transaction-history" class="container">
-            <h3>Recent Transactions</h3>
-            <ul id="transactions">
-                <li>No transactions to show.</li>
-            </ul>
-        </section>
+        
+        <div class="wave-decoration bottom"></div>
     </main>
 
     <div id="footer-placeholder"></div>

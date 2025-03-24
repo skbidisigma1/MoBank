@@ -217,19 +217,42 @@ function setupTransferForm(period, senderName) {
   });
 }
 
+// Update the displayRecentTransactions function to match the dashboard styling
 function displayRecentTransactions(transactions) {
   const list = document.getElementById('transactions');
   list.innerHTML = '';
-  if (transactions.length === 0) {
+  
+  if (!transactions || transactions.length === 0) {
     const li = document.createElement('li');
+    li.className = 'transaction-empty';
     li.textContent = 'No transactions to show.';
     list.appendChild(li);
-  } else {
-    transactions.forEach(tx => {
-      const li = document.createElement('li');
-      const date = tx.timestamp ? new Date(tx.timestamp._seconds * 1000 + tx.timestamp._nanoseconds / 1000000).toLocaleString() : '';
-      li.textContent = `${tx.type === 'credit' ? '+' : '-'}$${tx.amount} ${tx.type === 'credit' ? 'from' : 'to'} ${tx.counterpart} on ${date}`;
-      list.appendChild(li);
-    });
+    return;
   }
+
+  transactions.forEach(tx => {
+    const li = document.createElement('li');
+    const date = tx.timestamp 
+        ? new Date(tx.timestamp._seconds * 1000 + (tx.timestamp._nanoseconds || 0) / 1000000)
+        : new Date();
+        
+    const formattedDate = date.toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    const amount = tx.type === 'credit' ? `+$${tx.amount}` : `-$${tx.amount}`;
+    const amountClass = tx.type === 'credit' ? 'credit' : 'debit';
+    
+    li.innerHTML = `
+        <span class="transaction-amount ${amountClass}">${amount}</span>
+        <span class="transaction-details">
+            <span class="transaction-type">${tx.type === 'credit' ? 'from' : 'to'} ${tx.counterpart}</span>
+            <span class="transaction-date">${formattedDate}</span>
+        </span>
+    `;
+    list.appendChild(li);
+  });
 }

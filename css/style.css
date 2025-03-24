@@ -1507,6 +1507,7 @@ select:after {
   line-height: 1.5;
 }
 
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .trust-badges {
     flex-direction: column;
@@ -1534,6 +1535,7 @@ select:after {
   }
 }
 
+/* Dashboard Overview */
 .dashboard-overview {
   background: linear-gradient(
     to bottom,
@@ -1637,6 +1639,7 @@ select:after {
   height: 20px;
 }
 
+/* Transactions Section */
 .transactions-section {
   background: var(--color-main-bg);
   border-radius: 1.5rem;
@@ -1921,6 +1924,220 @@ select:after {
   .input-icon {
     width: 20px;
     height: 20px;
+  }
+}
+
+/* Add Transfer Page Styles */
+.transfer-section {
+  max-width: 600px;
+  margin: 0 auto 2rem;
+  padding: 2rem;
+  background: linear-gradient(
+    to bottom,
+    var(--color-bg) 0%,
+    var(--color-light-bg) 100%
+  );
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.page-heading {
+  font-size: clamp(2rem, 4vw, 2.5rem);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  margin-bottom: 1rem;
+  background: linear-gradient(120deg, var(--heading-gradient-from), var(--heading-gradient-to));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.page-description {
+  font-size: 1.1rem;
+  color: var(--color-text);
+  margin-bottom: 2rem;
+  text-align: center;
+  font-family: var(--font-main);
+  opacity: 0.9;
+}
+
+.balance-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--color-main-bg);
+  padding: 1.5rem;
+  border-radius: 1rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.balance-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.balance-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--color-primary);
+}
+
+.balance-info {
+  flex: 1;
+}
+
+.balance-info h3 {
+  font-size: 1rem;
+  color: var(--color-text);
+  font-family: var(--font-main);
+  opacity: 0.8;
+  margin-bottom: 0.25rem;
+}
+
+.balance-amount {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-text);
+  font-family: var(--font-main);
+}
+
+.input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Reset suggestions container styling */
+.suggestions-container {
+  position: absolute;
+  background-color: var(--color-main-bg);
+  border: 1px solid var(--color-border);
+  width: 100%;
+  top: 100%;
+  left: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1500;
+  display: none;
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.suggestions-container:not(:empty) {
+  display: block;
+}
+
+.suggestion-item {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  font-family: var(--font-main);
+  color: var(--color-text);
+  transition: background-color 0.2s ease;
+  position: relative;
+  z-index: 1501;
+}
+
+.suggestion-item:hover {
+  background-color: var(--color-hover-bg);
+}
+
+.highlighted {
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--color-primary);
+}
+
+.submit-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  font-family: var(--font-main);
+  color: var(--color-white);
+  background: var(--color-primary);
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  margin-top: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.submit-button:hover {
+  transform: translateY(-2px);
+  background: var(--color-primary-dark);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.submit-button:active {
+  transform: translateY(0);
+}
+
+.submit-button:disabled {
+  background-color: var(--color-muted);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.submit-button .button-icon {
+  width: 20px;
+  height: 20px;
+  transition: transform 0.2s ease;
+}
+
+.submit-button:hover .button-icon {
+  transform: translateX(4px);
+}
+
+/* Override the form-group hover effect for suggestions */
+.form-group:hover .suggestions-container,
+.form-group:hover .suggestion-item {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Ensure proper text color in dark mode */
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] select,
+[data-theme="dark"] .suggestions-container,
+[data-theme="dark"] .suggestion-item {
+  color: #e0e0e0;
+}
+
+@media (max-width: 768px) {
+  .transfer-section {
+    padding: 1.5rem;
+    margin: 1rem 0 2rem;
+  }
+  
+  .page-heading {
+    font-size: 1.8rem;
+  }
+  
+  .page-description {
+    font-size: 1rem;
+  }
+  
+  .balance-card {
+    padding: 1rem;
+  }
+  
+  .balance-icon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .balance-amount {
+    font-size: 1.5rem;
   }
 }
 
