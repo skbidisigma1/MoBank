@@ -152,7 +152,7 @@ module.exports = async (req, res) => {
               message: `You received ${formattedAmount} ${moBucksText} from ${
                   senderData.name ?? 'Unknown Sender'
               }`,
-              type: 'transfer_received',
+              type: 'user_transfer',
               timestamp: admin.firestore.Timestamp.now(),
               read: false,
             }

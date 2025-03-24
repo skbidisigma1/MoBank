@@ -224,11 +224,22 @@ async function loadHeaderFooter() {
                     }
                     
                     const message = document.createElement('div');
+                    message.className = 'notification-message';
                     message.textContent = notification.message || notification;
                     
                     const time = document.createElement('span');
                     time.className = 'notification-time';
-                    time.dataset.timestamp = ''; // Will store the original timestamp
+                    time.dataset.timestamp = '';
+
+                    // Add click handler for each notification
+                    notifItem.addEventListener('click', () => {
+                        const type = notification.type;
+                        if (type === 'admin_transfer') {
+                            window.location.href = 'dashboard';
+                        } else if (type === 'transfer_received' || type === 'user_transfer') {
+                            window.location.href = 'transfer';
+                        }
+                    });
 
                     if (notification.timestamp) {
                         try {

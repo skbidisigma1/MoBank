@@ -998,14 +998,15 @@ select:after {
   text-align: left;
   animation: notification-item-appear 0.2s ease forwards;
   animation-delay: calc(var(--item-index, 0) * 0.05s);
-}
-.notification-item:last-child {
-  margin-bottom: 0;
+  cursor: pointer;
 }
 .notification-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
   background-color: var(--color-hover-bg);
+}
+.notification-item:hover .notification-message {
+  text-decoration: underline;
 }
 .notification-item.unread {
   border-left: 3px solid var(--color-primary);
@@ -1015,6 +1016,10 @@ select:after {
   color: var(--color-muted);
   display: block;
   margin-top: 5px;
+}
+.notification-message {
+  color: var(--color-text);
+  margin-bottom: 5px;
 }
 .notification-count {
   position: absolute;
