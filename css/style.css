@@ -87,7 +87,7 @@ body {
   overflow-x: hidden;
 }
 header {
-  background-color: var(--color-primary);
+  background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   color: var(--color-white);
   padding: 20px;
   position: sticky;
@@ -191,8 +191,10 @@ nav a:hover {
   height: 32px;
   object-fit: cover;
   cursor: pointer;
+  transition: transform 0.2s ease;
 }
 .notification-icon:hover {
+  transform: scale(1.1);
   opacity: 0.8;
 }
 main {
@@ -402,6 +404,10 @@ select:after {
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid var(--color-white);
+  transition: transform 0.2s ease;
+}
+.profile-icon:hover {
+  transform: scale(1.1);
 }
 #auth0-signin {
   display: inline-flex;
@@ -935,6 +941,10 @@ select:after {
   cursor: pointer;
   position: relative;
   display: block;
+  transition: transform 0.2s ease;
+}
+.notification-icon:hover {
+  transform: scale(1.1);
 }
 .notification-dropdown {
   position: absolute;
@@ -2284,7 +2294,7 @@ select:after {
 .confirmation-modal-button.cancel {
   background-color: transparent;
   border: 2px solid var(--color-border);
-  color: var(--color-text);
+  color: var (--color-text);
 }
 
 .confirmation-modal-button.cancel:hover {
