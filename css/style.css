@@ -967,6 +967,15 @@ select:after {
   z-index: 1000;
   max-height: 400px;
   overflow-y: auto;
+  transform: translateY(-10px);
+  opacity: 0;
+  visibility: hidden;
+  transition: transform 0.2s ease, opacity 0.2s ease, visibility 0.2s ease;
+}
+.notification-dropdown.visible {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
 }
 .notification-dropdown p.notification-empty {
   font-size: 14px;
@@ -987,6 +996,8 @@ select:after {
   position: relative;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   text-align: left;
+  animation: notification-item-appear 0.2s ease forwards;
+  animation-delay: calc(var(--item-index, 0) * 0.05s);
 }
 .notification-item:last-child {
   margin-bottom: 0;
@@ -2067,7 +2078,7 @@ select:after {
   font-size: 1.1rem;
   font-weight: 600;
   font-family: var(--font-main);
-  color: var(--color-white);
+  color: var (--color-white);
   background: var(--color-primary);
   border: none;
   border-radius: 0.5rem;
@@ -2265,7 +2276,7 @@ select:after {
   transform: translateY(0);
 }
 
-.confirmation-mo  l-message {
+.confirmation-modal-message {
   font-size: 1.1rem;
   color: var(--color-text);
   text-align: center;
@@ -2302,7 +2313,7 @@ select:after {
 .confirmation-modal-button.cancel {
   background-color: transparent;
   border: 2px solid var(--color-border);
-  color: var (--color-text);
+  color: var(--color-text);
 }
 
 .confirmation-modal-button.cancel:hover {

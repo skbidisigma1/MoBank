@@ -199,9 +199,10 @@ async function loadHeaderFooter() {
                     </div>
                 `;
                 
-                notifications.forEach((notification) => {
+                notifications.forEach((notification, index) => {
                     const notifItem = document.createElement('div');
                     notifItem.className = 'notification-item';
+                    notifItem.style.setProperty('--item-index', index);
                     if (!notification.read) {
                         notifItem.classList.add('unread');
                     }
@@ -294,9 +295,9 @@ async function loadHeaderFooter() {
             e.preventDefault();
             e.stopPropagation();
             
-            const wasHidden = notifDropdown.classList.contains('hidden');
+            const wasHidden = !notifDropdown.classList.contains('visible');
             
-            notifDropdown.classList.toggle('hidden');
+            notifDropdown.classList.toggle('visible');
             notifIcon.classList.toggle('active');
             
             if (wasHidden && isLoggedIn && unreadCount > 0) {
@@ -341,7 +342,7 @@ async function loadHeaderFooter() {
             
             document.addEventListener('click', (e) => {
                 if (e.target !== notifIcon && e.target !== notifCount && !notifDropdown.contains(e.target)) {
-                    notifDropdown.classList.add('hidden');
+                    notifDropdown.classList.remove('visible');
                     notifIcon.classList.remove('active');
                 }
             });
