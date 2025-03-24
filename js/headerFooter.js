@@ -1,3 +1,19 @@
+function getRelativeTimeString(timestamp) {
+    const now = new Date();
+    const date = new Date(timestamp);
+    const secondsAgo = Math.floor((now - date) / 1000);
+    const minutesAgo = Math.floor(secondsAgo / 60);
+    const hoursAgo = Math.floor(minutesAgo / 60);
+    const daysAgo = Math.floor(hoursAgo / 24);
+
+    if (secondsAgo < 60) return 'just now';
+    if (minutesAgo < 60) return `${minutesAgo}m ago`;
+    if (hoursAgo < 24) return `${hoursAgo}h ago`;
+    if (daysAgo < 7) return `${daysAgo}d ago`;
+    
+    return `${date.getMonth() + 1}/${date.getDate()}/${String(date.getFullYear()).slice(-2)}`;
+}
+
 async function loadHeaderFooter() {
     try {
         const headerPath = window.location.pathname.includes('/pages/') ? '../header.html' : 'header.html';
@@ -212,29 +228,27 @@ async function loadHeaderFooter() {
                     
                     const time = document.createElement('span');
                     time.className = 'notification-time';
+                    time.dataset.timestamp = ''; // Will store the original timestamp
 
                     if (notification.timestamp) {
                         try {
                             let timestamp;
 
                             if (notification.timestamp.seconds) {
-                                timestamp = new Date(notification.timestamp.seconds * 1000);
+                                timestamp = notification.timestamp.seconds * 1000;
                             } else if (notification.timestamp._seconds) {
-                                timestamp = new Date(notification.timestamp._seconds * 1000);
+                                timestamp = notification.timestamp._seconds * 1000;
                             } else if (notification.timestamp.toDate) {
-                                timestamp = notification.timestamp.toDate();
+                                timestamp = notification.timestamp.toDate().getTime();
                             } else if (typeof notification.timestamp === 'string') {
-                                timestamp = new Date(notification.timestamp);
+                                timestamp = new Date(notification.timestamp).getTime();
                             } else if (typeof notification.timestamp === 'number') {
-                                timestamp = new Date(notification.timestamp);
-                            } else {
-                                timestamp = new Date(notification.timestamp);
+                                timestamp = notification.timestamp;
                             }
 
-                            if (!isNaN(timestamp.getTime())) {
-                                const dateStr = `${timestamp.getMonth() + 1}/${timestamp.getDate()}/${String(timestamp.getFullYear()).slice(-2)}`;
-                                const timeStr = timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                                time.textContent = `${dateStr} ${timeStr}`;
+                            if (!isNaN(timestamp)) {
+                                time.dataset.timestamp = timestamp;
+                                time.textContent = getRelativeTimeString(timestamp);
                             } else {
                                 time.textContent = "Unknown";
                             }
@@ -378,6 +392,23 @@ async function loadHeaderFooter() {
                 notifCount.classList.add('hidden');
             }
         }
+
+        function startTimestampUpdates() {
+            const updateTimestamps = () => {
+                const timeElements = document.querySelectorAll('.notification-time[data-timestamp]');
+                timeElements.forEach(el => {
+                    const timestamp = parseInt(el.dataset.timestamp);
+                    if (!isNaN(timestamp)) {
+                        el.textContent = getRelativeTimeString(timestamp);
+                    }
+                });
+            };
+
+            updateTimestamps();
+            setInterval(updateTimestamps, 60000);
+        }
+
+        startTimestampUpdates();
 
     } catch (error) {
         console.error('Error loading header and footer:', error);
