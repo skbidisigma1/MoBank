@@ -613,34 +613,102 @@ select:after {
   right: 20px;
   max-width: 350px;
   background-color: var(--color-toast-bg);
-  border-radius: 4px;
-  box-shadow: 0 0 0 1px var(--color-text), 0 0 0 3px var(--color-toast-border);
-  padding: 10px;
+  border-radius: 8px;
+  padding: 15px;
   opacity: 0;
   z-index: 1000;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--color-toast-border);
+  backdrop-filter: blur(8px);
 }
-.toast.show {
-  animation: toast-slide-in 0.5s forwards;
+
+/* Toast types */
+.toast.success {
+  --toast-accent: var(--color-success);
+  border-left: 4px solid var(--color-success);
 }
-.toast.hide {
-  animation: toast-slide-out 0.5s forwards;
+
+.toast.error {
+  --toast-accent: var(--color-danger);
+  border-left: 4px solid var(--color-danger);
 }
+
+.toast.warning {
+  --toast-accent: #ffc107;
+  border-left: 4px solid #ffc107;
+}
+
 .toast-content {
-  display: flex;
-  flex-direction: column;
+  flex: 1;
 }
+
 .toast-title {
-  font-size: 20px;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--color-white);
+  margin-bottom: 4px;
   font-family: var(--font-main);
-  margin-bottom: 3px;
 }
+
 .toast-message {
   font-size: 14px;
-  color: var(--color-white);
+  color: var(--color-muted);
   font-family: var(--font-main);
+  line-height: 1.4;
+}
+
+.toast.show {
+  animation: toast-slide-in 0.3s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+}
+
+.toast.hide {
+  animation: toast-slide-out 0.3s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+@keyframes toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%) translateY(10px);
+  }
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .toast {
+  background-color: rgba(35, 35, 35, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .toast-message {
+  color: #d1d1d1;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .toast {
+    width: calc(100% - 32px);
+    left: 16px;
+    right: 16px;
+    max-width: none;
+    padding: 12px;
+  }
 }
 .suggestions-container {
   position: absolute;
