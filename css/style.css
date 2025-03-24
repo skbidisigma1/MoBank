@@ -31,6 +31,10 @@
   --typing-cursor-color: var(--color-secondary);
   --heading-gradient-from: #2a4d69;
   --heading-gradient-to: #4b6cb7;
+  --color-danger: #dc3545;
+  --color-danger-dark: #bb2d3b;
+  --color-success: #198754;
+  --color-success-dark: #146c43;
 }
 [data-theme="dark"] {
   --color-primary: #005fa3;
@@ -62,6 +66,10 @@
   --typing-cursor-color: var(--color-secondary);
   --heading-gradient-from: #5ea2ff;
   --heading-gradient-to: #e0e0e0;
+  --color-danger: #ff4d4d;
+  --color-danger-dark: #e60000;
+  --color-success: #00b371;
+  --color-success-dark: #008f5b;
 }
 #particles-js {
   position: fixed;
@@ -2257,7 +2265,7 @@ select:after {
   transform: translateY(0);
 }
 
-.confirmation-modal-message {
+.confirmation-mo  l-message {
   font-size: 1.1rem;
   color: var(--color-text);
   text-align: center;
@@ -2428,5 +2436,23 @@ select:after {
   .pin-image {
     max-width: 100%;
   }
+}
+
+.action-button.danger {
+  background-color: var(--color-danger);
+  color: var(--color-white);
+}
+
+.action-button.danger:hover {
+  background-color: var(--color-danger-dark);
+}
+
+.action-button.success {
+  background-color: var(--color-success);
+  color: var(--color-white);
+}
+
+.action-button.success:hover {
+  background-color: var(--color-success-dark);
 }
 
