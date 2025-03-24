@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>How to Pin the App</title>
+  <title>Pin MoBank - Quick Access Guide</title>
   <script src="../js/theme.js"></script>
   <link rel="stylesheet" href="../css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
@@ -17,23 +17,48 @@
   <div id="particles-js"></div>
   <div id="header-placeholder"></div>
 
-  <main>
-    <h2>How to Pin the App (recommended)</h2>
-    <div class="pin-container">
-      <div class="pin-step">
-        <p>1. Find the <strong>MoBank</strong> app in your taskbar.</p>
-        <img src="../images/pin/step1.webp" alt="Go to Taskbar">
+  <main class="main-container">
+    <div class="wave-decoration"></div>
+    
+    <section class="pin-section">
+      <h1 class="page-heading">Pin MoBank to Your Taskbar</h1>
+      <p class="page-description">Quick access to your MoBucks management in three simple steps</p>
+      
+      <div class="pin-container">
+        <div class="pin-step">
+          <div class="pin-step-number">1</div>
+          <div class="pin-step-content">
+            <p>Find the <strong>MoBank</strong> app in your taskbar</p>
+            <img src="../images/pin/step1.webp" alt="Locate MoBank in taskbar" class="pin-image">
+          </div>
+        </div>
+
+        <div class="pin-step">
+          <div class="pin-step-number">2</div>
+          <div class="pin-step-content">
+            <p><strong>Right-click</strong> the app icon</p>
+            <img src="../images/pin/step2.webp" alt="Right-click the MoBank icon" class="pin-image">
+          </div>
+        </div>
+
+        <div class="pin-step">
+          <div class="pin-step-number">3</div>
+          <div class="pin-step-content">
+            <p>Click <strong>Pin to taskbar</strong></p>
+            <img src="../images/pin/step3.webp" alt="Select Pin to taskbar option" class="pin-image">
+          </div>
+        </div>
+
+        <div class="pin-action">
+          <button id="proceed-button" class="action-button primary">
+            <span>Return to Homepage</span>
+            <svg class="button-icon" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
+            </svg>
+          </button>
+        </div>
       </div>
-      <div class="pin-step">
-        <p>2. <strong>Right-click</strong> the app icon.</p>
-        <img src="../images/pin/step2.webp" alt="Right Click App">
-      </div>
-      <div class="pin-step">
-        <p>3. Click <strong>Pin</strong>.</p>
-        <img src="../images/pin/step3.webp" alt="Pin the App">
-      </div>
-      <button id="proceed-button">Proceed</button>
-    </div>
+    </section>
   </main>
 
   <div id="footer-placeholder"></div>
