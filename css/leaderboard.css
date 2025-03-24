@@ -85,6 +85,10 @@
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .period-button:hover {
@@ -265,5 +269,61 @@
 
     100% {
         transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 1220px) {
+    .leaderboard-table-container {
+        display: none;
+    }
+
+    .scroll-wrapper {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+
+    .leaderboard-card {
+        background: var(--color-light-bg);
+        border-radius: 12px;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-rank {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--color-text);
+    }
+
+    .card-rank.rank-1 { color: var(--rank-gold) !important; }
+    .card-rank.rank-2 { color: var(--rank-silver) !important; }
+    .card-rank.rank-3 { color: var(--rank-bronze) !important; }
+
+    .card-name {
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: var(--color-text);
+    }
+
+    .card-balance {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: var(--color-text);
+    }
+
+    .card-instrument {
+        color: var(--color-muted);
+        font-size: 0.9rem;
+    }
+
+    .card-divider {
+        height: 1px;
+        background-color: var(--color-border);
+        margin: 0.5rem 0;
     }
 }

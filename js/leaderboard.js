@@ -2,27 +2,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const loader = document.getElementById('loader');
   const periodButtons = document.querySelectorAll('.period-button');
   const leaderboardBody = document.getElementById('leaderboard-body');
+  const leaderboardCards = document.getElementById('leaderboard-cards');
   const lastUpdatedElement = document.getElementById('last-updated');
   const errorContainer = document.getElementById('error-container');
   const errorMessage = document.getElementById('error-message');
   const leaderboardTitle = document.getElementById('leaderboard-title');
 
   const CACHE_DURATION = 60 * 1000; // 1 minute cache
-
-  const instrumentIcons = {
-    violin: `<svg class="instrument-icon" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
-            </svg>`,
-    viola: `<svg class="instrument-icon" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
-           </svg>`,
-    cello: `<svg class="instrument-icon" viewBox="0 0 24 24">
-             <path fill="currentColor" d="M19,3V19H18V13H16V19H5V13H3V19H2V3H3V11H5V3H16V11H18V3H19M8,5V9H6V5H8M16,5V9H14V5H16M11,7V8H13V7H11M11,11V13H13V11H11Z"/>
-           </svg>`,
-    bass: `<svg class="instrument-icon" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M19,3V19H18V13H16V19H5V13H3V19H2V3H3V11H5V3H16V11H18V3H19M8,5V9H6V5H8M16,5V9H14V5H16M11,7V8H13V7H11M11,11V13H13V11H11Z"/>
-          </svg>`
-  };
 
   function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
@@ -46,14 +32,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     errorContainer.classList.add('hidden');
   }
 
+  function createCard(user, index) {
+    const rank = index + 1;
+    const card = document.createElement('div');
+    card.className = 'leaderboard-card';
+
+    const rankDisplay = rank <= 3 ? 
+      (rank === 1 ? '🏆' : rank === 2 ? '🥈' : '🥉') : 
+      `#${rank}`;
+
+    card.innerHTML = `
+      <div class="card-rank ${rank <= 3 ? `rank-${rank}` : ''}">${rankDisplay}</div>
+      <div class="card-name">${user.name === 'Luke Collingridge' ? '🛠️ ' + user.name : user.name}</div>
+      <div class="card-divider"></div>
+      <div class="card-balance">${user.balance} MoBucks</div>
+      <div class="card-instrument">${capitalizeFirstLetter(user.instrument)}</div>
+    `;
+
+    return card;
+  }
+
   function populateLeaderboard(data, period) {
     leaderboardBody.innerHTML = '';
+    leaderboardCards.innerHTML = '';
     leaderboardTitle.querySelector('span').textContent = `Leaderboard - Period ${period}`;
     
     const filteredData = data.leaderboardData.filter(
       user => user.name !== 'Madison Moline'
     );
 
+    // Populate table view
     filteredData.forEach((user, index) => {
       const row = document.createElement('tr');
       const rank = index + 1;
@@ -83,11 +91,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const instrumentCell = document.createElement('td');
       instrumentCell.className = 'instrument-cell';
-      const instrumentIcon = instrumentIcons[user.instrument.toLowerCase()] || '';
-      instrumentCell.innerHTML = `${instrumentIcon}${capitalizeFirstLetter(user.instrument)}`;
+      instrumentCell.textContent = capitalizeFirstLetter(user.instrument);
       row.appendChild(instrumentCell);
 
       leaderboardBody.appendChild(row);
+    });
+
+    // Populate card view
+    filteredData.forEach((user, index) => {
+      const card = createCard(user, index);
+      leaderboardCards.appendChild(card);
     });
 
     if (data.lastUpdated && data.lastUpdated._seconds) {
