@@ -129,6 +129,11 @@
     z-index: 10;
 }
 
+.leaderboard-table thead th:nth-child(2),
+.leaderboard-table thead th:nth-child(3) {
+    text-align: center;
+}
+
 .leaderboard-table tbody tr {
     transition: background-color 0.2s ease;
     border-bottom: 1px solid var(--color-hover-bg);
@@ -166,11 +171,13 @@
 
 .name-cell {
     font-weight: 500;
+    text-align: center;
 }
 
 .balance-cell {
     font-family: 'JetBrains Mono', monospace;
     font-weight: 600;
+    text-align: center;
 }
 
 .instrument-cell {
@@ -221,8 +228,12 @@
     position: relative;
 }
 
-.leaderboard-cards {
-    display: none;
+#leaderboard-cards {
+    display: none !important;
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    pointer-events: none;
 }
 
 @media (max-width: 768px) {
@@ -286,8 +297,12 @@
         display: none;
     }
 
-    .leaderboard-cards {
-        display: grid;
+    #leaderboard-cards {
+        display: grid !important;
+        visibility: visible;
+        opacity: 1;
+        position: static;
+        pointer-events: auto;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 1rem;
     }
