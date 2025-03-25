@@ -387,7 +387,11 @@ function openAnnouncementsModal(announcements) {
     lastActiveElement = document.activeElement;
     const fragment = document.createDocumentFragment();
     
-    isViewingSingleAnnouncement = announcements.length === 1;
+    // Check if we're viewing a single announcement in detail view
+    // This is only true if we're viewing a single announcement AND it's not the initial "all" view
+    isViewingSingleAnnouncement = announcements.length === 1 && 
+        allAnnouncements.length !== 1 && 
+        announcements[0].id === allAnnouncements.find(a => a.id === announcements[0].id)?.id;
     
     if (closeBtn) {
         closeBtn.textContent = isViewingSingleAnnouncement ? 'Back to All' : 'Close';
@@ -409,30 +413,40 @@ function openAnnouncementsModal(announcements) {
         title.id = `announcement-title-${ann.id}`;
         title.textContent = ann.title;
         
-        const body = document.createElement('div');
-        body.innerHTML = ann.body;
+        // When viewing all announcements, show description instead of full body
+        const contentElement = document.createElement('div');
+        if (isViewingSingleAnnouncement || announcements.length === allAnnouncements.length) {
+            // If single detail view OR initial view of all announcements
+            contentElement.innerHTML = ann.body;
+        } else {
+            // For the "all announcements" view with condensed items
+            contentElement.innerHTML = ann.description;
+        }
         
         const date = document.createElement('div');
         date.className = 'announcement-date';
         date.textContent = ann.date;
         
         card.appendChild(title);
-        card.appendChild(body);
+        card.appendChild(contentElement);
         card.appendChild(date);
         
-        card.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            card.focus();
-            openAnnouncementsModal([ann]);
-        });
-        
-        card.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
+        // Add click handlers only if not already in detail view or if there are multiple announcements
+        if (!isViewingSingleAnnouncement) {
+            card.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
+                card.focus();
                 openAnnouncementsModal([ann]);
-            }
-        });
+            });
+            
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openAnnouncementsModal([ann]);
+                }
+            });
+        }
         
         fragment.appendChild(card);
     });
