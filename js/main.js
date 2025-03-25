@@ -221,8 +221,19 @@ function handleModalKeyboard(e) {
 function initializeEventListeners() {
     const getStartedBtn = document.getElementById('get-started-btn');
     if (getStartedBtn) {
-        getStartedBtn.addEventListener('click', () => {
-            window.location.href = 'login';
+        getStartedBtn.addEventListener('click', async () => {
+            try {
+                // Check if user is already authenticated
+                if (auth0Client && await isAuthenticated()) {
+                    window.location.href = 'dashboard';
+                } else {
+                    window.location.href = 'login';
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                // Default to login page if authentication check fails
+                window.location.href = 'login';
+            }
         });
     }
 
