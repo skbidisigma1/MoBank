@@ -1,42 +1,10 @@
 [
   {
     "id": 1,
-    "title": "🚀 <span style='color:#ffcc00;'>skibidi</span>",
-    "body": "<p>eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee</li><li>📰 New announcements are posted here.</li><li>🛠️ <a href='/profile'>Click here</a> to view your MoBank profile.</li></ul>",
-    "description": "eeeeeeeeeeeeeeeeeeeeeeeeee.",
-    "date": "2025-03-19",
-    "pinned": false
-  },
-  {
-    "id": 2,
-    "title": "🎉                                      ",
-    "body": "<p>yes</p>",
-    "description": "!!!!!!!!!!!!!!!!",
-    "date": "2025-03-18",
-    "pinned": false
-  },
-  {
-    "id": 3,
-    "title": "🔧 ",
-    "body": "<p>T</p>",
-    "description": "hey",
-    "date": "2025-03-174673847634",
-    "pinned": false
-  },
-  {
-    "id": 4,
-    "title": "📈",
-    "body": "<p>\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8\uD83D\uDCC8</p>",
-    "description": "yes",
-    "date": "2025-53-16",
-    "pinned": false
-  },
-  {
-    "id": 5,
-    "title": "🛡️",
-    "body": "<p>\uFE0F</p>",
-    "description": "\uFE0F.",
-    "date": "2026-03-15",
-    "pinned": false
+    "title": "🚀 Welcome to MoBank!",
+    "body": "<p>Welcome to MoBank, your official platform for managing MoBucks!</p><p>This is our first official announcement. Here are a few tips to get you started:</p><ul><li>💰 Check your <a href='/pages/dashboard.html'>dashboard</a> regularly to view your balance</li><li>🔄 Transfer MoBucks to classmates through the <a href='/pages/transfer.html'>transfer page</a></li><li>📊 See who has the most MoBucks on the <a href='/pages/leaderboard.html'>leaderboard</a></li></ul><p>If you have any questions, please contact your teacher.</p>",
+    "description": "Welcome to MoBank, the official platform for managing your MoBucks!",
+    "date": "2025-03-24",
+    "pinned": true
   }
 ]
