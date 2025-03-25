@@ -15,6 +15,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             initializeEventListeners()
         ]);
 
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('showAnnouncements') === 'true') {
+            setTimeout(() => loadAndOpenAllAnnouncements(), 500);
+        }
+
     } catch (error) {
         console.error('Initialization error:', error);
         showToast('Error', 'Failed to initialize application. Please refresh the page.');

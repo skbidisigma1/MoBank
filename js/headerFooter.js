@@ -231,13 +231,14 @@ async function loadHeaderFooter() {
                     time.className = 'notification-time';
                     time.dataset.timestamp = '';
 
-                    // Add click handler for each notification
                     notifItem.addEventListener('click', () => {
                         const type = notification.type;
                         if (type === 'admin_transfer') {
                             window.location.href = 'dashboard';
                         } else if (type === 'transfer_received' || type === 'user_transfer') {
                             window.location.href = 'transfer';
+                        } else if (type === 'announcement') {
+                            window.location.href = `${window.location.origin}?showAnnouncements=true`;
                         }
                     });
 
