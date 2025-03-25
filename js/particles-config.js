@@ -5,6 +5,8 @@
     const RETRY_DELAY = 500;
     
     const BREAKPOINTS = {
+        MOBILE: 768,
+        TABLET: 1024,
         FULL_HD: 1920,
         WIDE_2K: 2560
     };
@@ -24,9 +26,11 @@
 
     function getResponsiveParticleCount() {
         const width = window.innerWidth;
-        if (width >= BREAKPOINTS.WIDE_2K) return 50;
-        if (width >= BREAKPOINTS.FULL_HD) return 45;
-        return 35;
+        if (width < BREAKPOINTS.MOBILE) return 0;
+        if (width >= BREAKPOINTS.WIDE_2K) return 75;
+        if (width >= BREAKPOINTS.FULL_HD) return 65;
+        if (width >= BREAKPOINTS.TABLET) return 55;
+        return 45;
     }
 
     function getReducedMotionConfig(baseConfig) {
@@ -172,6 +176,14 @@
             const currentTheme = getCurrentTheme();
             const config = getParticlesConfig(currentTheme, prefersReducedMotion);
             
+            if (window.innerWidth < BREAKPOINTS.MOBILE) {
+                if (particlesContainer) {
+                    particlesContainer.style.display = 'none';
+                }
+                console.log('Particles disabled on mobile devices');
+                return;
+            }
+            
             destroyParticles();
             particlesJS('particles-js', config);
             
@@ -251,6 +263,17 @@
     window.addEventListener('resize', () => {
         if (resizeTimeout) clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
+            const particlesContainer = document.getElementById('particles-js');
+            if (particlesContainer) {
+                if (window.innerWidth < BREAKPOINTS.MOBILE) {
+                    particlesContainer.style.display = 'none';
+                    destroyParticles();
+                    return;
+                } else {
+                    particlesContainer.style.display = 'block';
+                }
+            }
+            
             if (typeof pJSDom !== 'undefined' && pJSDom.length > 0) {
                 const config = getParticlesConfig(
                     getCurrentTheme(), 
