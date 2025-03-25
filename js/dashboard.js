@@ -32,6 +32,7 @@ function setupButtons() {
     const transferButton = document.getElementById('transfer-mobucks-btn');
     const logoutButton = document.getElementById('logout-btn');
     const profileButton = document.getElementById('profile-btn');
+    const leaderboardButton = document.getElementById('leaderboard-btn');
 
     if (transferButton) {
         transferButton.addEventListener('click', () => {
@@ -49,6 +50,12 @@ function setupButtons() {
     if (profileButton) {
         profileButton.addEventListener('click', () => {
             window.location.href = 'profile';
+        });
+    }
+    
+    if (leaderboardButton) {
+        leaderboardButton.addEventListener('click', () => {
+            window.location.href = 'leaderboard';
         });
     }
 }
