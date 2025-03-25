@@ -6,5 +6,13 @@
     "description": "MoBank v1.0.0 patch notes",
     "date": "March 24, 2025",
     "pinned": false
+  },
+  {
+    "id": 2,
+    "title": "test",
+    "body": "<p>test</p>",
+    "description": "test",
+    "date": "March 24, 2025",
+    "pinned": false
   }
 ]
