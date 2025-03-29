@@ -20,6 +20,38 @@ document.addEventListener('DOMContentLoaded', function() {
     qualityIndicator.className = 'detection-quality';
     tunerDisplay.appendChild(qualityIndicator);
     
+    // Add debug display (this will help diagnose issues)
+    const debugDisplay = document.createElement('div');
+    debugDisplay.className = 'debug-display';
+    debugDisplay.style.fontSize = '12px';
+    debugDisplay.style.color = '#666';
+    debugDisplay.style.marginTop = '10px';
+    debugDisplay.style.textAlign = 'left';
+    debugDisplay.style.fontFamily = 'monospace';
+    debugDisplay.style.padding = '5px';
+    debugDisplay.style.display = 'none';  // Hidden by default
+    tunerDisplay.appendChild(debugDisplay);
+    
+    // Add debug toggle button
+    const debugToggle = document.createElement('button');
+    debugToggle.textContent = 'Show Debug Info';
+    debugToggle.className = 'motools-button';
+    debugToggle.style.fontSize = '12px';
+    debugToggle.style.padding = '5px 10px';
+    debugToggle.style.marginLeft = '10px';
+    debugToggle.style.backgroundColor = '#666';
+    document.querySelector('.tuner-controls').appendChild(debugToggle);
+    
+    debugToggle.addEventListener('click', function() {
+        if (debugDisplay.style.display === 'none') {
+            debugDisplay.style.display = 'block';
+            this.textContent = 'Hide Debug Info';
+        } else {
+            debugDisplay.style.display = 'none';
+            this.textContent = 'Show Debug Info';
+        }
+    });
+    
     // Audio context and analyzer setup
     let audioContext;
     let analyzer;
@@ -27,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let scriptProcessor;
     let isListening = false;
     let animationFrameId = null;
+    let audioData = [];
     
     // Reference frequencies (A4) options
     const referenceFrequency = {
@@ -142,22 +175,43 @@ document.addEventListener('DOMContentLoaded', function() {
             // Request microphone access
             const stream = await navigator.mediaDevices.getUserMedia({ 
                 audio: { 
-                    echoCancellation: true,
-                    noiseSuppression: true,
+                    echoCancellation: false,  // Turned off for better pitch detection
+                    noiseSuppression: false,  // Turned off for better pitch detection
                     autoGainControl: false
                 } 
             });
             
             // Create analyzer node
-            analyzer = Pitchy.PitchAnalyzer.forAudioContext(audioContext);
+            analyzer = Pitchy.PitchAnalyzer.forAudioContext(audioContext, 2048);  // Smaller buffer for faster response
             
             // Connect microphone to analyzer
             microphone = audioContext.createMediaStreamSource(stream);
+            
+            // Add volume meter for debugging
+            const analyserNode = audioContext.createAnalyser();
+            analyserNode.fftSize = 256;
+            microphone.connect(analyserNode);
+            
             scriptProcessor = analyzer.inputNode;
+            
+            // Add audio processing for debugging
+            scriptProcessor.onaudioprocess = function(e) {
+                const input = e.inputBuffer.getChannelData(0);
+                const sum = input.reduce((acc, val) => acc + Math.abs(val), 0);
+                const avg = sum / input.length;
+                
+                // Store last 10 frames of audio data
+                audioData.push(avg);
+                if (audioData.length > 10) audioData.shift();
+                
+                // Only for debug display - we don't need to return anything
+            };
             
             // Connect the processor node to the destination to make it work
             microphone.connect(scriptProcessor);
             scriptProcessor.connect(audioContext.destination);
+            
+            debugDisplay.innerHTML = 'Audio context created<br>Microphone connected<br>Waiting for audio...';
             
             // UI updates
             startButton.style.display = 'none';
@@ -172,6 +226,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
         } catch (error) {
             console.error('Error initializing tuner:', error);
+            debugDisplay.innerHTML = `Error: ${error.message}<br>Stack: ${error.stack}`;
+            debugDisplay.style.display = 'block';
             alert('Unable to access microphone. Please check permissions and try again.');
             resetTuner();
         }
@@ -232,23 +288,63 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!analyzer || !isListening) return;
             
             const buffer = analyzer.getFloatTimeDomainData();
-            const [pitch, clarity] = Pitchy.PitchDetector.findPitch(buffer, audioContext.sampleRate);
             
-            updateTunerDisplay(pitch, clarity);
+            // Calculate signal level to determine if there's actual audio input
+            const sum = buffer.reduce((acc, val) => acc + Math.abs(val), 0);
+            const avg = sum / buffer.length;
+            
+            // Update debug info
+            const debugInfo = `
+                Sample rate: ${audioContext.sampleRate}Hz<br>
+                Buffer size: ${buffer.length}<br>
+                Audio level: ${(avg * 100).toFixed(2)}%<br>
+                Audio detected: ${avg > 0.01 ? 'YES' : 'NO'}<br>
+                Audio data: ${audioData.map(d => (d * 100).toFixed(1)).join('%, ')}%
+            `;
+            debugDisplay.innerHTML = debugInfo;
+            
+            // Only run pitch detection if we detect actual audio
+            if (avg > 0.01) {
+                const [pitch, clarity] = Pitchy.PitchDetector.findPitch(buffer, audioContext.sampleRate);
+                
+                // Add debug info for pitch detection
+                debugDisplay.innerHTML += `<br>Raw pitch: ${pitch.toFixed(1)}Hz<br>Clarity: ${(clarity * 100).toFixed(1)}%`;
+                
+                updateTunerDisplay(pitch, clarity, avg);
+            } else {
+                // Still update display to show no pitch detected
+                updateTunerDisplay(0, 0, avg);
+            }
             
             // Continue detecting in the next animation frame
             animationFrameId = requestAnimationFrame(detectPitch);
         } catch (error) {
             console.error('Error in pitch detection:', error);
+            debugDisplay.innerHTML = `Error: ${error.message}<br>Stack: ${error.stack}`;
+            debugDisplay.style.display = 'block';
             resetTuner();
         }
     }
     
     // Update tuner display with current pitch data
-    function updateTunerDisplay(pitch, clarity) {
+    function updateTunerDisplay(pitch, clarity, audioLevel) {
+        // Lower the threshold to make detection more sensitive
+        // Also take into account the audio level
+        const audioDetected = audioLevel > 0.01;
+        const minClarity = 0.5;  // Lower the threshold for better sensitivity
+        
+        // Update the quality indicator based on audio level
+        if (audioLevel < 0.01) {
+            qualityIndicator.className = 'detection-quality poor';
+            noteDisplay.textContent = '--';
+            frequencyDisplay.textContent = 'No audio detected';
+            updatePianoKeyboard();
+            return;
+        }
+        
         // Only update display if clarity is above threshold and pitch is in a reasonable range
-        // Typical audible frequency range is 20Hz - 20kHz
-        if (clarity >= 0.65 && pitch > 20 && pitch < 5000) {
+        // Typical audible frequency range is 20Hz - 5000Hz
+        if (clarity >= minClarity && pitch > 20 && pitch < 5000) {
             qualityIndicator.className = 'detection-quality good';
             
             // Calculate note information
@@ -280,9 +376,23 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update piano keyboard
             updatePianoKeyboard(note.name, note.octave);
             
-        } else if (clarity >= 0.4) {
-            // Medium clarity - show as "trying to detect"
+        } else if (audioDetected) {
+            // Audio detected but clarity not enough for pitch
             qualityIndicator.className = 'detection-quality average';
+            
+            if (clarity > 0) {
+                frequencyDisplay.textContent = `Detecting... (${(clarity * 100).toFixed(0)}%)`;
+            } else {
+                frequencyDisplay.textContent = 'Waiting for steady pitch...';
+            }
+            
+            if (pitch > 0) {
+                noteDisplay.textContent = '~';
+            } else {
+                noteDisplay.textContent = '--';
+            }
+            
+            updatePianoKeyboard();
         } else {
             // Low clarity - no reliable pitch detected
             qualityIndicator.className = 'detection-quality poor';
