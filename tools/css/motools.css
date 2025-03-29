@@ -1,6 +1,4 @@
-/* MoTools Main CSS - Gray Theme */
 :root {
-  /* Gray theme color palette - Light Mode */
   --mt-color-primary: #4a4a4a;
   --mt-color-primary-dark: #333333;
   --mt-color-secondary: #6c6c6c;
@@ -20,28 +18,23 @@
   --mt-color-toast-bg: rgb(33, 33, 33);
   --mt-color-toast-border: rgb(85, 85, 85);
   
-  /* Font families (inheriting from MoBank) */
   --font-main: 'Poppins', Arial, sans-serif;
   --font-heading: 'Montserrat', sans-serif;
   --font-tech: 'Orbitron', sans-serif;
   
-  /* MoTools specific heading gradient */
   --mt-heading-gradient-from: #4a4a4a;
   --mt-heading-gradient-to: #8e8e8e;
   
-  /* Tuner specific colors */
   --mt-tuner-in-tune: #4CAF50;
   --mt-tuner-slightly-off: #FFC107;
   --mt-tuner-off: #F44336;
   
-  /* Piano keyboard colors */
   --mt-piano-white-key: #ffffff;
   --mt-piano-black-key: #333333;
   --mt-piano-key-border: #cccccc;
   --mt-piano-key-active: #4CAF50;
 }
 
-/* Dark mode overrides */
 [data-theme="dark"] {
   --mt-color-primary: #8e8e8e;
   --mt-color-primary-dark: #6c6c6c;
@@ -62,19 +55,15 @@
   --mt-color-toast-bg: #2c2c2c;
   --mt-color-toast-border: #3a3a3a;
   
-  /* Dark mode heading gradient */
   --mt-heading-gradient-from: #9e9e9e;
   --mt-heading-gradient-to: #d9d9d9;
   
-  /* Piano keyboard colors in dark mode */
   --mt-piano-white-key: #e0e0e0;
   --mt-piano-black-key: #222222;
   --mt-piano-key-border: #444444;
   
-  /* Tuner colors remain the same in dark mode for clarity */
 }
 
-/* Basic reset and styles (similar to MoBank) */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -92,7 +81,6 @@ body {
   overflow-x: hidden;
 }
 
-/* MoTools Header - Gray theme */
 header.motools-header {
   background: linear-gradient(90deg, var(--mt-color-primary) 0%, var(--mt-color-primary-dark) 100%);
   color: var(--mt-color-white);
@@ -164,7 +152,6 @@ header.motools-header nav a:hover {
   color: var(--mt-color-nav-hover);
 }
 
-/* Main content */
 main.motools-main {
   flex: 1;
   padding: 40px;
@@ -178,7 +165,6 @@ main.motools-main {
   box-sizing: border-box;
 }
 
-/* MoTools Card Grid */
 .motools-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -235,7 +221,6 @@ main.motools-main {
   background-color: var(--mt-color-primary-dark);
 }
 
-/* MoTools Page Title */
 .motools-title {
   text-align: center;
   margin-bottom: 40px;
@@ -260,7 +245,6 @@ main.motools-main {
   margin: 0 auto;
 }
 
-/* Tool container */
 .tool-container {
   padding: 30px;
   background-color: var(--mt-color-card-bg);
@@ -269,7 +253,6 @@ main.motools-main {
   margin-top: 30px;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   header.motools-header #mobileMenuToggle {
     display: flex;
@@ -344,7 +327,6 @@ main.motools-main {
   }
 }
 
-/* Extra styling for tool pages */
 .tool-header {
   text-align: center;
   margin-bottom: 30px;
@@ -366,7 +348,6 @@ main.motools-main {
   color: var(--mt-color-muted);
 }
 
-/* Button styles */
 .motools-button {
   font-family: var(--font-main);
   background-color: var(--mt-color-primary);
@@ -388,7 +369,6 @@ main.motools-main {
   transform: translateY(0);
 }
 
-/* Select styles */
 .motools-select {
   font-family: var(--font-main);
   background-color: var(--mt-color-light-bg);
@@ -399,11 +379,25 @@ main.motools-main {
   cursor: pointer;
   font-size: 16px;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M6 9l6 6 6-6'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 16px;
   padding-right: 40px;
+  position: relative;
+}
+
+.tuner-options {
+  position: relative;
+}
+
+.tuner-options::after {
+  content: "\f078";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--mt-color-text);
+  font-size: 12px;
 }
 
 .motools-select:focus {
@@ -412,7 +406,6 @@ main.motools-main {
   box-shadow: 0 0 0 2px rgba(74, 74, 74, 0.2);
 }
 
-/* Tuner Specific Styles */
 .tuner-interface {
   max-width: 600px;
   margin: 0 auto;
