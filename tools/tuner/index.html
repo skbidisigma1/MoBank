@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Tuner - MoTools</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/tools/css/motools.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <!-- MoTools Header -->
+    <header class="motools-header">
+        <button id="mobileMenuToggle" aria-label="Toggle navigation" aria-expanded="false">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+        <h1>MoTools</h1>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="/tools/">Home</a></li>
+                <li><a href="/">MoBank</a></li>
+            </ul>
+        </nav>
+        <div class="mobile-nav">
+            <ul>
+                <li><a href="/tools/">Home</a></li>
+                <li><a href="/">MoBank</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="motools-main">
+        <div class="tool-header">
+            <h2>Audio Tuner</h2>
+            <p>A simple tool to help you tune your musical instruments with precision</p>
+        </div>
+
+        <!-- Tuner Tool Container -->
+        <div class="tool-container">
+            <div class="tuner-interface">
+                <div class="tuner-display">
+                    <div class="note-display">--</div>
+                    <div class="frequency-display">0 Hz</div>
+                    <div class="cents-display">0¢</div>
+                    <div class="indicator-container">
+                        <div class="tuning-scale">
+                            <div class="scale-mark" style="left: 0%;">-50¢</div>
+                            <div class="scale-mark" style="left: 25%;">-25¢</div>
+                            <div class="scale-mark" style="left: 50%;">0¢</div>
+                            <div class="scale-mark" style="left: 75%;">+25¢</div>
+                            <div class="scale-mark" style="left: 100%;">+50¢</div>
+                        </div>
+                        <div class="tuning-indicator"></div>
+                    </div>
+                </div>
+                
+                <div class="tuner-controls">
+                    <button id="start-tuner" class="motools-button">
+                        <i class="fas fa-microphone"></i> Start Tuner
+                    </button>
+                    <button id="stop-tuner" class="motools-button" style="display: none; background-color: var(--mt-color-secondary);">
+                        <i class="fas fa-stop"></i> Stop Tuner
+                    </button>
+                    <div class="tuner-options">
+                        <label for="reference-frequency">Reference A4:</label>
+                        <select id="reference-frequency" class="motools-select">
+                            <option value="440">440 Hz (Standard)</option>
+                            <option value="432">432 Hz</option>
+                            <option value="435">435 Hz</option>
+                            <option value="442">442 Hz</option>
+                            <option value="444">444 Hz</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="tuner-instructions">
+                    <h3>How to use:</h3>
+                    <ol>
+                        <li>Click "Start Tuner" to begin</li>
+                        <li>Allow microphone access when prompted</li>
+                        <li>Play a note on your instrument</li>
+                        <li>Adjust your instrument until the indicator shows it's in tune (centered at 0¢)</li>
+                        <li>Green indicator means your note is in tune (±5¢)</li>
+                        <li>Yellow indicator means your note is slightly off (±15¢)</li>
+                        <li>Red indicator means your note needs adjustment (> ±15¢)</li>
+                    </ol>
+                    <p class="tuner-note">
+                        <i class="fas fa-info-circle"></i> This tuner uses the Pitchy library for accurate pitch detection.
+                    </p>
+                </div>
+                
+                <div class="piano-keyboard">
+                    <div class="white-key" data-note="C4"></div>
+                    <div class="black-key" data-note="C#4"></div>
+                    <div class="white-key" data-note="D4"></div>
+                    <div class="black-key" data-note="D#4"></div>
+                    <div class="white-key" data-note="E4"></div>
+                    <div class="white-key" data-note="F4"></div>
+                    <div class="black-key" data-note="F#4"></div>
+                    <div class="white-key" data-note="G4"></div>
+                    <div class="black-key" data-note="G#4"></div>
+                    <div class="white-key" data-note="A4"></div>
+                    <div class="black-key" data-note="A#4"></div>
+                    <div class="white-key" data-note="B4"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer (loaded from footer.html) -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/pitchy@4.0.7/dist/pitchy.min.js"></script>
+    <script src="/tools/js/headerFooter.js"></script>
+    <script src="/js/theme.js"></script>
+    <script src="/tools/js/motools.js"></script>
+    <script src="/tools/tuner/tuner.js"></script>
+</body>
+</html>

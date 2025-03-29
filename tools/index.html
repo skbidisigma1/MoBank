@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoTools - Useful Web Tools</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/tools/css/motools.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <!-- MoTools Header -->
+    <header class="motools-header">
+        <button id="mobileMenuToggle" aria-label="Toggle navigation" aria-expanded="false">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+        <h1>MoTools</h1>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="/tools/">Home</a></li>
+                <li><a href="/">MoBank</a></li>
+            </ul>
+        </nav>
+        <div class="mobile-nav">
+            <ul>
+                <li><a href="/tools/">Home</a></li>
+                <li><a href="/">MoBank</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="motools-main">
+        <div class="motools-title">
+            <h2>MoTools</h2>
+            <p>A collection of useful tools for everyday tasks</p>
+        </div>
+
+        <!-- Tool Cards Grid -->
+        <div class="motools-grid">
+            <!-- Tuner Tool Card -->
+            <div class="motools-card">
+                <div class="motools-card-icon">
+                    <i class="fas fa-music"></i>
+                </div>
+                <h3>Audio Tuner</h3>
+                <p>A simple tool to help you tune your musical instruments with precision.</p>
+                <a href="/tools/tuner/" class="tool-link">Open Tool</a>
+            </div>
+
+            <!-- Placeholder for future tools -->
+            <div class="motools-card">
+                <div class="motools-card-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <h3>Calculator</h3>
+                <p>Advanced calculator with scientific functions. Coming soon!</p>
+                <a href="#" class="tool-link" style="background-color: var(--mt-color-secondary);">Coming Soon</a>
+            </div>
+
+            <div class="motools-card">
+                <div class="motools-card-icon">
+                    <i class="fas fa-stopwatch"></i>
+                </div>
+                <h3>Timer</h3>
+                <p>Countdown timer and stopwatch with alerts. Coming soon!</p>
+                <a href="#" class="tool-link" style="background-color: var(--mt-color-secondary);">Coming Soon</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer (loaded from footer.html) -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Scripts -->
+    <script src="/tools/js/headerFooter.js"></script>
+    <script src="/js/theme.js"></script>
+    <script src="/tools/js/motools.js"></script>
+</body>
+</html>
