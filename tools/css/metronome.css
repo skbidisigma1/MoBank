@@ -1,0 +1,877 @@
+:root {
+  --metronome-primary: #5a5a5a;
+  --metronome-secondary: #8c8c8c;
+  --metronome-accent: #ff6b6b;
+  --metronome-accent-secondary: #5a9eec;
+  --metronome-bg: var(--color-light-bg);
+  --metronome-input-bg: rgba(255, 255, 255, 0.1);
+  --metronome-border: var(--color-border);
+  --metronome-text: var(--color-text);
+  --metronome-text-light: var(--color-text-light);
+  --metronome-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  --metronome-pendulum-bg: rgba(var(--tools-primary-rgb), 0.15);
+  --metronome-pendulum-arm: var(--metronome-primary);
+  --metronome-pendulum-weight: var(--metronome-accent);
+}
+
+[data-theme="dark"] {
+  --metronome-primary: #6e6e6e;
+  --metronome-secondary: #a8a8a8;
+  --metronome-accent: #ff7b7b;
+  --metronome-accent-secondary: #6aaefc;
+  --metronome-bg: var(--color-dark-card);
+  --metronome-input-bg: rgba(0, 0, 0, 0.2);
+  --metronome-border: var(--color-border-dark);
+  --metronome-pendulum-bg: rgba(var(--tools-primary-rgb), 0.25);
+}
+
+.metronome-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.metronome-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.tool-title {
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  background: linear-gradient(120deg, var(--tools-heading-gradient-from), var(--tools-heading-gradient-to));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.tool-description {
+  font-size: clamp(1.1rem, 2vw, 1.25rem);
+  max-width: 800px;
+  margin: 0 auto;
+  color: var(--color-text);
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.metronome-wrapper {
+  background: var(--metronome-bg);
+  border-radius: 1.5rem;
+  box-shadow: var(--metronome-shadow);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  border: 1px solid var(--metronome-border);
+}
+
+.metronome-display-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+.tempo-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tempo-value {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: var(--font-heading);
+}
+
+#tempo-display {
+  font-size: 4.5rem;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.tempo-unit {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text-light);
+}
+
+.tempo-indicator-wrapper {
+  position: relative;
+  width: 240px;
+  height: 120px;
+  overflow: hidden;
+}
+
+.tempo-indicator {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: var(--metronome-pendulum-bg);
+  clip-path: inset(0 0 50% 0);
+}
+
+.tempo-pendulum {
+  position: absolute;
+  top: 0;
+  left: 120px;
+  width: 2px;
+  height: 120px;
+  transform-origin: top center;
+  transform: rotate(0deg);
+  transition: transform 0.1s ease;
+}
+
+.pendulum-arm {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 100px;
+  background-color: var(--metronome-pendulum-arm);
+}
+
+.pendulum-weight {
+  position: absolute;
+  bottom: 0;
+  left: -10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--metronome-pendulum-weight);
+}
+
+.visual-beat-indicator {
+  width: 100%;
+  max-width: 400px;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: var(--metronome-input-bg);
+}
+
+.beat-lights {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.beat-light {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--color-text-light);
+  opacity: 0.3;
+  transition: all 0.1s ease;
+}
+
+.beat-light.accent {
+  background-color: var(--metronome-accent);
+  opacity: 0.6;
+}
+
+.beat-light.active {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.metronome-controls-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.tempo-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.tempo-slider-wrapper {
+  position: relative;
+  width: 100%;
+  padding: 1rem 0;
+}
+
+.tempo-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, var(--metronome-accent), var(--metronome-accent-secondary));
+  outline: none;
+  cursor: pointer;
+}
+
+.tempo-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-white);
+  border: 3px solid var(--metronome-accent);
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.tempo-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-white);
+  border: 3px solid var(--metronome-accent);
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.tempo-slider-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--metronome-text-light);
+}
+
+.tempo-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.tempo-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--metronome-input-bg);
+  border: none;
+  color: var(--metronome-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tempo-button:hover {
+  background: var(--metronome-primary);
+  color: var(--color-white);
+}
+
+.tempo-button.primary {
+  background: var(--metronome-accent);
+  color: var(--color-white);
+  width: 80px;
+  height: 80px;
+}
+
+.tempo-button.primary:hover {
+  background: var(--metronome-accent-secondary);
+  transform: scale(1.05);
+}
+
+.time-signature-controls,
+.subdivision-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: var(--metronome-input-bg);
+  border-radius: 1rem;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.control-group label {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--metronome-text);
+}
+
+.control-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.control-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 0.5rem;
+  background: var(--metronome-input-bg);
+  border: 1px solid var(--metronome-border);
+  color: var(--metronome-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.control-button:hover {
+  background: var(--metronome-primary);
+  color: var(--color-white);
+}
+
+input[type="number"] {
+  width: 60px;
+  height: 40px;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: var(--metronome-bg);
+  border: 1px solid var(--metronome-border);
+  border-radius: 0.5rem;
+  color: var(--metronome-text);
+  padding: 0.5rem;
+}
+
+.note-value-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.note-value-button {
+  padding: 0.5rem 1rem;
+  background: var(--metronome-input-bg);
+  border: 1px solid var(--metronome-border);
+  border-radius: 0.5rem;
+  color: var(--metronome-text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.note-value-button.selected {
+  background: var(--metronome-accent);
+  color: var(--color-white);
+  border-color: var(--metronome-accent);
+}
+
+.note-value-button:hover:not(.selected) {
+  background: var(--metronome-primary);
+  color: var(--color-white);
+}
+
+.subdivision-selector-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.subdivision-selector {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  background: var(--metronome-bg);
+  border: 1px solid var(--metronome-border);
+  border-radius: 0.5rem;
+  color: var(--metronome-text);
+  cursor: pointer;
+  appearance: none;
+}
+
+.subdivision-selector-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid var(--metronome-text);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.accent-pattern-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.accent-pattern {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.accent-button {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--metronome-input-bg);
+  border: 1px solid var(--metronome-border);
+  color: var(--metronome-text);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.accent-button.accent-primary {
+  background: var(--metronome-accent);
+  color: var(--color-white);
+  border-color: var(--metronome-accent);
+}
+
+.accent-button.accent-secondary {
+  background: var(--metronome-accent-secondary);
+  color: var(--color-white);
+  border-color: var(--metronome-accent-secondary);
+}
+
+.accent-button:hover:not(.accent-primary):not(.accent-secondary) {
+  background: var(--metronome-primary);
+  color: var(--color-white);
+}
+
+.metronome-settings-section {
+  padding: 1.5rem;
+  background: var(--metronome-input-bg);
+  border-radius: 1rem;
+}
+
+.settings-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.panel-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--metronome-text);
+  margin-bottom: 0.5rem;
+}
+
+.sound-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.selector-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sound-button {
+  flex: 1;
+  min-width: 80px;
+  padding: 0.75rem 1rem;
+  background: var(--metronome-input-bg);
+  border: 1px solid var(--metronome-border);
+  border-radius: 0.5rem;
+  color: var(--metronome-text);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sound-button.selected {
+  background: var(--metronome-accent);
+  color: var(--color-white);
+  border-color: var(--metronome-accent);
+}
+
+.sound-button:hover:not(.selected) {
+  background: var(--metronome-primary);
+  color: var(--color-white);
+}
+
+.volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, var(--metronome-accent), var(--color-text-light));
+  outline: none;
+  cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-white);
+  border: 2px solid var(--metronome-accent);
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-white);
+  border: 2px solid var(--metronome-accent);
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toggle-button {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: var(--metronome-input-bg);
+  border: 1px solid var(--metronome-border);
+  border-radius: 0.5rem;
+  color: var(--metronome-text);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-button.selected {
+  background: var(--metronome-accent);
+  color: var(--color-white);
+  border-color: var(--metronome-accent);
+}
+
+.toggle-button:hover:not(.selected) {
+  background: var(--metronome-primary);
+  color: var(--color-white);
+}
+
+.color-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.color-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--color);
+  border: 2px solid var(--metronome-border);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.color-button.selected {
+  transform: scale(1.1);
+  border-color: var(--color-white);
+  box-shadow: 0 0 0 2px var(--color);
+}
+
+.color-button:hover:not(.selected) {
+  transform: scale(1.1);
+}
+
+.metronome-presets-section {
+  padding: 1.5rem;
+  background: var(--metronome-input-bg);
+  border-radius: 1rem;
+}
+
+.presets-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.presets-header h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--metronome-text);
+}
+
+.save-preset-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--metronome-accent);
+  color: var(--color-white);
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.save-preset-button:hover {
+  background: var(--metronome-accent-secondary);
+}
+
+.presets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.preset-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--metronome-bg);
+  border: 1px solid var(--metronome-border);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preset-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  border-color: var(--metronome-accent);
+}
+
+.preset-tempo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--metronome-text);
+}
+
+.preset-name {
+  font-size: 0.9rem;
+  color: var(--metronome-text-light);
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.visible {
+  display: flex;
+}
+
+.modal-content {
+  width: 90%;
+  max-width: 500px;
+  background-color: var(--metronome-bg);
+  border-radius: 1rem;
+  box-shadow: var(--metronome-shadow);
+  padding: 2rem;
+}
+
+.modal-content h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--metronome-text);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--metronome-text);
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  background: var(--metronome-input-bg);
+  border: 1px solid var(--metronome-border);
+  border-radius: 0.5rem;
+  color: var(--metronome-text);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.cancel-button {
+  padding: 0.75rem 1.5rem;
+  background: var(--metronome-input-bg);
+  border: 1px solid var(--metronome-border);
+  border-radius: 0.5rem;
+  color: var(--metronome-text);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-button:hover {
+  background: var(--metronome-primary);
+  color: var(--color-white);
+}
+
+.save-button {
+  padding: 0.75rem 1.5rem;
+  background: var(--metronome-accent);
+  border: none;
+  border-radius: 0.5rem;
+  color: var(--color-white);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.save-button:hover {
+  background: var(--metronome-accent-secondary);
+}
+
+@media (max-width: 768px) {
+  .metronome-wrapper {
+    padding: 1.5rem 1rem;
+    gap: 2rem;
+  }
+  
+  #tempo-display {
+    font-size: 3.5rem;
+  }
+  
+  .tempo-unit {
+    font-size: 1.2rem;
+  }
+  
+  .tempo-indicator-wrapper {
+    width: 200px;
+    height: 100px;
+  }
+  
+  .tempo-indicator {
+    width: 200px;
+    height: 200px;
+  }
+  
+  .tempo-pendulum {
+    left: 100px;
+    height: 100px;
+  }
+  
+  .pendulum-arm {
+    height: 80px;
+  }
+  
+  .tempo-button {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .tempo-button.primary {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .time-signature-controls,
+  .subdivision-controls,
+  .metronome-settings-section,
+  .metronome-presets-section {
+    padding: 1rem;
+  }
+  
+  .presets-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  
+  .preset-tempo {
+    font-size: 1.3rem;
+  }
+  
+  .preset-name {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .metronome-container {
+    padding: 1.5rem 0.75rem;
+  }
+  
+  .metronome-header {
+    margin-bottom: 2rem;
+  }
+  
+  #tempo-display {
+    font-size: 3rem;
+  }
+  
+  .tempo-indicator-wrapper {
+    width: 160px;
+    height: 80px;
+  }
+  
+  .tempo-indicator {
+    width: 160px;
+    height: 160px;
+  }
+  
+  .tempo-pendulum {
+    left: 80px;
+    height: 80px;
+  }
+  
+  .pendulum-arm {
+    height: 65px;
+  }
+  
+  .tempo-button {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .tempo-button.primary {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .settings-panels {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .presets-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .presets-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+  }
+}
