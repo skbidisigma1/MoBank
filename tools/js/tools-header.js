@@ -24,32 +24,25 @@ async function loadToolsHeaderFooter() {
             });
         }
 
-        const profilePicElement = document.getElementById('profile-pic');
-        if (profilePicElement) {
-            try {
-                await window.auth0Promise;
-                const isLoggedIn = await isAuthenticated();
-                
+        try {
+            await window.auth0Promise;
+            const isLoggedIn = await isAuthenticated();
+            const profilePicElement = document.getElementById('profile-pic');
+            
+            if (profilePicElement) {
                 if (isLoggedIn) {
-                    try {
-                        const user = await getUser();
-                        if (user && user.picture) {
-                            profilePicElement.src = user.picture;
-                        }
-                    } catch (profileError) {
-                        console.error('Error getting user profile:', profileError);
+                    const user = await getUser();
+                    if (user && user.picture) {
+                        profilePicElement.src = user.picture;
                     }
                 }
 
                 profilePicElement.addEventListener('click', () => {
                     window.location.href = isLoggedIn ? '/dashboard' : '/login';
                 });
-            } catch (authError) {
-                console.error('Auth error:', authError);
-                profilePicElement.addEventListener('click', () => {
-                    window.location.href = '/login';
-                });
             }
+        } catch (authError) {
+            console.error('Auth error:', authError);
         }
 
     } catch (error) {
@@ -57,30 +50,58 @@ async function loadToolsHeaderFooter() {
         
         const headerPlaceholder = document.getElementById('header-placeholder');
         if (headerPlaceholder) {
-            const backupHeader = `
-            <header>
-                <h1>MoTools</h1>
-                <nav>
-                    <ul class="nav-links">
-                        <li><a href="/tools">Home</a></li>
-                        <li><a href="/">MoBank</a></li>
-                    </ul>
-                </nav>
-            </header>`;
-            headerPlaceholder.innerHTML = backupHeader;
+            const backupHeader = document.createElement('header');
+            const headerTitle = document.createElement('h1');
+            headerTitle.textContent = 'MoTools';
+            
+            const nav = document.createElement('nav');
+            const navList = document.createElement('ul');
+            navList.className = 'nav-links';
+            
+            const homeItem = document.createElement('li');
+            const homeLink = document.createElement('a');
+            homeLink.href = '/tools';
+            homeLink.textContent = 'Home';
+            homeItem.appendChild(homeLink);
+            
+            const bankItem = document.createElement('li');
+            const bankLink = document.createElement('a');
+            bankLink.href = '/';
+            bankLink.textContent = 'MoBank';
+            bankItem.appendChild(bankLink);
+            
+            navList.appendChild(homeItem);
+            navList.appendChild(bankItem);
+            nav.appendChild(navList);
+            
+            backupHeader.appendChild(headerTitle);
+            backupHeader.appendChild(nav);
+            
+            headerPlaceholder.innerHTML = '';
+            headerPlaceholder.appendChild(backupHeader);
         }
         
         const footerPlaceholder = document.getElementById('footer-placeholder');
         if (footerPlaceholder) {
-            const backupFooter = `
-            <footer class="site-footer">
-                <div class="footer-container">
-                    <div class="footer-content">
-                        <span class="copyright">&copy; 2025 Sigma Boys. All rights reserved.</span>
-                    </div>
-                </div>
-            </footer>`;
-            footerPlaceholder.innerHTML = backupFooter;
+            const backupFooter = document.createElement('footer');
+            backupFooter.className = 'site-footer';
+            
+            const footerContainer = document.createElement('div');
+            footerContainer.className = 'footer-container';
+            
+            const footerContent = document.createElement('div');
+            footerContent.className = 'footer-content';
+            
+            const copyright = document.createElement('span');
+            copyright.className = 'copyright';
+            copyright.textContent = '© 2025 Sigma Boys. All rights reserved.';
+            
+            footerContent.appendChild(copyright);
+            footerContainer.appendChild(footerContent);
+            backupFooter.appendChild(footerContainer);
+            
+            footerPlaceholder.innerHTML = '';
+            footerPlaceholder.appendChild(backupFooter);
         }
     }
 }
