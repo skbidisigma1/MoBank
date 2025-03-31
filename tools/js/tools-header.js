@@ -28,6 +28,8 @@ async function loadToolsHeaderFooter() {
             await window.auth0Promise;
             const isLoggedIn = await isAuthenticated();
             const profilePicElement = document.getElementById('profile-pic');
+            const authLink = headerPlaceholder.querySelector('#auth-link');
+            const authLinkMobile = headerPlaceholder.querySelector('#auth-link-mobile');
             
             if (profilePicElement) {
                 if (isLoggedIn) {
@@ -40,6 +42,28 @@ async function loadToolsHeaderFooter() {
                 profilePicElement.addEventListener('click', () => {
                     window.location.href = isLoggedIn ? '/dashboard' : '/login';
                 });
+            }
+            
+            if (isLoggedIn) {
+                if (authLink) {
+                    authLink.style.display = 'block';
+                    authLink.textContent = 'Logout';
+                    authLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        sessionStorage.clear();
+                        logoutUser();
+                    });
+                }
+                
+                if (authLinkMobile) {
+                    authLinkMobile.style.display = 'block';
+                    authLinkMobile.textContent = 'Logout';
+                    authLinkMobile.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        sessionStorage.clear();
+                        logoutUser();
+                    });
+                }
             }
         } catch (authError) {
             console.error('Auth error:', authError);
