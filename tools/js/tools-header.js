@@ -44,25 +44,35 @@ async function loadToolsHeaderFooter() {
                 });
             }
             
-            if (isLoggedIn) {
-                if (authLink) {
-                    authLink.style.display = 'block';
+            if (authLink) {
+                authLink.style.display = 'block';
+                if (isLoggedIn) {
                     authLink.textContent = 'Logout';
+                    authLink.href = '#';
                     authLink.addEventListener('click', (e) => {
                         e.preventDefault();
                         sessionStorage.clear();
                         logoutUser();
                     });
+                } else {
+                    authLink.textContent = 'Login';
+                    authLink.href = '/login';
                 }
-                
-                if (authLinkMobile) {
-                    authLinkMobile.style.display = 'block';
+            }
+            
+            if (authLinkMobile) {
+                authLinkMobile.style.display = 'block';
+                if (isLoggedIn) {
                     authLinkMobile.textContent = 'Logout';
+                    authLinkMobile.href = '#';
                     authLinkMobile.addEventListener('click', (e) => {
                         e.preventDefault();
                         sessionStorage.clear();
                         logoutUser();
                     });
+                } else {
+                    authLinkMobile.textContent = 'Login';
+                    authLinkMobile.href = '/login';
                 }
             }
         } catch (authError) {
