@@ -35,7 +35,7 @@ function initializeMetronomeUI() {
     let pendulumDirection = 1;
     let pendulumAngle = 0;
     let selectedSound = 'glassTick';
-    let volume = parseFloat(volumeSlider.value) / 100;
+    let volume = parseFloat(volumeSlider.value) / 100 * 1.5; // Increased by 50%
     let visualization = 'pendulum';
     let selectedColor = 'default';
     let metronomeInterval = null;
@@ -273,17 +273,20 @@ function initializeMetronomeUI() {
         
         // Calculate pendulum movement based on tempo
         const beatInterval = (60 / currentTempo) * 1000;
-        const swingSpeed = (elapsed / beatInterval) * Math.PI;
+        
+        // Fixed swing speed calculation to be more natural and consistent
+        const swingSpeed = (elapsed / beatInterval) * Math.PI * 0.5;
         
         pendulumAngle += swingSpeed * pendulumDirection;
         
         // Reverse direction when pendulum reaches max angle
-        if (Math.abs(pendulumAngle) > Math.PI / 4) {
+        if (Math.abs(pendulumAngle) > Math.PI / 6) {
             pendulumDirection *= -1;
-            pendulumAngle = pendulumDirection * Math.PI / 4;
+            pendulumAngle = pendulumDirection * Math.PI / 6;
         }
         
-        // Apply rotation to pendulum element
+        // Apply rotation to pendulum element with smooth transition
+        pendulum.style.transition = 'transform 0.05s linear';
         pendulum.style.transform = `rotate(${pendulumAngle}rad)`;
         
         // Continue animation loop
@@ -356,7 +359,7 @@ function initializeMetronomeUI() {
     });
     
     volumeSlider.addEventListener('input', () => {
-        volume = parseFloat(volumeSlider.value) / 100;
+        volume = parseFloat(volumeSlider.value) / 100 * 1.5; // Increased by 50%
     });
     
     visualizationButtons.forEach(btn => {
