@@ -14,7 +14,7 @@ function initializeMetronomeUI() {
     const noteValueButtons = document.querySelectorAll('.note-value-button');
     const subdivisionSelector = document.getElementById('subdivision-selector');
     const accentPattern = document.getElementById('accent-pattern');
-    const soundButtons = document.querySelectorAll('.sound-button');
+    const soundButtons = document.querySelectorAll('.sound-button:not(.disabled)');
     const volumeSlider = document.getElementById('volume-slider');
     const visualizationButtons = document.querySelectorAll('.toggle-button[data-visual]');
     const colorButtons = document.querySelectorAll('.color-button');
@@ -26,7 +26,7 @@ function initializeMetronomeUI() {
     const pendulum = document.querySelector('.tempo-pendulum');
     
     let isPlaying = false;
-    let currentTempo = parseInt(tempoDisplay.textContent);
+    let currentTempo = parseInt(tempoDisplay.value);
     let beatValue = 4;
     let beatsPerMeasure = parseInt(beatsPerMeasureInput.value);
     let subdivision = parseInt(subdivisionSelector.value);
@@ -37,18 +37,91 @@ function initializeMetronomeUI() {
     let volume = parseFloat(volumeSlider.value) / 100;
     let visualization = 'pendulum';
     let selectedColor = 'default';
+    let metronomeInterval = null;
+    let audioContext = null;
+    let clickBuffer = null;
 
+    // Initialize Web Audio API
+    async function initAudio() {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            await loadSounds();
+        } catch (error) {
+            console.error('Error initializing audio:', error);
+        }
+    }
+
+    // Load sound samples
+    async function loadSounds() {
+        try {
+            // Simple click sound
+            const clickResponse = await fetch('/tools/sounds/click.mp3');
+            const clickArrayBuffer = await clickResponse.arrayBuffer();
+            clickBuffer = await audioContext.decodeAudioData(clickArrayBuffer);
+        } catch (error) {
+            console.error('Error loading sounds:', error);
+            // Create a fallback click sound if loading fails
+            clickBuffer = createClickSound();
+        }
+    }
+
+    // Create a synthesized click sound if the sample fails to load
+    function createClickSound() {
+        const sampleRate = audioContext.sampleRate;
+        const buffer = audioContext.createBuffer(1, sampleRate * 0.1, sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        // Create a quick decay click
+        for (let i = 0; i < buffer.length; i++) {
+            const t = i / sampleRate;
+            if (t < 0.001) {
+                data[i] = 0.8;
+            } else {
+                data[i] = 0.8 * Math.exp(-30 * t);
+            }
+        }
+        
+        return buffer;
+    }
+
+    // Play a sound with specified parameters
+    function playSound(buffer, time, isAccent) {
+        if (!audioContext || !buffer) return;
+        
+        const source = audioContext.createBufferSource();
+        const gainNode = audioContext.createGain();
+        
+        source.buffer = buffer;
+        
+        // Set volume with accent boost if needed
+        gainNode.gain.value = volume * (isAccent ? 1.5 : 1);
+        
+        source.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        source.start(time);
+    }
+
+    // Update the tempo
     function updateTempo(value) {
-        currentTempo = Math.min(Math.max(value, 40), 240);
-        tempoDisplay.textContent = currentTempo;
-        tempoSlider.value = currentTempo;
+        currentTempo = Math.min(Math.max(value, 30), 240);
+        tempoDisplay.value = currentTempo;
+        tempoSlider.value = Math.min(Math.max(currentTempo, 40), 240); // Slider has a min of 40
         updatePendulumSpeed();
+        
+        if (isPlaying) {
+            restartMetronome();
+        }
     }
 
     function updateBeatsPerMeasure(value) {
         beatsPerMeasure = Math.min(Math.max(value, 1), 12);
         beatsPerMeasureInput.value = beatsPerMeasure;
         updateAccentPattern();
+        
+        if (isPlaying) {
+            currentBeat = 0;
+        }
     }
 
     function updateAccentPattern() {
@@ -110,49 +183,108 @@ function initializeMetronomeUI() {
         pendulumAngle = pendulumDirection * 30;
         pendulum.style.transform = `rotate(${pendulumAngle}deg)`;
         pendulumDirection *= -1;
-        
-        setTimeout(animatePendulum, 60000 / currentTempo / 2);
     }
 
-    function highlightBeat() {
-        if (!isPlaying) return;
-        
+    function highlightBeat(beatIndex) {
         const beatLights = document.querySelectorAll('.beat-light');
-        const activeBeat = currentBeat % beatsPerMeasure;
-        
         beatLights.forEach(light => light.classList.remove('active'));
         
-        if (beatLights[activeBeat]) {
-            beatLights[activeBeat].classList.add('active');
+        if (beatLights[beatIndex]) {
+            beatLights[beatIndex].classList.add('active');
+        }
+    }
+
+    function playMetronomeBeat() {
+        if (!isPlaying) return;
+        
+        // Ensure audio context is running
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+        
+        const beatIndex = currentBeat % beatsPerMeasure;
+        const accentButtons = document.querySelectorAll('.accent-button');
+        const isAccent = accentButtons[beatIndex] && 
+                      (accentButtons[beatIndex].classList.contains('accent-primary') || 
+                       accentButtons[beatIndex].classList.contains('accent-secondary'));
+        
+        // Play sound
+        playSound(clickBuffer, 0, isAccent);
+        
+        // Visual feedback
+        highlightBeat(beatIndex);
+        
+        if (visualization === 'pendulum' || visualization === 'both') {
+            animatePendulum();
+        }
+        
+        if (visualization === 'flash' || visualization === 'both') {
+            document.body.classList.add('beat-flash');
+            setTimeout(() => {
+                document.body.classList.remove('beat-flash');
+            }, 50);
         }
         
         currentBeat = (currentBeat + 1) % beatsPerMeasure;
+    }
+
+    function startMetronome() {
+        if (isPlaying) return;
         
-        setTimeout(highlightBeat, 60000 / currentTempo);
+        if (!audioContext) {
+            initAudio();
+        }
+        
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+        
+        isPlaying = true;
+        currentBeat = 0;
+        
+        const interval = 60000 / currentTempo;
+        metronomeInterval = setInterval(playMetronomeBeat, interval);
+        
+        // Update UI
+        tempoPlayBtn.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 6h4v12H6V6zm8 0h4v12h-4V6z" fill="currentColor"/>
+            </svg>
+        `;
+    }
+
+    function stopMetronome() {
+        if (!isPlaying) return;
+        
+        isPlaying = false;
+        clearInterval(metronomeInterval);
+        metronomeInterval = null;
+        
+        // Reset UI
+        pendulum.style.transform = 'rotate(0deg)';
+        document.querySelectorAll('.beat-light').forEach(light => {
+            light.classList.remove('active');
+        });
+        
+        tempoPlayBtn.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
+            </svg>
+        `;
+    }
+
+    function restartMetronome() {
+        if (isPlaying) {
+            stopMetronome();
+            startMetronome();
+        }
     }
 
     function togglePlayState() {
-        isPlaying = !isPlaying;
-        
         if (isPlaying) {
-            tempoPlayBtn.innerHTML = `
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 6h4v12H6V6zm8 0h4v12h-4V6z" fill="currentColor"/>
-                </svg>
-            `;
-            currentBeat = 0;
-            animatePendulum();
-            highlightBeat();
+            stopMetronome();
         } else {
-            tempoPlayBtn.innerHTML = `
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
-                </svg>
-            `;
-            pendulum.style.transform = 'rotate(0deg)';
-            document.querySelectorAll('.beat-light').forEach(light => {
-                light.classList.remove('active');
-            });
+            startMetronome();
         }
     }
 
@@ -160,8 +292,25 @@ function initializeMetronomeUI() {
         updateTempo(tempo);
     }
 
+    // Event listeners
     tempoSlider.addEventListener('input', () => {
         updateTempo(parseInt(tempoSlider.value));
+    });
+
+    tempoDisplay.addEventListener('change', () => {
+        updateTempo(parseInt(tempoDisplay.value));
+    });
+
+    tempoDisplay.addEventListener('blur', () => {
+        // Ensure value is within range when focus is lost
+        updateTempo(parseInt(tempoDisplay.value));
+    });
+
+    tempoDisplay.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            updateTempo(parseInt(tempoDisplay.value));
+            tempoDisplay.blur();
+        }
     });
 
     tempoDecreaseBtn.addEventListener('click', () => {
@@ -200,6 +349,8 @@ function initializeMetronomeUI() {
 
     soundButtons.forEach(button => {
         button.addEventListener('click', () => {
+            if (button.classList.contains('disabled')) return;
+            
             soundButtons.forEach(btn => btn.classList.remove('selected'));
             button.classList.add('selected');
             selectedSound = button.dataset.sound;
@@ -286,6 +437,24 @@ function initializeMetronomeUI() {
         }
     });
 
+    // Create a flash effect style for beats
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes beat-flash {
+            0% { background-color: transparent; }
+            50% { background-color: rgba(var(--metronome-accent-rgb), 0.1); }
+            100% { background-color: transparent; }
+        }
+        .beat-flash {
+            animation: beat-flash 0.1s ease-out;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Initialize metronome
     updatePendulumSpeed();
     updateAccentPattern();
+    
+    // Create directory for sound files if they don't exist
+    initAudio();
 }

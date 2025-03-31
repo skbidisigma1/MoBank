@@ -94,6 +94,22 @@
   font-size: 4.5rem;
   font-weight: 800;
   color: var(--color-text);
+  width: 170px;
+  background: transparent;
+  border: none;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+
+#tempo-display::-webkit-inner-spin-button, 
+#tempo-display::-webkit-outer-spin-button { 
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+#tempo-display:focus {
+  outline: none;
+  border-bottom: 2px solid var(--metronome-accent);
 }
 
 .tempo-unit {
@@ -507,7 +523,7 @@ input[type="number"] {
   width: 100%;
   height: 8px;
   border-radius: 4px;
-  background: linear-gradient(to right, var(--metronome-accent), var(--color-text-light));
+  background: var(--metronome-border);
   outline: none;
   cursor: pointer;
 }

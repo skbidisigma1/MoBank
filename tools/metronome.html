@@ -51,7 +51,7 @@
       <section class="metronome-display-section">
         <div class="tempo-display">
           <div class="tempo-value">
-            <span id="tempo-display">120</span>
+            <input type="number" id="tempo-display" min="30" max="240" value="120">
             <span class="tempo-unit">BPM</span>
           </div>
           <div class="tempo-indicator-wrapper">
@@ -77,18 +77,15 @@
       <section class="metronome-controls-section">
         <div class="tempo-controls">
           <div class="tempo-slider-wrapper">
-            <input type="range" id="tempo-slider" class="tempo-slider" min="40" max="240" value="120" step="1">
+            <input type="range" id="tempo-slider" class="tempo-slider" min="30" max="240" value="120" step="1">
             <div class="tempo-slider-labels">
-              <span>40</span>
+              <span>30</span>
               <span>60</span>
-              <span>80</span>
-              <span>100</span>
+              <span>90</span>
               <span>120</span>
-              <span>140</span>
-              <span>160</span>
+              <span>150</span>
               <span>180</span>
-              <span>200</span>
-              <span>220</span>
+              <span>210</span>
               <span>240</span>
             </div>
           </div>
@@ -177,13 +174,7 @@
             <div class="sound-selector">
               <div class="selector-row">
                 <button class="sound-button selected" data-sound="click">Click</button>
-                <button class="sound-button" data-sound="beep">Beep</button>
-                <button class="sound-button" data-sound="woodblock">Woodblock</button>
-              </div>
-              <div class="selector-row">
-                <button class="sound-button" data-sound="drum">Drum</button>
-                <button class="sound-button" data-sound="cowbell">Cowbell</button>
-                <button class="sound-button" data-sound="rimshot">Rimshot</button>
+                <button class="sound-button disabled" data-sound="voice">Voice (Coming Soon)</button>
               </div>
             </div>
             
