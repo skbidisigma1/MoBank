@@ -243,7 +243,6 @@ function initializeMetronomeUI() {
         });
     }
     
-    // Restart the metronome (used when settings change)
     function restartMetronome() {
         if (isPlaying) {
             stopMetronome();
@@ -251,49 +250,34 @@ function initializeMetronomeUI() {
         }
     }
     
-    // Update the visual beat indicator
     function updateVisualBeat(beatIndex) {
-        // Clear all active beat lights
         document.querySelectorAll('.beat-light').forEach(light => {
             light.classList.remove('active');
         });
         
-        // Activate the current beat light
         const currentBeatLight = document.querySelector(`.beat-light[data-beat="${beatIndex + 1}"]`);
         if (currentBeatLight) {
             currentBeatLight.classList.add('active');
         }
     }
     
-    // Animate the pendulum
     function animatePendulum() {
         const now = performance.now();
         const elapsed = now - lastPendulumTime;
         lastPendulumTime = now;
         
-        // Calculate pendulum movement based on tempo
         const beatInterval = (60 / currentTempo) * 1000;
         
-        // Fixed swing speed calculation to be more natural and consistent
-        const swingSpeed = (elapsed / beatInterval) * Math.PI * 0.5;
+        const phase = (now / beatInterval) * Math.PI;
         
-        pendulumAngle += swingSpeed * pendulumDirection;
+        pendulumAngle = Math.sin(phase) * (Math.PI / 8);
         
-        // Reverse direction when pendulum reaches max angle
-        if (Math.abs(pendulumAngle) > Math.PI / 6) {
-            pendulumDirection *= -1;
-            pendulumAngle = pendulumDirection * Math.PI / 6;
-        }
-        
-        // Apply rotation to pendulum element with smooth transition
-        pendulum.style.transition = 'transform 0.05s linear';
+        pendulum.style.transition = 'none';
         pendulum.style.transform = `rotate(${pendulumAngle}rad)`;
         
-        // Continue animation loop
         pendulumRaf = requestAnimationFrame(animatePendulum);
     }
     
-    // Event listeners
     tempoSlider.addEventListener('input', () => {
         updateTempo(parseInt(tempoSlider.value));
     });
