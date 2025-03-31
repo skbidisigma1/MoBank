@@ -1,22 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
-
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#ffffff">
-
-  <title>MoTools - Metronome</title>
-  <meta name="description" content="Professional metronome with customizable tempo, time signatures, subdivisions, and visual feedback for musicians.">
-
-  <meta property="og:title" content="MoTools - Metronome">
-  <meta property="og:description" content="Professional metronome with customizable tempo, time signatures, subdivisions, and visual feedback for musicians.">
-  <meta property="og:type" content="website">
-
-  <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="icon" href="/images/favicon_192.png" type="image/png" sizes="192x192">
-  <link rel="apple-touch-icon" href="/images/favicon_192.png">
-
+  <title>Metronome | MoBank Tools</title>
+  <meta name="description" content="Precision tempo training with customizable settings and visual feedback">
+  
   <link rel="preload" href="/js/theme.js" as="script">
   <script src="/js/theme.js"></script>
   
@@ -51,7 +40,7 @@
       <section class="metronome-display-section">
         <div class="tempo-display">
           <div class="tempo-value">
-            <input type="number" id="tempo-display" min="30" max="240" value="120">
+            <input type="number" id="tempo-display" min="30" max="360" value="120">
             <span class="tempo-unit">BPM</span>
           </div>
           <div class="tempo-indicator-wrapper">
@@ -63,7 +52,6 @@
             </div>
           </div>
         </div>
-
         <div class="visual-beat-indicator">
           <div class="beat-lights">
             <div class="beat-light accent" data-beat="1"></div>
@@ -77,16 +65,14 @@
       <section class="metronome-controls-section">
         <div class="tempo-controls">
           <div class="tempo-slider-wrapper">
-            <input type="range" id="tempo-slider" class="tempo-slider" min="30" max="240" value="120" step="1">
+            <input type="range" id="tempo-slider" class="tempo-slider" min="30" max="360" value="120" step="1">
             <div class="tempo-slider-labels">
               <span>30</span>
-              <span>60</span>
               <span>90</span>
-              <span>120</span>
               <span>150</span>
-              <span>180</span>
               <span>210</span>
-              <span>240</span>
+              <span>270</span>
+              <span>330</span>
             </div>
           </div>
           <div class="tempo-buttons">
@@ -107,17 +93,17 @@
             </button>
           </div>
         </div>
-
+        
         <div class="time-signature-controls">
           <div class="control-group">
-            <label for="beats-per-measure">Beats Per Measure</label>
+            <label for="beats-per-measure">Beats per measure</label>
             <div class="control-inputs">
               <button class="control-button" data-action="decrease-beats">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M19 13H5V11H19V13Z" fill="currentColor"/>
                 </svg>
               </button>
-              <input type="number" id="beats-per-measure" min="1" max="12" value="4" step="1">
+              <input type="number" id="beats-per-measure" min="1" max="12" value="4">
               <button class="control-button" data-action="increase-beats">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="currentColor"/>
@@ -127,160 +113,141 @@
           </div>
           
           <div class="control-group">
-            <label for="beat-value">Beat Value</label>
+            <label>Beat value</label>
             <div class="note-value-selector">
-              <button class="note-value-button" data-value="1">1</button>
-              <button class="note-value-button" data-value="2">2</button>
-              <button class="note-value-button selected" data-value="4">4</button>
-              <button class="note-value-button" data-value="8">8</button>
-              <button class="note-value-button" data-value="16">16</button>
+              <button class="note-value-button" data-value="2">Half note</button>
+              <button class="note-value-button selected" data-value="4">Quarter note</button>
+              <button class="note-value-button" data-value="8">Eighth note</button>
             </div>
           </div>
         </div>
-
+        
         <div class="subdivision-controls">
           <div class="control-group">
-            <label for="subdivision-selector">Subdivisions</label>
+            <label for="subdivision-selector">Subdivision</label>
             <div class="subdivision-selector-wrapper">
               <select id="subdivision-selector" class="subdivision-selector">
-                <option value="1">Quarter Notes (1)</option>
-                <option value="2">Eighth Notes (2)</option>
-                <option value="3">Eighth Note Triplets (3)</option>
-                <option value="4">Sixteenth Notes (4)</option>
-                <option value="6">Sixteenth Note Triplets (6)</option>
-                <option value="8">32nd Notes (8)</option>
+                <option value="1">None</option>
+                <option value="2">Duplets</option>
+                <option value="3">Triplets</option>
+                <option value="4">Quadruplets</option>
               </select>
             </div>
           </div>
-
+          
           <div class="control-group">
-            <label for="accent-pattern">Accent Pattern</label>
+            <label>Accent pattern</label>
             <div class="accent-pattern-wrapper">
-              <div class="accent-pattern" id="accent-pattern">
-                <button class="accent-button accent-primary" data-position="1">1</button>
-                <button class="accent-button" data-position="2">2</button>
-                <button class="accent-button" data-position="3">3</button>
-                <button class="accent-button accent-secondary" data-position="4">4</button>
+              <div id="accent-pattern" class="accent-pattern">
+                <!-- Will be filled by JS -->
               </div>
             </div>
           </div>
         </div>
-      </section>
-
-      <section class="metronome-settings-section">
-        <div class="settings-panels">
-          <div class="settings-panel">
-            <h3 class="panel-title">Sound</h3>
-            <div class="sound-selector">
-              <div class="selector-row">
-                <button class="sound-button selected" data-sound="click">Click</button>
-                <button class="sound-button disabled" data-sound="voice">Voice (Coming Soon)</button>
+        
+        <div class="metronome-settings-section">
+          <div class="settings-panels">
+            <div class="settings-panel">
+              <h3 class="panel-title">Sound</h3>
+              <div class="sound-selector">
+                <div class="selector-row">
+                  <button class="sound-button selected" data-sound="glassTick">Glass</button>
+                  <button class="sound-button" data-sound="tongue">Tongue</button>
+                  <button class="sound-button" data-sound="bell">Bell</button>
+                </div>
+              </div>
+              
+              <div class="control-group">
+                <label for="volume-slider">Volume</label>
+                <input type="range" id="volume-slider" class="volume-slider" min="0" max="100" value="75">
               </div>
             </div>
             
-            <div class="control-group volume-control">
-              <label for="volume-slider">Volume</label>
-              <input type="range" id="volume-slider" class="volume-slider" min="0" max="100" value="75" step="1">
-            </div>
-          </div>
-          
-          <div class="settings-panel">
-            <h3 class="panel-title">Visual</h3>
-            
-            <div class="control-group">
-              <label for="visual-feedback">Beat Visualization</label>
+            <div class="settings-panel">
+              <h3 class="panel-title">Visualization</h3>
               <div class="toggle-group">
                 <button class="toggle-button selected" data-visual="pendulum">Pendulum</button>
-                <button class="toggle-button" data-visual="flash">Flash</button>
-                <button class="toggle-button" data-visual="both">Both</button>
               </div>
-            </div>
-            
-            <div class="control-group">
-              <label for="accent-color">Accent Color</label>
-              <div class="color-selector">
-                <button class="color-button selected" style="--color: var(--color-accent)" data-color="default"></button>
-                <button class="color-button" style="--color: #E74C3C" data-color="red"></button>
-                <button class="color-button" style="--color: #3498DB" data-color="blue"></button>
-                <button class="color-button" style="--color: #2ECC71" data-color="green"></button>
-                <button class="color-button" style="--color: #F39C12" data-color="orange"></button>
-                <button class="color-button" style="--color: #9B59B6" data-color="purple"></button>
+              
+              <div class="control-group">
+                <label>Accent color</label>
+                <div class="color-selector">
+                  <button class="color-button selected" data-color="default" style="--color:var(--metronome-accent)"></button>
+                  <button class="color-button" data-color="red" style="--color:#E74C3C"></button>
+                  <button class="color-button" data-color="blue" style="--color:#3498DB"></button>
+                  <button class="color-button" data-color="green" style="--color:#2ECC71"></button>
+                  <button class="color-button" data-color="orange" style="--color:#F39C12"></button>
+                  <button class="color-button" data-color="purple" style="--color:#9B59B6"></button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
-
+      
       <section class="metronome-presets-section">
         <div class="presets-header">
-          <h3>Tempo Presets</h3>
+          <h3>Presets</h3>
           <button id="save-preset" class="save-preset-button">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="currentColor"/>
             </svg>
-            Save Current
+            Save current
           </button>
         </div>
         
         <div class="presets-grid">
-          <button class="preset-button" data-tempo="60" data-name="Larghissimo">
+          <button class="preset-button" data-tempo="60" data-name="Largo">
             <span class="preset-tempo">60</span>
-            <span class="preset-name">Larghissimo</span>
+            <span class="preset-name">Largo</span>
           </button>
-          <button class="preset-button" data-tempo="72" data-name="Adagio">
-            <span class="preset-tempo">72</span>
+          <button class="preset-button" data-tempo="76" data-name="Adagio">
+            <span class="preset-tempo">76</span>
             <span class="preset-name">Adagio</span>
           </button>
-          <button class="preset-button" data-tempo="92" data-name="Andante">
-            <span class="preset-tempo">92</span>
+          <button class="preset-button" data-tempo="108" data-name="Andante">
+            <span class="preset-tempo">108</span>
             <span class="preset-name">Andante</span>
           </button>
-          <button class="preset-button" data-tempo="112" data-name="Moderato">
-            <span class="preset-tempo">112</span>
+          <button class="preset-button" data-tempo="120" data-name="Moderato">
+            <span class="preset-tempo">120</span>
             <span class="preset-name">Moderato</span>
           </button>
-          <button class="preset-button" data-tempo="120" data-name="Allegro">
-            <span class="preset-tempo">120</span>
+          <button class="preset-button" data-tempo="156" data-name="Allegro">
+            <span class="preset-tempo">156</span>
             <span class="preset-name">Allegro</span>
           </button>
-          <button class="preset-button" data-tempo="144" data-name="Vivace">
-            <span class="preset-tempo">144</span>
+          <button class="preset-button" data-tempo="176" data-name="Vivace">
+            <span class="preset-tempo">176</span>
             <span class="preset-name">Vivace</span>
           </button>
-          <button class="preset-button" data-tempo="168" data-name="Presto">
-            <span class="preset-tempo">168</span>
-            <span class="preset-name">Presto</span>
-          </button>
-          <button class="preset-button" data-tempo="200" data-name="Prestissimo">
+          <button class="preset-button" data-tempo="200" data-name="Presto">
             <span class="preset-tempo">200</span>
-            <span class="preset-name">Prestissimo</span>
+            <span class="preset-name">Presto</span>
           </button>
         </div>
       </section>
     </div>
-  </main>
-
-  <div id="save-preset-modal" class="modal" aria-hidden="true">
-    <div class="modal-content">
-      <h3>Save Preset</h3>
-      <form id="preset-form">
-        <div class="form-group">
-          <label for="preset-name">Preset Name</label>
-          <input type="text" id="preset-name" placeholder="Enter a name for your preset" required>
-        </div>
-        <div class="form-group">
-          <label for="preset-description">Description (Optional)</label>
-          <input type="text" id="preset-description" placeholder="Add a description">
-        </div>
-        <div class="form-actions">
-          <button type="button" class="cancel-button" id="cancel-save-preset">Cancel</button>
-          <button type="submit" class="save-button">Save Preset</button>
-        </div>
-      </form>
+    
+    <div id="save-preset-modal" class="modal">
+      <div class="modal-content">
+        <h3>Save preset</h3>
+        <form id="preset-form">
+          <div class="form-group">
+            <label for="preset-name">Name</label>
+            <input type="text" id="preset-name" required placeholder="e.g., My Practice Tempo">
+          </div>
+          <div class="form-group">
+            <label for="preset-description">Description (optional)</label>
+            <input type="text" id="preset-description" placeholder="e.g., For slow practice">
+          </div>
+          <div class="form-actions">
+            <button type="button" id="cancel-save-preset" class="cancel-button">Cancel</button>
+            <button type="submit" class="save-button">Save</button>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
-
-  <div id="footer-placeholder"></div>
+  </main>
 </body>
-
 </html>

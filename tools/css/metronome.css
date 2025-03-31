@@ -99,6 +99,10 @@
   border: none;
   text-align: center;
   -moz-appearance: textfield;
+  height: 80px; /* Increase height to prevent container issues */
+  line-height: 1;
+  margin: 0;
+  padding: 10px 0;
 }
 
 #tempo-display::-webkit-inner-spin-button, 
@@ -523,7 +527,7 @@ input[type="number"] {
   width: 100%;
   height: 8px;
   border-radius: 4px;
-  background: var(--metronome-border);
+  background: #444; /* Darker background that will be visible */
   outline: none;
   cursor: pointer;
 }
