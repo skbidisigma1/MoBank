@@ -1,8 +1,8 @@
 :root {
-  --metronome-primary: #5a5a5a;
-  --metronome-secondary: #8c8c8c;
-  --metronome-accent: #ff6b6b;
-  --metronome-accent-secondary: #5a9eec;
+  --metronome-primary: #3498DB; /* Blue primary color */
+  --metronome-secondary: #2ECC71; /* Green secondary color */
+  --metronome-accent: #3498DB; /* Blue accent color */
+  --metronome-accent-secondary: #2ECC71; /* Green accent secondary */
   --metronome-bg: var(--color-light-bg);
   --metronome-input-bg: rgba(255, 255, 255, 0.1);
   --metronome-border: var(--color-border);
@@ -15,10 +15,10 @@
 }
 
 [data-theme="dark"] {
-  --metronome-primary: #6e6e6e;
-  --metronome-secondary: #a8a8a8;
-  --metronome-accent: #ff7b7b;
-  --metronome-accent-secondary: #6aaefc;
+  --metronome-primary: #3498DB; /* Blue primary color */
+  --metronome-secondary: #2ECC71; /* Green secondary color */
+  --metronome-accent: #3498DB; /* Blue accent color */
+  --metronome-accent-secondary: #2ECC71; /* Green accent secondary */
   --metronome-bg: var(--color-dark-card);
   --metronome-input-bg: rgba(0, 0, 0, 0.2);
   --metronome-border: var(--color-border-dark);
@@ -99,7 +99,7 @@
   border: none;
   text-align: center;
   -moz-appearance: textfield;
-  height: 80px; /* Increase height to prevent container issues */
+  height: 80px;
   line-height: 1;
   margin: 0;
   padding: 10px 0;
@@ -419,12 +419,14 @@ input[type="number"] {
 .accent-pattern-wrapper {
   width: 100%;
   overflow-x: auto;
+  padding: 0.25rem 0.5rem;
 }
 
 .accent-pattern {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
+  gap: 0.75rem;
+  padding: 0.5rem 0.25rem;
+  margin-left: 4px;
 }
 
 .accent-button {
@@ -443,6 +445,14 @@ input[type="number"] {
   transition: all 0.2s ease;
 }
 
+.accent-button.accent {
+  background: var(--metronome-accent);
+  color: var(--color-white);
+  border-color: var(--metronome-accent);
+  transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
 .accent-button.accent-primary {
   background: var(--metronome-accent);
   color: var(--color-white);
@@ -455,9 +465,10 @@ input[type="number"] {
   border-color: var(--metronome-accent-secondary);
 }
 
-.accent-button:hover:not(.accent-primary):not(.accent-secondary) {
+.accent-button:hover:not(.accent):not(.accent-primary):not(.accent-secondary) {
   background: var(--metronome-primary);
   color: var(--color-white);
+  transform: scale(1.05);
 }
 
 .metronome-settings-section {
@@ -894,4 +905,104 @@ input[type="number"] {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 0.75rem;
   }
+}
+
+/* Time signature specific styles */
+.time-signature-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.time-signature-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--metronome-bg);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  width: 180px;
+  margin: 0 auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.time-signature-value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.time-signature-value::after {
+  content: "";
+  position: absolute;
+  width: 90%;
+  height: 3px;
+  background-color: var(--metronome-text);
+  top: 50%;
+  left: 5%;
+  transform: translateY(-50%);
+}
+
+.time-signature-top, 
+.time-signature-bottom {
+  padding: 0.75rem;
+  width: 60px;
+  text-align: center;
+  font-size: 2.5rem;
+  color: var(--metronome-text);
+  line-height: 1;
+}
+
+.time-signature-buttons {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.numerator-controls,
+.denominator-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.common-signatures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.signature-preset {
+  padding: 0.75rem 1rem;
+  background: var(--metronome-bg);
+  border: 1px solid var(--metronome-border);
+  border-radius: 0.75rem;
+  color: var(--metronome-text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 60px;
+  font-size: 1.1rem;
+}
+
+.signature-preset:hover {
+  background: var(--metronome-primary);
+  color: var(--color-white);
+  transform: translateY(-2px);
+}
+
+.signature-preset.selected {
+  background: var(--metronome-accent);
+  color: var(--color-white);
+  border-color: var(--metronome-accent);
+}
+
+.note-value-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }

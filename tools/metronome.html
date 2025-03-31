@@ -95,29 +95,35 @@
         </div>
         
         <div class="time-signature-controls">
-          <div class="control-group">
-            <label for="beats-per-measure">Beats per measure</label>
-            <div class="control-inputs">
-              <button class="control-button" data-action="decrease-beats">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M19 13H5V11H19V13Z" fill="currentColor"/>
-                </svg>
-              </button>
-              <input type="number" id="beats-per-measure" min="1" max="12" value="4">
-              <button class="control-button" data-action="increase-beats">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="currentColor"/>
-                </svg>
-              </button>
+          <div class="control-group time-signature-group">
+            <label>Time Signature</label>
+            <div class="time-signature-display">
+              <div class="time-signature-value">
+                <div id="time-sig-numerator" class="time-signature-top">4</div>
+                <div id="time-sig-denominator" class="time-signature-bottom">4</div>
+              </div>
+              <div class="time-signature-buttons">
+                <div class="numerator-controls">
+                  <button class="control-button" data-action="decrease-beats">−</button>
+                  <button class="control-button" data-action="increase-beats">+</button>
+                </div>
+                <div class="denominator-controls">
+                  <button class="control-button" data-action="decrease-note-value">−</button>
+                  <button class="control-button" data-action="increase-note-value">+</button>
+                </div>
+              </div>
             </div>
           </div>
           
-          <div class="control-group">
-            <label>Beat value</label>
-            <div class="note-value-selector">
-              <button class="note-value-button" data-value="2">Half note</button>
-              <button class="note-value-button selected" data-value="4">Quarter note</button>
-              <button class="note-value-button" data-value="8">Eighth note</button>
+          <div class="control-group note-value-group">
+            <label>Common Time Signatures</label>
+            <div class="common-signatures">
+              <button class="signature-preset selected" data-top="4" data-bottom="4">4/4</button>
+              <button class="signature-preset" data-top="3" data-bottom="4">3/4</button>
+              <button class="signature-preset" data-top="2" data-bottom="4">2/4</button>
+              <button class="signature-preset" data-top="6" data-bottom="8">6/8</button>
+              <button class="signature-preset" data-top="9" data-bottom="8">9/8</button>
+              <button class="signature-preset" data-top="12" data-bottom="8">12/8</button>
             </div>
           </div>
         </div>
@@ -128,9 +134,9 @@
             <div class="subdivision-selector-wrapper">
               <select id="subdivision-selector" class="subdivision-selector">
                 <option value="1">None</option>
-                <option value="2">Duplets</option>
+                <option value="2">Eighths</option>
                 <option value="3">Triplets</option>
-                <option value="4">Quadruplets</option>
+                <option value="4">Sixteenths</option>
               </select>
             </div>
           </div>
@@ -139,7 +145,6 @@
             <label>Accent pattern</label>
             <div class="accent-pattern-wrapper">
               <div id="accent-pattern" class="accent-pattern">
-                <!-- Will be filled by JS -->
               </div>
             </div>
           </div>
@@ -167,18 +172,6 @@
               <h3 class="panel-title">Visualization</h3>
               <div class="toggle-group">
                 <button class="toggle-button selected" data-visual="pendulum">Pendulum</button>
-              </div>
-              
-              <div class="control-group">
-                <label>Accent color</label>
-                <div class="color-selector">
-                  <button class="color-button selected" data-color="default" style="--color:var(--metronome-accent)"></button>
-                  <button class="color-button" data-color="red" style="--color:#E74C3C"></button>
-                  <button class="color-button" data-color="blue" style="--color:#3498DB"></button>
-                  <button class="color-button" data-color="green" style="--color:#2ECC71"></button>
-                  <button class="color-button" data-color="orange" style="--color:#F39C12"></button>
-                  <button class="color-button" data-color="purple" style="--color:#9B59B6"></button>
-                </div>
               </div>
             </div>
           </div>

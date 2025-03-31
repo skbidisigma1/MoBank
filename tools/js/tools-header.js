@@ -9,19 +9,28 @@ async function loadToolsHeaderFooter() {
 
         const [headerContent, footerContent] = await Promise.all([headerResponse.text(), footerResponse.text()]);
 
-        document.getElementById('header-placeholder').innerHTML = headerContent;
-        document.getElementById('footer-placeholder').innerHTML = footerContent;
-
         const headerPlaceholder = document.getElementById('header-placeholder');
-        const mobileMenuToggle = headerPlaceholder.querySelector('#mobileMenuToggle');
-        const mobileNav = headerPlaceholder.querySelector('.mobile-nav');
+        const footerPlaceholder = document.getElementById('footer-placeholder');
+        
+        if (headerPlaceholder) {
+            headerPlaceholder.innerHTML = headerContent;
+        }
+        
+        if (footerPlaceholder) {
+            footerPlaceholder.innerHTML = footerContent;
+        }
 
-        if (mobileMenuToggle && mobileNav) {
-            mobileMenuToggle.addEventListener('click', () => {
-                const isActive = mobileNav.classList.toggle('active');
-                mobileMenuToggle.classList.toggle('active');
-                mobileMenuToggle.setAttribute('aria-expanded', isActive);
-            });
+        if (headerPlaceholder) {
+            const mobileMenuToggle = headerPlaceholder.querySelector('#mobileMenuToggle');
+            const mobileNav = headerPlaceholder.querySelector('.mobile-nav');
+
+            if (mobileMenuToggle && mobileNav) {
+                mobileMenuToggle.addEventListener('click', () => {
+                    const isActive = mobileNav.classList.toggle('active');
+                    mobileMenuToggle.classList.toggle('active');
+                    mobileMenuToggle.setAttribute('aria-expanded', isActive);
+                });
+            }
         }
 
         try {
