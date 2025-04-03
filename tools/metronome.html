@@ -5,42 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Metronome | MoBank Tools</title>
   <meta name="description" content="Precision tempo training with customizable settings and visual feedback">
-  
   <link rel="preload" href="/js/theme.js" as="script">
   <script src="/js/theme.js"></script>
-  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
-  
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="/tools/css/tools-home.css">
   <link rel="stylesheet" href="/tools/css/metronome.css">
-  
   <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js" crossorigin="anonymous"></script>
-  
   <script src="/js/auth.js" defer></script>
   <script src="/js/toast.js" defer></script>
   <script src="/tools/js/tools-header.js" defer></script>
   <script src="/tools/js/metronome-ui.js" defer></script>
 </head>
-
 <body>
   <div id="header-placeholder" role="banner"></div>
-
   <main class="main-container metronome-container">
     <section class="metronome-header">
       <h1 class="tool-title">Metronome</h1>
       <p class="tool-description">Precision tempo training with customizable settings and visual feedback</p>
     </section>
-
     <div class="metronome-wrapper">
       <section class="metronome-display-section">
         <div class="tempo-display">
           <div class="tempo-value">
-            <input type="number" id="tempo-display" min="30" max="360" value="120">
+            <input type="number" id="tempo-display" min="10" max="1000" value="120">
             <span class="tempo-unit">BPM</span>
           </div>
           <div class="tempo-indicator-wrapper">
@@ -53,26 +45,20 @@
           </div>
         </div>
         <div class="visual-beat-indicator">
-          <div class="beat-lights">
-            <div class="beat-light accent" data-beat="1"></div>
-            <div class="beat-light" data-beat="2"></div>
-            <div class="beat-light" data-beat="3"></div>
-            <div class="beat-light" data-beat="4"></div>
-          </div>
+          <div class="beat-lights"></div>
         </div>
       </section>
-
       <section class="metronome-controls-section">
         <div class="tempo-controls">
           <div class="tempo-slider-wrapper">
-            <input type="range" id="tempo-slider" class="tempo-slider" min="30" max="360" value="120" step="1">
+            <input type="range" id="tempo-slider" class="tempo-slider" min="0" max="100" value="50" step="0.1">
             <div class="tempo-slider-labels">
-              <span>30</span>
-              <span>90</span>
-              <span>150</span>
-              <span>210</span>
-              <span>270</span>
-              <span>330</span>
+              <span>10</span>
+              <span>24</span>
+              <span>62</span>
+              <span>160</span>
+              <span>410</span>
+              <span>1000</span>
             </div>
           </div>
           <div class="tempo-buttons">
@@ -93,7 +79,6 @@
             </button>
           </div>
         </div>
-        
         <div class="time-signature-controls">
           <div class="control-group time-signature-group">
             <label>Time Signature</label>
@@ -114,20 +99,7 @@
               </div>
             </div>
           </div>
-          
-          <div class="control-group note-value-group">
-            <label>Common Time Signatures</label>
-            <div class="common-signatures">
-              <button class="signature-preset selected" data-top="4" data-bottom="4">4/4</button>
-              <button class="signature-preset" data-top="3" data-bottom="4">3/4</button>
-              <button class="signature-preset" data-top="2" data-bottom="4">2/4</button>
-              <button class="signature-preset" data-top="6" data-bottom="8">6/8</button>
-              <button class="signature-preset" data-top="9" data-bottom="8">9/8</button>
-              <button class="signature-preset" data-top="12" data-bottom="8">12/8</button>
-            </div>
-          </div>
         </div>
-        
         <div class="subdivision-controls">
           <div class="control-group">
             <label for="subdivision-selector">Subdivision</label>
@@ -140,44 +112,37 @@
               </select>
             </div>
           </div>
-          
           <div class="control-group">
             <label>Accent pattern</label>
             <div class="accent-pattern-wrapper">
-              <div id="accent-pattern" class="accent-pattern">
-              </div>
+              <div id="accent-pattern" class="accent-pattern"></div>
             </div>
           </div>
         </div>
-        
         <div class="metronome-settings-section">
           <div class="settings-panels">
             <div class="settings-panel">
               <h3 class="panel-title">Sound</h3>
               <div class="sound-selector">
                 <div class="selector-row">
-                  <button class="sound-button selected" data-sound="glassTick">Glass</button>
-                  <button class="sound-button" data-sound="tongue">Tongue</button>
+                  <button class="sound-button selected" data-sound="click">Click</button>
+                  <button class="sound-button" data-sound="glassTick">Glass</button>
                   <button class="sound-button" data-sound="bell">Bell</button>
                 </div>
               </div>
-              
               <div class="control-group">
                 <label for="volume-slider">Volume</label>
                 <input type="range" id="volume-slider" class="volume-slider" min="0" max="100" value="75">
               </div>
             </div>
-            
-            <div class="settings-panel">
-              <h3 class="panel-title">Visualization</h3>
-              <div class="toggle-group">
-                <button class="toggle-button selected" data-visual="pendulum">Pendulum</button>
-              </div>
-            </div>
           </div>
         </div>
+        <section class="tap-tempo-section">
+          <h3>Tap Tempo</h3>
+          <button id="tap-tempo-button" class="tap-tempo-button">Tap</button>
+          <div id="tap-tempo-display" class="tap-tempo-display">-- BPM</div>
+        </section>
       </section>
-      
       <section class="metronome-presets-section">
         <div class="presets-header">
           <h3>Presets</h3>
@@ -188,7 +153,6 @@
             Save current
           </button>
         </div>
-        
         <div class="presets-grid">
           <button class="preset-button" data-tempo="60" data-name="Largo">
             <span class="preset-tempo">60</span>
@@ -221,7 +185,6 @@
         </div>
       </section>
     </div>
-    
     <div id="save-preset-modal" class="modal">
       <div class="modal-content">
         <h3>Save preset</h3>
