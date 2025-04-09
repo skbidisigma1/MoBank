@@ -129,8 +129,8 @@ function setCachedUserData(data) {
 }
 
 function validateUserData(userData) {
-    const validInstruments = ['violin', 'viola', 'cello', 'bass'];
-    const validClassPeriods = [5, 6, 7];
+    const validInstruments = ['violin', 'viola', 'cello', 'bass', 'other'];
+    const validClassPeriods = [5, 6, 7, 8, 9, 10];
     const validThemes = ['light', 'dark'];
     if (
         !validInstruments.includes(userData.instrument.toLowerCase()) ||
