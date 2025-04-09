@@ -6,9 +6,9 @@ async function loadAdminContent() {
   '5': 'Period 5',
   '6': 'Period 6',
   '7': 'Period 7',
-  '8': 'Symphonic',
-  '9': 'Full',
-  '10': 'Chamber
+  '8': 'Symphonic Orchestra',
+  '9': 'Full Orchestra',
+  '10': 'Chamber Orchestra'
   };
   if (!roles.includes('admin')) {
     window.location.href = '/dashboard';
