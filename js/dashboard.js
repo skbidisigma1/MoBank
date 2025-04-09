@@ -141,6 +141,15 @@ function validateUserData(userData) {
     }
 }
 
+const periodNames = {
+    '5': 'Period 5',
+    '6': 'Period 6',
+    '7': 'Period 7',
+    '8': 'Symphonic Orchestra',
+    '9': 'Full Orchestra',
+    '10': 'Chamber Orchestra'
+};
+
 function populateDashboard(userData) {
     const name = userData.name || 'User';
     const currency_balance = userData.currency_balance || 0;
@@ -153,8 +162,11 @@ function populateDashboard(userData) {
     profileName.textContent = `Welcome, ${name}!`;
     profileCurrency.textContent = `MoBuck Balance: $${currency_balance}`;
 
+    // Get the formatted period name
+    const periodName = periodNames[userData.class_period] || `Period ${userData.class_period}`;
+
     dashboardContent.innerHTML = `
-        <div class="dashboard-card"><strong>Class Period:</strong> ${userData.class_period || 'N/A'}</div>
+        <div class="dashboard-card"><strong>Class Period:</strong> ${periodName}</div>
         <div class="dashboard-card"><strong>Instrument:</strong> ${instrument}</div>
     `;
 }
