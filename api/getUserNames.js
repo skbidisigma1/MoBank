@@ -45,10 +45,9 @@ module.exports = (req, res) => {
       const roles = decoded['https://mo-classroom.us/roles'] || [];
       if (!roles.includes('admin')) {
         return res.status(403).json({ message: 'Forbidden: Admins only' });
-      }
-
-      const period = parseInt(req.query.period, 10);
-      if (!period || ![5, 6, 7].includes(period)) {
+      }      const period = parseInt(req.query.period, 10);
+      const validPeriods = [5, 6, 7, 8, 9, 10];
+      if (!period || !validPeriods.includes(period)) {
         return res.status(400).json({ message: 'Invalid period' });
       }
 
