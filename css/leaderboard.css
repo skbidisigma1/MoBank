@@ -71,16 +71,16 @@
 
 .period-controls {
     display: flex;
-    gap: 10px;
+    gap: 15px;
     align-items: center;
     flex-wrap: wrap;
     justify-content: center;
-    max-width: 700px;
+    max-width: 720px;
     margin: 0 auto;
 }
 
 .period-button {
-    padding: 8px 12px;
+    padding: 8px 15px;
     font-size: 0.9rem;
     font-weight: 600;
     border: 2px solid var(--color-primary);
@@ -94,10 +94,16 @@
     align-items: center;
     justify-content: center;
     white-space: nowrap;
-    min-width: 90px;
-    flex: 1 0 calc(50% - 10px);
-    margin-bottom: 10px;
+    flex: 1 0 calc(50% - 15px);
+    margin-bottom: 15px;
     max-width: 300px;
+}
+
+@media (max-width: 768px) {
+    .period-button {
+        flex: 1 0 100%;
+        margin-bottom: 10px;
+    }
 }
 
 .period-button:hover {
