@@ -56,12 +56,10 @@ module.exports = async (req, res) => {
         requestBody = JSON.parse(body);
       } catch (error) {
         return res.status(400).json({ message: 'Invalid JSON format' });
-      }
+      }      const { class_period, instrument, theme } = requestBody;
 
-      const { class_period, instrument, theme } = requestBody;
-
-      const validClassPeriods = [5, 6, 7];
-      const validInstruments = ['violin', 'viola', 'cello', 'bass'];
+      const validClassPeriods = [5, 6, 7, 8, 9, 10];
+      const validInstruments = ['violin', 'viola', 'cello', 'bass', 'other'];
       const validThemes = ['light', 'dark'];
 
       if (!validClassPeriods.includes(class_period)) {
