@@ -106,9 +106,9 @@
             <div class="subdivision-selector-wrapper">
               <select id="subdivision-selector" class="subdivision-selector">
                 <option value="1">None</option>
-                <option value="2">Eighths</option>
-                <option value="3">Triplets</option>
-                <option value="4">Sixteenths</option>
+                <option value="2">2 per beat</option>
+                <option value="3">3 per beat (triplets)</option>
+                <option value="4">4 per beat</option>
               </select>
             </div>
           </div>
@@ -133,6 +133,45 @@
               <div class="control-group">
                 <label for="volume-slider">Volume</label>
                 <input type="range" id="volume-slider" class="volume-slider" min="0" max="100" value="75">
+              </div>
+              
+              <div class="voice-settings">
+                <div class="control-group">
+                  <label class="toggle-label">
+                    <input type="checkbox" id="use-voice-counting" class="toggle-checkbox">
+                    <span class="toggle-text">Use Voice Counting</span>
+                  </label>
+                </div>
+                
+                <div class="voice-options-panel">
+                  <div class="control-group">
+                    <label for="voice-selector">Voice</label>
+                    <div class="subdivision-selector-wrapper">
+                      <select id="voice-selector" class="subdivision-selector">
+                        <option value="male">Male</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div class="control-group">
+                    <label class="toggle-label">
+                      <input type="checkbox" id="use-click-subdivision" class="toggle-checkbox">
+                      <span class="toggle-text">Use Click Sound for Subdivisions</span>
+                    </label>
+                  </div>
+                  
+                  <div class="control-group">
+                    <label class="toggle-label">
+                      <input type="checkbox" id="enable-count-in" class="toggle-checkbox">
+                      <span class="toggle-text">Enable Count-In (1 measure)</span>
+                    </label>
+                  </div>
+                  
+                  <div class="control-group">
+                    <label for="voice-volume-slider">Voice Volume</label>
+                    <input type="range" id="voice-volume-slider" class="volume-slider" min="0" max="100" value="75">
+                  </div>
+                </div>
               </div>
             </div>
           </div>

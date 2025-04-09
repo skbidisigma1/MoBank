@@ -26,7 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const subdivisionSelector = document.getElementById('subdivision-selector');
     const tapButton = document.getElementById('tap-tempo-button');
     const tapDisplay = document.getElementById('tap-tempo-display');
-  
+    
+    // Voice counting elements
+    const useVoiceCountingCheckbox = document.getElementById('use-voice-counting');
+    const voiceOptionsPanel = document.querySelector('.voice-options-panel');
+    const voiceSelector = document.getElementById('voice-selector');
+    const useClickSubdivisionCheckbox = document.getElementById('use-click-subdivision');
+    const enableCountInCheckbox = document.getElementById('enable-count-in');
+    const voiceVolumeSlider = document.getElementById('voice-volume-slider');
+    
     let isPlaying = false;
     let currentTempo = parseInt(tempoDisplay.value);
     let beatsPerMeasure = parseInt(timeSignatureNumerator.textContent);
@@ -44,6 +52,21 @@ document.addEventListener('DOMContentLoaded', () => {
       glassTick: { hi: null, lo: null },
       bell: { hi: null, lo: null }
     };
+    
+    // Voice counting options
+    let useVoiceCounting = false;
+    let selectedVoice = 'male';
+    let useClickSubdivision = true;
+    let enableCountIn = false;
+    let voiceVolume = parseFloat(voiceVolumeSlider.value) / 100 * 1.5;
+    let voiceSounds = {
+      male: {
+        numbers: {}, // Will hold number sounds 1-12
+        subdivisions: {} // Will hold subdivision sounds (e, and, a, trip, let)
+      }
+    };
+    let countInActive = false;
+    let countInMeasure = 0;
     let pendulumRaf = null;
     let metronomeStartTime = 0;
     const validNoteValues = [1, 2, 4, 8, 16, 32];
@@ -54,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         await loadSounds();
+        await loadVoiceSounds();
       } catch (error) {
         console.error('Error initializing audio:', error);
       }
@@ -87,6 +111,77 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (error) {
         console.error('Error loading sounds:', error);
       }
+    }
+  
+    async function loadVoiceSounds() {
+      try {
+        // Load number sounds 1-12
+        const numberPromises = [];
+        for (let i = 1; i <= 12; i++) {
+          numberPromises.push(loadVoiceSound('male', 'numbers', i.toString(), `${i}.wav`));
+        }
+        
+        // Load subdivision sounds
+        const subdivisionFiles = [
+          { name: 'e', file: 'e.wav' },
+          { name: 'and', file: 'and.wav' },
+          { name: 'a', file: 'a.wav' },
+          { name: 'trip', file: 'trip.wav' },
+          { name: 'let', file: 'let.wav' }
+        ];
+        
+        const subdivisionPromises = subdivisionFiles.map(sound => 
+          loadVoiceSound('male', 'subdivisions', sound.name, sound.file)
+        );
+        
+        await Promise.all([...numberPromises, ...subdivisionPromises]);
+      } catch (error) {
+        console.error('Error loading voice sounds:', error);
+      }
+    }
+    
+    async function loadVoiceSound(voice, category, name, filename) {
+      try {
+        const response = await fetch(`/tools/sounds/metronome/voice/${voice}/${filename}`);
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        
+        if (!voiceSounds[voice][category]) {
+          voiceSounds[voice][category] = {};
+        }
+        
+        voiceSounds[voice][category][name] = audioBuffer;
+      } catch (err) {
+        console.error(`Error loading voice sound ${filename}:`, err);
+      }
+    }
+    
+    function playVoiceSound(number) {
+      if (!audioContext || !voiceSounds[selectedVoice].numbers[number]) return;
+      
+      const soundBuffer = voiceSounds[selectedVoice].numbers[number];
+      const source = audioContext.createBufferSource();
+      const gainNode = audioContext.createGain();
+      
+      source.buffer = soundBuffer;
+      gainNode.gain.value = voiceVolume;
+      source.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      source.start(0);
+    }
+    
+    function playVoiceSubdivision(type) {
+      if (!audioContext || !voiceSounds[selectedVoice].subdivisions[type]) return;
+      
+      const soundBuffer = voiceSounds[selectedVoice].subdivisions[type];
+      const source = audioContext.createBufferSource();
+      const gainNode = audioContext.createGain();
+      
+      source.buffer = soundBuffer;
+      gainNode.gain.value = voiceVolume * 0.8; // Slightly quieter than the main beat
+      source.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      source.start(0);
     }
   
     function playSound(isAccent) {
@@ -225,63 +320,147 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (audioContext.state === 'suspended') {
         await audioContext.resume();
       }
+      
       isPlaying = true;
       currentBeat = 0;
       let subBeat = 0;
       pendulumAngle = 0;
       pendulum.style.transform = `rotate(${pendulumAngle}rad)`;
       metronomeStartTime = performance.now();
+      
       tempoPlayBtn.innerHTML = `
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" fill="currentColor"/>
         </svg>
       `;
+      
       const baseInterval = (60 / currentTempo) * 1000 * (4 / noteValue);
       const playbackInterval = subdivision > 1 ? baseInterval / subdivision : baseInterval;
-      const firstButton = document.querySelector('.accent-button[data-beat="1"]');
-      const firstState = firstButton ? firstButton.dataset.state : 'normal';
-      if (firstState !== 'silent') {
-        if (firstState === 'accent') {
-          playSound(true);
-        } else {
-          playSound(false);
+      
+      countInActive = enableCountIn && useVoiceCounting;
+      countInMeasure = 0;
+      
+      if (!countInActive) {
+        const firstButton = document.querySelector('.accent-button[data-beat="1"]');
+        const firstState = firstButton ? firstButton.dataset.state : 'normal';
+        
+        if (firstState !== 'silent') {
+          if (useVoiceCounting) {
+            playVoiceSound('1');
+          } else {
+            if (firstState === 'accent') {
+              playSound(true);
+            } else {
+              playSound(false);
+            }
+          }
         }
+      } else {
+        playVoiceSound('1');
       }
+      
       updateVisualBeat(0);
       subBeat = 1;
+      
       if (pendulumRaf) cancelAnimationFrame(pendulumRaf);
       animatePendulum(baseInterval, playbackInterval);
+      
       metronomeInterval = setInterval(() => {
         const isMainBeat = subBeat % subdivision === 0;
         const mainBeatIndex = Math.floor(subBeat / subdivision);
         const beatInMeasure = mainBeatIndex % beatsPerMeasure;
-        if (isMainBeat) {
+        
+        if (countInActive) {
+          if (isMainBeat) {
+            const beatNumber = mainBeatIndex % beatsPerMeasure + 1;
+            
+            if (beatNumber === 1) {
+              countInMeasure++;
+              if (countInMeasure > 1) {
+                countInActive = false;
+              }
+            }
+            
+            if (beatNumber <= 12) {
+              playVoiceSound(beatNumber.toString());
+            }
+            
+            updateVisualBeat(beatInMeasure);
+          }
+        } else if (isMainBeat) {
           const button = document.querySelector(`.accent-button[data-beat="${beatInMeasure + 1}"]`);
           const state = button ? button.dataset.state : 'normal';
-          if (state === 'accent') {
-            playSound(true);
-          } else if (state === 'normal') {
-            playSound(false);
+          
+          if (state !== 'silent') {
+            if (useVoiceCounting) {
+              const beatNumber = beatInMeasure + 1;
+              if (beatNumber <= 12) {
+                playVoiceSound(beatNumber.toString());
+              }
+            } else {
+              if (state === 'accent') {
+                playSound(true);
+              } else {
+                playSound(false);
+              }
+            }
           }
+          
           updateVisualBeat(beatInMeasure);
         } else {
-          playSubdivisionSound();
+          playSubdivisionSound(subBeat % subdivision);
         }
+        
         subBeat = (subBeat + 1) % (beatsPerMeasure * subdivision);
       }, playbackInterval);
     }
   
-    function playSubdivisionSound() {
-      if (!audioContext || !sounds[selectedSound]) return;
-      const soundBuffer = sounds[selectedSound].lo;
-      if (!soundBuffer) return;
-      const source = audioContext.createBufferSource();
-      const gainNode = audioContext.createGain();
-      source.buffer = soundBuffer;
-      gainNode.gain.value = volume * 0.6;
-      source.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      source.start(0);
+    function playSubdivisionSound(subdivisionPosition) {
+      // If voice counting is disabled or user has selected to use click for subdivisions
+      if (!useVoiceCounting || useClickSubdivision) {
+        if (!audioContext || !sounds[selectedSound]) return;
+        const soundBuffer = sounds[selectedSound].lo;
+        if (!soundBuffer) return;
+        const source = audioContext.createBufferSource();
+        const gainNode = audioContext.createGain();
+        source.buffer = soundBuffer;
+        gainNode.gain.value = volume * 0.6; // Slightly quieter for subdivisions
+        source.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        source.start(0);
+        return;
+      }
+      
+      // Use voice subdivisions
+      if (!audioContext) return;
+      
+      // Choose the right verbal subdivision based on the subdivision type and position
+      let subdivisionSound;
+      
+      if (subdivision === 2) {
+        // For duplets, use "&" (and)
+        subdivisionSound = 'and';
+      } else if (subdivision === 3) {
+        // For triplets, use "trip" and "let"
+        if (subdivisionPosition === 1) {
+          subdivisionSound = 'trip';
+        } else if (subdivisionPosition === 2) {
+          subdivisionSound = 'let';
+        }
+      } else if (subdivision === 4) {
+        // For 16ths, use "e", "&", "a"
+        if (subdivisionPosition === 1) {
+          subdivisionSound = 'e';
+        } else if (subdivisionPosition === 2) {
+          subdivisionSound = 'and';
+        } else if (subdivisionPosition === 3) {
+          subdivisionSound = 'a';
+        }
+      }
+      
+      if (subdivisionSound) {
+        playVoiceSubdivision(subdivisionSound);
+      }
     }
       
     function stopMetronome() {
@@ -404,5 +583,46 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTempo(currentTempo - 1);
       }
     });
+
+    // Add voice counting UI interactions
+    useVoiceCountingCheckbox.addEventListener('change', () => {
+      useVoiceCounting = useVoiceCountingCheckbox.checked;
+      
+      if (useVoiceCounting) {
+        voiceOptionsPanel.classList.add('visible');
+        // Disable the regular sound buttons when voice counting is enabled
+        document.querySelector('.sound-selector').classList.add('disabled-sound');
+      } else {
+        voiceOptionsPanel.classList.remove('visible');
+        document.querySelector('.sound-selector').classList.remove('disabled-sound');
+      }
+      
+      if (isPlaying) restartMetronome();
+    });
+    
+    voiceSelector.addEventListener('change', () => {
+      selectedVoice = voiceSelector.value;
+      if (isPlaying) restartMetronome();
+    });
+    
+    useClickSubdivisionCheckbox.addEventListener('change', () => {
+      useClickSubdivision = useClickSubdivisionCheckbox.checked;
+      if (isPlaying) restartMetronome();
+    });
+    
+    enableCountInCheckbox.addEventListener('change', () => {
+      enableCountIn = enableCountInCheckbox.checked;
+    });
+    
+    voiceVolumeSlider.addEventListener('input', () => {
+      voiceVolume = parseFloat(voiceVolumeSlider.value) / 100 * 1.5;
+    });
+    
+    // Presets
+    presetButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tempo = parseInt(btn.dataset.tempo);
+        updateTempo(tempo);
+      });
+    });
   }
-  

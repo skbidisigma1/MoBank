@@ -904,3 +904,36 @@ input[type="number"] {
   font-size: 1.5rem;
   color: var(--metronome-text);
 }
+
+.voice-settings {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--metronome-border);
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.toggle-checkbox {
+  margin-right: 0.5rem;
+}
+
+.voice-options-panel {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--metronome-input-bg);
+  border-radius: 0.5rem;
+  display: none;
+}
+
+.voice-options-panel.visible {
+  display: block;
+}
+
+.disabled-sound {
+  opacity: 0.5;
+  pointer-events: none;
+}
