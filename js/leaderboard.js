@@ -51,11 +51,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     return card;
   }
-
   function populateLeaderboard(data, period) {
     leaderboardBody.innerHTML = '';
     leaderboardCards.innerHTML = '';
-    leaderboardTitle.querySelector('span').textContent = `Leaderboard - Period ${period}`;
+    
+    // Map period numbers to user-friendly names
+    const periodNames = {
+      '5': 'Period 5',
+      '6': 'Period 6',
+      '7': 'Period 7',
+      '8': 'Symphonic Orchestra',
+      '9': 'Full Orchestra',
+      '10': 'Chamber Orchestra'
+    };
+    
+    leaderboardTitle.querySelector('span').textContent = `Leaderboard - ${periodNames[period] || `Period ${period}`}`;
     
     const filteredData = data.leaderboardData.filter(
       user => user.name !== 'Madison Moline'
