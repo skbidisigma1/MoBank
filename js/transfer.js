@@ -28,6 +28,20 @@ document.addEventListener('DOMContentLoaded', loadTransferPage);
 
 const CACHE_DURATION = 10 * 60 * 1000;
 
+// Map period numbers to user-friendly names
+const periodNames = {
+  '5': 'Period 5',
+  '6': 'Period 6',
+  '7': 'Period 7',
+  '8': 'Symphonic Orchestra',
+  '9': 'Full Orchestra',
+  '10': 'Chamber Orchestra'
+};
+
+function getPeriodName(period) {
+  return periodNames[period] || `Period ${period}`;
+}
+
 function getCachedUserData() {
   const cached = localStorage.getItem('userData');
   if (cached) {
@@ -101,17 +115,16 @@ async function getNamesForPeriod(period) {
         Authorization: `Bearer ${token}`,
       },
     });
-    const data = await response.json();
-    if (response.ok) {
+    const data = await response.json();    if (response.ok) {
       const extractedNames = (data.leaderboardData || []).map(item => item.name);
       setCachedNames(period, extractedNames);
       return extractedNames.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     } else {
-      showToast('Error', data.message || `Failed to load student names for period ${period}.`);
+      showToast('Error', data.message || `Failed to load student names for ${getPeriodName(period)}.`);
       return [];
     }
   } catch (error) {
-    showToast('Error', `Failed to load student names for period ${period}.`);
+    showToast('Error', `Failed to load student names for ${getPeriodName(period)}.`);
     return [];
   }
 }
