@@ -163,8 +163,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const source = audioContext.createBufferSource();
       const gainNode = audioContext.createGain();
       
+      // Make the 2 sound 10% quieter as requested
+      const volumeMultiplier = number === '2' ? 0.9 : 1.0;
+      
       source.buffer = soundBuffer;
-      gainNode.gain.value = voiceVolume;
+      gainNode.gain.value = voiceVolume * volumeMultiplier;
       source.connect(gainNode);
       gainNode.connect(audioContext.destination);
       source.start(0);
@@ -177,8 +180,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const source = audioContext.createBufferSource();
       const gainNode = audioContext.createGain();
       
+      // Make the "and" subdivision 20% quieter as requested
+      let volumeMultiplier = 0.8; // Base multiplier for all subdivisions
+      if (type === 'and') {
+        volumeMultiplier *= 0.8; // Additional 20% reduction for "and" subdivision
+      }
+      
       source.buffer = soundBuffer;
-      gainNode.gain.value = voiceVolume * 0.8; // Slightly quieter than the main beat
+      gainNode.gain.value = voiceVolume * volumeMultiplier;
       source.connect(gainNode);
       gainNode.connect(audioContext.destination);
       source.start(0);
@@ -337,26 +346,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const baseInterval = (60 / currentTempo) * 1000 * (4 / noteValue);
       const playbackInterval = subdivision > 1 ? baseInterval / subdivision : baseInterval;
       
-      countInActive = enableCountIn && useVoiceCounting;
+      // Initialize count-in state
+      countInActive = enableCountIn;
       countInMeasure = 0;
       
+      // First beat handling - either play normally or start count-in
       if (!countInActive) {
-        const firstButton = document.querySelector('.accent-button[data-beat="1"]');
-        const firstState = firstButton ? firstButton.dataset.state : 'normal';
-        
-        if (firstState !== 'silent') {
-          if (useVoiceCounting) {
-            playVoiceSound('1');
-          } else {
-            if (firstState === 'accent') {
-              playSound(true);
-            } else {
-              playSound(false);
-            }
-          }
-        }
+        // Normal first beat
+        playFirstBeat();
       } else {
-        playVoiceSound('1');
+        // Start count-in
+        if (useVoiceCounting) {
+          playVoiceSound('1');
+        } else {
+          // Use regular sound for count-in when voice is not enabled
+          playSound(true);
+        }
       }
       
       updateVisualBeat(0);
@@ -371,6 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const beatInMeasure = mainBeatIndex % beatsPerMeasure;
         
         if (countInActive) {
+          // Handle count-in
           if (isMainBeat) {
             const beatNumber = mainBeatIndex % beatsPerMeasure + 1;
             
@@ -378,16 +384,26 @@ document.addEventListener('DOMContentLoaded', () => {
               countInMeasure++;
               if (countInMeasure > 1) {
                 countInActive = false;
+                // Play the first actual beat
+                playFirstBeat();
               }
             }
             
-            if (beatNumber <= 12) {
-              playVoiceSound(beatNumber.toString());
+            if (countInActive) { // Still in count-in mode
+              if (useVoiceCounting) {
+                if (beatNumber <= 12) {
+                  playVoiceSound(beatNumber.toString());
+                }
+              } else {
+                // Use regular sounds for count-in when voice is disabled
+                playSound(beatNumber === 1);
+              }
             }
             
             updateVisualBeat(beatInMeasure);
           }
         } else if (isMainBeat) {
+          // Regular beat handling
           const button = document.querySelector(`.accent-button[data-beat="${beatInMeasure + 1}"]`);
           const state = button ? button.dataset.state : 'normal';
           
@@ -407,59 +423,29 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           
           updateVisualBeat(beatInMeasure);
-        } else {
+        } else if (subdivision > 1) {
+          // Only play subdivisions if subdivision is greater than 1
           playSubdivisionSound(subBeat % subdivision);
         }
         
         subBeat = (subBeat + 1) % (beatsPerMeasure * subdivision);
       }, playbackInterval);
     }
-  
-    function playSubdivisionSound(subdivisionPosition) {
-      // If voice counting is disabled or user has selected to use click for subdivisions
-      if (!useVoiceCounting || useClickSubdivision) {
-        if (!audioContext || !sounds[selectedSound]) return;
-        const soundBuffer = sounds[selectedSound].lo;
-        if (!soundBuffer) return;
-        const source = audioContext.createBufferSource();
-        const gainNode = audioContext.createGain();
-        source.buffer = soundBuffer;
-        gainNode.gain.value = volume * 0.6; // Slightly quieter for subdivisions
-        source.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        source.start(0);
-        return;
-      }
+    
+    function playFirstBeat() {
+      const firstButton = document.querySelector('.accent-button[data-beat="1"]');
+      const firstState = firstButton ? firstButton.dataset.state : 'normal';
       
-      // Use voice subdivisions
-      if (!audioContext) return;
-      
-      // Choose the right verbal subdivision based on the subdivision type and position
-      let subdivisionSound;
-      
-      if (subdivision === 2) {
-        // For duplets, use "&" (and)
-        subdivisionSound = 'and';
-      } else if (subdivision === 3) {
-        // For triplets, use "trip" and "let"
-        if (subdivisionPosition === 1) {
-          subdivisionSound = 'trip';
-        } else if (subdivisionPosition === 2) {
-          subdivisionSound = 'let';
+      if (firstState !== 'silent') {
+        if (useVoiceCounting) {
+          playVoiceSound('1');
+        } else {
+          if (firstState === 'accent') {
+            playSound(true);
+          } else {
+            playSound(false);
+          }
         }
-      } else if (subdivision === 4) {
-        // For 16ths, use "e", "&", "a"
-        if (subdivisionPosition === 1) {
-          subdivisionSound = 'e';
-        } else if (subdivisionPosition === 2) {
-          subdivisionSound = 'and';
-        } else if (subdivisionPosition === 3) {
-          subdivisionSound = 'a';
-        }
-      }
-      
-      if (subdivisionSound) {
-        playVoiceSubdivision(subdivisionSound);
       }
     }
       
@@ -625,4 +611,53 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTempo(tempo);
       });
     });
+  }
+
+  function playSubdivisionSound(subdivisionPosition) {
+    // If voice counting is enabled and not using click for subdivisions
+    if (useVoiceCounting && !useClickSubdivision) {
+      // Use voice subdivisions
+      if (!audioContext) return;
+      
+      // Choose the right verbal subdivision based on the subdivision type and position
+      let subdivisionSound;
+      
+      if (subdivision === 2) {
+        // For duplets, use "&" (and)
+        subdivisionSound = 'and';
+      } else if (subdivision === 3) {
+        // For triplets, use "trip" and "let"
+        if (subdivisionPosition === 1) {
+          subdivisionSound = 'trip';
+        } else if (subdivisionPosition === 2) {
+          subdivisionSound = 'let';
+        }
+      } else if (subdivision === 4) {
+        // For 16ths, use "e", "&", "a"
+        if (subdivisionPosition === 1) {
+          subdivisionSound = 'e';
+        } else if (subdivisionPosition === 2) {
+          subdivisionSound = 'and';
+        } else if (subdivisionPosition === 3) {
+          subdivisionSound = 'a';
+        }
+      }
+      
+      if (subdivisionSound) {
+        playVoiceSubdivision(subdivisionSound);
+      }
+      return;
+    } 
+    
+    // Default behavior for regular click subdivisions
+    if (!audioContext || !sounds[selectedSound]) return;
+    const soundBuffer = sounds[selectedSound].lo;
+    if (!soundBuffer) return;
+    const source = audioContext.createBufferSource();
+    const gainNode = audioContext.createGain();
+    source.buffer = soundBuffer;
+    gainNode.gain.value = volume * 0.6; // Slightly quieter for subdivisions
+    source.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    source.start(0);
   }
