@@ -80,12 +80,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const instrument = instrumentSelect.value.trim().toLowerCase();
         const theme = themeSelect.value.trim().toLowerCase();
 
-        const validClassPeriods = [5, 6, 7];
-        const validInstruments = ['violin', 'viola', 'cello', 'bass'];
+        const validClassPeriods = [5, 6, 7, 8, 9, 10];
+        const validInstruments = ['violin', 'viola', 'cello', 'bass', 'other'];
         const validThemes = ['light', 'dark'];
 
-        if (!validClassPeriods.includes(classPeriod)) return showToast('Validation Error', 'Please select a valid class period (5, 6, 7).');
-        if (!validInstruments.includes(instrument)) return showToast('Validation Error', 'Please select a valid instrument (violin, viola, cello, bass).');
+        if (!validClassPeriods.includes(classPeriod)) return showToast('Validation Error', 'Please select a valid class period (5, 6, 7, Symphonic, Full, Chamber).');
+        if (!validInstruments.includes(instrument)) return showToast('Validation Error', 'Please select a valid instrument (violin, viola, cello, bass, other).');
         if (!validThemes.includes(theme)) return showToast('Validation Error', 'Please select a valid theme (light, dark).');
 
         const cooldownTimestamp = parseInt(sessionStorage.getItem('cooldownTimestamp'), 10) || 0;
