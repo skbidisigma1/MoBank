@@ -1,576 +1,582 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoBank - Admin Panel</title>
-    <script src="../js/theme.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-    <script src="../js/auth.js"></script>
-    <script src="../js/headerFooter.js" defer></script>
-    <script src="../js/toast.js" defer></script>
-    <script src="../js/particles-config.js" defer></script>
-    <script src="../js/admin.js" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MoBank - Admin Panel</title>
+  <script src="../js/theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/headerFooter.js" defer></script>
+  <script src="../js/toast.js" defer></script>
+  <script src="../js/particles-config.js" defer></script>
+  <script src="../js/admin.js" defer></script>
 </head>
 <body>
-    <div id="particles-js"></div>
-    <div id="header-placeholder"></div>
-    <main id="admin-content" class="main-container hidden">
-        <div class="wave-decoration"></div>
-        <section class="admin-section">
-            <h1 class="page-heading">Admin Panel</h1>
-            <p class="page-description">Manage student MoBucks balances</p>
-            <div class="tab-container">
-                <button class="tab-button active" data-period="5">Period 5</button>
-                <button class="tab-button" data-period="6">Period 6</button>
-                <button class="tab-button" data-period="7">Period 7</button>
-                <button class="tab-button" data-period="8">Symphonic Orchestra</button>
-                <button class="tab-button" data-period="9">Full Orchestra</button>
-                <button class="tab-button" data-period="10">Chamber Orchestra</button>
-            </div>
-            <div id="tab-content">
-                <div class="tab-panel" id="period-5-panel">
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Manage Students - Period 5</h3>
-                        <form id="period-5-form" class="admin-form">
-                            <div class="form-group">
-                                <label for="period-5-student-name">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
-                                    </svg>
-                                    Student Name
-                                </label>
-                                <div class="input-wrapper">
-                                    <input type="text" id="period-5-student-name" placeholder="Enter student name" required autocomplete="off">
-                                    <div class="suggestions-container"></div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="period-5-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="period-5-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                                </svg>
-                                Apply Changes
-                            </button>
-                        </form>
-                    </div>
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Update By Instrument - Period 5</h3>
-                        <form id="period-5-instrument-form" class="admin-form">
-                            <div class="form-group">
-                                <label for="period-5-instrument">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
-                                    </svg>
-                                    Instrument
-                                </label>
-                                <select id="period-5-instrument" required>
-                                    <option value="">Select instrument...</option>
-                                    <option value="violin">Violin</option>
-                                    <option value="viola">Viola</option>
-                                    <option value="cello">Cello</option>
-                                    <option value="bass">Bass</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="period-5-instrument-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="period-5-instrument-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                                </svg>
-                                Apply to Selected Instrument
-                            </button>
-                        </form>
-                    </div>
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Update By Class Period</h3>
-                        <form id="update-by-class-form-5" class="admin-form">
-                            <div class="form-group">
-                                <label for="period-5-class-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="period-5-class-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M18,8H8A2,2 0 0,0 6,10V20A2,2 0 0,0 8,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M18,20H8V10H18V20M14,15H10V17H14V15M16,11H13V13H16V11M12,11H9V13H12V11Z"/>
-                                </svg>
-                                Apply to All Students
-                            </button>
-                        </form>
-                    </div>
+  <div id="particles-js"></div>
+  <div id="header-placeholder"></div>
+  <main id="admin-content" class="main-container hidden">
+    <div class="wave-decoration"></div>
+    <section class="admin-section">
+      <h1 class="page-heading">Admin Panel</h1>
+      <p class="page-description">Manage student MoBucks balances</p>
+      <div class="tab-container">
+        <button class="tab-button active" data-period="5">Period 5</button>
+        <button class="tab-button" data-period="6">Period 6</button>
+        <button class="tab-button" data-period="7">Period 7</button>
+        <button class="tab-button" data-period="8">Symphonic Orchestra</button>
+        <button class="tab-button" data-period="9">Full Orchestra</button>
+        <button class="tab-button" data-period="10">Chamber Orchestra</button>
+      </div>
+      <div id="tab-content">
+        <!-- Period 5 Panel -->
+        <div class="tab-panel" id="period-5-panel">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Manage Students - Period 5</h3>
+            <form id="period-5-form" class="admin-form">
+              <div class="form-group">
+                <label for="period-5-student-name">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+                  </svg>
+                  Student Name
+                </label>
+                <div class="input-wrapper">
+                  <input type="text" id="period-5-student-name" placeholder="Enter student name" required autocomplete="off">
+                  <div class="suggestions-container"></div>
                 </div>
-                <div class="tab-panel hidden" id="period-6-panel">
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Manage Students - Period 6</h3>
-                        <form id="period-6-form" class="admin-form">
-                            <div class="form-group">
-                                <label for="period-6-student-name">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
-                                    </svg>
-                                    Student Name
-                                </label>
-                                <div class="input-wrapper">
-                                    <input type="text" id="period-6-student-name" placeholder="Enter student name" required autocomplete="off">
-                                    <div class="suggestions-container"></div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="period-6-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="period-6-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                                </svg>
-                                Apply Changes
-                            </button>
-                        </form>
-                    </div>
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Update By Instrument - Period 6</h3>
-                        <form id="period-6-instrument-form" class="admin-form">
-                            <div class="form-group">
-                                <label for="period-6-instrument">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
-                                    </svg>
-                                    Instrument
-                                </label>
-                                <select id="period-6-instrument" required>
-                                    <option value="">Select instrument...</option>
-                                    <option value="violin">Violin</option>
-                                    <option value="viola">Viola</option>
-                                    <option value="cello">Cello</option>
-                                    <option value="bass">Bass</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="period-6-instrument-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="period-6-instrument-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                                </svg>
-                                Apply to Selected Instrument
-                            </button>
-                        </form>
-                    </div>
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Update By Class Period</h3>
-                        <form id="update-by-class-form-6" class="admin-form">
-                            <div class="form-group">
-                                <label for="period-6-class-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="period-6-class-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M18,8H8A2,2 0 0,0 6,10V20A2,2 0 0,0 8,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M18,20H8V10H18V20M14,15H10V17H14V15M16,11H13V13H16V11M12,11H9V13H12V11Z"/>
-                                </svg>
-                                Apply to All Students
-                            </button>
-                        </form>
-                    </div>
+              </div>
+              <div class="form-group">
+                <label for="period-5-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-5-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                </svg>
+                Apply Changes
+              </button>
+            </form>
+          </div>
+          <div class="admin-card">
+            <h3 class="admin-card-title">Update By Instrument - Period 5</h3>
+            <form id="period-5-instrument-form" class="admin-form">
+              <div class="form-group">
+                <label for="period-5-instrument">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
+                  </svg>
+                  Instrument
+                </label>
+                <select id="period-5-instrument" required>
+                  <option value="">Select instrument...</option>
+                  <option value="violin">Violin</option>
+                  <option value="viola">Viola</option>
+                  <option value="cello">Cello</option>
+                  <option value="bass">Bass</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="period-5-instrument-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-5-instrument-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                </svg>
+                Apply to Selected Instrument
+              </button>
+            </form>
+          </div>
+          <div class="admin-card">
+            <h3 class="admin-card-title">Update By Class Period</h3>
+            <form id="update-by-class-form-5" class="admin-form">
+              <div class="form-group">
+                <label for="period-5-class-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-5-class-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M18,8H8A2,2 0 0,0 6,10V20A2,2 0 0,0 8,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M18,20H8V10H18V20M14,15H10V17H14V15M16,11H13V13H16V11M12,11H9V13H12V11Z"/>
+                </svg>
+                Apply to All Students
+              </button>
+            </form>
+          </div>
+        </div>
+        <!-- Period 6 Panel -->
+        <div class="tab-panel hidden" id="period-6-panel">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Manage Students - Period 6</h3>
+            <form id="period-6-form" class="admin-form">
+              <div class="form-group">
+                <label for="period-6-student-name">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+                  </svg>
+                  Student Name
+                </label>
+                <div class="input-wrapper">
+                  <input type="text" id="period-6-student-name" placeholder="Enter student name" required autocomplete="off">
+                  <div class="suggestions-container"></div>
                 </div>
-                <div class="tab-panel hidden" id="period-7-panel">
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Manage Students - Period 7</h3>
-                        <form id="period-7-form" class="admin-form">
-                            <div class="form-group">
-                                <label for="period-7-student-name">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
-                                    </svg>
-                                    Student Name
-                                </label>
-                                <div class="input-wrapper">
-                                    <input type="text" id="period-7-student-name" placeholder="Enter student name" required autocomplete="off">
-                                    <div class="suggestions-container"></div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="period-7-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="period-7-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                                </svg>
-                                Apply Changes
-                            </button>
-                        </form>
-                    </div>
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Update By Instrument - Period 7</h3>
-                        <form id="period-7-instrument-form" class="admin-form">
-                            <div class="form-group">
-                                <label for="period-7-instrument">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
-                                    </svg>
-                                    Instrument
-                                </label>
-                                <select id="period-7-instrument" required>
-                                    <option value="">Select instrument...</option>
-                                    <option value="violin">Violin</option>
-                                    <option value="viola">Viola</option>
-                                    <option value="cello">Cello</option>
-                                    <option value="bass">Bass</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="period-7-instrument-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="period-7-instrument-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                                </svg>
-                                Apply to Selected Instrument
-                            </button>
-                        </form>
-                    </div>
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Update By Class Period</h3>
-                        <form id="update-by-class-form-7" class="admin-form">
-                            <div class="form-group">
-                                <label for="period-7-class-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="period-7-class-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M18,8H8A2,2 0 0,0 6,10V20A2,2 0 0,0 8,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M18,20H8V10H18V20M14,15H10V17H14V15M16,11H13V13H16V11M12,11H9V13H12V11Z"/>
-                                </svg>
-                                Apply to All Students
-                            </button>
-                        </form>
-                    </div>
+              </div>
+              <div class="form-group">
+                <label for="period-6-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-6-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                </svg>
+                Apply Changes
+              </button>
+            </form>
+          </div>
+          <div class="admin-card">
+            <h3 class="admin-card-title">Update By Instrument - Period 6</h3>
+            <form id="period-6-instrument-form" class="admin-form">
+              <div class="form-group">
+                <label for="period-6-instrument">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
+                  </svg>
+                  Instrument
+                </label>
+                <select id="period-6-instrument" required>
+                  <option value="">Select instrument...</option>
+                  <option value="violin">Violin</option>
+                  <option value="viola">Viola</option>
+                  <option value="cello">Cello</option>
+                  <option value="bass">Bass</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="period-6-instrument-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-6-instrument-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                </svg>
+                Apply to Selected Instrument
+              </button>
+            </form>
+          </div>
+          <div class="admin-card">
+            <h3 class="admin-card-title">Update By Class Period</h3>
+            <form id="update-by-class-form-6" class="admin-form">
+              <div class="form-group">
+                <label for="period-6-class-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-6-class-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M18,8H8A2,2 0 0,0 6,10V20A2,2 0 0,0 8,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M18,20H8V10H18V20M14,15H10V17H14V15M16,11H13V13H16V11M12,11H9V13H12V11Z"/>
+                </svg>
+                Apply to All Students
+              </button>
+            </form>
+          </div>
+        </div>
+        <!-- Period 7 Panel -->
+        <div class="tab-panel hidden" id="period-7-panel">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Manage Students - Period 7</h3>
+            <form id="period-7-form" class="admin-form">
+              <div class="form-group">
+                <label for="period-7-student-name">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+                  </svg>
+                  Student Name
+                </label>
+                <div class="input-wrapper">
+                  <input type="text" id="period-7-student-name" placeholder="Enter student name" required autocomplete="off">
+                  <div class="suggestions-container"></div>
                 </div>
-                <div class="tab-panel hidden" id="symphonic-panel">
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Manage Students - Symphonic Orchestra</h3>
-                        <form id="symphonic-form" class="admin-form">
-                            <div class="form-group">
-                                <label for="symphonic-student-name">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
-                                    </svg>
-                                    Student Name
-                                </label>
-                                <div class="input-wrapper">
-                                    <input type="text" id="symphonic-student-name" placeholder="Enter student name" required autocomplete="off">
-                                    <div class="suggestions-container"></div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="symphonic-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="symphonic-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                                </svg>
-                                Apply Changes
-                            </button>
-                        </form>
-                    </div>
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Update By Instrument - Symphonic Orchestra</h3>
-                        <form id="symphonic-instrument-form" class="admin-form">
-                            <div class="form-group">
-                                <label for="symphonic-instrument">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
-                                    </svg>
-                                    Instrument
-                                </label>
-                                <select id="symphonic-instrument" required>
-                                    <option value="">Select instrument...</option>
-                                    <option value="violin">Violin</option>
-                                    <option value="viola">Viola</option>
-                                    <option value="cello">Cello</option>
-                                    <option value="bass">Bass</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="symphonic-instrument-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="symphonic-instrument-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                                </svg>
-                                Apply to Selected Instrument
-                            </button>
-                        </form>
-                    </div>
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Update By Class Period</h3>
-                        <form id="update-by-class-form-symphonic" class="admin-form">
-                            <div class="form-group">
-                                <label for="symphonic-class-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="symphonic-class-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M18,8H8A2,2 0 0,0 6,10V20A2,2 0 0,0 8,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M18,20H8V10H18V20M14,15H10V17H14V15M16,11H13V13H16V11M12,11H9V13H12V11Z"/>
-                                </svg>
-                                Apply to All Students
-                            </button>
-                        </form>
-                    </div>
+              </div>
+              <div class="form-group">
+                <label for="period-7-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-7-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                </svg>
+                Apply Changes
+              </button>
+            </form>
+          </div>
+          <div class="admin-card">
+            <h3 class="admin-card-title">Update By Instrument - Period 7</h3>
+            <form id="period-7-instrument-form" class="admin-form">
+              <div class="form-group">
+                <label for="period-7-instrument">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
+                  </svg>
+                  Instrument
+                </label>
+                <select id="period-7-instrument" required>
+                  <option value="">Select instrument...</option>
+                  <option value="violin">Violin</option>
+                  <option value="viola">Viola</option>
+                  <option value="cello">Cello</option>
+                  <option value="bass">Bass</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="period-7-instrument-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-7-instrument-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                </svg>
+                Apply to Selected Instrument
+              </button>
+            </form>
+          </div>
+          <div class="admin-card">
+            <h3 class="admin-card-title">Update By Class Period</h3>
+            <form id="update-by-class-form-7" class="admin-form">
+              <div class="form-group">
+                <label for="period-7-class-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-7-class-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M18,8H8A2,2 0 0,0 6,10V20A2,2 0 0,0 8,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M18,20H8V10H18V20M14,15H10V17H14V15M16,11H13V13H16V11M12,11H9V13H12V11Z"/>
+                </svg>
+                Apply to All Students
+              </button>
+            </form>
+          </div>
+        </div>
+        <!-- Period 8 Panel (Symphonic Orchestra) -->
+        <div class="tab-panel hidden" id="period-8-panel">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Manage Students - Symphonic Orchestra</h3>
+            <form id="period-8-form" class="admin-form">
+              <div class="form-group">
+                <label for="period-8-student-name">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+                  </svg>
+                  Student Name
+                </label>
+                <div class="input-wrapper">
+                  <input type="text" id="period-8-student-name" placeholder="Enter student name" required autocomplete="off">
+                  <div class="suggestions-container"></div>
                 </div>
-                <div class="tab-panel hidden" id="full-panel">
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Manage Students - Full Orchestra</h3>
-                        <form id="full-form" class="admin-form">
-                            <div class="form-group">
-                                <label for="full-student-name">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
-                                    </svg>
-                                    Student Name
-                                </label>
-                                <div class="input-wrapper">
-                                    <input type="text" id="full-student-name" placeholder="Enter student name" required autocomplete="off">
-                                    <div class="suggestions-container"></div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="full-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="full-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                                </svg>
-                                Apply Changes
-                            </button>
-                        </form>
-                    </div>
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Update By Instrument - Full Orchestra</h3>
-                        <form id="full-instrument-form" class="admin-form">
-                            <div class="form-group">
-                                <label for="full-instrument">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
-                                    </svg>
-                                    Instrument
-                                </label>
-                                <select id="full-instrument" required>
-                                    <option value="">Select instrument...</option>
-                                    <option value="violin">Violin</option>
-                                    <option value="viola">Viola</option>
-                                    <option value="cello">Cello</option>
-                                    <option value="bass">Bass</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="full-instrument-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="full-instrument-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                                </svg>
-                                Apply to Selected Instrument
-                            </button>
-                        </form>
-                    </div>
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Update By Class Period</h3>
-                        <form id="update-by-class-form-full" class="admin-form">
-                            <div class="form-group">
-                                <label for="full-class-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="full-class-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M18,8H8A2,2 0 0,0 6,10V20A2,2 0 0,0 8,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M18,20H8V10H18V20M14,15H10V17H14V15M16,11H13V13H16V11M12,11H9V13H12V11Z"/>
-                                </svg>
-                                Apply to All Students
-                            </button>
-                        </form>
-                    </div>
+              </div>
+              <div class="form-group">
+                <label for="period-8-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-8-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                </svg>
+                Apply Changes
+              </button>
+            </form>
+          </div>
+          <div class="admin-card">
+            <h3 class="admin-card-title">Update By Instrument - Symphonic Orchestra</h3>
+            <form id="period-8-instrument-form" class="admin-form">
+              <div class="form-group">
+                <label for="period-8-instrument">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
+                  </svg>
+                  Instrument
+                </label>
+                <select id="period-8-instrument" required>
+                  <option value="">Select instrument...</option>
+                  <option value="violin">Violin</option>
+                  <option value="viola">Viola</option>
+                  <option value="cello">Cello</option>
+                  <option value="bass">Bass</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="period-8-instrument-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-8-instrument-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                </svg>
+                Apply to Selected Instrument
+              </button>
+            </form>
+          </div>
+          <div class="admin-card">
+            <h3 class="admin-card-title">Update By Class Period</h3>
+            <form id="update-by-class-form-8" class="admin-form">
+              <div class="form-group">
+                <label for="period-8-class-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-8-class-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M18,8H8A2,2 0 0,0 6,10V20A2,2 0 0,0 8,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M18,20H8V10H18V20M14,15H10V17H14V15M16,11H13V13H16V11M12,11H9V13H12V11Z"/>
+                </svg>
+                Apply to All Students
+              </button>
+            </form>
+          </div>
+        </div>
+        <!-- Period 9 Panel (Full Orchestra) -->
+        <div class="tab-panel hidden" id="period-9-panel">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Manage Students - Full Orchestra</h3>
+            <form id="period-9-form" class="admin-form">
+              <div class="form-group">
+                <label for="period-9-student-name">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+                  </svg>
+                  Student Name
+                </label>
+                <div class="input-wrapper">
+                  <input type="text" id="period-9-student-name" placeholder="Enter student name" required autocomplete="off">
+                  <div class="suggestions-container"></div>
                 </div>
-                <div class="tab-panel hidden" id="chamber-panel">
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Manage Students - Chamber Orchestra</h3>
-                        <form id="chamber-form" class="admin-form">
-                            <div class="form-group">
-                                <label for="chamber-student-name">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
-                                    </svg>
-                                    Student Name
-                                </label>
-                                <div class="input-wrapper">
-                                    <input type="text" id="chamber-student-name" placeholder="Enter student name" required autocomplete="off">
-                                    <div class="suggestions-container"></div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="chamber-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="chamber-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                                </svg>
-                                Apply Changes
-                            </button>
-                        </form>
-                    </div>
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Update By Instrument - Chamber Orchestra</h3>
-                        <form id="chamber-instrument-form" class="admin-form">
-                            <div class="form-group">
-                                <label for="chamber-instrument">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
-                                    </svg>
-                                    Instrument
-                                </label>
-                                <select id="chamber-instrument" required>
-                                    <option value="">Select instrument...</option>
-                                    <option value="violin">Violin</option>
-                                    <option value="viola">Viola</option>
-                                    <option value="cello">Cello</option>
-                                    <option value="bass">Bass</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="chamber-instrument-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="chamber-instrument-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                                </svg>
-                                Apply to Selected Instrument
-                            </button>
-                        </form>
-                    </div>
-                    <div class="admin-card">
-                        <h3 class="admin-card-title">Update By Class Period</h3>
-                        <form id="update-by-class-form-chamber" class="admin-form">
-                            <div class="form-group">
-                                <label for="chamber-class-amount">
-                                    <svg class="input-icon" viewBox="0 0 24 24">
-                                        <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
-                                    </svg>
-                                    Amount
-                                </label>
-                                <input type="number" id="chamber-class-amount" placeholder="Enter amount to adjust balance" required>
-                            </div>
-                            <button type="submit" class="submit-button">
-                                <svg class="button-icon" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M18,8H8A2,2 0 0,0 6,10V20A2,2 0 0,0 8,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M18,20H8V10H18V20M14,15H10V17H14V15M16,11H13V13H16V11M12,11H9V13H12V11Z"/>
-                                </svg>
-                                Apply to All Students
-                            </button>
-                        </form>
-                    </div>
+              </div>
+              <div class="form-group">
+                <label for="period-9-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-9-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                </svg>
+                Apply Changes
+              </button>
+            </form>
+          </div>
+          <div class="admin-card">
+            <h3 class="admin-card-title">Update By Instrument - Full Orchestra</h3>
+            <form id="period-9-instrument-form" class="admin-form">
+              <div class="form-group">
+                <label for="period-9-instrument">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
+                  </svg>
+                  Instrument
+                </label>
+                <select id="period-9-instrument" required>
+                  <option value="">Select instrument...</option>
+                  <option value="violin">Violin</option>
+                  <option value="viola">Viola</option>
+                  <option value="cello">Cello</option>
+                  <option value="bass">Bass</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="period-9-instrument-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-9-instrument-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                </svg>
+                Apply to Selected Instrument
+              </button>
+            </form>
+          </div>
+          <div class="admin-card">
+            <h3 class="admin-card-title">Update By Class Period</h3>
+            <form id="update-by-class-form-9" class="admin-form">
+              <div class="form-group">
+                <label for="period-9-class-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-9-class-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M18,8H8A2,2 0 0,0 6,10V20A2,2 0 0,0 8,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M18,20H8V10H18V20M14,15H10V17H14V15M16,11H13V13H16V11M12,11H9V13H12V11Z"/>
+                </svg>
+                Apply to All Students
+              </button>
+            </form>
+          </div>
+        </div>
+        <!-- Period 10 Panel (Chamber Orchestra) -->
+        <div class="tab-panel hidden" id="period-10-panel">
+          <div class="admin-card">
+            <h3 class="admin-card-title">Manage Students - Chamber Orchestra</h3>
+            <form id="period-10-form" class="admin-form">
+              <div class="form-group">
+                <label for="period-10-student-name">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+                  </svg>
+                  Student Name
+                </label>
+                <div class="input-wrapper">
+                  <input type="text" id="period-10-student-name" placeholder="Enter student name" required autocomplete="off">
+                  <div class="suggestions-container"></div>
                 </div>
-            </div>
-        </section>
-        <div class="wave-decoration bottom"></div>
-    </main>
-    <div id="footer-placeholder"></div>
+              </div>
+              <div class="form-group">
+                <label for="period-10-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-10-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                </svg>
+                Apply Changes
+              </button>
+            </form>
+          </div>
+          <div class="admin-card">
+            <h3 class="admin-card-title">Update By Instrument - Chamber Orchestra</h3>
+            <form id="period-10-instrument-form" class="admin-form">
+              <div class="form-group">
+                <label for="period-10-instrument">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M21,3V15.5A3.5,3.5 0 0,1 17.5,19A3.5,3.5 0 0,1 14,15.5A3.5,3.5 0 0,1 17.5,12C18.04,12 18.55,12.12 19,12.34V6.47L9,8.6V17.5A3.5,3.5 0 0,1 5.5,21A3.5,3.5 0 0,1 2,17.5A3.5,3.5 0 0,1 5.5,14C6.04,14 6.55,14.12 7,14.34V6L21,3Z"/>
+                  </svg>
+                  Instrument
+                </label>
+                <select id="period-10-instrument" required>
+                  <option value="">Select instrument...</option>
+                  <option value="violin">Violin</option>
+                  <option value="viola">Viola</option>
+                  <option value="cello">Cello</option>
+                  <option value="bass">Bass</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="period-10-instrument-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-10-instrument-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                </svg>
+                Apply to Selected Instrument
+              </button>
+            </form>
+          </div>
+          <div class="admin-card">
+            <h3 class="admin-card-title">Update By Class Period</h3>
+            <form id="update-by-class-form-10" class="admin-form">
+              <div class="form-group">
+                <label for="period-10-class-amount">
+                  <svg class="input-icon" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z"/>
+                  </svg>
+                  Amount
+                </label>
+                <input type="number" id="period-10-class-amount" placeholder="Enter amount to adjust balance" required>
+              </div>
+              <button type="submit" class="submit-button">
+                <svg class="button-icon" viewBox="0 0 24 24">
+                  <path fill="currentColor" d="M18,8H8A2,2 0 0,0 6,10V20A2,2 0 0,0 8,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M18,20H8V10H18V20M14,15H10V17H14V15M16,11H13V13H16V11M12,11H9V13H12V11Z"/>
+                </svg>
+                Apply to All Students
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+    <div class="wave-decoration bottom"></div>
+  </main>
+  <div id="footer-placeholder"></div>
 </body>
 </html>
