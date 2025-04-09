@@ -2,7 +2,14 @@ async function loadAdminContent() {
   await window.auth0Promise;
   const user = await getUser();
   const roles = (user && user['https://mo-classroom.us/roles']) || [];
-
+  const periodNames = {
+  '5': 'Period 5',
+  '6': 'Period 6',
+  '7': 'Period 7',
+  '8': 'Symphonic',
+  '9': 'Full',
+  '10': 'Chamber
+  };
   if (!roles.includes('admin')) {
     window.location.href = '/dashboard';
     return;
@@ -15,7 +22,6 @@ async function loadAdminContent() {
   const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
   const namesCache = {};
 
-  // Create modal elements
   const modalOverlay = document.createElement('div');
   modalOverlay.className = 'confirmation-modal-overlay';
   
@@ -277,7 +283,7 @@ async function loadAdminContent() {
         return;
       }
 
-      const target = `all ${instrument} players in period ${period}`;
+      const target = `all ${instrument} players in ${periodNames[period] || `Period ${period}`}`;
       const confirmed = await showConfirmationModal(formatConfirmationMessage(amount, target));
       if (!confirmed) {
         submitButton.disabled = false;
@@ -334,7 +340,7 @@ async function loadAdminContent() {
         return;
       }
 
-      const target = `all students in period ${period}`;
+      const target = `all students in ${periodNames[period] || `Period ${period}`}`;
       const confirmed = await showConfirmationModal(formatConfirmationMessage(amount, target));
       if (!confirmed) {
         submitButton.disabled = false;
@@ -390,7 +396,7 @@ async function loadAdminContent() {
         return;
       }
 
-      const target = period !== 'all' ? `all students in period ${period}` : 'all students';
+      const target = period !== 'all' ? `all students in ${periodNames[period] || `Period ${period}`}` : 'all students';
       const confirmed = await showConfirmationModal(formatConfirmationMessage(amount, target));
       if (!confirmed) {
         submitButton.disabled = false;
