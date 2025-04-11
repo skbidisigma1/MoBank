@@ -400,16 +400,18 @@ function initializeMetronomeUI() {
       startMetronome();
     }
   }
-      function updateVisualBeat(beatIndex) {
-    // Remove active class from all beat lights
+    function updateVisualBeat(beatIndex) {
     document.querySelectorAll('.beat-light').forEach(light => light.classList.remove('active'));
     
-    // Find the current beat light and add active class
+    const beatLights = document.querySelectorAll('.beat-light');
+    if (beatLights.length !== beatsPerMeasure) {
+      updateBeatLights();
+    }
+    
     const currentBeatLight = document.querySelector(`.beat-light[data-beat="${beatIndex + 1}"]`);
     if (currentBeatLight) {
       currentBeatLight.classList.add('active');
     } else {
-      // If we can't find the beat light, recreate the beat lights and try again
       updateBeatLights();
       const refreshedBeatLight = document.querySelector(`.beat-light[data-beat="${beatIndex + 1}"]`);
       if (refreshedBeatLight) {
@@ -453,7 +455,6 @@ function initializeMetronomeUI() {
     const baseInterval = (60 / currentTempo) * 1000 * (4 / noteValue);
     const playbackInterval = subdivision > 1 ? baseInterval / subdivision : baseInterval;
     
-    // Play first beat
     playFirstBeat();
     
     updateVisualBeat(0);
@@ -468,7 +469,6 @@ function initializeMetronomeUI() {
       const beatInMeasure = mainBeatIndex % beatsPerMeasure;
       
       if (isMainBeat) {
-        // Regular beat handling
         const button = document.querySelector(`.accent-button[data-beat="${beatInMeasure + 1}"]`);
         const state = button ? button.dataset.state : 'normal';
         
@@ -489,7 +489,6 @@ function initializeMetronomeUI() {
         
         updateVisualBeat(beatInMeasure);
       } else if (subdivision > 1) {
-        // Only play subdivisions if subdivision is greater than 1
         playSubdivisionSound(subBeat % subdivision);
       }
       
@@ -497,7 +496,6 @@ function initializeMetronomeUI() {
     }, playbackInterval);
   }
 
-  // Set up event listeners
   subdivisionSelector.addEventListener('change', () => {
     subdivision = parseInt(subdivisionSelector.value);
     if (isPlaying) restartMetronome();
