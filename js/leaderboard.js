@@ -55,7 +55,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     leaderboardBody.innerHTML = '';
     leaderboardCards.innerHTML = '';
     
-    // Map period numbers to user-friendly names
     const periodNames = {
       '5': 'Period 5',
       '6': 'Period 6',
@@ -157,11 +156,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     localStorage.setItem(`leaderboard_period_${period}`, JSON.stringify(cacheEntry));
   }
-
   async function fetchLeaderboard(period) {
     showLoader();
     hideError();
     leaderboardBody.innerHTML = '';
+    
+    if (period === 'global') {
+      await fetchGlobalLeaderboard();
+      return;
+    }
+    
     const cachedData = getCachedLeaderboard(period);
     if (cachedData) {
       populateLeaderboard(cachedData, period);
@@ -184,6 +188,62 @@ document.addEventListener('DOMContentLoaded', async () => {
       setCachedLeaderboard(period, data);
     } catch (error) {
       showError(error.message || 'An unexpected error occurred.');
+    } finally {
+      hideLoader();
+    }
+  }
+  
+  async function fetchGlobalLeaderboard() {
+    const cachedGlobal = getCachedLeaderboard('global');
+    if (cachedGlobal) {
+      populateLeaderboard(cachedGlobal, 'global');
+      hideLoader();
+      return;
+    }
+
+    try {
+      const token = await getToken();
+      const validPeriods = [5, 6, 7, 8, 9, 10];
+      const leaderboardPromises = validPeriods.map(period => 
+        fetch(`/api/getAggregatedLeaderboard?period=${period}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }).then(response => {
+          if (!response.ok) {
+            return { leaderboardData: [] };
+          }
+          return response.json();
+        })
+      );
+      
+      const results = await Promise.all(leaderboardPromises);
+      
+      let combinedData = [];
+      results.forEach(result => {
+        if (result.leaderboardData && result.leaderboardData.length > 0) {
+          combinedData = combinedData.concat(result.leaderboardData);
+        }
+      });
+      
+      const uniqueUsers = {};
+      combinedData.forEach(user => {
+        if (!uniqueUsers[user.name] || user.balance > uniqueUsers[user.name].balance) {
+          uniqueUsers[user.name] = user;
+        }
+      });
+      
+      const globalLeaderboardData = Object.values(uniqueUsers).sort((a, b) => b.balance - a.balance);
+      
+      const globalData = {
+        leaderboardData: globalLeaderboardData,
+        lastUpdated: { _seconds: Math.floor(Date.now() / 1000) }
+      };
+      
+      populateLeaderboard(globalData, 'global');
+      setCachedLeaderboard('global', globalData);
+    } catch (error) {
+      showError('Failed to fetch global leaderboard data.');
     } finally {
       hideLoader();
     }

@@ -162,7 +162,6 @@ function populateDashboard(userData) {
     profileName.textContent = `Welcome, ${name}!`;
     profileCurrency.textContent = `MoBuck Balance: $${currency_balance}`;
 
-    // Get the formatted period name
     const periodName = periodNames[userData.class_period] || `Period ${userData.class_period}`;
 
     dashboardContent.innerHTML = `

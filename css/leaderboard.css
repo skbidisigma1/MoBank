@@ -122,6 +122,26 @@
     color: var(--color-white);
 }
 
+.period-button.global-button {
+    background-color: var(--color-secondary);
+    color: var(--color-white);
+    border-color: var(--color-secondary);
+    font-weight: 700;
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 20px;
+}
+
+.period-button.global-button:hover {
+    background-color: var(--color-secondary-dark);
+    border-color: var(--color-secondary-dark);
+}
+
+.period-button.global-button.active {
+    background-color: var(--color-secondary-dark);
+    border-color: var(--color-secondary-dark);
+}
+
 .leaderboard-table-container {
     background: var(--color-light-bg);
     border-radius: 12px;
