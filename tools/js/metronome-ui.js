@@ -52,17 +52,15 @@ function initializeMetronomeUI() {
     glassTick: { hi: null, lo: null },
     bell: { hi: null, lo: null }
   };
-  
-  // Voice counting options
   let useVoiceCounting = false;
   let selectedVoice = 'male';
-  let useClickSubdivision = true;
+  let useClickSubdivision = false;
   let enableCountIn = false;
   let voiceVolume = parseFloat(voiceVolumeSlider.value) / 100 * 1.5;
   let voiceSounds = {
     male: {
-      numbers: {}, // Will hold number sounds 1-12
-      subdivisions: {} // Will hold subdivision sounds (e, and, a, trip, let)
+      numbers: {},
+      subdivisions: {}
     }
   };
   let countInActive = false;
