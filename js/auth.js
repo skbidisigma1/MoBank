@@ -58,7 +58,7 @@ const auth0Promise = (async () => {
   auth0Client = await createAuth0Client({
     domain: 'dev-nqdfwemz14t8nf7w.us.auth0.com',
     client_id: 'IJVNKTUu7mlBsvxDhdNNYOOtTXfFOtqA',
-    redirect_uri: window.location.origin + 'dashboard',
+    redirect_uri: window.location.origin + '/dashboard',
     audience: 'https://mo-classroom.us/api',
     cacheLocation: 'localstorage',
     useRefreshTokens: true
@@ -93,7 +93,7 @@ async function handleAuthRedirect() {
   if (query.includes('code=') && query.includes('state=')) {
     try {
       await auth0Client.handleRedirectCallback();
-      const targetUrl = 'dashboard';
+      const targetUrl = '/dashboard';
       window.history.replaceState({}, document.title, targetUrl);
     } catch (error) {
       console.error('Auth0 Callback Error:', error);
