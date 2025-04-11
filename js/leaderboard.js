@@ -31,8 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     errorMessage.textContent = '';
     errorContainer.classList.add('hidden');
   }
-
-  function createCard(user, index) {
+  function createCard(user, index, isGlobal = false) {
     const rank = index + 1;
     const card = document.createElement('div');
     card.className = 'leaderboard-card';
@@ -40,17 +39,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     const rankDisplay = rank <= 3 ? 
       (rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉') : 
       `#${rank}`;
+      
+    const periodNames = {
+      '5': 'Period 5',
+      '6': 'Period 6',
+      '7': 'Period 7',
+      '8': 'Symphonic',
+      '9': 'Full',
+      '10': 'Chamber'
+    };
+    
+    let instrumentDisplay = capitalizeFirstLetter(user.instrument);
+    
+    if (isGlobal && user.class_period) {
+      const periodDisplay = periodNames[user.class_period] || `Period ${user.class_period}`;
+      instrumentDisplay += `<span class="period-tag">${periodDisplay}</span>`;
+    }
 
     card.innerHTML = `
       <div class="card-rank ${rank <= 3 ? `rank-${rank}` : ''}">${rankDisplay}</div>
       <div class="card-name">${user.name === 'Luke Collingridge' ? '🛠️ ' + user.name : user.name}</div>
       <div class="card-divider"></div>
       <div class="card-balance">${user.balance} MoBucks</div>
-      <div class="card-instrument">${capitalizeFirstLetter(user.instrument)}</div>
+      <div class="card-instrument">${instrumentDisplay}</div>
     `;
 
     return card;
-  }  function populateLeaderboard(data, period) {
+  }function populateLeaderboard(data, period) {
     leaderboardBody.innerHTML = '';
     leaderboardCards.innerHTML = '';
     
@@ -68,9 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const filteredData = data.leaderboardData.filter(
       user => user.name !== 'Madison Moline'
-    );
-
-    filteredData.forEach((user, index) => {
+    );    filteredData.forEach((user, index) => {
       const row = document.createElement('tr');
       const rank = index + 1;
 
@@ -99,14 +112,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const instrumentCell = document.createElement('td');
       instrumentCell.className = 'instrument-cell';
-      instrumentCell.textContent = capitalizeFirstLetter(user.instrument);
+      
+      // For global leaderboard, show both instrument and period
+      if (period === 'global' && user.class_period) {
+        const periodNames = {
+          '5': 'Period 5',
+          '6': 'Period 6',
+          '7': 'Period 7',
+          '8': 'Symphonic',
+          '9': 'Full',
+          '10': 'Chamber'
+        };
+        
+        const periodDisplay = periodNames[user.class_period] || `Period ${user.class_period}`;
+        instrumentCell.innerHTML = `${capitalizeFirstLetter(user.instrument)}<span class="period-tag">${periodDisplay}</span>`;
+      } else {
+        instrumentCell.textContent = capitalizeFirstLetter(user.instrument);
+      }
+      
       row.appendChild(instrumentCell);
 
       leaderboardBody.appendChild(row);
-    });
-
-    filteredData.forEach((user, index) => {
-      const card = createCard(user, index);
+    });    filteredData.forEach((user, index) => {
+      const card = createCard(user, index, period === 'global');
       leaderboardCards.appendChild(card);
     });
 
@@ -216,13 +244,18 @@ document.addEventListener('DOMContentLoaded', async () => {
           return response.json();
         })
       );
-      
-      const results = await Promise.all(leaderboardPromises);
+        const results = await Promise.all(leaderboardPromises);
       
       let combinedData = [];
-      results.forEach(result => {
+      results.forEach((result, index) => {
         if (result.leaderboardData && result.leaderboardData.length > 0) {
-          combinedData = combinedData.concat(result.leaderboardData);
+          // Add the period information to each user
+          const period = validPeriods[index];
+          const dataWithPeriod = result.leaderboardData.map(user => ({
+            ...user,
+            class_period: period
+          }));
+          combinedData = combinedData.concat(dataWithPeriod);
         }
       });
       
