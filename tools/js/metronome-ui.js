@@ -399,8 +399,7 @@ function initializeMetronomeUI() {
       stopMetronome();
       startMetronome();
     }
-  }
-    function updateVisualBeat(beatIndex) {
+  }    function updateVisualBeat(beatIndex) {
     document.querySelectorAll('.beat-light').forEach(light => light.classList.remove('active'));
     
     const beatLights = document.querySelectorAll('.beat-light');
@@ -408,14 +407,16 @@ function initializeMetronomeUI() {
       updateBeatLights();
     }
     
-    const currentBeatLight = document.querySelector(`.beat-light[data-beat="${beatIndex + 1}"]`);
-    if (currentBeatLight) {
-      currentBeatLight.classList.add('active');
-    } else {
-      updateBeatLights();
-      const refreshedBeatLight = document.querySelector(`.beat-light[data-beat="${beatIndex + 1}"]`);
-      if (refreshedBeatLight) {
-        refreshedBeatLight.classList.add('active');
+    if (beatIndex >= 0 && beatIndex < beatsPerMeasure) {
+      const currentBeatLight = document.querySelector(`.beat-light[data-beat="${beatIndex + 1}"]`);
+      if (currentBeatLight) {
+        currentBeatLight.classList.add('active');
+      } else {
+        updateBeatLights();
+        const refreshedBeatLight = document.querySelector(`.beat-light[data-beat="${beatIndex + 1}"]`);
+        if (refreshedBeatLight) {
+          refreshedBeatLight.classList.add('active');
+        }
       }
     }
   }
@@ -438,8 +439,7 @@ function initializeMetronomeUI() {
     } else if (audioContext.state === 'suspended') {
       await audioContext.resume();
     }
-    
-    isPlaying = true;
+      isPlaying = true;
     currentBeat = 0;
     let subBeat = 0;
     pendulumAngle = 0;
