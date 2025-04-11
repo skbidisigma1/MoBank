@@ -1,9 +1,8 @@
 /* Enhanced styling for the metronome */
 
 :root {
-  /* Modernized gradient palette */
-  --metronome-gradient: linear-gradient(135deg, #4A90E2 0%, #5D9DE2 50%, #2ECC71 100%);
-  --metronome-gradient-light: linear-gradient(135deg, rgba(74, 144, 226, 0.8) 0%, rgba(93, 157, 226, 0.8) 50%, rgba(46, 204, 113, 0.8) 100%);
+  --metronome-blue: #4A90E2;
+  --metronome-green: #2ECC71;
   --metronome-accent-glow: 0 0 15px rgba(74, 144, 226, 0.6);
   --metronome-panel-bg: rgba(255, 255, 255, 0.07);
   --metronome-panel-border: rgba(255, 255, 255, 0.1);
@@ -37,10 +36,7 @@
   font-size: clamp(2.8rem, 6vw, 4rem);
   margin-bottom: 1.2rem;
   letter-spacing: -0.5px;
-  background: var(--metronome-gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--metronome-blue);
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
@@ -147,6 +143,8 @@
   background: var(--metronome-panel-bg);
   border: 1px solid var(--metronome-panel-border);
   clip-path: inset(0 0 50% 0);
+  background-image: radial-gradient(circle at center, transparent 0%, transparent 70%, rgba(255, 255, 255, 0.05) 75%, rgba(255, 255, 255, 0.05) 100%),
+                    repeating-conic-gradient(rgba(255, 255, 255, 0.03) 0deg, rgba(255, 255, 255, 0.01) 30deg, rgba(255, 255, 255, 0.03) 60deg);
 }
 
 .tempo-pendulum {
@@ -158,6 +156,7 @@
   transform-origin: top center;
   transform: rotate(0deg);
   transition: transform 0.1s ease;
+  z-index: 5;
 }
 
 .pendulum-arm {
@@ -166,8 +165,8 @@
   left: 0;
   width: 2px;
   height: 110px;
-  background: linear-gradient(to bottom, var(--metronome-primary), var(--metronome-secondary));
-  box-shadow: 0 0 5px rgba(var(--tools-primary-rgb), 0.5);
+  background: linear-gradient(to bottom, var(--metronome-blue), var(--metronome-blue));
+  box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
 }
 
 .pendulum-weight {
@@ -177,8 +176,9 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: var(--metronome-gradient);
-  box-shadow: 0 0 10px rgba(var(--tools-primary-rgb), 0.7);
+  background: var(--metronome-blue);
+  box-shadow: 0 0 10px rgba(74, 144, 226, 0.7);
+  z-index: 10;
 }
 
 /* Beat lights enhancements */
@@ -202,33 +202,35 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background-color: var(--color-text-light);
-  opacity: 0.2;
+  background-color: #cccccc;
+  opacity: 0.3;
   transition: all 0.15s ease;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text);
 }
 
 .beat-light::after {
   content: attr(data-beat);
   position: absolute;
-  top: 110%;
-  left: 50%;
-  transform: translateX(-50%);
-  color: var(--color-text-light);
+  color: var(--color-text);
   font-size: 0.8rem;
-  opacity: 0.7;
 }
 
 .beat-light.accent {
-  background-color: var(--metronome-accent);
+  background-color: var(--metronome-blue);
   opacity: 0.4;
 }
 
 .beat-light.active {
-  background-color: var(--metronome-accent);
+  background-color: var(--metronome-blue);
   opacity: 1;
   transform: scale(1.3);
-  box-shadow: 0 0 15px var(--metronome-accent);
+  box-shadow: 0 0 15px var(--metronome-blue);
   animation: enhanced-pulse 0.2s ease-in-out;
 }
 
@@ -332,7 +334,7 @@
 }
 
 .tempo-button.primary {
-  background: var(--metronome-gradient);
+  background: var(--metronome-green);
   border: none;
   color: white;
   width: 80px;
@@ -396,7 +398,7 @@
   position: absolute;
   width: 90%;
   height: 3px;
-  background: var(--metronome-gradient);
+  background: var(--metronome-blue);
   top: 50%;
   left: 5%;
   transform: translateY(-50%);
@@ -474,7 +476,7 @@
 }
 
 .accent-button.accent {
-  background: var(--metronome-gradient);
+  background: var(--metronome-blue);
   color: white;
   border: none;
   transform: scale(1.1);
@@ -491,7 +493,7 @@
 
 .settings-panels {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 2rem;
 }
 
