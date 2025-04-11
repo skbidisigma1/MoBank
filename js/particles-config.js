@@ -190,9 +190,7 @@
         } catch (error) {
             console.error('Error initializing particles.js:', error);
         }
-    }
-
-    function setupClickHandler() {
+    }    function setupClickHandler() {
         if (typeof pJSDom !== 'undefined' && pJSDom.length > 0 && pJSDom[0].pJS) {
             const handler = function(e) {
                 if (!document.hidden) {
@@ -202,12 +200,15 @@
                     };
                     
                     try {
-                        const pJS = pJSDom[0].pJS;
-                        Object.assign(pJS.interactivity.mouse, {
-                            click_pos: pos,
-                            click_time: new Date().getTime()
-                        });
-                        pJS.fn.modes.pushParticles(4, pos);
+                        // Make sure pJSDom is still available when the click happens
+                        if (typeof pJSDom !== 'undefined' && pJSDom.length > 0 && pJSDom[0].pJS) {
+                            const pJS = pJSDom[0].pJS;
+                            Object.assign(pJS.interactivity.mouse, {
+                                click_pos: pos,
+                                click_time: new Date().getTime()
+                            });
+                            pJS.fn.modes.pushParticles(4, pos);
+                        }
                     } catch (err) {
                         console.warn('Could not add particles on click', err);
                     }
