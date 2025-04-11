@@ -143,7 +143,9 @@
   background: var(--metronome-panel-bg);
   border: 1px solid var(--metronome-panel-border);
   clip-path: inset(0 0 50% 0);
-  background-image: radial-gradient(circle at center, transparent 0%, transparent 80%, rgba(255, 255, 255, 0.03) 85%, rgba(255, 255, 255, 0.03) 100%);
+  background-image: 
+    repeating-linear-gradient(0deg, transparent, transparent 9px, rgba(255, 255, 255, 0.02) 10px, transparent 11px),
+    radial-gradient(circle at center, transparent 0%, transparent 80%, rgba(255, 255, 255, 0.05) 100%);
 }
 
 .tempo-pendulum {
@@ -177,7 +179,7 @@
   border-radius: 50%;
   background: var(--metronome-blue);
   box-shadow: 0 0 10px rgba(74, 144, 226, 0.7);
-  z-index: 10;
+  z-index: 100;
 }
 
 /* Beat lights enhancements */
@@ -209,8 +211,9 @@
   align-items: center;
   justify-content: center;
   font-size: 0.9rem;
-  font-weight: 700;
-  color: #333;
+  font-weight: 800;
+  color: #222;
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
 }
 
 .beat-light::after {
@@ -221,6 +224,8 @@
 .beat-light.accent {
   background-color: var(--metronome-blue);
   opacity: 0.4;
+  color: white;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
 }
 
 .beat-light.active {
@@ -230,6 +235,7 @@
   box-shadow: 0 0 15px var(--metronome-blue);
   animation: enhanced-pulse 0.2s ease-in-out;
   color: white;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
 }
 
 @keyframes enhanced-pulse {
@@ -609,13 +615,38 @@
   animation: fadeIn 0.3s ease-out;
 }
 
+/* Improved dropdown styling with better contrast */
+select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--metronome-bg);
+  border: 1px solid var(--metronome-panel-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  color: white;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--metronome-blue);
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+select option {
+  background-color: #333;
+  color: white;
+  font-size: 1rem;
+  padding: 10px;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-.voice-options-panel.visible {
-  display: block;
 }
 
 /* Toggle switch styling */
@@ -710,7 +741,8 @@ input:checked + .toggle-slider:before {
 
 .tap-tempo-button:hover {
   transform: translateY(-3px);
-  box-shadow: 0 7px 20px rgba(74, 144, 226, 0.7);
+  background: var(--metronome-blue);
+  box-shadow: 0 7px 20px rgba(46, 204, 113, 0.7);
 }
 
 .tap-tempo-button:active {
