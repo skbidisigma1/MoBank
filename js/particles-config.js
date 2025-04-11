@@ -187,7 +187,6 @@
             destroyParticles();
             particlesJS('particles-js', config);
             
-            console.log('Particles.js initialized successfully');
         } catch (error) {
             console.error('Error initializing particles.js:', error);
         }
@@ -225,13 +224,7 @@
     initParticles();
     
     function checkAndSetupParticles() {
-        if (typeof pJSDom !== 'undefined' && pJSDom.length > 0) {
-            if (setupClickHandler()) {
-                console.log('Particles click handler initialized successfully');
-            }
-        } else {
-            setTimeout(checkAndSetupParticles, 1000);
-        }
+        setupClickHandler();
     }
     
     window.addEventListener('themechange', (e) => {

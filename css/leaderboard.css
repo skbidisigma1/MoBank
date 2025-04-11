@@ -123,23 +123,23 @@
 }
 
 .period-button.global-button {
-    background-color: var(--color-secondary);
-    color: var(--color-white);
+    color: var(--color-text);
     border-color: var(--color-secondary);
-    font-weight: 700;
+    border-width: 2px;
+    font-weight: 600;
     width: 100%;
     max-width: 100%;
-    margin-bottom: 20px;
+    margin-top: 10px;
 }
 
 .period-button.global-button:hover {
-    background-color: var(--color-secondary-dark);
-    border-color: var(--color-secondary-dark);
+    background-color: var(--color-secondary);
+    color: var(--color-white);
 }
 
 .period-button.global-button.active {
-    background-color: var(--color-secondary-dark);
-    border-color: var(--color-secondary-dark);
+    background-color: var(--color-secondary);
+    color: var(--color-white);
 }
 
 .leaderboard-table-container {

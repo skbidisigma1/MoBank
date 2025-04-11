@@ -50,8 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     `;
 
     return card;
-  }
-  function populateLeaderboard(data, period) {
+  }  function populateLeaderboard(data, period) {
     leaderboardBody.innerHTML = '';
     leaderboardCards.innerHTML = '';
     
@@ -61,7 +60,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       '7': 'Period 7',
       '8': 'Symphonic Orchestra',
       '9': 'Full Orchestra',
-      '10': 'Chamber Orchestra'
+      '10': 'Chamber Orchestra',
+      'global': 'Global'
     };
     
     leaderboardTitle.querySelector('span').textContent = `Leaderboard - ${periodNames[period] || `Period ${period}`}`;
