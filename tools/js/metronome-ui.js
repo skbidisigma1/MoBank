@@ -26,13 +26,11 @@ function initializeMetronomeUI() {
   const subdivisionSelector = document.getElementById('subdivision-selector');
   const tapButton = document.getElementById('tap-tempo-button');
   const tapDisplay = document.getElementById('tap-tempo-display');
-  
-  // Voice counting elements
+    // Voice counting elements
   const useVoiceCountingCheckbox = document.getElementById('use-voice-counting');
   const voiceOptionsPanel = document.querySelector('.voice-options-panel');
   const voiceSelector = document.getElementById('voice-selector');
   const useClickSubdivisionCheckbox = document.getElementById('use-click-subdivision');
-  const enableCountInCheckbox = document.getElementById('enable-count-in');
   const voiceVolumeSlider = document.getElementById('voice-volume-slider');
   
   let isPlaying = false;
@@ -51,11 +49,9 @@ function initializeMetronomeUI() {
     click: { hi: null, lo: null },
     glassTick: { hi: null, lo: null },
     bell: { hi: null, lo: null }
-  };
-  let useVoiceCounting = false;
+  };  let useVoiceCounting = false;
   let selectedVoice = 'male';
   let useClickSubdivision = false;
-  let enableCountIn = false;
   let voiceVolume = parseFloat(voiceVolumeSlider.value) / 100 * 1.5;
   let voiceSounds = {
     male: {
@@ -63,8 +59,6 @@ function initializeMetronomeUI() {
       subdivisions: {}
     }
   };
-  let countInActive = false;
-  let countInMeasure = 0;
   let pendulumRaf = null;
   let metronomeStartTime = 0;
   const validNoteValues = [1, 2, 4, 8, 16, 32];
@@ -406,11 +400,22 @@ function initializeMetronomeUI() {
       startMetronome();
     }
   }
-    
-  function updateVisualBeat(beatIndex) {
+      function updateVisualBeat(beatIndex) {
+    // Remove active class from all beat lights
     document.querySelectorAll('.beat-light').forEach(light => light.classList.remove('active'));
+    
+    // Find the current beat light and add active class
     const currentBeatLight = document.querySelector(`.beat-light[data-beat="${beatIndex + 1}"]`);
-    if (currentBeatLight) currentBeatLight.classList.add('active');
+    if (currentBeatLight) {
+      currentBeatLight.classList.add('active');
+    } else {
+      // If we can't find the beat light, recreate the beat lights and try again
+      updateBeatLights();
+      const refreshedBeatLight = document.querySelector(`.beat-light[data-beat="${beatIndex + 1}"]`);
+      if (refreshedBeatLight) {
+        refreshedBeatLight.classList.add('active');
+      }
+    }
   }
     
   function animatePendulum(baseInterval, playbackInterval) {
@@ -425,7 +430,6 @@ function initializeMetronomeUI() {
     pendulum.style.transform = `rotate(${pendulumAngle}rad)`;
     pendulumRaf = requestAnimationFrame(() => animatePendulum(baseInterval, playbackInterval));
   }
-
   async function startMetronome() {
     if (audioContext === null) {
       await initAudio();
@@ -449,23 +453,8 @@ function initializeMetronomeUI() {
     const baseInterval = (60 / currentTempo) * 1000 * (4 / noteValue);
     const playbackInterval = subdivision > 1 ? baseInterval / subdivision : baseInterval;
     
-    // Initialize count-in state
-    countInActive = enableCountIn;
-    countInMeasure = 0;
-    
-    // First beat handling - either play normally or start count-in
-    if (!countInActive) {
-      // Normal first beat
-      playFirstBeat();
-    } else {
-      // Start count-in
-      if (useVoiceCounting) {
-        playVoiceSound('1');
-      } else {
-        // Use regular sound for count-in when voice is not enabled
-        playSound(true);
-      }
-    }
+    // Play first beat
+    playFirstBeat();
     
     updateVisualBeat(0);
     subBeat = 1;
@@ -478,34 +467,7 @@ function initializeMetronomeUI() {
       const mainBeatIndex = Math.floor(subBeat / subdivision);
       const beatInMeasure = mainBeatIndex % beatsPerMeasure;
       
-      if (countInActive) {
-        // Handle count-in
-        if (isMainBeat) {
-          const beatNumber = mainBeatIndex % beatsPerMeasure + 1;
-          
-          if (beatNumber === 1) {
-            countInMeasure++;
-            if (countInMeasure > 1) {
-              countInActive = false;
-              // Play the first actual beat
-              playFirstBeat();
-            }
-          }
-          
-          if (countInActive) { // Still in count-in mode
-            if (useVoiceCounting) {
-              if (beatNumber <= 12) {
-                playVoiceSound(beatNumber.toString());
-              }
-            } else {
-              // Use regular sounds for count-in when voice is disabled
-              playSound(beatNumber === 1);
-            }
-          }
-          
-          updateVisualBeat(beatInMeasure);
-        }
-      } else if (isMainBeat) {
+      if (isMainBeat) {
         // Regular beat handling
         const button = document.querySelector(`.accent-button[data-beat="${beatInMeasure + 1}"]`);
         const state = button ? button.dataset.state : 'normal';
@@ -626,25 +588,37 @@ function initializeMetronomeUI() {
     selectedVoice = voiceSelector.value;
     if (isPlaying) restartMetronome();
   });
-  
-  useClickSubdivisionCheckbox.addEventListener('change', () => {
+    useClickSubdivisionCheckbox.addEventListener('change', () => {
     useClickSubdivision = useClickSubdivisionCheckbox.checked;
     if (isPlaying) restartMetronome();
-  });
-  
-  enableCountInCheckbox.addEventListener('change', () => {
-    enableCountIn = enableCountInCheckbox.checked;
   });
   
   voiceVolumeSlider.addEventListener('input', () => {
     voiceVolume = parseFloat(voiceVolumeSlider.value) / 100 * 1.5;
   });
-  
-  // Presets
+    // Presets
   presetButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       const tempo = parseInt(btn.dataset.tempo);
+      const beatsValue = btn.dataset.beats ? parseInt(btn.dataset.beats) : null;
+      const noteVal = btn.dataset.noteValue ? parseInt(btn.dataset.noteValue) : null;
+      
+      // Update tempo
       updateTempo(tempo);
+      
+      // Update time signature if provided
+      if (beatsValue) {
+        updateBeatsPerMeasure(beatsValue);
+      }
+      
+      if (noteVal) {
+        updateNoteValue(noteVal);
+      }
+      
+      // Apply changes immediately if playing
+      if (isPlaying) {
+        restartMetronome();
+      }
     });
   });
   
