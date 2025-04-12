@@ -10,8 +10,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">  <link rel="stylesheet" href="/css/style.css">
-  <link rel="stylesheet" href="/tools/css/tools-home.css">  <link rel="stylesheet" href="/tools/css/metronome.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/tools/css/tools-home.css">
+  <link rel="stylesheet" href="/tools/css/metronome.css">
   <link rel="stylesheet" href="/tools/css/metronome-fix.css">
   <link rel="stylesheet" href="/tools/css/metronome-enhanced.css">
   <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js" crossorigin="anonymous"></script>
@@ -21,16 +23,16 @@
   <script src="/tools/js/tools-header.js" defer></script>
   <script src="/tools/js/metronome-ui.js" defer></script>
 </head>
-<body>  <div id="header-placeholder" role="banner"></div>
-  
+<body>
+  <div id="header-placeholder" role="banner"></div>
   <div class="particles-background"></div>
-  
   <main class="main-container metronome-container">
     <section class="metronome-header">
       <h1 class="tool-title">Metronome</h1>
       <p class="tool-description">Precision tempo training with customizable settings and visual feedback</p>
     </section>
-    <div class="metronome-wrapper">      <section class="metronome-display-section">
+    <div class="metronome-wrapper">
+      <section class="metronome-display-section">
         <div class="tempo-display">
           <div class="tempo-value">
             <input type="number" id="tempo-display" min="10" max="1000" value="120">
@@ -48,7 +50,8 @@
         <div class="visual-beat-indicator">
           <div class="beat-lights"></div>
         </div>
-      </section>      <section class="metronome-controls-section">
+      </section>
+      <section class="metronome-controls-section">
         <div class="tempo-controls">
           <div class="tempo-slider-wrapper">
             <input type="range" id="tempo-slider" class="tempo-slider" min="0" max="100" value="50" step="0.1">
@@ -78,7 +81,8 @@
               </svg>
             </button>
           </div>
-        </div>        <div class="time-signature-controls">
+        </div>
+        <div class="time-signature-controls">
           <div class="control-group time-signature-group">
             <label>Time Signature</label>
             <div class="time-signature-display">
@@ -98,7 +102,8 @@
               </div>
             </div>
           </div>
-        </div>        <div class="subdivision-controls">
+        </div>
+        <div class="subdivision-controls">
           <div class="control-group">
             <label for="subdivision-selector">Subdivision</label>
             <div class="subdivision-selector-wrapper">
@@ -116,7 +121,8 @@
               <div id="accent-pattern" class="accent-pattern"></div>
             </div>
           </div>
-        </div>        <div class="metronome-settings-section">
+        </div>
+        <div class="metronome-settings-section">
           <div class="settings-panels">
             <div class="settings-panel">
               <h3 class="panel-title">Sound Options</h3>
@@ -131,7 +137,6 @@
                 <label for="volume-slider">Master Volume</label>
                 <input type="range" id="volume-slider" class="volume-slider" min="0" max="100" value="75">
               </div>
-              
               <div class="voice-settings">
                 <div class="control-group">
                   <label class="toggle-label">
@@ -142,7 +147,6 @@
                     <span class="toggle-text">Use Voice Counting</span>
                   </label>
                 </div>
-                
                 <div class="voice-options-panel">
                   <div class="control-group">
                     <label for="voice-selector">Voice Type</label>
@@ -152,7 +156,6 @@
                       </select>
                     </div>
                   </div>
-                  
                   <div class="control-group">
                     <label class="toggle-label">
                       <span class="toggle-switch">
@@ -162,7 +165,6 @@
                       <span class="toggle-text">Use Click Sound for Subdivisions</span>
                     </label>
                   </div>
-                  
                   <div class="control-group">
                     <label for="voice-volume-slider">Voice Volume</label>
                     <input type="range" id="voice-volume-slider" class="volume-slider" min="0" max="100" value="75">
@@ -170,9 +172,9 @@
                 </div>
               </div>
             </div>
-  
           </div>
-        </div>        <section class="tap-tempo-section">
+        </div>
+        <section class="tap-tempo-section">
           <h3>Tap Tempo</h3>
           <button id="tap-tempo-button" class="tap-tempo-button">Tap</button>
           <div id="tap-tempo-display" class="tap-tempo-display">-- BPM</div>
@@ -218,7 +220,8 @@
             <span class="preset-name">Presto</span>
           </button>
         </div>
-      </section>    </div>
+      </section>
+    </div>
     <div id="save-preset-modal" class="modal">
       <div class="modal-content">
         <h3>Save preset</h3>

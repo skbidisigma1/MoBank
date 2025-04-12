@@ -4,12 +4,12 @@
   --metronome-accent: #3498DB;
   --metronome-accent-secondary: #2ECC71;
   --metronome-bg: var(--color-light-bg);
-  --metronome-input-bg: rgba(255, 255, 255, 0.1);
+  --metronome-input-bg: rgba(255,255,255,0.1);
   --metronome-border: var(--color-border);
   --metronome-text: var(--color-text);
   --metronome-text-light: var(--color-text-light);
-  --metronome-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-  --metronome-pendulum-bg: rgba(var(--tools-primary-rgb), 0.15);
+  --metronome-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  --metronome-pendulum-bg: rgba(var(--tools-primary-rgb),0.15);
   --metronome-pendulum-arm: var(--metronome-primary);
   --metronome-pendulum-weight: var(--metronome-accent);
 }
@@ -20,9 +20,9 @@
   --metronome-accent: #3498DB;
   --metronome-accent-secondary: #2ECC71;
   --metronome-bg: var(--color-dark-card);
-  --metronome-input-bg: rgba(0, 0, 0, 0.2);
+  --metronome-input-bg: rgba(0,0,0,0.2);
   --metronome-border: var(--color-border-dark);
-  --metronome-pendulum-bg: rgba(var(--tools-primary-rgb), 0.25);
+  --metronome-pendulum-bg: rgba(var(--tools-primary-rgb),0.25);
 }
 
 .metronome-container {
@@ -37,7 +37,7 @@
 }
 
 .tool-title {
-  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-size: clamp(2.5rem,5vw,3.5rem);
   line-height: 1.2;
   margin-bottom: 1rem;
   font-family: var(--font-heading);
@@ -49,7 +49,7 @@
 }
 
 .tool-description {
-  font-size: clamp(1.1rem, 2vw, 1.25rem);
+  font-size: clamp(1.1rem,2vw,1.25rem);
   max-width: 800px;
   margin: 0 auto;
   color: var(--color-text);
@@ -105,8 +105,8 @@
   padding: 10px 0;
 }
 
-#tempo-display::-webkit-inner-spin-button, 
-#tempo-display::-webkit-outer-spin-button { 
+#tempo-display::-webkit-inner-spin-button,
+#tempo-display::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
@@ -197,7 +197,7 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%,-50%);
   color: var(--color-white);
   font-size: 0.8rem;
 }
@@ -254,7 +254,7 @@
   background: var(--color-white);
   border: 3px solid var(--metronome-accent);
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .tempo-slider::-moz-range-thumb {
@@ -264,7 +264,7 @@
   background: var(--color-white);
   border: 3px solid var(--metronome-accent);
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .tempo-slider-labels {
@@ -447,7 +447,7 @@ input[type="number"] {
   color: var(--color-white);
   border-color: var(--metronome-accent);
   transform: scale(1.1);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
 .metronome-settings-section {
@@ -532,7 +532,7 @@ input[type="number"] {
   background: var(--color-white);
   border: 2px solid var(--metronome-accent);
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .volume-slider::-moz-range-thumb {
@@ -542,7 +542,7 @@ input[type="number"] {
   background: var(--color-white);
   border: 2px solid var(--metronome-accent);
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .metronome-presets-section {
@@ -604,7 +604,7 @@ input[type="number"] {
 
 .preset-button:hover {
   transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
   border-color: var(--metronome-accent);
 }
 
@@ -627,7 +627,7 @@ input[type="number"] {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0,0,0,0.5);
   justify-content: center;
   align-items: center;
 }
@@ -825,7 +825,7 @@ input[type="number"] {
   padding: 1.5rem;
   width: 240px;
   margin: 0 auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .time-signature-value {
@@ -849,7 +849,7 @@ input[type="number"] {
   transform: translateY(-50%);
 }
 
-.time-signature-top, 
+.time-signature-top,
 .time-signature-bottom {
   padding: 0.75rem;
   width: 60px;
