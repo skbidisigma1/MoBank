@@ -3,17 +3,18 @@
   --metronome-secondary: #50E3C2;
   --metronome-accent: var(--metronome-primary);
   --metronome-accent-secondary: var(--metronome-secondary);
-  --metronome-bg: #f0f2f5; /* Slightly darker bg */
-  --metronome-card-bg: var(--color-white);
-  --metronome-input-bg: #e9ecef; /* Keep input bg distinct */
-  --metronome-border: #ced4da; /* Darker border */
+  --metronome-bg: #f0f2f5;
+  --metronome-card-bg: #e9ecef;
+  --metronome-input-bg: #dee2e6;
+  --metronome-border: #adb5bd;
   --metronome-text: #212529;
-  --metronome-text-light: #495057; /* Darker light text */
+  --metronome-text-light: #495057;
   --metronome-shadow: 0 6px 20px rgba(0,0,0,0.08);
-  --metronome-pendulum-bg: rgba(74, 144, 226, 0.08); /* Make pendulum bg slightly visible */
+  --metronome-pendulum-bg: rgba(74, 144, 226, 0.08);
   --metronome-pendulum-arm: var(--metronome-primary);
   --metronome-pendulum-weight: var(--metronome-accent);
   --metronome-gradient: linear-gradient(135deg, var(--metronome-primary), var(--metronome-secondary));
+  --metronome-disabled-bg: #e9ecef;
 }
 
 [data-theme="dark"] {
@@ -26,7 +27,7 @@
   --metronome-input-bg: #21262d;
   --metronome-border: #30363d;
   --metronome-text: #c9d1d9;
-  --metronome-text-light: #adb5bd; /* Lighter text-light for dark mode */
+  --metronome-text-light: #adb5bd;
   --metronome-shadow: 0 8px 24px rgba(0,0,0,0.3);
   --metronome-pendulum-bg: rgba(88, 166, 255, 0.15);
 }
@@ -151,7 +152,7 @@
   width: 240px;
   height: 240px;
   border-radius: 50%;
-  background: var(--metronome-pendulum-bg); /* Ensure background is applied */
+  background: var(--metronome-pendulum-bg);
   clip-path: inset(0 0 50% 0);
   border: 1px solid var(--metronome-border);
 }
@@ -206,8 +207,8 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background-color: var(--metronome-border); /* Use border color for inactive */
-  opacity: 0.4; /* Slightly more visible inactive */
+  background-color: var(--metronome-border);
+  opacity: 0.4;
   transition: all 0.15s ease;
   position: relative;
 }
@@ -218,20 +219,20 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%,-50%);
-  color: var(--metronome-text); /* Use main text color for light mode */
+  color: var(--metronome-text);
   font-size: 0.75rem;
   font-weight: 700;
-  opacity: 0.6; /* Make numbers always somewhat visible */
+  opacity: 0.6;
   transition: opacity 0.15s ease;
 }
 
 [data-theme="dark"] .beat-light::after {
-  color: var(--color-white); /* White numbers in dark mode */
+  color: var(--color-white);
 }
 
 .beat-light.accent {
   background-color: var(--metronome-accent);
-  opacity: 0.7; /* Slightly more visible inactive accent */
+  opacity: 0.7;
 }
 
 .beat-light.accent::after {
@@ -256,8 +257,9 @@
 }
 
 .beat-light.active::after {
-  opacity: 1; /* Full opacity for active beat number */
-  transform: translate(-50%, -50%) scale(1.1); /* Slightly larger active number */
+  color: var(--color-white);
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.1);
 }
 
 .metronome-controls-section {
@@ -395,7 +397,7 @@
   grid-template-columns: 1fr;
   gap: 1.5rem;
   padding: 1.5rem;
-  background: var(--metronome-input-bg);
+  background: var(--metronome-card-bg);
   border-radius: 0.75rem;
   border: 1px solid var(--metronome-border);
   justify-items: center;
@@ -500,7 +502,9 @@ input[type="number"]:focus {
 
 .accent-pattern {
   display: flex;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
   padding: 0.5rem 0.25rem;
   margin-left: 4px;
 }
@@ -542,7 +546,7 @@ input[type="number"]:focus {
 
 .metronome-settings-section {
   padding: 1.5rem;
-  background: var(--metronome-input-bg);
+  background: var(--metronome-card-bg);
   border-radius: 0.75rem;
   border: 1px solid var(--metronome-border);
   display: flex;
@@ -647,7 +651,7 @@ input[type="number"]:focus {
 
 .metronome-presets-section {
   padding: 1.5rem;
-  background: var(--metronome-input-bg);
+  background: var(--metronome-card-bg);
   border-radius: 0.75rem;
   border: 1px solid var(--metronome-border);
 }
@@ -657,7 +661,7 @@ input[type="number"]:focus {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  gap: 1rem; /* Add gap between title and button */
+  gap: 1rem;
 }
 
 .presets-header h3 {
@@ -867,7 +871,6 @@ input[type="number"]:focus {
     height: 70px;
   }
   .time-signature-controls,
-  .subdivision-controls,
   .metronome-settings-section,
   .metronome-presets-section {
     padding: 1rem;
@@ -994,7 +997,7 @@ input[type="number"]:focus {
 
 .tap-tempo-section {
   padding: 1rem;
-  background: var(--metronome-input-bg);
+  background: var(--metronome-card-bg);
   border-radius: 0.75rem;
   text-align: center;
   margin-top: 1.5rem;
@@ -1071,6 +1074,7 @@ input[type="number"]:focus {
   display: inline-block;
   width: 50px;
   height: 26px;
+  flex-shrink: 0; /* Prevent shrinking in flex container */
 }
 
 .toggle-switch input {
@@ -1086,10 +1090,11 @@ input[type="number"]:focus {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--metronome-input-bg);
+  background-color: var(--metronome-border);
   transition: .4s;
   border-radius: 34px;
   border: 1px solid var(--metronome-border);
+  box-sizing: border-box;
 }
 
 .toggle-slider:before {
@@ -1112,6 +1117,16 @@ input:checked + .toggle-slider {
 
 input:checked + .toggle-slider:before {
   transform: translateX(23px);
+}
+
+input:disabled + .toggle-slider {
+  background-color: var(--metronome-disabled-bg);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+input:disabled + .toggle-slider:before {
+  background-color: #adb5bd;
 }
 
 .toggle-text {

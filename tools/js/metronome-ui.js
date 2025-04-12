@@ -32,6 +32,7 @@ function initializeMetronomeUI() {
   const voiceSelector = document.getElementById('voice-selector');
   const useClickSubdivisionCheckbox = document.getElementById('use-click-subdivision');
   const voiceVolumeSlider = document.getElementById('voice-volume-slider');
+  const soundSelectorPanel = document.querySelector('.sound-selector'); // Get the sound selector panel
   
   let isPlaying = false;
   let currentTempo = parseInt(tempoDisplay.value);
@@ -265,7 +266,12 @@ function initializeMetronomeUI() {
   }
 
   function updateTempo(value) {
-    currentTempo = Math.min(Math.max(value, 10), 1000);
+    let newTempo = parseInt(value);
+    // Default to 10 if input is empty or invalid
+    if (isNaN(newTempo) || newTempo <= 0) {
+      newTempo = 10;
+    }
+    currentTempo = Math.min(Math.max(newTempo, 10), 1000);
     tempoDisplay.value = currentTempo;
     tempoSlider.value = tempoToSliderPosition(currentTempo);
     if (isPlaying) {
@@ -506,7 +512,8 @@ function initializeMetronomeUI() {
     updateTempo(sliderPositionToTempo(parseFloat(tempoSlider.value)));
   });
   
-  tempoDisplay.addEventListener('change', () => updateTempo(parseInt(tempoDisplay.value)));
+  tempoDisplay.addEventListener('change', () => updateTempo(tempoDisplay.value)); // Use value directly
+  tempoDisplay.addEventListener('blur', () => updateTempo(tempoDisplay.value)); // Also update on blur
   tempoDecreaseBtn.addEventListener('click', () => updateTempo(currentTempo - 1));
   tempoIncreaseBtn.addEventListener('click', () => updateTempo(currentTempo + 1));
   tempoPlayBtn.addEventListener('click', () => isPlaying ? stopMetronome() : startMetronome());
@@ -545,6 +552,11 @@ function initializeMetronomeUI() {
   
   tapButton.addEventListener('click', () => {
     const now = Date.now();
+    
+    // Add feedback animation
+    tapButton.classList.add('tapped');
+    setTimeout(() => tapButton.classList.remove('tapped'), 200); // Match animation duration
+
     if (tapTimes.length > 0 && now - tapTimes[tapTimes.length - 1] > 2000) {
       tapTimes = [];
     }
@@ -569,24 +581,17 @@ function initializeMetronomeUI() {
   // Add voice counting UI interactions
   useVoiceCountingCheckbox.addEventListener('change', () => {
     useVoiceCounting = useVoiceCountingCheckbox.checked;
-    
-    if (useVoiceCounting) {
-      voiceOptionsPanel.classList.add('visible');
-      // Disable the regular sound buttons when voice counting is enabled
-      document.querySelector('.sound-selector').classList.add('disabled-sound');
-    } else {
-      voiceOptionsPanel.classList.remove('visible');
-      document.querySelector('.sound-selector').classList.remove('disabled-sound');
-    }
-    
+    voiceOptionsPanel.style.display = useVoiceCounting ? 'block' : 'none';
     if (isPlaying) restartMetronome();
   });
   
-  voiceSelector.addEventListener('change', () => {
-    selectedVoice = voiceSelector.value;
-    if (isPlaying) restartMetronome();
-  });
-    useClickSubdivisionCheckbox.addEventListener('change', () => {
+  // Remove event listener for the non-existent voice selector
+  // voiceSelector.addEventListener('change', () => {
+  //   selectedVoice = voiceSelector.value;
+  //   if (isPlaying) restartMetronome();
+  // });
+
+  useClickSubdivisionCheckbox.addEventListener('change', () => {
     useClickSubdivision = useClickSubdivisionCheckbox.checked;
     if (isPlaying) restartMetronome();
   });
@@ -629,17 +634,49 @@ function initializeMetronomeUI() {
   });
   
   window.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT') {
-      e.preventDefault();
+    const activeElement = document.activeElement;
+    const isInputFocused = activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'SELECT';
+    const isTempoInputFocused = activeElement === tempoDisplay;
+
+    // Space: Always toggle play/pause
+    if (e.code === 'Space') {
+      e.preventDefault(); // Prevent default scrolling/button activation
       isPlaying ? stopMetronome() : startMetronome();
+      return; // Stop further processing for Space
     }
-    if (e.code === 'ArrowUp' && document.activeElement.tagName !== 'INPUT') {
-      e.preventDefault();
-      updateTempo(currentTempo + 1);
+
+    // Enter: Focus/Blur tempo input
+    if (e.code === 'Enter') {
+      if (isTempoInputFocused) {
+        tempoDisplay.blur(); // Blur will trigger the 'change' and 'blur' listeners which handle validation
+        e.preventDefault();
+      } else if (!isInputFocused) { // Only focus if not already in another input
+        tempoDisplay.focus();
+        tempoDisplay.select(); // Select text for easy replacement
+        e.preventDefault();
+      }
+      return; // Stop further processing for Enter
     }
-    if (e.code === 'ArrowDown' && document.activeElement.tagName !== 'INPUT') {
-      e.preventDefault();
-      updateTempo(currentTempo - 1);
+
+    // Tempo Adjustments (only if not focused on an input)
+    if (!isInputFocused) {
+      let step = 1;
+      if (e.shiftKey && e.ctrlKey) {
+        step = 20;
+      } else if (e.ctrlKey) {
+        step = 10;
+      } else if (e.shiftKey) {
+        step = 5;
+      }
+
+      if (e.code === 'ArrowUp' || e.code === 'ArrowRight') {
+        e.preventDefault();
+        updateTempo(currentTempo + step);
+      }
+      if (e.code === 'ArrowDown' || e.code === 'ArrowLeft') {
+        e.preventDefault();
+        updateTempo(currentTempo - step);
+      }
     }
   });
 }

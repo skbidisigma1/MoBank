@@ -2,11 +2,11 @@
   --metronome-blue: #4A90E2;
   --metronome-green: #50E3C2;
   --metronome-accent-glow: 0 0 18px rgba(74, 144, 226, 0.7);
-  --metronome-panel-bg: rgba(255, 255, 255, 0.08); /* Slightly more opaque panel */
-  --metronome-panel-border: rgba(255, 255, 255, 0.15); /* Slightly more opaque border */
+  --metronome-panel-bg: #dee2e6;
+  --metronome-panel-border: rgba(0, 0, 0, 0.1);
   --metronome-card-shadow: 0 12px 35px rgba(0, 0, 0, 0.1);
   --metronome-control-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
-  --metronome-button-hover: rgba(255, 255, 255, 0.15);
+  --metronome-button-hover: rgba(0, 0, 0, 0.05);
   --metronome-gradient: linear-gradient(135deg, var(--metronome-blue), var(--metronome-green));
 }
 
@@ -14,8 +14,8 @@
   --metronome-blue: #58a6ff;
   --metronome-green: #50E3C2;
   --metronome-accent-glow: 0 0 20px rgba(88, 166, 255, 0.8);
-  --metronome-panel-bg: rgba(0, 0, 0, 0.3); /* Darker panel */
-  --metronome-panel-border: rgba(255, 255, 255, 0.1); /* Slightly more visible border */
+  --metronome-panel-bg: rgba(0, 0, 0, 0.3);
+  --metronome-panel-border: rgba(255, 255, 255, 0.1);
   --metronome-card-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
   --metronome-control-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
   --metronome-button-hover: rgba(255, 255, 255, 0.1);
@@ -108,6 +108,7 @@
   background: transparent;
   border: none;
   text-align: center;
+  appearance: textfield;
   -moz-appearance: textfield;
   height: 100px;
   line-height: 1;
@@ -120,7 +121,6 @@
 
 #tempo-display:focus {
   outline: none;
-  transform: scale(1.05);
   text-shadow: var(--metronome-accent-glow);
   border-bottom-color: transparent;
 }
@@ -207,8 +207,8 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background-color: var(--metronome-border); /* Consistent inactive color */
-  opacity: 0.6; /* Enhanced inactive visibility */
+  background-color: var(--metronome-border);
+  opacity: 0.6;
   transition: all 0.15s ease;
   position: relative;
   display: flex;
@@ -216,24 +216,24 @@
   justify-content: center;
   font-size: 1rem;
   font-weight: 800;
-  color: var(--metronome-text); /* Ensure text color is set */
+  color: var(--metronome-text);
   text-shadow: none;
 }
 
 .beat-light::after {
   content: attr(data-beat);
   position: absolute;
-  color: var(--metronome-text); /* Base color for light mode */
-  opacity: 0.7; /* Always visible */
+  color: var(--metronome-text);
+  opacity: 0.7;
 }
 
 [data-theme="dark"] .beat-light::after {
-  color: var(--color-white); /* White in dark mode */
+  color: var(--color-white);
 }
 
 .beat-light.accent {
   background-color: var(--metronome-blue);
-  opacity: 0.8; /* Enhanced inactive accent visibility */
+  opacity: 0.8;
   color: white;
   text-shadow: 0 0 2px rgba(0,0,0,0.5);
 }
@@ -252,8 +252,9 @@
 }
 
 .beat-light.active::after {
+  color: white;
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1.15); /* Larger active number */
+  transform: translate(-50%, -50%) scale(1.15);
 }
 
 @keyframes enhanced-pulse {
@@ -354,7 +355,7 @@
 }
 
 .tempo-button.primary {
-  background: var(--metronome-gradient);
+  background: var(--metronome-blue);
   border: none;
   color: white;
   width: 85px;
@@ -374,6 +375,13 @@
   border: 1px solid var(--metronome-panel-border);
   padding: 2rem;
   width: 100%;
+}
+
+.accent-pattern {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
 }
 
 @media (min-width: 1550px) {
@@ -633,6 +641,7 @@ select option {
   transition: .4s;
   border-radius: 34px;
   border: 1px solid var(--metronome-panel-border);
+  box-sizing: border-box;
 }
 
 .toggle-slider:before {
@@ -654,7 +663,7 @@ input:checked + .toggle-slider {
 }
 
 input:checked + .toggle-slider:before {
-  transform: translateX(23px);
+  transform: translateX(24px);
 }
 
 .toggle-label {
@@ -710,6 +719,16 @@ input:checked + .toggle-slider:before {
   box-shadow: 0 4px 12px rgba(0,0,0, 0.18);
 }
 
+.tap-tempo-button.tapped {
+  animation: tap-pulse 0.2s ease-out;
+}
+
+@keyframes tap-pulse {
+  0% { transform: scale(1) translateY(-3px); }
+  50% { transform: scale(1.1) translateY(-4px); }
+  100% { transform: scale(1) translateY(-3px); }
+}
+
 .tap-tempo-display {
   font-size: 1.8rem;
   font-weight: 600;
@@ -729,7 +748,7 @@ input:checked + .toggle-slider:before {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  gap: 1.5rem; /* Ensure gap is applied */
+  gap: 1.5rem;
 }
 
 .presets-header h3 {
@@ -902,4 +921,46 @@ input:checked + .toggle-slider:before {
 .save-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+}
+
+.metronome-settings-section {
+  padding: 2rem;
+  background: var(--metronome-panel-bg);
+  border-radius: 1rem;
+  border: 1px solid var(--metronome-panel-border);
+  display: block;
+}
+
+:root:not([data-theme="dark"]) .volume-slider {
+  background: #adb5bd;
+}
+
+:root:not([data-theme="dark"]) input:disabled + .toggle-slider {
+  background-color: #adb5bd;
+  border-color: #6c757d;
+  opacity: 0.7;
+}
+:root:not([data-theme="dark"]) input:disabled + .toggle-slider:before {
+   background-color: #dee2e6;
+}
+
+.metronome-settings-section {
+  padding: 2rem;
+  background: var(--metronome-panel-bg);
+  border-radius: 1rem;
+  border: 1px solid var(--metronome-panel-border);
+  display: block;
+}
+
+:root:not([data-theme="dark"]) .volume-slider {
+  background: #adb5bd;
+}
+
+:root:not([data-theme="dark"]) input:disabled + .toggle-slider {
+  background-color: #adb5bd;
+  border-color: #6c757d;
+  opacity: 0.7;
+}
+:root:not([data-theme="dark"]) input:disabled + .toggle-slider:before {
+   background-color: #dee2e6;
 }
