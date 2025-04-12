@@ -440,12 +440,18 @@ function initializeMetronomeUI() {
     pendulumRaf = requestAnimationFrame(() => animatePendulum(baseInterval, playbackInterval));
   }
   async function startMetronome() {
+    if (isPlaying) {
+      return; 
+    }
+    isPlaying = true; 
+
     if (audioContext === null) {
       await initAudio();
     } else if (audioContext.state === 'suspended') {
       await audioContext.resume();
     }
-      isPlaying = true;
+    
+    // isPlaying = true; // This line is removed as it's set earlier
     currentBeat = 0;
     let subBeat = 0;
     pendulumAngle = 0;
