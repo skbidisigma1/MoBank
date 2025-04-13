@@ -581,24 +581,20 @@
   animation: fadeIn 0.3s ease-out;
 }
 
-select {
+.subdivision-selector {
   width: 100%;
   padding: 0.75rem 1rem;
   background: var(--metronome-panel-bg);
   border: 1px solid var(--metronome-panel-border);
   border-radius: 10px;
   font-size: 1rem;
-  color: white;
+  color: var(--metronome-text);
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-color: var(--metronome-text-light);
-  mask-image: url('../images/dropdown-arrow.svg');
-  -webkit-mask-image: url('../images/dropdown-arrow.svg');
-  mask-repeat: no-repeat;
-  -webkit-mask-repeat: no-repeat;
-  mask-position: right 10px center;
+  position: relative;
+}
   -webkit-mask-position: right 10px center;
   mask-size: 16px 16px;
   -webkit-mask-size: 16px 16px;

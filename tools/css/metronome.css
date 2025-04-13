@@ -465,13 +465,17 @@ input[type="number"]:focus {
   width: 100%;
   padding: 0.75rem 1rem;
   font-size: 1rem;
-  background: var(--metronome-card-bg);
+  background: var(--metronome-input-bg);
   border: 1px solid var(--metronome-border);
   border-radius: 0.5rem;
   color: var(--metronome-text);
   cursor: pointer;
-  appearance: none;
+  font-weight: 600;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  /* Use a standardized appearance for better text visibility */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
 .subdivision-selector:focus {
