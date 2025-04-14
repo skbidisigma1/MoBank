@@ -266,6 +266,12 @@
   transition: all 0.2s ease;
 }
 
+.preset-action-btn svg {
+  width: 22px; /* Increased from 18px */
+  height: 22px; /* Increased from 18px */
+  vertical-align: middle; /* Align icons better */
+}
+
 .preset-action-btn:hover {
   background-color: var(--preset-item-hover);
   color: var(--metronome-text);
@@ -455,6 +461,76 @@
 
 .alert-btn-secondary:hover {
   background-color: var(--preset-item-hover);
+}
+
+/* Preset Accent Pattern Buttons */
+.preset-accent-pattern-wrapper {
+  margin-top: 1rem;
+}
+
+.preset-accent-pattern {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.preset-accent-button {
+  width: 40px; /* Slightly smaller than main */
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--preset-panel-border);
+  background-color: var(--preset-panel-bg);
+  color: var(--metronome-text-light);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.preset-accent-button span {
+  position: relative;
+  z-index: 1;
+}
+
+.preset-accent-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  border-color: var(--preset-header-color);
+}
+
+.preset-accent-button.accent {
+  background-color: var(--preset-header-color);
+  border-color: var(--preset-header-color);
+  color: white;
+  box-shadow: 0 3px 6px rgba(74, 144, 226, 0.4);
+}
+
+.preset-accent-button.accent:hover {
+  background-color: #3a80d2; /* Slightly darker blue on hover */
+  border-color: #3a80d2;
+}
+
+.preset-accent-button.silent {
+  background-color: transparent;
+  border-style: dashed;
+  color: var(--preset-panel-border);
+  opacity: 0.7;
+}
+
+.preset-accent-button.silent span {
+  opacity: 0.5;
+}
+
+.preset-accent-button.silent:hover {
+  opacity: 1;
+  border-color: var(--metronome-text-light);
+  color: var(--metronome-text-light);
 }
 
 .preset-setting-control {
@@ -683,6 +759,130 @@
 
 .toggle-checkbox:checked + .toggle-slider:before {
   transform: translateX(16px);
+}
+
+/* Styling for User Presets Grid on Main Page */
+.presets-section {
+  margin-top: 2.5rem;
+  padding: 2rem;
+  background: var(--metronome-panel-bg);
+  border-radius: 1rem;
+  border: 1px solid var(--metronome-panel-border);
+}
+
+.presets-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.presets-section-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--metronome-text);
+  margin: 0;
+}
+
+/* Style the 'Manage Presets' button */
+#save-preset {
+  background: var(--metronome-panel-bg);
+  border: 1px solid var(--metronome-panel-border);
+  color: var(--metronome-text);
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#save-preset:hover {
+  background: var(--metronome-button-hover);
+  border-color: var(--preset-header-color);
+  color: var(--preset-header-color);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+#save-preset svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
+
+#presets-grid {
+  display: grid;
+  /* Adjust minmax to make cards wider, aiming for ~4 per row */
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+  gap: 1.5rem; /* Slightly larger gap */
+}
+
+.preset-button.user-preset {
+  /* Reset default button styles */
+  appearance: none;
+  border: none;
+  font-family: inherit;
+  /* Card styling */
+  background-color: var(--metronome-bg);
+  border: 1px solid var(--preset-panel-border);
+  border-radius: 10px;
+  padding: 1.2rem; /* Increased padding */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center content horizontally */
+  justify-content: center; /* Center content vertically */
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center; /* Center text */
+  box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+  min-height: 150px; /* Increased min-height for more description space */
+  overflow: hidden; /* Needed for ellipsis */
+}
+
+.preset-button.user-preset:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+  border-color: var(--preset-header-color);
+}
+
+.preset-button.user-preset .preset-tempo {
+  font-weight: 700;
+  color: var(--preset-header-color);
+  font-size: 1.8rem; /* Larger tempo */
+  line-height: 1.2;
+  margin-bottom: 0.2rem;
+}
+
+.preset-button.user-preset .preset-name {
+  font-weight: 600; /* Bolder name */
+  color: var(--metronome-text);
+  font-size: 1rem;
+  line-height: 1.3;
+  word-break: break-word;
+  width: 100%;
+  /* Ellipsis for name (max 2 lines) */
+  display: -webkit-box;
+  -webkit-line-clamp: 2; 
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preset-button.user-preset .preset-description {
+  font-size: 0.85rem;
+  color: var(--metronome-text-light);
+  line-height: 1.4;
+  margin-top: 0.3rem;
+  width: 100%;
+  /* Ellipsis for description (max 3 lines) */
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Show max 3 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .toggle-text {

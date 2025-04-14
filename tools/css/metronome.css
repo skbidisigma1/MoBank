@@ -253,7 +253,7 @@
   opacity: 1;
   transform: scale(1.2);
   box-shadow: 0 0 12px var(--metronome-accent);
-  animation: pulse 0.18s ease-out;
+  /* animation: pulse 0.18s ease-out; */
 }
 
 .beat-light.active::after {

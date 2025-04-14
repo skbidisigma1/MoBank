@@ -209,7 +209,6 @@
   border-radius: 50%;
   background-color: var(--metronome-border);
   opacity: 0.6;
-  transition: all 0.15s ease;
   position: relative;
   display: flex;
   align-items: center;
@@ -246,7 +245,6 @@
   opacity: 1;
   transform: scale(1.3);
   box-shadow: var(--metronome-accent-glow);
-  animation: enhanced-pulse 0.18s ease-out;
   color: white;
   text-shadow: 0 0 2px rgba(0,0,0,0.5);
 }
@@ -255,12 +253,6 @@
   color: white;
   opacity: 1;
   transform: translate(-50%, -50%) scale(1.15);
-}
-
-@keyframes enhanced-pulse {
-  0% { transform: scale(1); opacity: 0.5; box-shadow: 0 0 8px rgba(var(--tools-primary-rgb), 0.4); }
-  50% { transform: scale(1.4); opacity: 1; box-shadow: 0 0 20px rgba(var(--tools-primary-rgb), 0.9); }
-  100% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 18px rgba(var(--tools-primary-rgb), 0.7); }
 }
 
 .metronome-controls-section {
@@ -741,18 +733,18 @@ input:disabled + .toggle-slider {
 .accent-pattern {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem; /* Increased gap */
+  gap: 0.75rem;
   justify-content: center;
 }
 
 .accent-button {
-  width: 45px; /* Slightly larger */
+  width: 45px;
   height: 45px;
   border-radius: 50%;
   border: 2px solid var(--metronome-border);
   background-color: var(--metronome-input-bg);
   color: var(--metronome-text-light);
-  font-size: 1.1rem; /* Larger font */
+  font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -782,7 +774,7 @@ input:disabled + .toggle-slider {
 }
 
 .accent-button.accent:hover {
-  background-color: #3a80d2; /* Slightly darker blue on hover */
+  background-color: #3a80d2;
   border-color: #3a80d2;
 }
 
@@ -802,5 +794,3 @@ input:disabled + .toggle-slider {
   border-color: var(--metronome-text-light);
   color: var(--metronome-text-light);
 }
-
-@media (min-width: 1550px) {
