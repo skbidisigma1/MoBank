@@ -733,3 +733,74 @@ input:disabled + .toggle-slider {
   color: var(--metronome-text);
   transition: all 0.2s ease;
 }
+
+.accent-pattern-wrapper {
+  margin-top: 1rem;
+}
+
+.accent-pattern {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem; /* Increased gap */
+  justify-content: center;
+}
+
+.accent-button {
+  width: 45px; /* Slightly larger */
+  height: 45px;
+  border-radius: 50%;
+  border: 2px solid var(--metronome-border);
+  background-color: var(--metronome-input-bg);
+  color: var(--metronome-text-light);
+  font-size: 1.1rem; /* Larger font */
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.accent-button span {
+  position: relative;
+  z-index: 1;
+}
+
+.accent-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  border-color: var(--metronome-blue);
+}
+
+.accent-button.accent {
+  background-color: var(--metronome-blue);
+  border-color: var(--metronome-blue);
+  color: white;
+  box-shadow: 0 3px 6px rgba(74, 144, 226, 0.4);
+}
+
+.accent-button.accent:hover {
+  background-color: #3a80d2; /* Slightly darker blue on hover */
+  border-color: #3a80d2;
+}
+
+.accent-button.silent {
+  background-color: transparent;
+  border-style: dashed;
+  color: var(--metronome-border);
+  opacity: 0.7;
+}
+
+.accent-button.silent span {
+  opacity: 0.5;
+}
+
+.accent-button.silent:hover {
+  opacity: 1;
+  border-color: var(--metronome-text-light);
+  color: var(--metronome-text-light);
+}
+
+@media (min-width: 1550px) {

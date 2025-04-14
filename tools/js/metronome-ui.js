@@ -460,6 +460,15 @@ function initializeMetronomeUI(){
   const includeSoundCheck=document.getElementById('include-sound')
   const includeVolumeCheck=document.getElementById('include-volume')
   const includeVoiceSettingsCheck=document.getElementById('include-voice-settings')
+
+  const presetDecreaseBeats = document.getElementById('preset-decrease-beats');
+  const presetIncreaseBeats = document.getElementById('preset-increase-beats');
+  const presetDecreaseNoteValue = document.getElementById('preset-decrease-note-value');
+  const presetIncreaseNoteValue = document.getElementById('preset-increase-note-value');
+  const presetSoundButtons = document.querySelectorAll('.preset-sound-button');
+  const presetVolumeSlider = document.getElementById('preset-volume-slider');
+  const presetVoiceVolumeSlider = document.getElementById('preset-voice-volume-slider');
+
   let currentEditingPresetId=null
   function initializePresets(){renderUserPresets();loadUserPresetsToGrid()}
   presetTabs.forEach(tab=>{
