@@ -1295,3 +1295,17 @@ async function loadUserPresetsToGrid() {
     }
   });
 }
+
+function getIncludedSettingsString(preset) {
+  const settings = [];
+  if (!preset || !preset.settings) return '';
+  if (preset.settings.tempo !== undefined) settings.push('Tempo');
+  if (preset.settings.beatsPerMeasure !== undefined) settings.push('Time Sig');
+  if (preset.settings.subdivision !== undefined) settings.push('Subdivision');
+  if (preset.settings.accentPattern !== undefined) settings.push('Accents');
+  if (preset.settings.sound !== undefined) settings.push('Sound');
+  if (preset.settings.volume !== undefined) settings.push('Volume');
+  if (preset.settings.useVoiceCounting !== undefined) settings.push('Voice');
+  if (settings.length === 0) return '';
+  return `<span class="preset-included-settings">Includes: ${settings.join(', ')}</span>`;
+}
