@@ -1109,6 +1109,10 @@ function initializeMetronomeUI() {
       });
   }
 
+  // Ensure all preset-sound-buttons are type="button" (for static and dynamic cases)
+  document.querySelectorAll('.preset-sound-button').forEach(btn => {
+    if (btn.tagName === 'BUTTON') btn.type = 'button';
+  });
 
   // Final Initializations
   initializePresets();
