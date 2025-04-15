@@ -52,7 +52,7 @@ module.exports = async (req, res) => {
         const data = userDoc.data();
         const presets = Array.isArray(data.metronomePresets) ? data.metronomePresets : [];
         if (presets.length >= 4) throw new Error('Preset limit reached');
-        const now = admin.firestore.FieldValue.serverTimestamp();
+        const now = Date.now();
         const newPreset = { id, name, description: description || '', createdAt: now, updatedAt: now, settings };
         t.update(userRef, { metronomePresets: [...presets, newPreset] });
       });
@@ -91,7 +91,7 @@ module.exports = async (req, res) => {
           name,
           description: description || '',
           settings,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: Date.now(),
         };
         const newPresets = [...presets];
         newPresets[idx] = updatedPreset;
