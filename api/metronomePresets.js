@@ -1,7 +1,9 @@
 const { admin, db } = require('../firebase');
 
 module.exports = async (req, res) => {
+  console.log('metronomePresets.js invoked', { method: req.method, headers: req.headers });
   const uid = req.auth && req.auth.payload && req.auth.payload.sub;
+  console.log('Auth check', { uid, auth: req.auth });
   if (!uid) return res.status(401).json({ message: 'Unauthorized' });
 
   if (req.method === 'GET') {
