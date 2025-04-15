@@ -1313,3 +1313,59 @@ function getIncludedSettingsString(preset) {
   if (settings.length === 0) return '';
   return `<span class="preset-included-settings">Includes: ${settings.join(', ')}</span>`;
 }
+
+// --- Apply a preset to the metronome UI and state ---
+function applyPreset(preset) {
+  if (!preset || !preset.settings) return;
+  // Set tempo
+  if (preset.settings.tempo !== undefined && typeof updateTempo === 'function') {
+    updateTempo(preset.settings.tempo);
+  }
+  // Set time signature
+  if (preset.settings.beatsPerMeasure !== undefined && typeof updateBeatsPerMeasure === 'function') {
+    updateBeatsPerMeasure(preset.settings.beatsPerMeasure);
+  }
+  if (preset.settings.noteValue !== undefined && typeof updateNoteValue === 'function') {
+    updateNoteValue(preset.settings.noteValue);
+  }
+  // Set subdivision
+  if (preset.settings.subdivision !== undefined && typeof subdivisionSelector !== 'undefined' && subdivisionSelector) {
+    subdivision = preset.settings.subdivision;
+    subdivisionSelector.value = subdivision;
+  }
+  // Set sound
+  if (preset.settings.sound !== undefined) {
+    selectedSound = preset.settings.sound;
+    // Update UI for sound selection if needed
+    document.querySelectorAll('.sound-button').forEach(btn => {
+      btn.classList.toggle('selected', btn.dataset.sound === selectedSound);
+    });
+  }
+  // Set volume
+  if (preset.settings.volume !== undefined && typeof volumeSlider !== 'undefined' && volumeSlider) {
+    volume = preset.settings.volume / 100 * 1.5;
+    volumeSlider.value = preset.settings.volume;
+  }
+  // Set accent pattern (if needed, add your own logic)
+  // Set voice counting
+  if (preset.settings.useVoiceCounting !== undefined && typeof useVoiceCountingCheckbox !== 'undefined' && useVoiceCountingCheckbox) {
+    useVoiceCountingCheckbox.checked = preset.settings.useVoiceCounting;
+    useVoiceCounting = preset.settings.useVoiceCounting;
+    if (voiceOptionsPanel) voiceOptionsPanel.style.display = useVoiceCounting ? 'block' : 'none';
+  }
+  // Set click subdivision
+  if (preset.settings.useClickSubdivision !== undefined && typeof useClickSubdivisionCheckbox !== 'undefined' && useClickSubdivisionCheckbox) {
+    useClickSubdivisionCheckbox.checked = preset.settings.useClickSubdivision;
+    useClickSubdivision = preset.settings.useClickSubdivision;
+  }
+  // Set voice volume
+  if (preset.settings.voiceVolume !== undefined && typeof voiceVolumeSlider !== 'undefined' && voiceVolumeSlider) {
+    voiceVolume = preset.settings.voiceVolume / 100 * 1.5;
+    voiceVolumeSlider.value = preset.settings.voiceVolume;
+  }
+  // If you want to update accent pattern UI, add logic here
+  // If metronome is playing, restart to apply changes
+  if (typeof isPlaying !== 'undefined' && isPlaying && typeof restartMetronome === 'function') {
+    restartMetronome();
+  }
+}
