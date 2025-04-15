@@ -682,7 +682,7 @@ function initializeMetronomeUI() {
   // SAVE button INSIDE the modal (id='preset-save-action' or similar recommended)
   const modalSaveButton = document.getElementById('preset-save'); // Check if this ID is correct for the *button*
   if (modalSaveButton && modalSaveButton.tagName === 'BUTTON') {
-      modalSaveButton.addEventListener('click', () => {
+      modalSaveButton.addEventListener('click', async () => {
           const name = presetNameInput ? presetNameInput.value.trim() : '';
           if (!name) { showAlert('Please enter a name for the preset'); return; }
 
@@ -732,7 +732,7 @@ function initializeMetronomeUI() {
                preset.settings.voiceVolume = parseInt(presetVoiceVolEl.value);
            }
 
-          savePresetToStorage(preset);
+          await savePresetToStorage(preset);
           resetPresetForm();
           if (presetModal) presetModal.classList.remove('visible');
           renderUserPresets();
@@ -742,7 +742,7 @@ function initializeMetronomeUI() {
 
   // UPDATE button INSIDE the modal
   if (presetUpdateBtn) {
-      presetUpdateBtn.addEventListener('click', () => {
+      presetUpdateBtn.addEventListener('click', async () => {
           if (!currentEditingPresetId) return;
           const name = presetNameInput ? presetNameInput.value.trim() : '';
           if (!name) { showAlert('Please enter a name for the preset'); return; }
@@ -799,8 +799,7 @@ function initializeMetronomeUI() {
            }
 
 
-          presets[presetIndex] = updatedPreset;
-          localStorage.setItem('metronomePresets', JSON.stringify(presets));
+          await updatePresetInStorage(updatedPreset);
           resetPresetForm();
           if (presetModal) presetModal.classList.remove('visible');
           renderUserPresets();
@@ -835,236 +834,120 @@ function initializeMetronomeUI() {
        }
   }
 
-  function savePresetToStorage(preset) {
-    const presets = getUserPresets()
-    presets.push(preset)
-    localStorage.setItem('metronomePresets', JSON.stringify(presets))
-  }
-
-  function getUserPresets() {
-    const presets = localStorage.getItem('metronomePresets')
+  async function savePresetToStorage(preset) {
     try {
-        return presets ? JSON.parse(presets) : []
+      await savePresetToBackend(preset);
+      await renderUserPresets();
+      loadUserPresetsToGrid();
     } catch (e) {
-        console.error("Error parsing presets from localStorage:", e);
-        return []; // Return empty array on error
+      showAlert(e.message);
     }
   }
 
-  function renderUserPresets() {
-      const presets = getUserPresets();
-      if (!presetList || !emptyPresets) return;
+  async function updatePresetInStorage(preset) {
+    try {
+      await updatePresetInBackend(preset);
+      await renderUserPresets();
+      loadUserPresetsToGrid();
+    } catch (e) {
+      showAlert(e.message);
+    }
+  }
 
-      Array.from(presetList.children).forEach(child => {
-          if (child !== emptyPresets) { child.remove(); }
+  async function deletePreset(presetId) {
+    showConfirm('Are you sure you want to delete this preset?', async () => {
+      try {
+        await deletePresetFromBackend(presetId);
+        await renderUserPresets();
+        loadUserPresetsToGrid();
+      } catch (e) {
+        showAlert(e.message);
+      }
+    });
+  }
+
+  let backendPresetsCache = [];
+
+  async function refreshBackendPresets() {
+    backendPresetsCache = await fetchUserPresets();
+  }
+
+  function getUserPresets() {
+    return backendPresetsCache;
+  }
+
+  async function renderUserPresets() {
+    await refreshBackendPresets();
+    const presets = getUserPresets();
+    if (!presetList || !emptyPresets) return;
+    Array.from(presetList.children).forEach(child => {
+      if (child !== emptyPresets) { child.remove(); }
+    });
+    if (presets.length === 0) {
+      emptyPresets.style.display = 'block';
+      return;
+    } else {
+      emptyPresets.style.display = 'none';
+    }
+    presets.forEach(preset => {
+      const presetItem = document.createElement('div');
+      presetItem.className = 'preset-item';
+      presetItem.dataset.id = preset.id;
+      const includesString = getIncludedSettingsString(preset);
+      presetItem.innerHTML = `
+        <h3 class="preset-item-title">${preset.name || 'Unnamed Preset'}</h3>
+        ${preset.description ? `<p class="preset-item-description">${preset.description}</p>` : ''}
+        ${preset.settings?.tempo !== undefined ? `<div class="preset-item-tempo">${preset.settings.tempo} BPM</div>` : ''}
+        <div class="preset-item-includes">${includesString}</div>
+        <div class="preset-item-actions">
+          <button class="preset-action-btn edit" aria-label="Edit preset">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+            </svg>
+          </button>
+          <button class="preset-action-btn delete" aria-label="Delete preset">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
+      `;
+      presetItem.addEventListener('click', (e) => {
+        if (!e.target.closest('.preset-action-btn')) {
+          applyPreset(preset);
+          if (presetModal) presetModal.classList.remove('visible');
+        }
       });
-
-      if (presets.length === 0) {
-          emptyPresets.style.display = 'block';
-          return;
-      } else {
-          emptyPresets.style.display = 'none';
-      }
-
-      presets.forEach(preset => {
-          const presetItem = document.createElement('div');
-          presetItem.className = 'preset-item';
-          presetItem.dataset.id = preset.id;
-          const includesString = getIncludedSettingsString(preset);
-          presetItem.innerHTML = `
-            <h3 class="preset-item-title">${preset.name || 'Unnamed Preset'}</h3>
-            ${preset.description ? `<p class="preset-item-description">${preset.description}</p>` : ''}
-            ${preset.settings?.tempo !== undefined ? `<div class="preset-item-tempo">${preset.settings.tempo} BPM</div>` : ''}
-            <div class="preset-item-includes">${includesString}</div>
-            <div class="preset-item-actions">
-              <button class="preset-action-btn edit" aria-label="Edit preset">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                </svg>
-              </button>
-              <button class="preset-action-btn delete" aria-label="Delete preset">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-              </button>
-            </div>
-          `;
-
-          presetItem.addEventListener('click', (e) => {
-              if (!e.target.closest('.preset-action-btn')) {
-                  applyPreset(preset);
-                  if (presetModal) presetModal.classList.remove('visible');
-              }
-          });
-
-          const editBtn = presetItem.querySelector('.edit');
-          if (editBtn) { editBtn.addEventListener('click', (e) => { e.stopPropagation(); enterEditMode(preset); }); }
-
-          const deleteBtn = presetItem.querySelector('.delete');
-          if (deleteBtn) { deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); deletePreset(preset.id); }); }
-
-          presetList.appendChild(presetItem);
-      });
+      const editBtn = presetItem.querySelector('.edit');
+      if (editBtn) { editBtn.addEventListener('click', (e) => { e.stopPropagation(); enterEditMode(preset); }); }
+      const deleteBtn = presetItem.querySelector('.delete');
+      if (deleteBtn) { deleteBtn.addEventListener('click', async (e) => { e.stopPropagation(); await deletePreset(preset.id); }); }
+      presetList.appendChild(presetItem);
+    });
   }
 
-  function getIncludedSettingsString(preset) {
-    const settings = []
-    if (!preset || !preset.settings) return '';
-    if (preset.settings.tempo !== undefined) settings.push('Tempo')
-    if (preset.settings.beatsPerMeasure !== undefined) settings.push('Time Sig')
-    if (preset.settings.subdivision !== undefined) settings.push('Subdivision')
-    if (preset.settings.accentPattern !== undefined) settings.push('Accents')
-    if (preset.settings.sound !== undefined) settings.push('Sound')
-    if (preset.settings.volume !== undefined) settings.push('Volume')
-    if (preset.settings.useVoiceCounting !== undefined) settings.push('Voice')
-    if (settings.length === 0) return ''
-    return `<span class="preset-included-settings">Includes: ${settings.join(', ')}</span>`
+  async function loadUserPresetsToGrid() {
+    await refreshBackendPresets();
+    const presets = getUserPresets();
+    if (!presetsGrid) return;
+    const existingUserPresets = presetsGrid.querySelectorAll('.user-preset');
+    existingUserPresets.forEach(btn => btn.remove());
+    presets.forEach(preset => {
+      if (preset.name && preset.settings && preset.settings.tempo !== undefined) {
+        const presetButton = document.createElement('button');
+        presetButton.className = 'preset-button user-preset';
+        presetButton.dataset.id = preset.id;
+        presetButton.innerHTML = `
+          <span class="preset-tempo">${preset.settings.tempo}</span>
+          <span class="preset-name">${preset.name}</span>
+          ${preset.description ? `<span class="preset-description">${preset.description}</span>` : ''}
+        `;
+        presetButton.addEventListener('click', () => { applyPreset(preset); });
+        presetsGrid.appendChild(presetButton);
+      }
+    });
   }
-
-  function enterEditMode(preset) {
-      if (!preset || !preset.settings) return;
-      currentEditingPresetId = preset.id;
-
-      if (presetTabs) presetTabs.forEach(t => t.classList.remove('active'));
-      if (presetTabContents) presetTabContents.forEach(c => c.classList.remove('active'));
-      const saveTab = document.querySelector('.preset-tab[data-tab="save"]');
-      const saveTabContent = document.getElementById('save-tab');
-      if (saveTab) saveTab.classList.add('active');
-      if (saveTabContent) saveTabContent.classList.add('active');
-
-
-      if (presetNameInput) presetNameInput.value = preset.name || '';
-      if (presetDescInput) presetDescInput.value = preset.description || '';
-
-      if (includeTempoCheck) includeTempoCheck.checked = preset.settings.tempo !== undefined;
-      if (includeTimeSignatureCheck) includeTimeSignatureCheck.checked = preset.settings.beatsPerMeasure !== undefined;
-      if (includeSubdivisionCheck) includeSubdivisionCheck.checked = preset.settings.subdivision !== undefined;
-      if (includeAccentPatternCheck) includeAccentPatternCheck.checked = preset.settings.accentPattern !== undefined;
-      if (includeSoundCheck) includeSoundCheck.checked = preset.settings.sound !== undefined;
-      if (includeVolumeCheck) includeVolumeCheck.checked = preset.settings.volume !== undefined;
-      if (includeVoiceSettingsCheck) includeVoiceSettingsCheck.checked = preset.settings.useVoiceCounting !== undefined;
-
-      initializePresetControls(preset);
-
-      const container = document.getElementById('preset-accent-pattern-container');
-      if (container && includeAccentPatternCheck) {
-           container.style.display = includeAccentPatternCheck.checked ? 'block' : 'none';
-      }
-       if (includeAccentPatternCheck && includeAccentPatternCheck.checked) {
-           updatePresetAccentPattern(preset.settings.accentPattern);
-       }
-
-
-      if (saveTabButtons) saveTabButtons.style.display = 'none';
-      if (editTabButtons) editTabButtons.style.display = 'flex';
-  }
-
-  function deletePreset(presetId) {
-      showConfirm('Are you sure you want to delete this preset?', () => {
-          const presets = getUserPresets();
-          const updatedPresets = presets.filter(p => p.id !== presetId);
-          localStorage.setItem('metronomePresets', JSON.stringify(updatedPresets));
-          renderUserPresets();
-          loadUserPresetsToGrid();
-      });
-  }
-
-  function applyPreset(preset) {
-      if (!preset || !preset.settings) return;
-      const settings = preset.settings;
-
-      if (settings.tempo !== undefined) { updateTempo(settings.tempo); }
-      if (settings.beatsPerMeasure !== undefined && settings.noteValue !== undefined) {
-          updateBeatsPerMeasure(settings.beatsPerMeasure);
-          updateNoteValue(settings.noteValue);
-      } else if (settings.beatsPerMeasure !== undefined) {
-           updateBeatsPerMeasure(settings.beatsPerMeasure);
-      } else if (settings.noteValue !== undefined) {
-           updateNoteValue(settings.noteValue);
-      }
-
-      if (settings.subdivision !== undefined && subdivisionSelector) {
-          subdivision = settings.subdivision;
-          subdivisionSelector.value = settings.subdivision;
-      }
-
-      if (settings.accentPattern) {
-          const accentButtons = document.querySelectorAll('.accent-button');
-          // Ensure accent pattern is applied *after* potential time signature changes
-          // Need to make sure updateAccentPattern() in updateBeatsPerMeasure/updateNoteValue doesn't overwrite this
-          // Maybe applyPreset should temporarily disable auto-updates? Or re-apply pattern after time sig change?
-          // For now, assume updateAccentPattern in time sig functions respects existing buttons if possible
-          settings.accentPattern.forEach((state, index) => {
-              if (index < accentButtons.length) {
-                  const btn = accentButtons[index];
-                  if (btn) {
-                      btn.dataset.state = state;
-                      btn.classList.remove('accent', 'silent');
-                      if (state === 'accent') { btn.classList.add('accent'); }
-                      else if (state === 'silent') { btn.classList.add('silent'); }
-                  }
-              }
-          });
-          updateBeatLights();
-      }
-
-      if (settings.sound && soundButtons) {
-          selectedSound = settings.sound;
-          soundButtons.forEach(btn => {
-              btn.classList.remove('selected');
-              if (btn.dataset.sound === settings.sound) { btn.classList.add('selected'); }
-          });
-      }
-
-      if (settings.volume !== undefined && volumeSlider) {
-          volume = (settings.volume / 100) * 1.5;
-          volumeSlider.value = settings.volume;
-      }
-
-      if (settings.useVoiceCounting !== undefined && useVoiceCountingCheckbox && voiceOptionsPanel) {
-          useVoiceCounting = settings.useVoiceCounting;
-          useVoiceCountingCheckbox.checked = settings.useVoiceCounting;
-          voiceOptionsPanel.style.display = settings.useVoiceCounting ? 'block' : 'none';
-
-          if (settings.useClickSubdivision !== undefined && useClickSubdivisionCheckbox) {
-              useClickSubdivision = settings.useClickSubdivision;
-              useClickSubdivisionCheckbox.checked = settings.useClickSubdivision;
-          }
-          if (settings.voiceVolume !== undefined && voiceVolumeSlider) {
-              voiceVolume = (settings.voiceVolume / 100) * 1.5;
-              voiceVolumeSlider.value = settings.voiceVolume;
-          }
-      }
-
-      if (isPlaying) { restartMetronome(); }
-  }
-
-
-  function loadUserPresetsToGrid() {
-      const presets = getUserPresets();
-      if (!presetsGrid) return;
-
-      const existingUserPresets = presetsGrid.querySelectorAll('.user-preset');
-      existingUserPresets.forEach(btn => btn.remove());
-
-      presets.forEach(preset => {
-          // Only show presets that have at least a name and tempo
-          if (preset.name && preset.settings && preset.settings.tempo !== undefined) {
-              const presetButton = document.createElement('button');
-              presetButton.className = 'preset-button user-preset';
-              presetButton.dataset.id = preset.id;
-              presetButton.innerHTML = `
-                <span class="preset-tempo">${preset.settings.tempo}</span>
-                <span class="preset-name">${preset.name}</span>
-                ${preset.description ? `<span class="preset-description">${preset.description}</span>` : ''}
-              `;
-              presetButton.addEventListener('click', () => { applyPreset(preset); });
-              presetsGrid.appendChild(presetButton);
-          }
-      });
-  }
-
 
   // Alert/Confirm Modals
   function showAlert(message, callback) {
@@ -1231,4 +1114,184 @@ function initializeMetronomeUI() {
   initializePresets();
   initializePresetControls();
   initAudio();
+}
+
+// --- Backend API integration for metronome presets ---
+async function getAuthToken() {
+  if (window.auth0Client && typeof window.auth0Client.getTokenSilently === 'function') {
+    return await window.auth0Client.getTokenSilently();
+  }
+  if (window.getToken) {
+    return await window.getToken();
+  }
+  return null;
+}
+
+async function fetchUserPresets() {
+  const token = await getAuthToken();
+  if (!token) return [];
+  const res = await fetch('/api/metronomePresets', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) return [];
+  return await res.json();
+}
+
+async function savePresetToBackend(preset) {
+  const token = await getAuthToken();
+  if (!token) throw new Error('Not authenticated');
+  const res = await fetch('/api/metronomePresets', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ name: preset.name, description: preset.description, settings: preset.settings })
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || 'Failed to save preset');
+  }
+  return await res.json();
+}
+
+async function updatePresetInBackend(preset) {
+  const token = await getAuthToken();
+  if (!token) throw new Error('Not authenticated');
+  const res = await fetch('/api/metronomePresets', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ presetId: preset.id, name: preset.name, description: preset.description, settings: preset.settings })
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || 'Failed to update preset');
+  }
+  return await res.json();
+}
+
+async function deletePresetFromBackend(presetId) {
+  const token = await getAuthToken();
+  if (!token) throw new Error('Not authenticated');
+  const res = await fetch('/api/metronomePresets', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ presetId })
+  });
+  if (!res.ok && res.status !== 204) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || 'Failed to delete preset');
+  }
+}
+
+let backendPresetsCache = [];
+
+async function refreshBackendPresets() {
+  backendPresetsCache = await fetchUserPresets();
+}
+
+function getUserPresets() {
+  return backendPresetsCache;
+}
+
+async function renderUserPresets() {
+  await refreshBackendPresets();
+  const presets = getUserPresets();
+  if (!presetList || !emptyPresets) return;
+  Array.from(presetList.children).forEach(child => {
+    if (child !== emptyPresets) { child.remove(); }
+  });
+  if (presets.length === 0) {
+    emptyPresets.style.display = 'block';
+    return;
+  } else {
+    emptyPresets.style.display = 'none';
+  }
+  presets.forEach(preset => {
+    const presetItem = document.createElement('div');
+    presetItem.className = 'preset-item';
+    presetItem.dataset.id = preset.id;
+    const includesString = getIncludedSettingsString(preset);
+    presetItem.innerHTML = `
+      <h3 class="preset-item-title">${preset.name || 'Unnamed Preset'}</h3>
+      ${preset.description ? `<p class="preset-item-description">${preset.description}</p>` : ''}
+      ${preset.settings?.tempo !== undefined ? `<div class="preset-item-tempo">${preset.settings.tempo} BPM</div>` : ''}
+      <div class="preset-item-includes">${includesString}</div>
+      <div class="preset-item-actions">
+        <button class="preset-action-btn edit" aria-label="Edit preset">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+          </svg>
+        </button>
+        <button class="preset-action-btn delete" aria-label="Delete preset">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+      </div>
+    `;
+    presetItem.addEventListener('click', (e) => {
+      if (!e.target.closest('.preset-action-btn')) {
+        applyPreset(preset);
+        if (presetModal) presetModal.classList.remove('visible');
+      }
+    });
+    const editBtn = presetItem.querySelector('.edit');
+    if (editBtn) { editBtn.addEventListener('click', (e) => { e.stopPropagation(); enterEditMode(preset); }); }
+    const deleteBtn = presetItem.querySelector('.delete');
+    if (deleteBtn) { deleteBtn.addEventListener('click', async (e) => { e.stopPropagation(); await deletePreset(preset.id); }); }
+    presetList.appendChild(presetItem);
+  });
+}
+
+async function savePresetToStorage(preset) {
+  try {
+    await savePresetToBackend(preset);
+    await renderUserPresets();
+    loadUserPresetsToGrid();
+  } catch (e) {
+    showAlert(e.message);
+  }
+}
+
+async function updatePresetInStorage(preset) {
+  try {
+    await updatePresetInBackend(preset);
+    await renderUserPresets();
+    loadUserPresetsToGrid();
+  } catch (e) {
+    showAlert(e.message);
+  }
+}
+
+async function deletePreset(presetId) {
+  showConfirm('Are you sure you want to delete this preset?', async () => {
+    try {
+      await deletePresetFromBackend(presetId);
+      await renderUserPresets();
+      loadUserPresetsToGrid();
+    } catch (e) {
+      showAlert(e.message);
+    }
+  });
+}
+
+async function loadUserPresetsToGrid() {
+  await refreshBackendPresets();
+  const presets = getUserPresets();
+  if (!presetsGrid) return;
+  const existingUserPresets = presetsGrid.querySelectorAll('.user-preset');
+  existingUserPresets.forEach(btn => btn.remove());
+  presets.forEach(preset => {
+    if (preset.name && preset.settings && preset.settings.tempo !== undefined) {
+      const presetButton = document.createElement('button');
+      presetButton.className = 'preset-button user-preset';
+      presetButton.dataset.id = preset.id;
+      presetButton.innerHTML = `
+        <span class="preset-tempo">${preset.settings.tempo}</span>
+        <span class="preset-name">${preset.name}</span>
+        ${preset.description ? `<span class="preset-description">${preset.description}</span>` : ''}
+      `;
+      presetButton.addEventListener('click', () => { applyPreset(preset); });
+      presetsGrid.appendChild(presetButton);
+    }
+  });
 }
