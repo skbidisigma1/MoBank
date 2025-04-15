@@ -26,8 +26,10 @@ module.exports = async (req, res) => {
       const userDoc = await db.collection('users').doc(uid).get();
       if (!userDoc.exists) return res.status(404).json({ message: 'User not found' });
       const data = userDoc.data();
-      res.status(200).json(Array.isArray(data.metronomePresets) ? data.metronomePresets : []);
+      const presets = Array.isArray(data.metronomePresets) ? data.metronomePresets : [];
+      res.status(200).json(presets);
     } catch (error) {
+      console.error('GET metronomePresets error:', error);
       res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
     }
     return;
@@ -42,8 +44,11 @@ module.exports = async (req, res) => {
     try {
       await db.runTransaction(async (t) => {
         const userRef = db.collection('users').doc(uid);
-        const userDoc = await t.get(userRef);
-        if (!userDoc.exists) throw new Error('User not found');
+        let userDoc = await t.get(userRef);
+        if (!userDoc.exists) {
+          t.set(userRef, { metronomePresets: [] }, { merge: true });
+          userDoc = await t.get(userRef);
+        }
         const data = userDoc.data();
         const presets = Array.isArray(data.metronomePresets) ? data.metronomePresets : [];
         if (presets.length >= 4) throw new Error('Preset limit reached');
@@ -56,6 +61,7 @@ module.exports = async (req, res) => {
       const preset = (data.metronomePresets || []).find((p) => p.id === id);
       res.status(201).json(preset);
     } catch (error) {
+      console.error('POST metronomePresets error:', error);
       if (error.message === 'Preset limit reached') return res.status(400).json({ message: 'Preset limit reached' });
       if (error.message === 'User not found') return res.status(404).json({ message: 'User not found' });
       res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
@@ -71,8 +77,11 @@ module.exports = async (req, res) => {
     try {
       await db.runTransaction(async (t) => {
         const userRef = db.collection('users').doc(uid);
-        const userDoc = await t.get(userRef);
-        if (!userDoc.exists) throw new Error('User not found');
+        let userDoc = await t.get(userRef);
+        if (!userDoc.exists) {
+          t.set(userRef, { metronomePresets: [] }, { merge: true });
+          userDoc = await t.get(userRef);
+        }
         const data = userDoc.data();
         const presets = Array.isArray(data.metronomePresets) ? data.metronomePresets : [];
         const idx = presets.findIndex((p) => p.id === presetId);
@@ -93,6 +102,7 @@ module.exports = async (req, res) => {
       const preset = (data.metronomePresets || []).find((p) => p.id === presetId);
       res.status(200).json(preset);
     } catch (error) {
+      console.error('PUT metronomePresets error:', error);
       if (error.message === 'Preset not found') return res.status(404).json({ message: 'Preset not found' });
       if (error.message === 'User not found') return res.status(404).json({ message: 'User not found' });
       res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
@@ -106,8 +116,11 @@ module.exports = async (req, res) => {
     try {
       await db.runTransaction(async (t) => {
         const userRef = db.collection('users').doc(uid);
-        const userDoc = await t.get(userRef);
-        if (!userDoc.exists) throw new Error('User not found');
+        let userDoc = await t.get(userRef);
+        if (!userDoc.exists) {
+          t.set(userRef, { metronomePresets: [] }, { merge: true });
+          userDoc = await t.get(userRef);
+        }
         const data = userDoc.data();
         const presets = Array.isArray(data.metronomePresets) ? data.metronomePresets : [];
         const newPresets = presets.filter((p) => p.id !== presetId);
@@ -116,6 +129,7 @@ module.exports = async (req, res) => {
       });
       res.status(204).end();
     } catch (error) {
+      console.error('DELETE metronomePresets error:', error);
       if (error.message === 'Preset not found') return res.status(404).json({ message: 'Preset not found' });
       if (error.message === 'User not found') return res.status(404).json({ message: 'User not found' });
       res.status(500).json({ message: 'Internal Server Error', error: error.toString() });
