@@ -1346,7 +1346,10 @@ function applyPreset(preset) {
     volume = preset.settings.volume / 100 * 1.5;
     volumeSlider.value = preset.settings.volume;
   }
-  // Set accent pattern (if needed, add your own logic)
+  // Set accent pattern
+  if (preset.settings.accentPattern !== undefined && typeof updateAccentPattern === 'function') {
+    updateAccentPattern(preset.settings.accentPattern);
+  }
   // Set voice counting
   if (preset.settings.useVoiceCounting !== undefined && typeof useVoiceCountingCheckbox !== 'undefined' && useVoiceCountingCheckbox) {
     useVoiceCountingCheckbox.checked = preset.settings.useVoiceCounting;
