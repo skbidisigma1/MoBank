@@ -30,9 +30,16 @@ function getUrlParameter(name) {
 
 function setupButtons() {
     const transferButton = document.getElementById('transfer-mobucks-btn');
+    const moToolsButton = document.getElementById('motools-btn');
     const logoutButton = document.getElementById('logout-btn');
     const profileButton = document.getElementById('profile-btn');
     const leaderboardButton = document.getElementById('leaderboard-btn');
+
+    if (moToolsButton) {
+        moToolsButton.addEventListener('click', () => {
+            window.location.href = 'tools';
+        });
+    }
 
     if (transferButton) {
         transferButton.addEventListener('click', () => {
