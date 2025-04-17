@@ -35,6 +35,8 @@
   --color-danger-dark: #bb2d3b;
   --color-success: #198754;
   --color-success-dark: #146c43;
+  --color-success: #6e6e6e;
+  --color-success-dark: #5b5b5b;
 }
 [data-theme="dark"] {
   --color-primary: #005fa3;
@@ -68,8 +70,8 @@
   --heading-gradient-to: #e0e0e0;
   --color-danger: #ff4d4d;
   --color-danger-dark: #e60000;
-  --color-success: #00b371;
-  --color-success-dark: #008f5b;
+  --color-success: #6e6e6e;
+  --color-success-dark: #5b5b5b;
 }
 #particles-js {
   position: fixed;
@@ -2547,6 +2549,15 @@ select:after {
   background-color: var(--color-success-dark);
 }
 
+.action-button.motools {
+  background-color: var(--color-motools);
+  color: var(--color-white);
+}
+
+.action-button.motools:hover {
+  background-color: var(--color-motools-dark);
+}
+
 @keyframes notification-fadeout {
     0% {
         opacity: 1;
@@ -2565,4 +2576,3 @@ select:after {
 .notification-item.fadeout {
     animation-delay: calc(var(--item-index, 0) * 0.05s);
 }
-
