@@ -8,7 +8,8 @@
     { "source": "/privacy", "destination": "/pages/privacy.html" },
     { "source": "/profile", "destination": "/pages/profile.html" },
     { "source": "/tos", "destination": "/pages/tos.html" },
-    { "source": "/transfer", "destination": "/pages/transfer.html" }
+    { "source": "/transfer", "destination": "/pages/transfer.html" },
+    { "source": "/tools/metronome", "destination": "/tools/metronome.html" }
   ],
 
   "headers": [
