@@ -35,8 +35,8 @@
   --color-danger-dark: #bb2d3b;
   --color-success: #198754;
   --color-success-dark: #146c43;
-  --color-success: #6e6e6e;
-  --color-success-dark: #5b5b5b;
+  --color-motools: #6e6e6e;
+  --color-motools-dark: #5b5b5b;
 }
 [data-theme="dark"] {
   --color-primary: #005fa3;
@@ -70,8 +70,8 @@
   --heading-gradient-to: #e0e0e0;
   --color-danger: #ff4d4d;
   --color-danger-dark: #e60000;
-  --color-success: #6e6e6e;
-  --color-success-dark: #5b5b5b;
+  --color-success: #00b371;
+  --color-success-dark: #008f5b;
 }
 #particles-js {
   position: fixed;

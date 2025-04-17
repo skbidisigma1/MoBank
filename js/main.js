@@ -228,7 +228,6 @@ function initializeEventListeners() {
     if (getStartedBtn) {
         getStartedBtn.addEventListener('click', async () => {
             try {
-                // Check if user is already authenticated
                 if (auth0Client && await isAuthenticated()) {
                     window.location.href = 'dashboard';
                 } else {
@@ -236,9 +235,15 @@ function initializeEventListeners() {
                 }
             } catch (error) {
                 console.error('Auth check failed:', error);
-                // Default to login page if authentication check fails
                 window.location.href = 'login';
             }
+        });
+    }
+
+    const moToolsBtn = document.getElementById('motools-btn');
+    if (moToolsBtn) {
+        moToolsBtn.addEventListener('click', () => {
+            window.location.href = 'tools';
         });
     }
 
