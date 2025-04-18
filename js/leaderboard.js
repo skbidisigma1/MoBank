@@ -302,13 +302,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.location.href = 'login';
       return;
     }
-    const user = await getUser();
-    const roles = (user && (user['https://mo-classroom.us/roles'] || user.roles)) || [];
-    const isAdmin = roles.includes('admin');
+    // Always show period buttons for all logged-in users
     const periodButtonsContainer = document.getElementById('period-buttons');
-    if (isAdmin) {
-      periodButtonsContainer.classList.remove('hidden');
-    }
+    periodButtonsContainer.classList.remove('hidden');
     let defaultPeriod = 5;
     try {
       const token = await getToken();
