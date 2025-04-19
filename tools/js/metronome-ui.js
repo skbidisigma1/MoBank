@@ -5,9 +5,43 @@ soundButtons.forEach(b=>{if(b.tagName==='BUTTON'){b.type='button';b.onclick=e=>{
 presetSoundButtons.forEach(b=>{if(b.tagName==='BUTTON')b.type='button'})
 let isPlaying=false,currentTempo=parseInt(tempoDisplay.value),beatsPerMeasure=parseInt(timeSignatureNumerator.textContent),noteValue=parseInt(timeSignatureDenominator.textContent),subdivision=parseInt(subdivisionSelector.value),currentBeat=0,pendulumAngle=0,selectedSound='click',volume=parseFloat(volumeSlider.value)/100*1.5,metronomeInterval=null,audioContext=null,tempoDebounceTimeout=null,sounds={click:{hi:null,lo:null},glassTick:{hi:null,lo:null},bell:{hi:null,lo:null}},useVoiceCounting=false,selectedVoice='male',useClickSubdivision=false,voiceVolume=parseFloat(voiceVolumeSlider.value)/100*1.5,voiceSounds={male:{numbers:{},subdivisions:{}}},pendulumRaf=null,metronomeStartTime=0,constValid=[1,2,4,8,16,32],tapTimes=[],tapTimeout=null,currentEditingPresetId=null,presetModalSelectedSound=selectedSound,overlayPointerDown=false,wakeLock=null
 
-// Metronome desync logging variables
+// Create on-screen logging container
+function createLoggingPanel() {
+    const loggingContainer = document.createElement('div');
+    loggingContainer.id = 'metronome-log-container';
+    loggingContainer.style.cssText = 'position: fixed; bottom: 0; left: 0; width: 100%; max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.8); color: white; font-family: monospace; font-size: 12px; padding: 8px; z-index: 9999; display: none;';
+    
+    const logHeader = document.createElement('div');
+    logHeader.innerHTML = '<span>Metronome Timing Log</span><button id="clear-log-btn" style="float:right; margin-left: 10px;">Clear</button><button id="toggle-log-btn" style="float:right;">Hide</button>';
+    logHeader.style.cssText = 'padding: 0 0 5px 0; border-bottom: 1px solid #555; margin-bottom: 5px;';
+    
+    const logContent = document.createElement('div');
+    logContent.id = 'metronome-log-content';
+    logContent.style.cssText = 'max-height: 170px; overflow-y: auto;';
+    
+    loggingContainer.appendChild(logHeader);
+    loggingContainer.appendChild(logContent);
+    document.body.appendChild(loggingContainer);
+    
+    document.getElementById('toggle-log-btn').addEventListener('click', () => {
+        const isHidden = logContent.style.display === 'none';
+        logContent.style.display = isHidden ? 'block' : 'none';
+        document.getElementById('toggle-log-btn').textContent = isHidden ? 'Hide' : 'Show';
+    });
+    
+    document.getElementById('clear-log-btn').addEventListener('click', () => {
+        logContent.innerHTML = '';
+    });
+    
+    return loggingContainer;
+}
+
+// Create and initialize the logging panel
+const loggingPanel = createLoggingPanel();
+
+// Modified desync logging object to output to screen
 const desyncLogging = {
-    enabled: true,
+    enabled: false, // Start disabled by default
     beatInterval: 0,
     expectedBeats: [],
     actualBeats: [],
@@ -28,7 +62,37 @@ const desyncLogging = {
         this.totalDesync = 0;
         this.beatCount = 0;
         this.startTime = performance.now();
-        console.log(`Metronome logging initialized: ${currentTempo} BPM, ${beatsPerMeasure}/${noteValue}, subdivision: ${subdivision}`);
+        this.log(`Metronome logging initialized: ${currentTempo} BPM, ${beatsPerMeasure}/${noteValue}, subdivision: ${subdivision}`, 'heading');
+    },
+    
+    // Add text to the on-screen log
+    log(message, type = 'normal') {
+        const logContent = document.getElementById('metronome-log-content');
+        if (!logContent) return;
+        
+        const entry = document.createElement('div');
+        entry.textContent = message;
+        
+        // Apply styling based on message type
+        switch (type) {
+            case 'heading':
+                entry.style.cssText = 'color: #4CAF50; font-weight: bold; margin-top: 5px;';
+                break;
+            case 'error':
+                entry.style.cssText = 'color: #F44336; font-weight: bold;';
+                break;
+            case 'stat':
+                entry.style.cssText = 'color: #2196F3; padding-left: 10px;';
+                break;
+            case 'warning':
+                entry.style.cssText = 'color: #FFC107;';
+                break;
+            default:
+                entry.style.cssText = 'color: #FFFFFF;';
+        }
+        
+        logContent.appendChild(entry);
+        logContent.scrollTop = logContent.scrollHeight; // Auto-scroll to bottom
     },
     
     logBeat(isSubdivision = false) {
@@ -54,8 +118,10 @@ const desyncLogging = {
         this.maxDesync = Math.max(this.maxDesync, Math.abs(desync));
         this.beatCount++;
         
+        const desyncColor = Math.abs(desync) > 20 ? 'warning' : 'normal';
+        
         // Log individual beat desync
-        console.log(`Beat ${this.beatCount}: desync = ${desync}ms ${isSubdivision ? '(subdivision)' : ''}`);
+        this.log(`Beat ${this.beatCount}: desync = ${desync}ms ${isSubdivision ? '(subdivision)' : ''}`, desyncColor);
         
         // Log statistics periodically
         if (this.beatCount % this.logFrequency === 0) {
@@ -67,15 +133,15 @@ const desyncLogging = {
         if (!this.enabled || this.beatCount === 0) return;
         
         const avgDesync = Math.round(this.totalDesync / this.beatCount);
-        console.log('%cMetronome Timing Stats:', 'color: #4CAF50; font-weight: bold');
-        console.log(`  Beats tracked: ${this.beatCount}`);
-        console.log(`  Average desync: ${avgDesync}ms`);
-        console.log(`  Max desync: ${this.maxDesync}ms`);
+        this.log('Metronome Timing Stats:', 'heading');
+        this.log(`Beats tracked: ${this.beatCount}`, 'stat');
+        this.log(`Average desync: ${avgDesync}ms`, 'stat');
+        this.log(`Max desync: ${this.maxDesync}ms`, 'stat');
         
         // Calculate jitter (variance in timing)
         if (this.desyncs.length > 1) {
             const jitter = this.calculateJitter();
-            console.log(`  Timing jitter: ${Math.round(jitter)}ms`);
+            this.log(`Timing jitter: ${Math.round(jitter)}ms`, 'stat');
         }
     },
     
@@ -93,9 +159,18 @@ const desyncLogging = {
     reset() {
         if (this.beatCount > 0) {
             this.logStats();
-            console.log('Metronome logging reset');
+            this.log('Metronome logging reset', 'heading');
         }
+        document.getElementById('metronome-log-content').innerHTML = '';
         this.initialize(this.beatInterval);
+    },
+    
+    show() {
+        document.getElementById('metronome-log-container').style.display = 'block';
+    },
+    
+    hide() {
+        document.getElementById('metronome-log-container').style.display = 'none';
     }
 };
 
@@ -122,7 +197,7 @@ function stopMetronome(){isPlaying=false;releaseWakeLock();clearInterval(metrono
     
     // Log final desync stats when stopping
     if (desyncLogging.enabled && desyncLogging.beatCount > 0) {
-        console.log('%cMetronome Stopped - Final Stats:', 'color: #F44336; font-weight: bold');
+        desyncLogging.log('Metronome Stopped - Final Stats:', 'error');
         desyncLogging.logStats();
     }
 }
@@ -175,7 +250,7 @@ window.onkeydown=e=>{const a=document.activeElement,f=a&&(a.tagName==='INPUT'||a
         if(e.ctrlKey && e.altKey && e.code === 'KeyS') {
             e.preventDefault();
             desyncLogging.subdivisionDesync = !desyncLogging.subdivisionDesync;
-            console.log(`Subdivision desync logging ${desyncLogging.subdivisionDesync ? 'enabled' : 'disabled'}`);
+            desyncLogging.log(`Subdivision desync logging ${desyncLogging.subdivisionDesync ? 'enabled' : 'disabled'}`, desyncLogging.subdivisionDesync ? 'heading' : 'error');
         }
     }
 }
@@ -233,9 +308,20 @@ async function deletePresetFromBackend(id){const t=await getAuthToken();if(!t)th
 // Add a toggle option for desync logging
 function toggleDesyncLogging() {
     desyncLogging.enabled = !desyncLogging.enabled;
-    console.log(`Metronome desync logging ${desyncLogging.enabled ? 'enabled' : 'disabled'}`);
-    if (isPlaying && desyncLogging.enabled) {
-        desyncLogging.reset();
+    
+    if (desyncLogging.enabled) {
+        desyncLogging.show();
+        desyncLogging.log(`Metronome desync logging enabled`, 'heading');
+        if (isPlaying) {
+            desyncLogging.reset();
+        }
+    } else {
+        desyncLogging.log(`Metronome desync logging disabled`, 'error');
+        setTimeout(() => {
+            if (!desyncLogging.enabled) {
+                desyncLogging.hide();
+            }
+        }, 1500); // Give user time to see the disabled message
     }
 }
 
@@ -280,7 +366,7 @@ window.onkeydown = e => {
         if(e.ctrlKey && e.altKey && e.code === 'KeyS') {
             e.preventDefault();
             desyncLogging.subdivisionDesync = !desyncLogging.subdivisionDesync;
-            console.log(`Subdivision desync logging ${desyncLogging.subdivisionDesync ? 'enabled' : 'disabled'}`);
+            desyncLogging.log(`Subdivision desync logging ${desyncLogging.subdivisionDesync ? 'enabled' : 'disabled'}`, desyncLogging.subdivisionDesync ? 'heading' : 'error');
         }
     }
 }
