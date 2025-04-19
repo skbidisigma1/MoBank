@@ -33,6 +33,14 @@ function createLoggingPanel() {
         logContent.innerHTML = '';
     });
     
+    // Add a visible toggle button in the UI
+    const toggleButton = document.createElement('button');
+    toggleButton.id = 'desync-toggle-btn';
+    toggleButton.textContent = 'Show Timing Log';
+    toggleButton.style.cssText = 'position: fixed; bottom: 10px; right: 10px; background: #2196F3; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; z-index: 9998; font-weight: bold;';
+    toggleButton.addEventListener('click', toggleDesyncLogging);
+    document.body.appendChild(toggleButton);
+    
     return loggingContainer;
 }
 
@@ -167,10 +175,14 @@ const desyncLogging = {
     
     show() {
         document.getElementById('metronome-log-container').style.display = 'block';
+        document.getElementById('desync-toggle-btn').textContent = 'Hide Timing Log';
+        document.getElementById('desync-toggle-btn').style.backgroundColor = '#F44336';
     },
     
     hide() {
         document.getElementById('metronome-log-container').style.display = 'none';
+        document.getElementById('desync-toggle-btn').textContent = 'Show Timing Log';
+        document.getElementById('desync-toggle-btn').style.backgroundColor = '#2196F3';
     }
 };
 
@@ -298,12 +310,7 @@ if(includeAccentPatternCheck)includeAccentPatternCheck.onchange=()=>{const cont=
 function getIncludedSettingsString(p){const s=[];if(p.settings.tempo!==undefined)s.push('Tempo');if(p.settings.beatsPerMeasure!==undefined)s.push('Time Sig');if(p.settings.subdivision!==undefined)s.push('Subdivision');if(p.settings.accentPattern!==undefined)s.push('Accents');if(p.settings.sound!==undefined)s.push('Sound');if(p.settings.volume!==undefined)s.push('Volume');if(p.settings.useVoiceCounting!==undefined)s.push('Voice');return s.length?`<span class="preset-included-settings">Includes: ${s.join(', ')}</span>`:''}
 function enterEditMode(pr){currentEditingPresetId=pr.id;presetTabs.forEach(t=>t.classList.remove('active'));presetTabContents.forEach(c=>c.classList.remove('active'));const s=document.querySelector('.preset-tab[data-tab="save"]'),c=document.getElementById('save-tab');s.classList.add('active');c.classList.add('active');if(saveTabButtons)saveTabButtons.style.display='none';if(editTabButtons)editTabButtons.style.display='flex';presetNameInput.value=pr.name;presetDescInput.value=pr.description||'';initializePresetControls(pr);if(includeAccentPatternCheck.checked)updatePresetAccentPattern(pr.settings.accentPattern);presetModal.classList.add('visible')}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&isPlaying){requestWakeLock()}else if(document.visibilityState==='hidden'){releaseWakeLock()}})
-initializePresets();initializePresetControls();initAudio()}
-async function getAuthToken(){if(window.auth0Client&&window.auth0Client.getTokenSilently)return await window.auth0Client.getTokenSilently();if(window.getToken)return await window.getToken();return null}
-async function fetchUserPresets(){const t=await getAuthToken();if(!t)return[];const r=await fetch('/api/metronomePresets',{headers:{Authorization:`Bearer ${t}`}});return r.ok?await r.json():[]}
-async function savePresetToBackend(p){const t=await getAuthToken();if(!t)throw new Error('Not authenticated');const r=await fetch('/api/metronomePresets',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify({name:p.name,description:p.description,settings:p.settings})});if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.message||'Failed to save preset')}return await r.json()}
-async function updatePresetInBackend(p){const t=await getAuthToken();if(!t)throw new Error('Not authenticated');const r=await fetch('/api/metronomePresets',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify({presetId:p.id,name:p.name,description:p.description,settings:p.settings})});if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.message||'Failed to update preset')}return await r.json()}
-async function deletePresetFromBackend(id){const t=await getAuthToken();if(!t)throw new Error('Not authenticated');const r=await fetch('/api/metronomePresets',{method:'DELETE',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify({presetId:id})});if(!r.ok&&r.status!==204){const d=await r.json().catch(()=>({}));throw new Error(d.message||'Failed to delete preset')}}
+initializePresets();initializePresetControls();initAudio()
 
 // Add a toggle option for desync logging
 function toggleDesyncLogging() {
@@ -311,12 +318,13 @@ function toggleDesyncLogging() {
     
     if (desyncLogging.enabled) {
         desyncLogging.show();
-        desyncLogging.log(`Metronome desync logging enabled`, 'heading');
+        desyncLogging.log(`Metronome logging enabled: Press START to begin recording timing data`, 'heading');
+        desyncLogging.log(`Current settings: ${currentTempo} BPM, ${beatsPerMeasure}/${noteValue}, subdivision: ${subdivision}`, 'stat');
         if (isPlaying) {
             desyncLogging.reset();
         }
     } else {
-        desyncLogging.log(`Metronome desync logging disabled`, 'error');
+        desyncLogging.log(`Metronome logging disabled`, 'error');
         setTimeout(() => {
             if (!desyncLogging.enabled) {
                 desyncLogging.hide();
@@ -370,3 +378,16 @@ window.onkeydown = e => {
         }
     }
 }
+
+// Add a tip about the logging feature when the metronome initializes
+setTimeout(() => {
+    // Show a tip when the page loads about the logging feature
+    showAlert('Tip: Click the blue "Show Timing Log" button in the bottom right corner to analyze metronome timing accuracy.');
+}, 1000);
+}
+
+async function getAuthToken(){if(window.auth0Client&&window.auth0Client.getTokenSilently)return await window.auth0Client.getTokenSilently();if(window.getToken)return await window.getToken();return null}
+async function fetchUserPresets(){const t=await getAuthToken();if(!t)return[];const r=await fetch('/api/metronomePresets',{headers:{Authorization:`Bearer ${t}`}});return r.ok?await r.json():[]}
+async function savePresetToBackend(p){const t=await getAuthToken();if(!t)throw new Error('Not authenticated');const r=await fetch('/api/metronomePresets',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify({name:p.name,description:p.description,settings:p.settings})});if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.message||'Failed to save preset')}return await r.json()}
+async function updatePresetInBackend(p){const t=await getAuthToken();if(!t)throw new Error('Not authenticated');const r=await fetch('/api/metronomePresets',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify({presetId:p.id,name:p.name,description:p.description,settings:p.settings})});if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.message||'Failed to update preset')}return await r.json()}
+async function deletePresetFromBackend(id){const t=await getAuthToken();if(!t)throw new Error('Not authenticated');const r=await fetch('/api/metronomePresets',{method:'DELETE',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify({presetId:id})});if(!r.ok&&r.status!==204){const d=await r.json().catch(()=>({}));throw new Error(d.message||'Failed to delete preset')}}
