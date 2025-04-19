@@ -4,6 +4,101 @@ const tempoSlider=document.getElementById('tempo-slider'),tempoDisplay=document.
 soundButtons.forEach(b=>{if(b.tagName==='BUTTON'){b.type='button';b.onclick=e=>{e.preventDefault();e.stopPropagation();soundButtons.forEach(x=>x.classList.remove('selected'));b.classList.add('selected');selectedSound=b.dataset.sound}}})
 presetSoundButtons.forEach(b=>{if(b.tagName==='BUTTON')b.type='button'})
 let isPlaying=false,currentTempo=parseInt(tempoDisplay.value),beatsPerMeasure=parseInt(timeSignatureNumerator.textContent),noteValue=parseInt(timeSignatureDenominator.textContent),subdivision=parseInt(subdivisionSelector.value),currentBeat=0,pendulumAngle=0,selectedSound='click',volume=parseFloat(volumeSlider.value)/100*1.5,metronomeInterval=null,audioContext=null,tempoDebounceTimeout=null,sounds={click:{hi:null,lo:null},glassTick:{hi:null,lo:null},bell:{hi:null,lo:null}},useVoiceCounting=false,selectedVoice='male',useClickSubdivision=false,voiceVolume=parseFloat(voiceVolumeSlider.value)/100*1.5,voiceSounds={male:{numbers:{},subdivisions:{}}},pendulumRaf=null,metronomeStartTime=0,constValid=[1,2,4,8,16,32],tapTimes=[],tapTimeout=null,currentEditingPresetId=null,presetModalSelectedSound=selectedSound,overlayPointerDown=false,wakeLock=null
+
+// Metronome desync logging variables
+const desyncLogging = {
+    enabled: true,
+    beatInterval: 0,
+    expectedBeats: [],
+    actualBeats: [],
+    desyncs: [],
+    maxDesync: 0,
+    totalDesync: 0,
+    beatCount: 0,
+    logFrequency: 10, // Log stats every N beats
+    startTime: 0,
+    subdivisionDesync: false, // Whether to log subdivision desync
+    
+    initialize(interval) {
+        this.beatInterval = interval;
+        this.expectedBeats = [];
+        this.actualBeats = [];
+        this.desyncs = [];
+        this.maxDesync = 0;
+        this.totalDesync = 0;
+        this.beatCount = 0;
+        this.startTime = performance.now();
+        console.log(`Metronome logging initialized: ${currentTempo} BPM, ${beatsPerMeasure}/${noteValue}, subdivision: ${subdivision}`);
+    },
+    
+    logBeat(isSubdivision = false) {
+        if (!this.enabled) return;
+        if (isSubdivision && !this.subdivisionDesync) return;
+        
+        const now = performance.now();
+        let expectedTime;
+        
+        if (this.expectedBeats.length === 0) {
+            // First beat
+            expectedTime = this.startTime;
+        } else {
+            // Calculate when this beat should have happened
+            expectedTime = this.startTime + this.beatCount * this.beatInterval;
+        }
+        
+        const desync = Math.round(now - expectedTime);
+        this.expectedBeats.push(expectedTime);
+        this.actualBeats.push(now);
+        this.desyncs.push(desync);
+        this.totalDesync += Math.abs(desync);
+        this.maxDesync = Math.max(this.maxDesync, Math.abs(desync));
+        this.beatCount++;
+        
+        // Log individual beat desync
+        console.log(`Beat ${this.beatCount}: desync = ${desync}ms ${isSubdivision ? '(subdivision)' : ''}`);
+        
+        // Log statistics periodically
+        if (this.beatCount % this.logFrequency === 0) {
+            this.logStats();
+        }
+    },
+    
+    logStats() {
+        if (!this.enabled || this.beatCount === 0) return;
+        
+        const avgDesync = Math.round(this.totalDesync / this.beatCount);
+        console.log('%cMetronome Timing Stats:', 'color: #4CAF50; font-weight: bold');
+        console.log(`  Beats tracked: ${this.beatCount}`);
+        console.log(`  Average desync: ${avgDesync}ms`);
+        console.log(`  Max desync: ${this.maxDesync}ms`);
+        
+        // Calculate jitter (variance in timing)
+        if (this.desyncs.length > 1) {
+            const jitter = this.calculateJitter();
+            console.log(`  Timing jitter: ${Math.round(jitter)}ms`);
+        }
+    },
+    
+    calculateJitter() {
+        // Calculate standard deviation of desync values
+        const mean = this.totalDesync / this.desyncs.length;
+        const squareDiffs = this.desyncs.map(desync => {
+            const diff = Math.abs(desync) - mean;
+            return diff * diff;
+        });
+        const variance = squareDiffs.reduce((sum, squareDiff) => sum + squareDiff, 0) / this.desyncs.length;
+        return Math.sqrt(variance);
+    },
+    
+    reset() {
+        if (this.beatCount > 0) {
+            this.logStats();
+            console.log('Metronome logging reset');
+        }
+        this.initialize(this.beatInterval);
+    }
+};
+
 const PRESET_CACHE_MS=2e4
 async function requestWakeLock(){try{if('wakeLock'in navigator){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{if(isPlaying)requestWakeLock()})}}catch(e){}}
 function releaseWakeLock(){if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null}}
@@ -23,11 +118,29 @@ function updateAccentPattern(p=null){accentPattern.innerHTML='';for(let i=0;i<be
 function updateBeatLights(){const c=document.querySelector('.beat-lights');c.innerHTML='';for(let i=0;i<beatsPerMeasure;i++){const a=document.querySelector(`.accent-button[data-beat="${i+1}"]`),s=document.createElement('div');s.className='beat-light';const st=a?a.dataset.state:'normal';if(st==='accent')s.classList.add('accent');else if(st==='silent')s.classList.add('silent');s.dataset.beat=i+1;c.appendChild(s)}}
 function updateNoteValue(v){if(constValid.includes(v)){noteValue=v;timeSignatureDenominator.textContent=noteValue;updateAccentPattern();updateBeatLights();if(isPlaying)restartMetronome()}}
 function playFirstBeat(){const b=document.querySelector('.accent-button[data-beat="1"]'),st=b?b.dataset.state:'normal';if(st!=='silent'){useVoiceCounting?playVoiceSound('1'):playSound(st==='accent')}}
-function stopMetronome(){isPlaying=false;releaseWakeLock();clearInterval(metronomeInterval);if(pendulumRaf){cancelAnimationFrame(pendulumRaf);pendulumRaf=null}pendulumAngle=0;pendulum.style.transition='transform 0.5s ease-out';pendulum.style.transform='rotate(0rad)';tempoPlayBtn.innerHTML='<svg width="24" height="24"><path d="M8 5V19L19 12Z" fill="currentColor"/></svg>';document.querySelectorAll('.beat-light').forEach(l=>l.classList.remove('active'))}
+function stopMetronome(){isPlaying=false;releaseWakeLock();clearInterval(metronomeInterval);if(pendulumRaf){cancelAnimationFrame(pendulumRaf);pendulumRaf=null}pendulumAngle=0;pendulum.style.transition='transform 0.5s ease-out';pendulum.style.transform='rotate(0rad)';tempoPlayBtn.innerHTML='<svg width="24" height="24"><path d="M8 5V19L19 12Z" fill="currentColor"/></svg>';document.querySelectorAll('.beat-light').forEach(l=>l.classList.remove('active'))
+    
+    // Log final desync stats when stopping
+    if (desyncLogging.enabled && desyncLogging.beatCount > 0) {
+        console.log('%cMetronome Stopped - Final Stats:', 'color: #F44336; font-weight: bold');
+        desyncLogging.logStats();
+    }
+}
 function restartMetronome(){if(isPlaying){stopMetronome();startMetronome()}}
 function updateVisualBeat(i){document.querySelectorAll('.beat-light').forEach(l=>l.classList.remove('active'));const b=document.querySelector(`.beat-light[data-beat="${i+1}"]`);if(b)b.classList.add('active')}
 function animatePendulum(i){const p=i,n=performance.now(),e=n-metronomeStartTime,prog=(e%p)/p,dir=Math.floor(e/p)%2===0?1:-1;pendulumAngle=Math.sin(prog*Math.PI)*0.392699*dir;pendulum.style.transition='none';pendulum.style.transform=`rotate(${pendulumAngle}rad)`;pendulumRaf=requestAnimationFrame(()=>animatePendulum(i))}
-async function startMetronome(){if(isPlaying)return;isPlaying=true;if(audioContext===null)await initAudio();else if(audioContext.state==='suspended')await audioContext.resume();await requestWakeLock();currentBeat=0;pendulum.style.transform='rotate(0rad)';metronomeStartTime=performance.now();tempoPlayBtn.innerHTML='<svg width="24" height="24"><path d="M6 19h4V5H6zm8-14v14h4V5z" fill="currentColor"/></svg>';const base=(60/currentTempo)*1000*(4/noteValue),inter=subdivision>1?base/subdivision:base;playFirstBeat();updateVisualBeat(0);let sub=1;if(pendulumRaf)cancelAnimationFrame(pendulumRaf);animatePendulum(base);metronomeInterval=setInterval(()=>{const main=sub%subdivision===0,mainIdx=Math.floor(sub/subdivision),beatIn=mainIdx%beatsPerMeasure,button=document.querySelector(`.accent-button[data-beat="${beatIn+1}"]`),state=button?button.dataset.state:'normal';if(main){if(state!=='silent'){useVoiceCounting?playVoiceSound((beatIn+1).toString()):playSound(state==='accent')}updateVisualBeat(beatIn)}else if(subdivision>1&&state!=='silent'){playSubdivisionSound(sub%subdivision)}sub=(sub+1)%(beatsPerMeasure*subdivision)},inter)}
+async function startMetronome(){if(isPlaying)return;isPlaying=true;if(audioContext===null)await initAudio();else if(audioContext.state==='suspended')await audioContext.resume();await requestWakeLock();currentBeat=0;pendulum.style.transform='rotate(0rad)';metronomeStartTime=performance.now();tempoPlayBtn.innerHTML='<svg width="24" height="24"><path d="M6 19h4V5H6zm8-14v14h4V5z" fill="currentColor"/></svg>';const base=(60/currentTempo)*1000*(4/noteValue),inter=subdivision>1?base/subdivision:base
+    
+    // Initialize desync logging
+    desyncLogging.initialize(inter);
+    
+    playFirstBeat();updateVisualBeat(0);let sub=1;if(pendulumRaf)cancelAnimationFrame(pendulumRaf);animatePendulum(base);metronomeInterval=setInterval(()=>{const main=sub%subdivision===0,mainIdx=Math.floor(sub/subdivision),beatIn=mainIdx%beatsPerMeasure,button=document.querySelector(`.accent-button[data-beat="${beatIn+1}"]`),state=button?button.dataset.state:'normal';if(main){if(state!=='silent'){useVoiceCounting?playVoiceSound((beatIn+1).toString()):playSound(state==='accent')}updateVisualBeat(beatIn)
+            // Log main beat timing
+            desyncLogging.logBeat(false);
+        }else if(subdivision>1&&state!=='silent'){playSubdivisionSound(sub%subdivision)
+            // Log subdivision beat timing
+            desyncLogging.logBeat(true);
+        }sub=(sub+1)%(beatsPerMeasure*subdivision)},inter)}
 function handlePresetSoundButtonClick(e){e.preventDefault();e.stopPropagation();presetModalSelectedSound=this.dataset.sound;presetSoundButtons.forEach(b=>b.classList.toggle('selected',b===this))}
 function handlePresetDecreaseBeats(){const n=document.getElementById('preset-time-sig-numerator');if(!n)return;const v=parseInt(n.textContent);if(v>1){n.textContent=v-1;if(includeAccentPatternCheck.checked)updatePresetAccentPattern()}}
 function handlePresetIncreaseBeats(){const n=document.getElementById('preset-time-sig-numerator');if(!n)return;const v=parseInt(n.textContent);if(v<12){n.textContent=v+1;if(includeAccentPatternCheck.checked)updatePresetAccentPattern()}}
@@ -50,7 +163,22 @@ document.querySelectorAll('.preset-button:not(.user-preset)').forEach(b=>{if(b.t
 updateAccentPattern();updateBeatLights()
 window.addEventListener('pointerdown',e=>{overlayPointerDown=e.target===presetModal})
 window.addEventListener('click',e=>{if(e.target===presetModal&&overlayPointerDown){presetModal.classList.remove('visible');resetPresetForm()}overlayPointerDown=false})
-window.onkeydown=e=>{const a=document.activeElement,f=a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT');if(e.code==='Space'&&!f){e.preventDefault();isPlaying?stopMetronome():startMetronome()}if(e.code==='Enter'){if(a===tempoDisplay){tempoDisplay.blur();e.preventDefault()}else if(!f){tempoDisplay.focus();tempoDisplay.select();e.preventDefault()}}if(!f){let s=e.shiftKey&&e.ctrlKey?20:e.ctrlKey?10:e.shiftKey?5:1;if(e.code==='ArrowUp'||e.code==='ArrowRight'){e.preventDefault();updateTempo(currentTempo+s)}if(e.code==='ArrowDown'||e.code==='ArrowLeft'){e.preventDefault();updateTempo(currentTempo-s)}}}
+window.onkeydown=e=>{const a=document.activeElement,f=a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT');if(e.code==='Space'&&!f){e.preventDefault();isPlaying?stopMetronome():startMetronome()}if(e.code==='Enter'){if(a===tempoDisplay){tempoDisplay.blur();e.preventDefault()}else if(!f){tempoDisplay.focus();tempoDisplay.select();e.preventDefault()}}if(!f){let s=e.shiftKey&&e.ctrlKey?20:e.ctrlKey?10:e.shiftKey?5:1;if(e.code==='ArrowUp'||e.code==='ArrowRight'){e.preventDefault();updateTempo(currentTempo+s)}if(e.code==='ArrowDown'||e.code==='ArrowLeft'){e.preventDefault();updateTempo(currentTempo-s)}
+        
+        // New keyboard shortcut for desync logging
+        if(e.ctrlKey && e.altKey && e.code === 'KeyL') {
+            e.preventDefault();
+            toggleDesyncLogging();
+        }
+        
+        // Toggle subdivision desync logging (Ctrl+Alt+S)
+        if(e.ctrlKey && e.altKey && e.code === 'KeyS') {
+            e.preventDefault();
+            desyncLogging.subdivisionDesync = !desyncLogging.subdivisionDesync;
+            console.log(`Subdivision desync logging ${desyncLogging.subdivisionDesync ? 'enabled' : 'disabled'}`);
+        }
+    }
+}
 function applyPreset(p){if(!p||!p.settings)return;if(p.settings.tempo!==undefined)updateTempo(p.settings.tempo);if(p.settings.beatsPerMeasure!==undefined)updateBeatsPerMeasure(p.settings.beatsPerMeasure);if(p.settings.noteValue!==undefined)updateNoteValue(p.settings.noteValue);if(p.settings.subdivision!==undefined){subdivision=p.settings.subdivision;subdivisionSelector.value=subdivision}if(p.settings.sound!==undefined){selectedSound=p.settings.sound;document.querySelectorAll('.sound-button').forEach(b=>b.classList.toggle('selected',b.dataset.sound===selectedSound))}if(p.settings.volume!==undefined){volume=p.settings.volume/100*1.5;volumeSlider.value=p.settings.volume}if(p.settings.accentPattern!==undefined)updateAccentPattern(p.settings.accentPattern);else updateAccentPattern();if(p.settings.useVoiceCounting!==undefined){useVoiceCountingCheckbox.checked=p.settings.useVoiceCounting;useVoiceCounting=p.settings.useVoiceCounting;if(voiceOptionsPanel)voiceOptionsPanel.style.display=useVoiceCounting?'block':'none'}if(p.settings.useClickSubdivision!==undefined){useClickSubdivisionCheckbox.checked=p.settings.useClickSubdivision;useClickSubdivision=p.settings.useClickSubdivision}if(p.settings.voiceVolume!==undefined){voiceVolume=p.settings.voiceVolume/100*1.5;voiceVolumeSlider.value=p.settings.voiceVolume}updateBeatLights();if(isPlaying)restartMetronome()}
 function initializePresets(){renderUserPresets();loadUserPresetsToGrid()}
 if(presetTabs)presetTabs.forEach(t=>t.onclick=()=>{const id=t.dataset.tab;presetTabs.forEach(x=>x.classList.remove('active'));presetTabContents.forEach(x=>x.classList.remove('active'));t.classList.add('active');document.getElementById(id+'-tab').classList.add('active');if(id==='save'&&(!editTabButtons||editTabButtons.style.display==='none')){resetPresetForm();initializePresetControls();if(includeAccentPatternCheck.checked)updatePresetAccentPattern()}if(id==='my-presets')renderUserPresets()})
@@ -101,3 +229,58 @@ async function fetchUserPresets(){const t=await getAuthToken();if(!t)return[];co
 async function savePresetToBackend(p){const t=await getAuthToken();if(!t)throw new Error('Not authenticated');const r=await fetch('/api/metronomePresets',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify({name:p.name,description:p.description,settings:p.settings})});if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.message||'Failed to save preset')}return await r.json()}
 async function updatePresetInBackend(p){const t=await getAuthToken();if(!t)throw new Error('Not authenticated');const r=await fetch('/api/metronomePresets',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify({presetId:p.id,name:p.name,description:p.description,settings:p.settings})});if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.message||'Failed to update preset')}return await r.json()}
 async function deletePresetFromBackend(id){const t=await getAuthToken();if(!t)throw new Error('Not authenticated');const r=await fetch('/api/metronomePresets',{method:'DELETE',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify({presetId:id})});if(!r.ok&&r.status!==204){const d=await r.json().catch(()=>({}));throw new Error(d.message||'Failed to delete preset')}}
+
+// Add a toggle option for desync logging
+function toggleDesyncLogging() {
+    desyncLogging.enabled = !desyncLogging.enabled;
+    console.log(`Metronome desync logging ${desyncLogging.enabled ? 'enabled' : 'disabled'}`);
+    if (isPlaying && desyncLogging.enabled) {
+        desyncLogging.reset();
+    }
+}
+
+// Add keyboard shortcut for toggling logging (Ctrl+Alt+L)
+window.onkeydown = e => {
+    const a = document.activeElement,
+        f = a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT');
+    
+    // Original keyboard handlers
+    if(e.code==='Space'&&!f){
+        e.preventDefault();
+        isPlaying?stopMetronome():startMetronome()
+    }
+    if(e.code==='Enter'){
+        if(a===tempoDisplay){
+            tempoDisplay.blur();
+            e.preventDefault()
+        }else if(!f){
+            tempoDisplay.focus();
+            tempoDisplay.select();
+            e.preventDefault()
+        }
+    }
+    if(!f){
+        let s=e.shiftKey&&e.ctrlKey?20:e.ctrlKey?10:e.shiftKey?5:1;
+        if(e.code==='ArrowUp'||e.code==='ArrowRight'){
+            e.preventDefault();
+            updateTempo(currentTempo+s)
+        }
+        if(e.code==='ArrowDown'||e.code==='ArrowLeft'){
+            e.preventDefault();
+            updateTempo(currentTempo-s)
+        }
+        
+        // New keyboard shortcut for desync logging
+        if(e.ctrlKey && e.altKey && e.code === 'KeyL') {
+            e.preventDefault();
+            toggleDesyncLogging();
+        }
+        
+        // Toggle subdivision desync logging (Ctrl+Alt+S)
+        if(e.ctrlKey && e.altKey && e.code === 'KeyS') {
+            e.preventDefault();
+            desyncLogging.subdivisionDesync = !desyncLogging.subdivisionDesync;
+            console.log(`Subdivision desync logging ${desyncLogging.subdivisionDesync ? 'enabled' : 'disabled'}`);
+        }
+    }
+}
