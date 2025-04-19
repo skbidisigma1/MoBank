@@ -5,49 +5,37 @@ soundButtons.forEach(b=>{if(b.tagName==='BUTTON'){b.type='button';b.onclick=e=>{
 presetSoundButtons.forEach(b=>{if(b.tagName==='BUTTON')b.type='button'})
 let isPlaying=false,currentTempo=parseInt(tempoDisplay.value),beatsPerMeasure=parseInt(timeSignatureNumerator.textContent),noteValue=parseInt(timeSignatureDenominator.textContent),subdivision=parseInt(subdivisionSelector.value),currentBeat=0,pendulumAngle=0,selectedSound='click',volume=parseFloat(volumeSlider.value)/100*1.5,metronomeInterval=null,audioContext=null,tempoDebounceTimeout=null,sounds={click:{hi:null,lo:null},glassTick:{hi:null,lo:null},bell:{hi:null,lo:null}},useVoiceCounting=false,selectedVoice='male',useClickSubdivision=false,voiceVolume=parseFloat(voiceVolumeSlider.value)/100*1.5,voiceSounds={male:{numbers:{},subdivisions:{}}},pendulumRaf=null,metronomeStartTime=0,constValid=[1,2,4,8,16,32],tapTimes=[],tapTimeout=null,currentEditingPresetId=null,presetModalSelectedSound=selectedSound,overlayPointerDown=false,wakeLock=null
 
-// Create on-screen logging container
-function createLoggingPanel() {
-    const loggingContainer = document.createElement('div');
-    loggingContainer.id = 'metronome-log-container';
-    loggingContainer.style.cssText = 'position: fixed; bottom: 0; left: 0; width: 100%; max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.8); color: white; font-family: monospace; font-size: 12px; padding: 8px; z-index: 9999; display: none;';
+// Create simple logging container at the bottom of the page
+function createSimpleLoggingContainer() {
+    const container = document.createElement('div');
+    container.id = 'metronome-log-container';
+    container.style.cssText = 'margin-top: 50px; padding: 20px; border-top: 2px solid #444; background-color: #f5f5f5;';
     
-    const logHeader = document.createElement('div');
-    logHeader.innerHTML = '<span>Metronome Timing Log</span><button id="clear-log-btn" style="float:right; margin-left: 10px;">Clear</button><button id="toggle-log-btn" style="float:right;">Hide</button>';
-    logHeader.style.cssText = 'padding: 0 0 5px 0; border-bottom: 1px solid #555; margin-bottom: 5px;';
+    const heading = document.createElement('h3');
+    heading.textContent = 'Metronome Timing Log';
+    heading.style.cssText = 'margin: 0 0 10px 0;';
+    
+    const toggleBtn = document.createElement('button');
+    toggleBtn.id = 'log-toggle-btn';
+    toggleBtn.textContent = 'Start Logging';
+    toggleBtn.style.cssText = 'margin-bottom: 10px; padding: 5px 10px;';
+    toggleBtn.onclick = toggleDesyncLogging;
     
     const logContent = document.createElement('div');
     logContent.id = 'metronome-log-content';
-    logContent.style.cssText = 'max-height: 170px; overflow-y: auto;';
     
-    loggingContainer.appendChild(logHeader);
-    loggingContainer.appendChild(logContent);
-    document.body.appendChild(loggingContainer);
+    container.appendChild(heading);
+    container.appendChild(toggleBtn);
+    container.appendChild(logContent);
     
-    document.getElementById('toggle-log-btn').addEventListener('click', () => {
-        const isHidden = logContent.style.display === 'none';
-        logContent.style.display = isHidden ? 'block' : 'none';
-        document.getElementById('toggle-log-btn').textContent = isHidden ? 'Hide' : 'Show';
-    });
-    
-    document.getElementById('clear-log-btn').addEventListener('click', () => {
-        logContent.innerHTML = '';
-    });
-    
-    // Add a visible toggle button in the UI
-    const toggleButton = document.createElement('button');
-    toggleButton.id = 'desync-toggle-btn';
-    toggleButton.textContent = 'Show Timing Log';
-    toggleButton.style.cssText = 'position: fixed; bottom: 10px; right: 10px; background: #2196F3; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; z-index: 9998; font-weight: bold;';
-    toggleButton.addEventListener('click', toggleDesyncLogging);
-    document.body.appendChild(toggleButton);
-    
-    return loggingContainer;
+    document.body.appendChild(container);
+    return container;
 }
 
-// Create and initialize the logging panel
-const loggingPanel = createLoggingPanel();
+// Create the simple logging container
+const logContainer = createSimpleLoggingContainer();
 
-// Modified desync logging object to output to screen
+// Modified desync logging object for simpler output
 const desyncLogging = {
     enabled: false, // Start disabled by default
     beatInterval: 0,
@@ -73,34 +61,40 @@ const desyncLogging = {
         this.log(`Metronome logging initialized: ${currentTempo} BPM, ${beatsPerMeasure}/${noteValue}, subdivision: ${subdivision}`, 'heading');
     },
     
-    // Add text to the on-screen log
+    // Add text to the log as a paragraph
     log(message, type = 'normal') {
         const logContent = document.getElementById('metronome-log-content');
         if (!logContent) return;
         
-        const entry = document.createElement('div');
+        const entry = document.createElement('p');
         entry.textContent = message;
+        entry.style.margin = '3px 0';
         
         // Apply styling based on message type
         switch (type) {
             case 'heading':
-                entry.style.cssText = 'color: #4CAF50; font-weight: bold; margin-top: 5px;';
+                entry.style.fontWeight = 'bold';
+                entry.style.color = '#4CAF50';
+                entry.style.fontSize = '16px';
                 break;
             case 'error':
-                entry.style.cssText = 'color: #F44336; font-weight: bold;';
+                entry.style.fontWeight = 'bold';
+                entry.style.color = '#F44336';
                 break;
             case 'stat':
-                entry.style.cssText = 'color: #2196F3; padding-left: 10px;';
+                entry.style.color = '#2196F3';
+                entry.style.marginLeft = '20px';
                 break;
             case 'warning':
-                entry.style.cssText = 'color: #FFC107;';
+                entry.style.color = '#FF9800';
                 break;
             default:
-                entry.style.cssText = 'color: #FFFFFF;';
+                entry.style.color = '#333';
         }
         
         logContent.appendChild(entry);
-        logContent.scrollTop = logContent.scrollHeight; // Auto-scroll to bottom
+        // Auto-scroll to bottom
+        window.scrollTo(0, document.body.scrollHeight);
     },
     
     logBeat(isSubdivision = false) {
@@ -173,16 +167,18 @@ const desyncLogging = {
         this.initialize(this.beatInterval);
     },
     
-    show() {
-        document.getElementById('metronome-log-container').style.display = 'block';
-        document.getElementById('desync-toggle-btn').textContent = 'Hide Timing Log';
-        document.getElementById('desync-toggle-btn').style.backgroundColor = '#F44336';
+    // Start logging
+    startLogging() {
+        document.getElementById('log-toggle-btn').textContent = 'Stop Logging';
+        document.getElementById('log-toggle-btn').style.backgroundColor = '#F44336';
+        document.getElementById('log-toggle-btn').style.color = 'white';
     },
     
-    hide() {
-        document.getElementById('metronome-log-container').style.display = 'none';
-        document.getElementById('desync-toggle-btn').textContent = 'Show Timing Log';
-        document.getElementById('desync-toggle-btn').style.backgroundColor = '#2196F3';
+    // Stop logging
+    stopLogging() {
+        document.getElementById('log-toggle-btn').textContent = 'Start Logging';
+        document.getElementById('log-toggle-btn').style.backgroundColor = '';
+        document.getElementById('log-toggle-btn').style.color = '';
     }
 };
 
@@ -317,19 +313,15 @@ function toggleDesyncLogging() {
     desyncLogging.enabled = !desyncLogging.enabled;
     
     if (desyncLogging.enabled) {
-        desyncLogging.show();
-        desyncLogging.log(`Metronome logging enabled: Press START to begin recording timing data`, 'heading');
+        desyncLogging.startLogging();
+        desyncLogging.log(`Metronome timing logging enabled`, 'heading');
         desyncLogging.log(`Current settings: ${currentTempo} BPM, ${beatsPerMeasure}/${noteValue}, subdivision: ${subdivision}`, 'stat');
         if (isPlaying) {
             desyncLogging.reset();
         }
     } else {
-        desyncLogging.log(`Metronome logging disabled`, 'error');
-        setTimeout(() => {
-            if (!desyncLogging.enabled) {
-                desyncLogging.hide();
-            }
-        }, 1500); // Give user time to see the disabled message
+        desyncLogging.log(`Metronome timing logging disabled`, 'error');
+        desyncLogging.stopLogging();
     }
 }
 
