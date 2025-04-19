@@ -169,9 +169,13 @@ function scheduleNote(subIdx, time) {
 }
 function nextNote(subIntervalSec) { nextNoteTime += subIntervalSec; currentSub = (currentSub + 1) % (beatsPerMeasure * subdivision) }
 function scheduler(subIntervalSec) {
-    while (nextNoteTime < audioContext.currentTime + scheduleAheadTime) {
-        scheduleNote(currentSub, nextNoteTime)
-        nextNote(subIntervalSec)
+    // Use performance.now for more accurate timing measurements
+    const currentTime = audioContext.currentTime;
+    
+    // Pre-schedule multiple beats ahead for more consistent timing
+    while (nextNoteTime < currentTime + scheduleAheadTime) {
+        scheduleNote(currentSub, nextNoteTime);
+        nextNote(subIntervalSec);
     }
 }
 function updateVisualBeat(i) {
@@ -179,12 +183,26 @@ function updateVisualBeat(i) {
     const b = document.querySelector(`.beat-light[data-beat="${i + 1}"]`)
     if (b) b.classList.add('active')
 }
-function animatePendulum(i) {
-    const p = i, n = performance.now(), e = n - metronomeStartTime, prog = (e % p) / p, dir = Math.floor(e / p) % 2 === 0 ? 1 : -1
-    pendulumAngle = Math.sin(prog * Math.PI) * 0.392699 * dir
-    pendulum.style.transition = 'none'
-    pendulum.style.transform = `rotate(${pendulumAngle}rad)`
-    pendulumRaf = requestAnimationFrame(() => animatePendulum(i))
+// Use requestAnimationFrame timing for visual updates
+function animatePendulum(intervalMs) {
+    const now = performance.now();
+    const elapsed = now - metronomeStartTime;
+    const progress = (elapsed % intervalMs) / intervalMs;
+    const direction = Math.floor(elapsed / intervalMs) % 2 === 0 ? 1 : -1;
+    
+    // Optimize by calculating angle only when needed
+    pendulumAngle = Math.sin(progress * Math.PI) * 0.392699 * direction;
+    
+    // Avoid layout thrashing by batching DOM operations
+    if (!pendulum.pendingUpdate) {
+        pendulum.pendingUpdate = true;
+        requestAnimationFrame(() => {
+            pendulum.style.transform = `rotate(${pendulumAngle}rad)`;
+            pendulum.pendingUpdate = false;
+        });
+    }
+    
+    pendulumRaf = requestAnimationFrame(() => animatePendulum(intervalMs));
 }
 async function startMetronome() {
     if (isPlaying) return
@@ -260,7 +278,324 @@ function toggleDesyncLogging() {
         desyncLogging.stopLogging()
     }
 }
-setTimeout(() => { showAlert('Tip: Click the blue "Show Timing Log" button in the bottom right corner to analyze metronome timing accuracy.') }, 1000)
+// Define the missing showAlert function
+function showAlert(message, duration = 5000) {
+    if (!alertModal || !alertMessage) return;
+    alertMessage.textContent = message;
+    alertModal.classList.add('visible');
+    setTimeout(() => {
+        alertModal.classList.remove('visible');
+    }, duration);
+}
+// Implement renderUserPresets function
+async function renderUserPresets() {
+    try {
+        const presets = await fetchUserPresets();
+        if (!presetList) return;
+        
+        presetList.innerHTML = '';
+        if (presets.length === 0) {
+            if (emptyPresets) emptyPresets.style.display = 'block';
+            return;
+        }
+        
+        if (emptyPresets) emptyPresets.style.display = 'none';
+        presets.forEach(preset => {
+            const item = document.createElement('div');
+            item.className = 'preset-item';
+            item.dataset.id = preset.id;
+            
+            const name = document.createElement('h4');
+            name.textContent = preset.name;
+            
+            const desc = document.createElement('p');
+            desc.textContent = preset.description || 'No description';
+            
+            const actions = document.createElement('div');
+            actions.className = 'preset-actions';
+            
+            const loadBtn = document.createElement('button');
+            loadBtn.textContent = 'Load';
+            loadBtn.type = 'button';
+            loadBtn.onclick = () => loadPreset(preset);
+            
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.type = 'button';
+            editBtn.onclick = () => editPreset(preset);
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.type = 'button';
+            deleteBtn.onclick = () => confirmDeletePreset(preset.id);
+            
+            actions.appendChild(loadBtn);
+            actions.appendChild(editBtn);
+            actions.appendChild(deleteBtn);
+            
+            item.appendChild(name);
+            item.appendChild(desc);
+            item.appendChild(actions);
+            presetList.appendChild(item);
+        });
+    } catch (error) {
+        console.error('Failed to render presets:', error);
+        showAlert('Failed to load your presets. Please try again later.');
+    }
+}
+// Implement loadUserPresetsToGrid function
+async function loadUserPresetsToGrid() {
+    if (!presetsGrid) return;
+    
+    try {
+        const presets = await fetchUserPresets();
+        const existingPresets = presetsGrid.querySelectorAll('.user-preset');
+        existingPresets.forEach(preset => preset.remove());
+        
+        if (presets.length === 0) return;
+        
+        presets.forEach(preset => {
+            const btn = document.createElement('button');
+            btn.className = 'preset-button user-preset';
+            btn.textContent = preset.name;
+            btn.type = 'button';
+            btn.dataset.id = preset.id;
+            
+            if (preset.settings) {
+                if (preset.settings.tempo) btn.dataset.tempo = preset.settings.tempo;
+                if (preset.settings.beatsPerMeasure) btn.dataset.beats = preset.settings.beatsPerMeasure;
+                if (preset.settings.noteValue) btn.dataset.noteValue = preset.settings.noteValue;
+            }
+            
+            btn.onclick = () => loadPreset(preset);
+            presetsGrid.appendChild(btn);
+        });
+    } catch (error) {
+        console.error('Failed to load presets to grid:', error);
+    }
+}
+// Add the loadPreset function
+function loadPreset(preset) {
+    if (!preset.settings) return;
+    
+    const s = preset.settings;
+    if (s.tempo) updateTempo(parseInt(s.tempo));
+    if (s.beatsPerMeasure) updateBeatsPerMeasure(parseInt(s.beatsPerMeasure));
+    if (s.noteValue) updateNoteValue(parseInt(s.noteValue));
+    if (s.subdivision && subdivisionSelector) {
+        subdivisionSelector.value = s.subdivision;
+        subdivision = parseInt(s.subdivision);
+    }
+    
+    if (s.accentPattern) updateAccentPattern(s.accentPattern);
+    
+    if (s.sound) {
+        selectedSound = s.sound;
+        soundButtons.forEach(btn => {
+            btn.classList.toggle('selected', btn.dataset.sound === s.sound);
+        });
+    }
+    
+    if (s.volume !== undefined) {
+        volume = parseFloat(s.volume);
+        if (volumeSlider) volumeSlider.value = Math.round(volume / 1.5 * 100);
+    }
+    
+    if (s.voiceSettings) {
+        if (s.voiceSettings.useVoice !== undefined && useVoiceCountingCheckbox) {
+            useVoiceCountingCheckbox.checked = s.voiceSettings.useVoice;
+            useVoiceCounting = s.voiceSettings.useVoice;
+            if (voiceOptionsPanel) {
+                voiceOptionsPanel.style.display = useVoiceCounting ? 'block' : 'none';
+            }
+        }
+        
+        if (s.voiceSettings.useClickSubdivision !== undefined && useClickSubdivisionCheckbox) {
+            useClickSubdivisionCheckbox.checked = s.voiceSettings.useClickSubdivision;
+            useClickSubdivision = s.voiceSettings.useClickSubdivision;
+        }
+        
+        if (s.voiceSettings.voiceVolume !== undefined && voiceVolumeSlider) {
+            voiceVolume = parseFloat(s.voiceSettings.voiceVolume);
+            voiceVolumeSlider.value = Math.round(voiceVolume / 1.5 * 100);
+        }
+    }
+    
+    if (isPlaying) restartMetronome();
+    showAlert(`Preset "${preset.name}" loaded successfully.`);
+}
+// Add the editPreset function
+function editPreset(preset) {
+    if (!presetModal) return;
+    
+    currentEditingPresetId = preset.id;
+    
+    const saveTab = document.querySelector('.preset-tab[data-tab="save"]');
+    const saveTabContent = document.getElementById('save-tab');
+    
+    if (saveTab) saveTab.classList.add('active');
+    if (saveTabContent) saveTabContent.classList.add('active');
+    
+    if (saveTabButtons) saveTabButtons.style.display = 'none';
+    if (editTabButtons) editTabButtons.style.display = 'flex';
+    
+    if (presetNameInput) presetNameInput.value = preset.name;
+    if (presetDescInput) presetDescInput.value = preset.description || '';
+    
+    // Initialize form with preset settings
+    initializePresetControls(preset.settings);
+    
+    presetModal.classList.add('visible');
+}
+// Add the confirmDeletePreset function
+function confirmDeletePreset(id) {
+    if (!confirmModal || !confirmMessage || !confirmOk || !confirmCancel) return;
+    
+    confirmMessage.textContent = 'Are you sure you want to delete this preset? This action cannot be undone.';
+    confirmModal.classList.add('visible');
+    
+    const handleConfirm = async () => {
+        try {
+            await deletePresetFromBackend(id);
+            showAlert('Preset deleted successfully.');
+            renderUserPresets();
+            loadUserPresetsToGrid();
+        } catch (error) {
+            console.error('Failed to delete preset:', error);
+            showAlert('Failed to delete preset. Please try again later.');
+        } finally {
+            confirmModal.classList.remove('visible');
+            confirmOk.removeEventListener('click', handleConfirm);
+            confirmCancel.removeEventListener('click', handleCancel);
+        }
+    };
+    
+    const handleCancel = () => {
+        confirmModal.classList.remove('visible');
+        confirmOk.removeEventListener('click', handleConfirm);
+        confirmCancel.removeEventListener('click', handleCancel);
+    };
+    
+    confirmOk.addEventListener('click', handleConfirm);
+    confirmCancel.addEventListener('click', handleCancel);
+}
+// Add initializePresetControls function
+function initializePresetControls(settings = null) {
+    if (presetDecreaseBeats && presetIncreaseBeats) {
+        let beats = beatsPerMeasure;
+        if (settings && settings.beatsPerMeasure) beats = settings.beatsPerMeasure;
+        
+        document.getElementById('preset-time-sig-numerator').textContent = beats;
+        
+        presetDecreaseBeats.onclick = () => {
+            beats = Math.max(1, beats - 1);
+            document.getElementById('preset-time-sig-numerator').textContent = beats;
+            updatePresetAccentPattern();
+        };
+        
+        presetIncreaseBeats.onclick = () => {
+            beats = Math.min(12, beats + 1);
+            document.getElementById('preset-time-sig-numerator').textContent = beats;
+            updatePresetAccentPattern();
+        };
+    }
+    
+    if (presetDecreaseNoteValue && presetIncreaseNoteValue) {
+        let noteVal = noteValue;
+        if (settings && settings.noteValue) noteVal = settings.noteValue;
+        
+        document.getElementById('preset-time-sig-denominator').textContent = noteVal;
+        
+        presetDecreaseNoteValue.onclick = () => {
+            const idx = constValid.indexOf(noteVal);
+            if (idx > 0) {
+                noteVal = constValid[idx - 1];
+                document.getElementById('preset-time-sig-denominator').textContent = noteVal;
+            }
+        };
+        
+        presetIncreaseNoteValue.onclick = () => {
+            const idx = constValid.indexOf(noteVal);
+            if (idx < constValid.length - 1) {
+                noteVal = constValid[idx + 1];
+                document.getElementById('preset-time-sig-denominator').textContent = noteVal;
+            }
+        };
+    }
+    
+    // Set preset sound buttons
+    presetSoundButtons.forEach(btn => {
+        if (btn.tagName === 'BUTTON') {
+            btn.onclick = e => {
+                e.preventDefault();
+                e.stopPropagation();
+                presetSoundButtons.forEach(x => x.classList.remove('selected'));
+                btn.classList.add('selected');
+                presetModalSelectedSound = btn.dataset.sound;
+            };
+            
+            if (settings && settings.sound && btn.dataset.sound === settings.sound) {
+                btn.classList.add('selected');
+                presetModalSelectedSound = settings.sound;
+            }
+        }
+    });
+    
+    // Initialize volume slider
+    if (presetVolumeSlider && settings && settings.volume !== undefined) {
+        presetVolumeSlider.value = Math.round(settings.volume / 1.5 * 100);
+    }
+    
+    // Initialize voice volume slider
+    if (presetVoiceVolumeSlider && settings && settings.voiceSettings && settings.voiceSettings.voiceVolume !== undefined) {
+        presetVoiceVolumeSlider.value = Math.round(settings.voiceSettings.voiceVolume / 1.5 * 100);
+    }
+    
+    updatePresetAccentPattern();
+}
+// Add updatePresetAccentPattern function
+function updatePresetAccentPattern() {
+    const presetAccentPattern = document.getElementById('preset-accent-pattern');
+    if (!presetAccentPattern) return;
+    
+    const beats = parseInt(document.getElementById('preset-time-sig-numerator').textContent);
+    const noteVal = parseInt(document.getElementById('preset-time-sig-denominator').textContent);
+    
+    presetAccentPattern.innerHTML = '';
+    for (let i = 0; i < beats; i++) {
+        let state = 'normal';
+        if (noteVal === 8 && (beats === 6 || beats === 9 || beats === 12) ? i % 3 === 0 : i === 0) {
+            state = 'accent';
+        }
+        
+        const btn = document.createElement('button');
+        btn.className = 'accent-button';
+        btn.dataset.beat = i + 1;
+        btn.dataset.state = state;
+        btn.type = 'button';
+        
+        if (state === 'accent') btn.classList.add('accent');
+        else if (state === 'silent') btn.classList.add('silent');
+        
+        btn.innerHTML = `<span>${i + 1}</span>`;
+        
+        btn.onclick = () => {
+            const currentState = btn.dataset.state;
+            btn.dataset.state = currentState === 'normal' ? 'accent' : 
+                               currentState === 'accent' ? 'silent' : 'normal';
+            
+            btn.classList.toggle('accent', btn.dataset.state === 'accent');
+            btn.classList.toggle('silent', btn.dataset.state === 'silent');
+        };
+        
+        presetAccentPattern.appendChild(btn);
+    }
+}
+setTimeout(() => { 
+    if (typeof showAlert === 'function') {
+        showAlert('Tip: Click the blue "Show Timing Log" button in the bottom right corner to analyze metronome timing accuracy.');
+    }
+}, 1000);
 async function getAuthToken() { if (window.auth0Client && window.auth0Client.getTokenSilently) return await window.auth0Client.getTokenSilently(); if (window.getToken) return await window.getToken(); return null }
 async function fetchUserPresets() { const t = await getAuthToken(); if (!t) return []; const r = await fetch('/api/metronomePresets', { headers: { Authorization: `Bearer ${t}` } }); return r.ok ? await r.json() : [] }
 async function savePresetToBackend(p) { const t = await getAuthToken(); if (!t) throw new Error('Not authenticated'); const r = await fetch('/api/metronomePresets', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` }, body: JSON.stringify({ name: p.name, description: p.description, settings: p.settings }) }); if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.message || 'Failed to save preset') } return await r.json() }
