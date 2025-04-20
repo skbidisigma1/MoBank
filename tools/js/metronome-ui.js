@@ -6,7 +6,7 @@ presetSoundButtons.forEach(b=>{if(b.tagName==='BUTTON')b.type='button'});
 let isPlaying=false,currentTempo=parseInt(tempoDisplay.value),beatsPerMeasure=parseInt(timeSignatureNumerator.textContent),noteValue=parseInt(timeSignatureDenominator.textContent),subdivision=parseInt(subdivisionSelector.value),currentBeat=0,pendulumAngle=0,selectedSound='click',volume=parseFloat(volumeSlider.value)/100*1.5,audioContext=null,audioWorkletNode=null,metronomeProcessor=null,tempoDebounceTimeout=null,sounds={click:{hi:null,lo:null},glassTick:{hi:null,lo:null},bell:{hi:null,lo:null}},useVoiceCounting=false,selectedVoice='male',useClickSubdivision=false,voiceVolume=parseFloat(voiceVolumeSlider.value)/100*1.5,voiceSounds={male:{numbers:{},subdivisions:{}}},pendulumRaf=null,metronomeStartTime=0,constValid=[1,2,4,8,16,32],tapTimes=[],tapTimeout=null,currentEditingPresetId=null,presetModalSelectedSound=selectedSound,overlayPointerDown=false,wakeLock=null,audioContextStartTime=0,beatLookAhead=0.2,lateNoteScheduleThreshold=0.01,scheduledBeats=new Map(),droppedNoteCount=0,perfectNoteCount=0,schedulerId=null,lookaheadMs=25,nextNoteTime=0,currentSub=0,scheduleAheadTime=0.1,scheduledVisuals=[],lastVisualCheck=0;
 function createSimpleLoggingContainer(){const container=document.createElement('div');container.id='metronome-log-container';container.style.cssText='margin-top:50px;padding:20px;border-top:2px solid #444;background-color:#f5f5f5;';const heading=document.createElement('h3');heading.textContent='Metronome Timing Log';heading.style.cssText='margin:0 0 10px 0;';const toggleBtn=document.createElement('button');toggleBtn.id='log-toggle-btn';toggleBtn.textContent='Start Logging';toggleBtn.style.cssText='margin-bottom:10px;padding:5px 10px;';toggleBtn.onclick=toggleDesyncLogging;const logContent=document.createElement('div');logContent.id='metronome-log-content';container.appendChild(heading);container.appendChild(toggleBtn);container.appendChild(logContent);document.body.appendChild(container);return container}
 const logContainer=createSimpleLoggingContainer();
-const desyncLogging={enabled:false,beatInterval:0,expectedBeats:[],actualBeats:[],desyncs:[],maxDesync:0,totalDesync:0,beatCount:0,logFrequency:10,startTime:null,subdivisionDesync:false,jitterValues:[],audioLatency:0,initialize(interval){this.beatInterval=interval;this.expectedBeats=[];this.actualBeats=[];this.desyncs=[];this.maxDesync=0;this.totalDesync=0;this.beatCount=0;this.startTime=null;this.log(`Metronome logging initialized: ${currentTempo} BPM, ${beatsPerMeasure}/${noteValue}, subdivision: ${subdivision}`,'heading')},log(message,type='normal'){const logContent=document.getElementById('metronome-log-content');if(!logContent)return;const entry=document.createElement('p');entry.textContent=message;entry.style.margin='3px 0';switch(type){case'heading':entry.style.fontWeight='bold';entry.style.color='#4CAF50';entry.style.fontSize='16px';break;case'error':entry.style.fontWeight='bold';entry.style.color='#F44336';break;case'stat':entry.style.color='#2196F3';entry.style.marginLeft='20px';break;case'warning':entry.style.color='#FF9800';break;default:entry.style.color='#333'}logContent.appendChild(entry);window.scrollTo(0,document.body.scrollHeight)},logBeat(isSubdivision=false){if(!this.enabled)return;if(isSubdivision&&!this.subdivisionDesync)return;const now=performance.now();let expectedTime;if(this.expectedBeats.length===0){this.startTime=now;expectedTime=this.startTime}else expectedTime=this.startTime+this.beatCount*this.beatInterval;const desync=Math.round(now-expectedTime);this.expectedBeats.push(expectedTime);this.actualBeats.push(now);this.desyncs.push(desync);this.totalDesync+=Math.abs(desync);this.maxDesync=Math.max(this.maxDesync,Math.abs(desync));this.beatCount++;const desyncColor=Math.abs(desync)>20?'warning':'normal';this.log(`Beat ${this.beatCount}: desync = ${desync}ms ${isSubdivision?'(subdivision)':''}`,desyncColor);if(this.beatCount%this.logFrequency===0)this.logStats()},logStats(){if(!this.enabled||this.beatCount===0)return;const avgDesync=Math.round(this.totalDesync/this.beatCount);this.log('Metronome Timing Stats:','heading');this.log(`Beats tracked: ${this.beatCount}`,'stat');this.log(`Average desync: ${avgDesync}ms`,'stat');this.log(`Max desync: ${this.maxDesync}ms`,'stat');if(this.desyncs.length>1){const jitter=this.calculateJitter();this.log(`Timing jitter: ${Math.round(jitter)}ms`,'stat')}if(audioContext&&this.beatCount>10){if(audioContext.outputLatency){this.audioLatency=audioContext.outputLatency;this.log(`Audio output latency: ${(this.audioLatency*1000).toFixed(2)}ms`,'stat')}this.log(`Audio hardware: ${audioContext.sampleRate}Hz`,'stat');if(metronomeProcessor){this.log('Using AudioWorklet for high precision timing','stat')}else{this.log('Using setInterval fallback (less precise)','warning')}}},calculateJitter(){const mean=this.totalDesync/this.desyncs.length;const squareDiffs=this.desyncs.map(desync=>{const diff=Math.abs(desync)-mean;return diff*diff});const variance=squareDiffs.reduce((sum,squareDiff)=>sum+squareDiff,0)/this.desyncs.length;return Math.sqrt(variance)},reset(){if(this.beatCount>0){this.logStats();this.log('Metronome logging reset','heading')}document.getElementById('metronome-log-content').innerHTML='';this.initialize(this.beatInterval)},startLogging(){document.getElementById('log-toggle-btn').textContent='Stop Logging';document.getElementById('log-toggle-btn').style.backgroundColor='#F44336';document.getElementById('log-toggle-btn').style.color='white'},stopLogging(){document.getElementById('log-toggle-btn').textContent='Start Logging';document.getElementById('log-toggle-btn').style.backgroundColor='';document.getElementById('log-toggle-btn').style.color=''}};
+const desyncLogging={enabled:false,beatInterval:0,expectedBeats:[],actualBeats:[],desyncs:[],maxDesync:0,totalDesync:0,beatCount:0,logFrequency:10,startTime:null,subdivisionDesync:false,jitterValues:[],audioLatency:0,initialize(interval){this.beatInterval=interval;this.expectedBeats=[];this.actualBeats=[];this.desyncs=[];this.maxDesync=0;this.totalDesync=0;this.beatCount=0;this.startTime=null;this.log(`Metronome logging initialized: ${currentTempo} BPM, ${beatsPerMeasure}/${noteValue}, subdivision: ${subdivision}`,'heading')},log(message,type='normal'){const logContent=document.getElementById('metronome-log-content');if(!logContent)return;const entry=document.createElement('p');entry.textContent=message;entry.style.margin='3px 0';switch(type){case'heading':entry.style.fontWeight='bold';entry.style.color='#4CAF50';entry.style.fontSize='16px';break;case'error':entry.style.fontWeight='bold';entry.style.color='#F44336';break;case'stat':entry.style.color='#2196F3';entry.style.marginLeft='20px';break;case'warning':entry.style.color='#FF9800';break;default:entry.style.color='#333'}logContent.appendChild(entry);window.scrollTo(0,document.body.scrollHeight)},logBeat(isSubdivision=false){if(!this.enabled)return;if(isSubdivision&&!this.subdivisionDesync)return;if(!audioContext) return;const now = audioContext.currentTime * 1000;let expectedTime;if(this.expectedBeats.length===0){this.startTime=now;expectedTime=this.startTime}else expectedTime=this.startTime+this.beatCount*this.beatInterval;const desync=Math.round(now-expectedTime);this.expectedBeats.push(expectedTime);this.actualBeats.push(now);this.desyncs.push(desync);this.totalDesync+=Math.abs(desync);this.maxDesync=Math.max(this.maxDesync,Math.abs(desync));this.beatCount++;const desyncColor=Math.abs(desync)>5?'warning':'normal';this.log(`Beat ${this.beatCount}: desync = ${desync}ms ${isSubdivision?'(subdivision)':''}`,desyncColor);if(this.beatCount%this.logFrequency===0)this.logStats()},logStats(){if(!this.enabled||this.beatCount===0)return;const avgDesync=Math.round(this.totalDesync/this.beatCount);this.log('Metronome Timing Stats:','heading');this.log(`Beats tracked: ${this.beatCount}`,'stat');this.log(`Average desync: ${avgDesync}ms`,'stat');this.log(`Max desync: ${this.maxDesync}ms`,'stat');if(this.desyncs.length>1){const jitter=this.calculateJitter();this.log(`Timing jitter: ${Math.round(jitter)}ms`,'stat')}if(audioContext&&this.beatCount>10){if(audioContext.outputLatency){this.audioLatency=audioContext.outputLatency;this.log(`Audio output latency: ${(this.audioLatency*1000).toFixed(2)}ms`,'stat')}this.log(`Audio hardware: ${audioContext.sampleRate}Hz`,'stat');if(metronomeProcessor){this.log('Using AudioWorklet for high precision timing','stat')}else{this.log('Using setInterval fallback (less precise)','warning')}}},calculateJitter(){const mean=this.totalDesync/this.desyncs.length;const squareDiffs=this.desyncs.map(desync=>{const diff=Math.abs(desync)-mean;return diff*diff});const variance=squareDiffs.reduce((sum,squareDiff)=>sum+squareDiff,0)/this.desyncs.length;return Math.sqrt(variance)},reset(){if(this.beatCount>0){this.logStats();this.log('Metronome logging reset','heading')}document.getElementById('metronome-log-content').innerHTML='';this.initialize(this.beatInterval)},startLogging(){document.getElementById('log-toggle-btn').textContent='Stop Logging';document.getElementById('log-toggle-btn').style.backgroundColor='#F44336';document.getElementById('log-toggle-btn').style.color='white'},stopLogging(){document.getElementById('log-toggle-btn').textContent='Start Logging';document.getElementById('log-toggle-btn').style.backgroundColor='';document.getElementById('log-toggle-btn').style.color=''}};
 const PRESET_CACHE_MS=2e4;
 async function requestWakeLock(){try{if('wakeLock'in navigator){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{if(isPlaying)requestWakeLock()})}}catch(e){}}
 function releaseWakeLock(){if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null}}
@@ -69,7 +69,6 @@ async function deletePresetFromBackend(id){const t=await getAuthToken();if(!t)th
 function initializePresets(){renderUserPresets();loadUserPresetsToGrid()}
 initializePresets();initializePresetControls();initAudio()
 
-// Add loadSounds function
 async function loadSounds(){
   try{
     const files=[
@@ -92,7 +91,6 @@ async function loadSounds(){
       }
     }));
     
-    // Set the selected sound button
     const selectedButton=document.querySelector(`.sound-button[data-sound="${selectedSound}"]`);
     if(selectedButton) selectedButton.classList.add('selected');
     
@@ -101,16 +99,13 @@ async function loadSounds(){
   }
 }
 
-// Add loadVoiceSounds function
 async function loadVoiceSounds(){
   try{
-    // Load voice counting numbers (1-12)
     const numberPromises=[];
     for(let i=1;i<=12;i++){
       numberPromises.push(loadVoiceSound('numbers',i.toString(),`${i}.wav`));
     }
     
-    // Load subdivision vocalizations
     const subdivisionSounds=[
       {name:'e',file:'e.wav'},
       {name:'and',file:'and.wav'},
@@ -123,7 +118,6 @@ async function loadVoiceSounds(){
       loadVoiceSound('subdivisions',sound.name,sound.file)
     );
     
-    // Wait for all sounds to load
     await Promise.all([...numberPromises,...subdivisionPromises]);
     
   }catch(error){
@@ -131,7 +125,6 @@ async function loadVoiceSounds(){
   }
 }
 
-// Helper function to load individual voice sounds
 async function loadVoiceSound(category,name,filename){
   try{
     const response=await fetch(`/tools/sounds/metronome/voice/male/${filename}`);
@@ -143,19 +136,15 @@ async function loadVoiceSound(category,name,filename){
   }
 }
 
-// Fix playTickSound function which is called but not defined
 function playTickSound(data,atTime=null){
   if(data.silent) return;
   
   if(data.isMainBeat){
-    // Play main beat
     if(useVoiceCounting){
       playVoiceSound((data.beatInMeasure+1).toString(),atTime);
     }else{
       playSound(data.accent,atTime);
     }
   }else if(subdivision>1){
-    // Play subdivision beat
     playSubdivisionSound(data.subBeat,atTime);
   }}
-}
