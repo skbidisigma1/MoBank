@@ -3,7 +3,42 @@ function initializeMetronomeUI() {
 const tempoSlider = document.getElementById('tempo-slider'), tempoDisplay = document.getElementById('tempo-display'), tempoDecreaseBtn = document.getElementById('tempo-decrease'), tempoIncreaseBtn = document.getElementById('tempo-increase'), tempoPlayBtn = document.getElementById('tempo-play'), decreaseBeatsBtn = document.querySelector('[data-action="decrease-beats"]'), increaseBeatsBtn = document.querySelector('[data-action="increase-beats"]'), decreaseNoteValueBtn = document.querySelector('[data-action="decrease-note-value"]'), increaseNoteValueBtn = document.querySelector('[data-action="increase-note-value"]'), timeSignatureNumerator = document.getElementById('time-sig-numerator'), timeSignatureDenominator = document.getElementById('time-sig-denominator'), accentPattern = document.getElementById('accent-pattern'), soundButtons = document.querySelectorAll('.sound-button'), volumeSlider = document.getElementById('volume-slider'), pendulum = document.querySelector('.tempo-pendulum'), subdivisionSelector = document.getElementById('subdivision-selector'), tapButton = document.getElementById('tap-tempo-button'), tapDisplay = document.getElementById('tap-tempo-display'), useVoiceCountingCheckbox = document.getElementById('use-voice-counting'), voiceOptionsPanel = document.querySelector('.voice-options-panel'), useClickSubdivisionCheckbox = document.getElementById('use-click-subdivision'), voiceVolumeSlider = document.getElementById('voice-volume-slider'), presetModal = document.getElementById('preset-modal'), presetTabs = document.querySelectorAll('.preset-tab'), presetTabContents = document.querySelectorAll('.preset-tab-content'), presetNameInput = document.getElementById('preset-name'), presetDescInput = document.getElementById('preset-description'), presetSaveBtn = document.getElementById('preset-save'), presetCancelBtn = document.getElementById('preset-cancel'), presetCloseBtn = document.getElementById('preset-close'), presetUpdateBtn = document.getElementById('preset-update'), presetCancelEditBtn = document.getElementById('preset-cancel-edit'), presetList = document.getElementById('preset-list'), emptyPresets = document.getElementById('empty-presets'), saveTabButtons = document.getElementById('save-tab-buttons'), editTabButtons = document.getElementById('edit-tab-buttons'), presetsGrid = document.getElementById('presets-grid'), presetForm = document.getElementById('preset-form'), includeTempoCheck = document.getElementById('include-tempo'), includeTimeSignatureCheck = document.getElementById('include-time-signature'), includeSubdivisionCheck = document.getElementById('include-subdivision'), includeAccentPatternCheck = document.getElementById('include-accent-pattern'), includeSoundCheck = document.getElementById('include-sound'), includeVolumeCheck = document.getElementById('include-volume'), includeVoiceSettingsCheck = document.getElementById('include-voice-settings'), presetDecreaseBeats = document.getElementById('preset-decrease-beats'), presetIncreaseBeats = document.getElementById('preset-increase-beats'), presetDecreaseNoteValue = document.getElementById('preset-decrease-note-value'), presetIncreaseNoteValue = document.getElementById('preset-increase-note-value'), presetSoundButtons = document.querySelectorAll('.preset-sound-button'), presetVolumeSlider = document.getElementById('preset-volume-slider'), presetVoiceVolumeSlider = document.getElementById('preset-voice-volume-slider'), alertModal = document.getElementById('alert-modal'), alertMessage = document.getElementById('alert-message'), alertConfirm = document.getElementById('alert-confirm'), confirmModal = document.getElementById('confirm-modal'), confirmMessage = document.getElementById('confirm-message'), confirmOk = document.getElementById('confirm-ok'), confirmCancel = document.getElementById('confirm-cancel')
 soundButtons.forEach(b => { if (b.tagName === 'BUTTON') { b.type = 'button'; b.onclick = e => { e.preventDefault(); e.stopPropagation(); soundButtons.forEach(x => x.classList.remove('selected')); b.classList.add('selected'); selectedSound = b.dataset.sound } } })
 presetSoundButtons.forEach(b => { if (b.tagName === 'BUTTON') b.type = 'button' })
-let isPlaying = false, currentTempo = parseInt(tempoDisplay.value), beatsPerMeasure = parseInt(timeSignatureNumerator.textContent), noteValue = parseInt(timeSignatureDenominator.textContent), subdivision = parseInt(subdivisionSelector.value), currentBeat = 0, pendulumAngle = 0, selectedSound = 'click', volume = parseFloat(volumeSlider.value) / 100 * 1.5, audioContext = null, tempoDebounceTimeout = null, sounds = { click: { hi: null, lo: null }, glassTick: { hi: null, lo: null }, bell: { hi: null, lo: null } }, useVoiceCounting = false, selectedVoice = 'male', useClickSubdivision = false, voiceVolume = parseFloat(voiceVolumeSlider.value) / 100 * 1.5, voiceSounds = { male: { numbers: {}, subdivisions: {} } }, pendulumRaf = null, metronomeStartTime = 0, constValid = [1, 2, 4, 8, 16, 32], tapTimes = [], tapTimeout = null, currentEditingPresetId = null, presetModalSelectedSound = selectedSound, overlayPointerDown = false, wakeLock = null, schedulerId = null, nextNoteTime = 0, currentSub = 0, lookaheadMs = 25, scheduleAheadTime = 0.1
+let isPlaying = false, 
+    currentTempo = parseInt(tempoDisplay.value), 
+    beatsPerMeasure = parseInt(timeSignatureNumerator.textContent), 
+    noteValue = parseInt(timeSignatureDenominator.textContent), 
+    subdivision = parseInt(subdivisionSelector.value), 
+    currentBeat = 0, 
+    pendulumAngle = 0, 
+    selectedSound = 'click', 
+    volume = parseFloat(volumeSlider.value) / 100 * 1.5, 
+    audioContext = null, 
+    audioWorkletNode = null,
+    metronomeProcessor = null,
+    tempoDebounceTimeout = null, 
+    sounds = { click: { hi: null, lo: null }, glassTick: { hi: null, lo: null }, bell: { hi: null, lo: null } }, 
+    useVoiceCounting = false, 
+    selectedVoice = 'male', 
+    useClickSubdivision = false, 
+    voiceVolume = parseFloat(voiceVolumeSlider.value) / 100 * 1.5, 
+    voiceSounds = { male: { numbers: {}, subdivisions: {} } }, 
+    pendulumRaf = null, 
+    metronomeStartTime = 0, 
+    constValid = [1, 2, 4, 8, 16, 32], 
+    tapTimes = [], 
+    tapTimeout = null, 
+    currentEditingPresetId = null, 
+    presetModalSelectedSound = selectedSound, 
+    overlayPointerDown = false, 
+    wakeLock = null,
+    // New timing related variables
+    audioContextStartTime = 0,
+    beatLookAhead = 0.2, // seconds to schedule ahead
+    lateNoteScheduleThreshold = 0.01, // 10ms threshold for late scheduling
+    scheduledBeats = new Map(),
+    // Debug counters
+    droppedNoteCount = 0,
+    perfectNoteCount = 0
 function createSimpleLoggingContainer() {
     const container = document.createElement('div')
     container.id = 'metronome-log-container'
@@ -37,6 +72,8 @@ const desyncLogging = {
     logFrequency: 10,
     startTime: 0,
     subdivisionDesync: false,
+    jitterValues: [],
+    audioLatency: 0,
     initialize(interval) {
         this.beatInterval = interval
         this.expectedBeats = []
@@ -106,6 +143,24 @@ const desyncLogging = {
             const jitter = this.calculateJitter()
             this.log(`Timing jitter: ${Math.round(jitter)}ms`, 'stat')
         }
+        // Add advanced timing diagnostics
+        if (audioContext && this.beatCount > 10) {
+            // Calculate the average audio latency if available
+            if (audioContext.outputLatency) {
+                this.audioLatency = audioContext.outputLatency;
+                this.log(`Audio output latency: ${(this.audioLatency * 1000).toFixed(2)}ms`, 'stat');
+            }
+            
+            // Log information about the audio hardware
+            this.log(`Audio hardware: ${audioContext.sampleRate}Hz`, 'stat');
+            
+            // If using AudioWorklet, show that information
+            if (metronomeProcessor) {
+                this.log(`Using AudioWorklet for high precision timing`, 'stat');
+            } else {
+                this.log(`Using setInterval fallback (less precise)`, 'warning');
+            }
+        }
     },
     calculateJitter() {
         const mean = this.totalDesync / this.desyncs.length
@@ -132,7 +187,99 @@ const desyncLogging = {
 const PRESET_CACHE_MS = 2e4
 async function requestWakeLock() { try { if ('wakeLock' in navigator) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { if (isPlaying) requestWakeLock() }) } } catch (e) { } }
 function releaseWakeLock() { if (wakeLock) { wakeLock.release().catch(() => { }); wakeLock = null } }
-async function initAudio() { try { audioContext = new (window.AudioContext || window.webkitAudioContext)(); await loadSounds(); await loadVoiceSounds() } catch (e) { console.error(e) } }
+async function initAudio() { 
+    try { 
+        audioContext = new (window.AudioContext || window.webkitAudioContext)({
+            latencyHint: 'interactive',
+            sampleRate: 48000
+        });
+        
+        // Load sounds first
+        await loadSounds(); 
+        await loadVoiceSounds();
+        
+        // Then initialize the AudioWorklet
+        await initAudioWorklet();
+    } catch (e) { 
+        console.error('Audio initialization error:', e);
+        showAlert('Error initializing audio system. Some features may not work correctly.');
+    } 
+}
+async function initAudioWorklet() {
+    if (!audioContext) return;
+    
+    try {
+        // Load the AudioWorklet processor
+        await audioContext.audioWorklet.addModule('/tools/js/metronome-processor.js');
+        
+        // Create the AudioWorklet node
+        metronomeProcessor = new AudioWorkletNode(audioContext, 'metronome-processor', {
+            numberOfInputs: 0,
+            numberOfOutputs: 0,
+            processorOptions: {
+                beatsPerMeasure: beatsPerMeasure,
+                subdivision: subdivision
+            }
+        });
+        
+        // Set up message handling from the processor
+        metronomeProcessor.port.onmessage = handleWorkletMessage;
+        
+        // Connect the node to the destination to keep it active
+        metronomeProcessor.connect(audioContext.destination);
+        
+        console.log('AudioWorklet initialized successfully');
+    } catch (e) {
+        console.error('AudioWorklet initialization failed:', e);
+        // Fall back to the old scheduling method
+        console.warn('Falling back to setInterval-based scheduling');
+    }
+}
+function handleWorkletMessage(event) {
+    const data = event.data;
+    
+    if (data.type === 'tick') {
+        const now = audioContext.currentTime;
+        const scheduledTime = data.time;
+        
+        // If the scheduled time is too close or already passed, log it as a potentially dropped beat
+        if (scheduledTime - now < lateNoteScheduleThreshold) {
+            console.warn('Late scheduling detected');
+            droppedNoteCount++;
+            // Try to play it immediately instead of at the scheduled time
+            playTickSound(data);
+        } else {
+            perfectNoteCount++;
+            // Schedule the sound at the precise time
+            playTickSound(data, scheduledTime);
+        }
+        
+        // Schedule visual update
+        scheduleVisual(() => {
+            if (data.isMainBeat) {
+                updateVisualBeat(data.beatInMeasure);
+                desyncLogging.logBeat(false);
+            } else if (data.subBeat > 0) {
+                desyncLogging.logBeat(true);
+            }
+        }, scheduledTime);
+    }
+}
+function playTickSound(data, atTime = null) {
+    if (data.silent) return;
+    
+    if (data.isMainBeat) {
+        // Play main beat
+        if (useVoiceCounting) {
+            playVoiceSound((data.beatInMeasure + 1).toString(), atTime);
+        } else {
+            playSound(data.accent, atTime);
+        }
+    } else if (subdivision > 1) {
+        // Play subdivision beat
+        playSubdivisionSound(data.subBeat, atTime);
+    }
+}
 async function loadSounds() { try { const f = [{ n: 'glassTick', f: 'Perc_Glass_hi.wav', t: 'hi' }, { n: 'glassTick', f: 'Perc_Glass_lo.wav', t: 'lo' }, { n: 'click', f: 'Perc_Tongue_hi.wav', t: 'hi' }, { n: 'click', f: 'Perc_Tongue_lo.wav', t: 'lo' }, { n: 'bell', f: 'Synth_Bell_A_hi.wav', t: 'hi' }, { n: 'bell', f: 'Synth_Bell_A_lo.wav', t: 'lo' }]; await Promise.all(f.map(async s => { try { const r = await fetch(`/tools/sounds/metronome/${s.f}`); const a = await r.arrayBuffer(); sounds[s.n][s.t] = await audioContext.decodeAudioData(a) } catch (e) { console.error(e) } })); const b = document.querySelector(`.sound-button[data-sound="${selectedSound}"]`); if (b) b.classList.add('selected') } catch (e) { console.error(e) } }
 async function loadVoiceSounds() { try { const p = []; for (let i = 1; i <= 12; i++) p.push(loadVoiceSound('male', 'numbers', i.toString(), `${i}.wav`)); const s = [{ n: 'e', f: 'e.wav' }, { n: 'and', f: 'and.wav' }, { n: 'a', f: 'a.wav' }, { n: 'trip', f: 'trip.wav' }, { n: 'let', f: 'let.wav' }]; await Promise.all([...p, ...s.map(s => loadVoiceSound('male', 'subdivisions', s.n, s.f))]) } catch (e) { console.error(e) } }
 async function loadVoiceSound(v, c, n, f) { try { const r = await fetch(`/tools/sounds/metronome/voice/${v}/${f}`); const a = await r.arrayBuffer(); voiceSounds[v][c][n] = await audioContext.decodeAudioData(a) } catch (e) { console.error(e) } }
@@ -142,12 +289,49 @@ function playSound(accent, atTime = null) { if (!audioContext || !sounds[selecte
 function playSubdivisionSound(p, atTime = null) { if (useVoiceCounting && !useClickSubdivision) { let s = null; if (subdivision === 2) s = 'and'; else if (subdivision === 3) { if (p === 1) s = 'trip'; else if (p === 2) s = 'let' } else if (subdivision === 4) { if (p === 1) s = 'e'; else if (p === 2) s = 'and'; else if (p === 3) s = 'a' } if (s) { playVoiceSubdivision(s, atTime); return } } if (!audioContext || !sounds[selectedSound]) return; const b = audioContext.createBufferSource(), g = audioContext.createGain(); b.buffer = sounds[selectedSound].lo; if (!b.buffer) return; g.gain.value = volume * 0.6; b.connect(g); g.connect(audioContext.destination); b.start(atTime ?? 0) }
 function tempoToSliderPosition(t) { const m = 10, x = 1000, l = Math.log(m), M = Math.log(x); return 100 / (M - l) * (Math.log(t) - l) }
 function sliderPositionToTempo(p) { const m = 10, x = 1000, l = Math.log(m), M = Math.log(x); return Math.round(Math.exp(l + p * (M - l) / 100)) }
-function updateTempo(v) { let n = parseInt(v); if (isNaN(n) || n <= 0) n = 10; currentTempo = Math.min(Math.max(n, 10), 1000); tempoDisplay.value = currentTempo; tempoSlider.value = tempoToSliderPosition(currentTempo); if (isPlaying) { clearTimeout(tempoDebounceTimeout); tempoDebounceTimeout = setTimeout(restartMetronome, 150) } }
+function updateTempo(v) { 
+    let n = parseInt(v); 
+    if (isNaN(n) || n <= 0) n = 10; 
+    currentTempo = Math.min(Math.max(n, 10), 1000); 
+    tempoDisplay.value = currentTempo; 
+    tempoSlider.value = tempoToSliderPosition(currentTempo); 
+    
+    if (isPlaying) { 
+        clearTimeout(tempoDebounceTimeout); 
+        
+        // If using AudioWorklet, just update the tempo instead of restarting
+        if (metronomeProcessor) {
+            tempoDebounceTimeout = setTimeout(() => {
+                const beatIntervalSec = (60 / currentTempo) * (4 / noteValue);
+                const subIntervalSec = subdivision > 1 ? beatIntervalSec / subdivision : beatIntervalSec;
+                
+                metronomeProcessor.port.postMessage({
+                    type: 'update',
+                    interval: subIntervalSec,
+                    tempo: currentTempo
+                });
+            }, 150);
+        } else {
+            // Fall back to restarting the metronome
+            tempoDebounceTimeout = setTimeout(restartMetronome, 150);
+        }
+    }
+}
 function updateBeatsPerMeasure(v) { beatsPerMeasure = Math.min(Math.max(v, 1), 12); timeSignatureNumerator.textContent = beatsPerMeasure; updateAccentPattern(); updateBeatLights(); if (isPlaying) restartMetronome() }
 function updateAccentPattern(p = null) { accentPattern.innerHTML = ''; for (let i = 0; i < beatsPerMeasure; i++) { let s = 'normal'; if (p && i < p.length) s = p[i]; else if (noteValue === 8 && (beatsPerMeasure === 6 || beatsPerMeasure === 9 || beatsPerMeasure === 12) ? i % 3 === 0 : i === 0) s = 'accent'; const b = document.createElement('button'); b.className = 'accent-button'; b.dataset.beat = i + 1; b.dataset.state = s; b.type = 'button'; if (s === 'accent') b.classList.add('accent'); else if (s === 'silent') b.classList.add('silent'); b.innerHTML = `<span>${i + 1}</span>`; b.onclick = () => { const c = b.dataset.state; b.dataset.state = c === 'normal' ? 'accent' : c === 'accent' ? 'silent' : 'normal'; b.classList.toggle('accent', b.dataset.state === 'accent'); b.classList.toggle('silent', b.dataset.state === 'silent'); updateBeatLights() }; accentPattern.appendChild(b) } updateBeatLights() }
 function updateBeatLights() { const c = document.querySelector('.beat-lights'); c.innerHTML = ''; for (let i = 0; i < beatsPerMeasure; i++) { const a = document.querySelector(`.accent-button[data-beat="${i + 1}"]`), s = document.createElement('div'); s.className = 'beat-light'; const st = a ? a.dataset.state : 'normal'; if (st === 'accent') s.classList.add('accent'); else if (st === 'silent') s.classList.add('silent'); s.dataset.beat = i + 1; c.appendChild(s) } }
 function updateNoteValue(v) { if (constValid.includes(v)) { noteValue = v; timeSignatureDenominator.textContent = noteValue; updateAccentPattern(); updateBeatLights(); if (isPlaying) restartMetronome() } }
-function scheduleVisual(cb, time) { const delay = Math.max(0, (time - audioContext.currentTime) * 1000); setTimeout(cb, delay) }
+function scheduleVisual(cb, time) { 
+    // Calculate the delay based on the difference between audio context time and scheduled time
+    const delay = Math.max(0, (time - audioContext.currentTime) * 1000);
+    
+    // If the delay is very small, execute immediately to prevent visual lag
+    if (delay < 5) {
+        cb();
+    } else {
+        setTimeout(cb, delay);
+    }
+}
 function scheduleNote(subIdx, time) {
     const main = subIdx % subdivision === 0
     const mainIdx = Math.floor(subIdx / subdivision)
@@ -190,14 +374,14 @@ function animatePendulum(intervalMs) {
     const progress = (elapsed % intervalMs) / intervalMs;
     const direction = Math.floor(elapsed / intervalMs) % 2 === 0 ? 1 : -1;
     
-    // Optimize by calculating angle only when needed
+    // Use a more efficient pendulum motion calculation
     pendulumAngle = Math.sin(progress * Math.PI) * 0.392699 * direction;
     
-    // Avoid layout thrashing by batching DOM operations
+    // Use transform: translate3d() to trigger GPU acceleration
     if (!pendulum.pendingUpdate) {
         pendulum.pendingUpdate = true;
         requestAnimationFrame(() => {
-            pendulum.style.transform = `rotate(${pendulumAngle}rad)`;
+            pendulum.style.transform = `rotate(${pendulumAngle}rad) translate3d(0,0,0)`;
             pendulum.pendingUpdate = false;
         });
     }
@@ -213,6 +397,8 @@ async function startMetronome() {
     currentBeat = 0
     pendulum.style.transform = 'rotate(0rad)'
     metronomeStartTime = performance.now()
+    audioContextStartTime = audioContext.currentTime;
+    
     tempoPlayBtn.innerHTML = '<svg width="24" height="24"><path d="M6 19h4V5H6zm8-14v14h4V5z" fill="currentColor"/></svg>'
     const beatIntervalSec = (60 / currentTempo) * (4 / noteValue)
     const subIntervalSec = subdivision > 1 ? beatIntervalSec / subdivision : beatIntervalSec
@@ -222,7 +408,37 @@ async function startMetronome() {
     currentSub = 0
     if (pendulumRaf) cancelAnimationFrame(pendulumRaf)
     animatePendulum(beatIntervalMs)
-    schedulerId = setInterval(() => scheduler(subIntervalSec), lookaheadMs)
+    // Collect accent patterns for the processor
+    const accentPatterns = [];
+    document.querySelectorAll('.accent-button').forEach(btn => {
+        accentPatterns.push(btn.dataset.state || 'normal');
+    });
+    
+    // If we have the AudioWorklet processor, use it
+    if (metronomeProcessor) {
+        metronomeProcessor.port.postMessage({
+            type: 'start',
+            interval: subIntervalSec,
+            tempo: currentTempo,
+            beatsPerMeasure: beatsPerMeasure,
+            subdivision: subdivision,
+            beatPatterns: accentPatterns
+        });
+    } else {
+        // Fall back to the old scheduling method
+        // This is kept for browsers that don't support AudioWorklet
+        nextNoteTime = audioContext.currentTime + 0.05;
+        currentSub = 0;
+        schedulerId = setInterval(() => scheduler(subIntervalSec), lookaheadMs);
+    }
+    
+    // Reset diagnostic counters
+    droppedNoteCount = 0;
+    perfectNoteCount = 0;
+    
+    // Print audio system setup info to help with debugging
+    console.log(`Metronome started: ${currentTempo} BPM, ${beatsPerMeasure}/${noteValue}, subdivision: ${subdivision}`);
+    console.log(`Audio context: sampleRate=${audioContext.sampleRate}, baseLatency=${audioContext.baseLatency || 'unknown'}, outputLatency=${audioContext.outputLatency || 'unknown'}`);
 }
 function stopMetronome() {
     isPlaying = false
@@ -235,6 +451,47 @@ function stopMetronome() {
     tempoPlayBtn.innerHTML = '<svg width="24" height="24"><path d="M8 5V19L19 12Z" fill="currentColor"/></svg>'
     document.querySelectorAll('.beat-light').forEach(l => l.classList.remove('active'))
     if (desyncLogging.enabled && desyncLogging.beatCount > 0) { desyncLogging.log('Metronome Stopped - Final Stats:', 'error'); desyncLogging.logStats() }
+    // Stop the AudioWorklet if it's active
+    if (metronomeProcessor) {
+        metronomeProcessor.port.postMessage({
+            type: 'stop'
+        });
+    }
+    
+    if (schedulerId) { 
+        clearInterval(schedulerId); 
+        schedulerId = null;
+    }
+    
+    if (pendulumRaf) { 
+        cancelAnimationFrame(pendulumRaf); 
+        pendulumRaf = null;
+    }
+    
+    pendulumAngle = 0;
+    pendulum.style.transition = 'transform 0.5s ease-out';
+    pendulum.style.transform = 'rotate(0rad)';
+    tempoPlayBtn.innerHTML = '<svg width="24" height="24"><path d="M8 5V19L19 12Z" fill="currentColor"/></svg>';
+    document.querySelectorAll('.beat-light').forEach(l => l.classList.remove('active'));
+    
+    if (desyncLogging.enabled && desyncLogging.beatCount > 0) { 
+        desyncLogging.log('Metronome Stopped - Final Stats:', 'error'); 
+        desyncLogging.logStats();
+        
+        // Log additional timing diagnostics
+        if (metronomeProcessor) {
+            const totalBeats = perfectNoteCount + droppedNoteCount;
+            if (totalBeats > 0) {
+                const percentPerfect = (perfectNoteCount / totalBeats * 100).toFixed(2);
+                desyncLogging.log(`AudioWorklet timing stats:`, 'heading');
+                desyncLogging.log(`Perfect timing: ${perfectNoteCount} beats (${percentPerfect}%)`, 'stat');
+                desyncLogging.log(`Late scheduling: ${droppedNoteCount} beats (${(100-percentPerfect).toFixed(2)}%)`, 'stat');
+            }
+        }
+    }
+    
+    // Clear any scheduled sounds
+    scheduledBeats.clear();
 }
 function restartMetronome() { if (isPlaying) { stopMetronome(); startMetronome() } }
 if (subdivisionSelector) subdivisionSelector.onchange = () => { subdivision = parseInt(subdivisionSelector.value); if (isPlaying) restartMetronome() }
