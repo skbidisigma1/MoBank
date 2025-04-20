@@ -537,4 +537,4 @@ window.addEventListener('keydown', e => {
         desyncLogging.subdivisionDesync ? 'heading' : 'error');
     }
   }
-});
+})};
