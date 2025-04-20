@@ -37,20 +37,32 @@ class MetronomeProcessor extends AudioWorkletProcessor {
         if (this.isRunning) {
             const now = currentTime;
             const batch = [];
-            while (this.startTickTime + this.tickIndex * this.interval < now + 0.3) {
+            
+            // Use a tighter scheduling window (100ms look-ahead)
+            const scheduleWindow = now + 0.1;
+            
+            // Schedule all beats within the window
+            while (this.startTickTime + this.tickIndex * this.interval < scheduleWindow) {
                 const t = this.startTickTime + this.tickIndex * this.interval;
+                
+                // Calculate exact sample frame for maximum precision
+                const frameDelta = Math.round((t - now) * sampleRate);
+                
                 const total = this.beatsPerMeasure * this.subdivision;
                 const subIdx = this.tickIndex % total;
                 const mainBeat = Math.floor(subIdx / this.subdivision);
                 const subBeat = subIdx % this.subdivision;
                 const isMain = subBeat === 0;
+                
                 let accent = false;
                 let silent = false;
+                
                 if (isMain && this.beatPatterns.length > mainBeat) {
                     const pat = this.beatPatterns[mainBeat];
                     accent = pat === 'accent';
                     silent = pat === 'silent';
                 }
+                
                 batch.push({
                     time: t,
                     beatInMeasure: mainBeat,
@@ -58,14 +70,19 @@ class MetronomeProcessor extends AudioWorkletProcessor {
                     isMainBeat: isMain,
                     accent: accent,
                     silent: silent,
-                    measureStart: mainBeat === 0 && subBeat === 0
+                    measureStart: mainBeat === 0 && subBeat === 0,
+                    frame: frameDelta
                 });
+                
                 this.tickIndex++;
-                if (batch.length >= 4 || t > now + 0.25) {
+                
+                // Send batches more frequently for higher precision
+                if (batch.length >= 2 || t > now + 0.08) {
                     this.port.postMessage({ type: 'batch', events: batch });
                     batch.length = 0;
                 }
             }
+            
             if (batch.length > 0) {
                 this.port.postMessage({ type: 'batch', events: batch });
             }

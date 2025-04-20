@@ -17,33 +17,32 @@ function handleWorkletMessage(event){
   const data=event.data;
   if(data.type==='batch'){
     data.events.forEach(event=>{
-      // Add safety check for output latency
-      const outputLatency = audioContext.outputLatency ? 
-        Math.min(audioContext.outputLatency, 0.1) : 0; // Cap at 100ms
-      const adjustedTime = Math.max(event.time - outputLatency, audioContext.currentTime);
+      // Use raw AudioWorklet time with no latency adjustment
+      const scheduledTime = event.time;
+      const now = audioContext.currentTime;
       
-      if(adjustedTime - audioContext.currentTime < lateNoteScheduleThreshold){
-        console.warn('Late scheduling detected');
+      if(scheduledTime < now + lateNoteScheduleThreshold) {
         droppedNoteCount++;
-        playTickSound(event);
-      }else{
+        playTickSound(event); // Immediate playback
+      } else {
         perfectNoteCount++;
-        playTickSound(event, adjustedTime);
+        playTickSound(event, scheduledTime); // Use precise scheduled time
       }
       
-      scheduleVisual(()=>{
+      // Schedule visuals based on audio time
+      scheduleVisual(() => {
         if(event.isMainBeat){
           updateVisualBeat(event.beatInMeasure);
           desyncLogging.logBeat(false);
         }else if(event.subBeat>0){
           desyncLogging.logBeat(true);
         }
-      }, adjustedTime);
+      }, scheduledTime);
     });
   }
 }
 const scheduledSources=new Map();
-function playSound(accent,atTime=null){if(!audioContext||!sounds[selectedSound])return;const buffer=accent?sounds[selectedSound].hi:sounds[selectedSound].lo;const source=audioContext.createBufferSource();const gainNode=audioContext.createGain();source.buffer=buffer;gainNode.gain.value=volume;source.connect(gainNode);gainNode.connect(audioContext.destination);const adjustedTime=Math.max(atTime,audioContext.currentTime+0.005);source.start(adjustedTime);scheduledSources.set(adjustedTime,{source,gainNode});setTimeout(()=>{scheduledSources.delete(adjustedTime)},(adjustedTime-audioContext.currentTime)*1000+1000)}
+function playSound(accent,atTime=null){if(!audioContext||!sounds[selectedSound])return;const buffer=accent?sounds[selectedSound].hi:sounds[selectedSound].lo;const source=audioContext.createBufferSource();const gainNode=audioContext.createGain();source.buffer=buffer;gainNode.gain.value=volume;source.connect(gainNode);gainNode.connect(audioContext.destination);const minTime = atTime !== null ? Math.max(atTime, audioContext.currentTime) : audioContext.currentTime;source.start(minTime);scheduledSources.set(minTime,{source,gainNode});setTimeout(()=>{scheduledSources.delete(minTime)},(minTime-audioContext.currentTime)*1000+1000)}
 function playVoiceSound(n,atTime=null){
   if(!audioContext||!voiceSounds[selectedVoice].numbers[n])return;
   const s=audioContext.createBufferSource(),g=audioContext.createGain();
@@ -51,9 +50,9 @@ function playVoiceSound(n,atTime=null){
   g.gain.value=voiceVolume*(n==='2'?0.9:1);
   s.connect(g);
   g.connect(audioContext.destination);
-  // Ensure minimum safe scheduling time
-  const adjustedTime = atTime !== null ? Math.max(atTime, audioContext.currentTime + 0.005) : audioContext.currentTime;
-  s.start(adjustedTime);
+  // No artificial padding - use scheduled time directly
+  const minTime = atTime !== null ? Math.max(atTime, audioContext.currentTime) : audioContext.currentTime;
+  s.start(minTime);
 }
 function playVoiceSubdivision(t,atTime=null){
   if(!audioContext||!voiceSounds[selectedVoice].subdivisions[t])return;
@@ -62,19 +61,19 @@ function playVoiceSubdivision(t,atTime=null){
   s.buffer=voiceSounds[selectedVoice].subdivisions[t];
   s.connect(g);
   g.connect(audioContext.destination);
-  // Ensure minimum safe scheduling time
-  const adjustedTime = atTime !== null ? Math.max(atTime, audioContext.currentTime + 0.005) : audioContext.currentTime;
-  s.start(adjustedTime);
+  // No artificial padding - use scheduled time directly
+  const minTime = atTime !== null ? Math.max(atTime, audioContext.currentTime) : audioContext.currentTime;
+  s.start(minTime);
 }
 function playSubdivisionSound(p,atTime=null){if(useVoiceCounting&&!useClickSubdivision){let s=null;if(subdivision===2)s='and';else if(subdivision===3){if(p===1)s='trip';else if(p===2)s='let'}else if(subdivision===4){if(p===1)s='e';else if(p===2)s='and';else if(p===3)s='a'}if(s){playVoiceSubdivision(s,atTime);return}}if(!audioContext||!sounds[selectedSound])return;const b=audioContext.createBufferSource(),g=audioContext.createGain();b.buffer=sounds[selectedSound].lo;if(!b.buffer)return;g.gain.value=volume*0.6;b.connect(g);g.connect(audioContext.destination);b.start(atTime??0)}
 function checkScheduledVisuals(){const now=audioContext?.currentTime||performance.now()/1000;for(let i=scheduledVisuals.length-1;i>=0;i--){if(now>=scheduledVisuals[i].time){scheduledVisuals[i].callback();scheduledVisuals.splice(i,1)}}requestAnimationFrame(checkScheduledVisuals)}
-function scheduleVisual(cb,time){scheduledVisuals.push({time:time,callback:cb})}
+function scheduleVisual(cb,time){const visualTime = time; // Use audio context timing directly
+  scheduledVisuals.push({time:visualTime,callback:cb})}
 checkScheduledVisuals();
 function tempoToSliderPosition(t){const m=10,x=1000,l=Math.log(m),M=Math.log(x);return 100/(M-l)*(Math.log(t)-l)}
 function sliderPositionToTempo(p){const m=10,x=1000,l=Math.log(m),M=Math.log(x);return Math.round(Math.exp(l+p*(M-l)/100))}
 function updateTempo(v){let n=parseInt(v);if(isNaN(n)||n<=0)n=10;currentTempo=Math.min(Math.max(n,10),1000);tempoDisplay.value=currentTempo;tempoSlider.value=tempoToSliderPosition(currentTempo);if(isPlaying){clearTimeout(tempoDebounceTimeout);if(metronomeProcessor){tempoDebounceTimeout=setTimeout(()=>{const beatIntervalSec=(60/currentTempo)*(4/noteValue);const subIntervalSec=subdivision>1?beatIntervalSec/subdivision:beatIntervalSec;metronomeProcessor.port.postMessage({type:'update',interval:subIntervalSec,tempo:currentTempo})},150)}else{tempoDebounceTimeout=setTimeout(restartMetronome,150)}}}
 function updateBeatsPerMeasure(v){beatsPerMeasure=Math.min(Math.max(v,1),12);timeSignatureNumerator.textContent=beatsPerMeasure;updateAccentPattern();updateBeatLights();if(isPlaying)restartMetronome()}
-
 function updateAccentPattern(p=null){accentPattern.innerHTML='';for(let i=0;i<beatsPerMeasure;i++){let s='normal';if(p&&i<p.length)s=p[i];else if(noteValue===8&&(beatsPerMeasure===6||beatsPerMeasure===9||beatsPerMeasure===12)?i%3===0:i===0)s='accent';const b=document.createElement('button');b.className='accent-button';b.dataset.beat=i+1;b.dataset.state=s;b.type='button';if(s==='accent')b.classList.add('accent');else if(s==='silent')b.classList.add('silent');b.innerHTML=`<span>${i+1}</span>`;b.onclick=()=>{const c=b.dataset.state;b.dataset.state=c==='normal'?'accent':c==='accent'?'silent':'normal';b.classList.toggle('accent',b.dataset.state==='accent');b.classList.toggle('silent',b.dataset.state==='silent');updateBeatLights()};accentPattern.appendChild(b)}updateBeatLights()}
 function updateBeatLights(){const c=document.querySelector('.beat-lights');c.innerHTML='';for(let i=0;i<beatsPerMeasure;i++){const a=document.querySelector(`.accent-button[data-beat="${i+1}"]`),s=document.createElement('div');s.className='beat-light';const st=a?a.dataset.state:'normal';if(st==='accent')s.classList.add('accent');else if(st==='silent')s.classList.add('silent');s.dataset.beat=i+1;c.appendChild(s)}}
 function updateNoteValue(v){if(constValid.includes(v)){noteValue=v;timeSignatureDenominator.textContent=noteValue;updateAccentPattern();updateBeatLights();if(isPlaying)restartMetronome()}}
