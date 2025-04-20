@@ -1,94 +1,54 @@
-// MetronomeProcessor - A precise audio-thread based timing system
-class MetronomeProcessor extends AudioWorkletProcessor {
-  constructor() {
-    super();
-    this.nextTickTime = 0;
-    this.isRunning = false;
-    this.currentBeat = 0;
-    this.currentSub = 0;
-    this.beatsPerMeasure = 4;
-    this.subdivision = 1;
-    this.interval = 0.5;  // Default 120 BPM
-    this.beatPatterns = [];
-    
-    // Process messages from the main thread
-    this.port.onmessage = (event) => {
-      const data = event.data;
-      
-      if (data.type === 'start') {
-        this.isRunning = true;
-        this.interval = data.interval;
-        this.nextTickTime = currentTime + 0.05; // Small offset to avoid immediate tick
-        this.beatsPerMeasure = data.beatsPerMeasure;
-        this.subdivision = data.subdivision;
-        this.beatPatterns = data.beatPatterns || [];
-        this.currentBeat = 0;
-        this.currentSub = 0;
-      } 
-      else if (data.type === 'stop') {
-        this.isRunning = false;
-      } 
-      else if (data.type === 'update') {
-        // Update parameters without resetting beat counter
-        this.interval = data.interval;
-        if (data.beatsPerMeasure) this.beatsPerMeasure = data.beatsPerMeasure;
-        if (data.subdivision) this.subdivision = data.subdivision;
-        if (data.beatPatterns) this.beatPatterns = data.beatPatterns;
-      }
-    };
-  }
-
-  process(inputs, outputs, parameters) {
-    // Output silence to the audio output - we're just using this as a timing source
-    if (outputs.length > 0 && outputs[0].length > 0) {
-      const output = outputs[0][0];
-      for (let i = 0; i < output.length; i++) {
-        output[i] = 0; // Output silence
-      }
-    }
-    
-    // Check if it's time to schedule the next tick
-    if (this.isRunning) {
-      const now = currentTime;
-      
-      // Schedule multiple ticks ahead in one process cycle for efficiency
-      while (this.nextTickTime < now + 0.1) {
-        const mainBeat = Math.floor(this.currentSub / this.subdivision);
-        const beatInMeasure = mainBeat % this.beatsPerMeasure;
-        const subBeat = this.currentSub % this.subdivision;
-        const isMainBeat = subBeat === 0;
-        
-        // Determine if this is an accent based on beat patterns
-        let accent = false;
-        let silent = false;
-        
-        if (isMainBeat && this.beatPatterns.length > beatInMeasure) {
-          const pattern = this.beatPatterns[beatInMeasure];
-          accent = pattern === 'accent';
-          silent = pattern === 'silent';
-        }
-        
-        // Send precise timing information to main thread
-        this.port.postMessage({
-          type: 'tick',
-          time: this.nextTickTime,
-          beatInMeasure: beatInMeasure,
-          subBeat: subBeat,
-          isMainBeat: isMainBeat,
-          accent: accent,
-          silent: silent,
-          measureStart: beatInMeasure === 0 && subBeat === 0
-        });
-        
-        // Advance to next subdivision
-        this.currentSub = (this.currentSub + 1) % (this.beatsPerMeasure * this.subdivision);
-        this.nextTickTime += this.interval;
-      }
-    }
-    
-    // AudioWorkletProcessors must return true to keep processing
-    return true;
-  }
+class MetronomeProcessor extends AudioWorkletProcessor{
+constructor(){
+super()
+this.tickIndex=0
+this.startTickTime=0
+this.beatsPerMeasure=4
+this.subdivision=1
+this.interval=0.5
+this.beatPatterns=[]
+this.isRunning=false
+this.port.onmessage=e=>{
+const d=e.data
+if(d.type==='start'){
+this.interval=d.interval
+this.beatsPerMeasure=d.beatsPerMeasure
+this.subdivision=d.subdivision
+this.beatPatterns=d.beatPatterns||[]
+this.tickIndex=0
+this.startTickTime=currentTime+0.05
+this.isRunning=true
+}else if(d.type==='stop'){
+this.isRunning=false
+}else if(d.type==='update'){
+if(d.interval) this.interval=d.interval
+if(d.beatsPerMeasure) this.beatsPerMeasure=d.beatsPerMeasure
+if(d.subdivision) this.subdivision=d.subdivision
+if(d.beatPatterns) this.beatPatterns=d.beatPatterns
+}}
 }
-
-registerProcessor('metronome-processor', MetronomeProcessor);
+process(i,o,p){
+if(o.length&&o[0].length) o[0][0].fill(0)
+if(this.isRunning){
+const now=currentTime
+while(this.startTickTime+this.tickIndex*this.interval<now+0.1){
+const t=this.startTickTime+this.tickIndex*this.interval
+const total=this.beatsPerMeasure*this.subdivision
+const subIdx=this.tickIndex%total
+const mainBeat=Math.floor(subIdx/this.subdivision)
+const subBeat=subIdx%this.subdivision
+const isMain=subBeat===0
+let accent=false
+let silent=false
+if(isMain&&this.beatPatterns.length>mainBeat){
+const pat=this.beatPatterns[mainBeat]
+accent=pat==='accent'
+silent=pat==='silent'
+}
+this.port.postMessage({type:'tick',time:t,beatInMeasure:mainBeat,subBeat:subBeat,isMainBeat:isMain,accent:accent,silent:silent,measureStart:mainBeat===0&&subBeat===0})
+this.tickIndex++
+}}
+return true
+}
+}
+registerProcessor('metronome-processor',MetronomeProcessor)
