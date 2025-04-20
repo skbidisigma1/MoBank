@@ -66,4 +66,95 @@ async function savePresetToBackend(p){const t=await getAuthToken();if(!t)throw n
 async function updatePresetInBackend(p){const t=await getAuthToken();if(!t)throw new Error('Not authenticated');const r=await fetch('/api/metronomePresets',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify({presetId:p.id,name:p.name,description:p.description,settings:p.settings})});if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.message||'Failed to update preset')}return await r.json()}
 async function deletePresetFromBackend(id){const t=await getAuthToken();if(!t)throw new Error('Not authenticated');const r=await fetch('/api/metronomePresets',{method:'DELETE',headers:{'Content-Type':'application/json',Authorization:`Bearer ${t}`},body:JSON.stringify({presetId:id})});if(!r.ok&&r.status!==204){const d=await r.json().catch(()=>({}));throw new Error(d.message||'Failed to delete preset')}}
 function initializePresets(){renderUserPresets();loadUserPresetsToGrid()}
-initializePresets();initializePresetControls();initAudio()}
+initializePresets();initializePresetControls();initAudio()
+
+// Add loadSounds function
+async function loadSounds(){
+  try{
+    const files=[
+      {name:'click',file:'Perc_Tongue_hi.wav',type:'hi'},
+      {name:'click',file:'Perc_Tongue_lo.wav',type:'lo'},
+      {name:'glassTick',file:'Perc_Glass_hi.wav',type:'hi'},
+      {name:'glassTick',file:'Perc_Glass_lo.wav',type:'lo'},
+      {name:'bell',file:'Synth_Bell_A_hi.wav',type:'hi'},
+      {name:'bell',file:'Synth_Bell_A_lo.wav',type:'lo'}
+    ];
+    
+    await Promise.all(files.map(async sound=>{
+      try{
+        const response=await fetch(`/tools/sounds/metronome/${sound.file}`);
+        if(!response.ok) throw new Error(`Failed to load sound: ${sound.file}`);
+        const audioBuffer=await response.arrayBuffer();
+        sounds[sound.name][sound.type]=await audioContext.decodeAudioData(audioBuffer);
+      }catch(error){
+        console.error(`Error loading sound ${sound.file}:`,error);
+      }
+    }));
+    
+    // Set the selected sound button
+    const selectedButton=document.querySelector(`.sound-button[data-sound="${selectedSound}"]`);
+    if(selectedButton) selectedButton.classList.add('selected');
+    
+  }catch(error){
+    console.error('Error in loadSounds:',error);
+  }
+}
+
+// Add loadVoiceSounds function
+async function loadVoiceSounds(){
+  try{
+    // Load voice counting numbers (1-12)
+    const numberPromises=[];
+    for(let i=1;i<=12;i++){
+      numberPromises.push(loadVoiceSound('numbers',i.toString(),`${i}.wav`));
+    }
+    
+    // Load subdivision vocalizations
+    const subdivisionSounds=[
+      {name:'e',file:'e.wav'},
+      {name:'and',file:'and.wav'},
+      {name:'a',file:'a.wav'},
+      {name:'trip',file:'trip.wav'},
+      {name:'let',file:'let.wav'}
+    ];
+    
+    const subdivisionPromises=subdivisionSounds.map(sound=>
+      loadVoiceSound('subdivisions',sound.name,sound.file)
+    );
+    
+    // Wait for all sounds to load
+    await Promise.all([...numberPromises,...subdivisionPromises]);
+    
+  }catch(error){
+    console.error('Error in loadVoiceSounds:',error);
+  }
+}
+
+// Helper function to load individual voice sounds
+async function loadVoiceSound(category,name,filename){
+  try{
+    const response=await fetch(`/tools/sounds/metronome/voice/male/${filename}`);
+    if(!response.ok) throw new Error(`Failed to load voice sound: ${filename}`);
+    const audioBuffer=await response.arrayBuffer();
+    voiceSounds.male[category][name]=await audioContext.decodeAudioData(audioBuffer);
+  }catch(error){
+    console.error(`Error loading voice sound ${filename}:`,error);
+  }
+}
+
+// Fix playTickSound function which is called but not defined
+function playTickSound(data,atTime=null){
+  if(data.silent) return;
+  
+  if(data.isMainBeat){
+    // Play main beat
+    if(useVoiceCounting){
+      playVoiceSound((data.beatInMeasure+1).toString(),atTime);
+    }else{
+      playSound(data.accent,atTime);
+    }
+  }else if(subdivision>1){
+    // Play subdivision beat
+    playSubdivisionSound(data.subBeat,atTime);
+  }
+}
