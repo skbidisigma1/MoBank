@@ -31,7 +31,8 @@ process(i,o,p){
 if(o.length&&o[0].length) o[0][0].fill(0)
 if(this.isRunning){
 const now=currentTime
-while(this.startTickTime+this.tickIndex*this.interval<now+0.1){
+const batch=[]
+while(this.startTickTime+this.tickIndex*this.interval<now+0.3){
 const t=this.startTickTime+this.tickIndex*this.interval
 const total=this.beatsPerMeasure*this.subdivision
 const subIdx=this.tickIndex%total
@@ -45,9 +46,25 @@ const pat=this.beatPatterns[mainBeat]
 accent=pat==='accent'
 silent=pat==='silent'
 }
-this.port.postMessage({type:'tick',time:t,beatInMeasure:mainBeat,subBeat:subBeat,isMainBeat:isMain,accent:accent,silent:silent,measureStart:mainBeat===0&&subBeat===0})
+batch.push({
+time:t,
+beatInMeasure:mainBeat,
+subBeat:subBeat,
+isMainBeat:isMain,
+accent:accent,
+silent:silent,
+measureStart:mainBeat===0&&subBeat===0
+})
 this.tickIndex++
-}}
+if(batch.length>=4||t>now+0.25){
+this.port.postMessage({type:'batch',events:batch})
+batch.length=0
+}
+}
+if(batch.length>0){
+this.port.postMessage({type:'batch',events:batch})
+}
+}
 return true
 }
 }
