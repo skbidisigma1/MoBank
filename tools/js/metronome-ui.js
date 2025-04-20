@@ -12,11 +12,60 @@ async function requestWakeLock(){try{if('wakeLock'in navigator){wakeLock=await n
 function releaseWakeLock(){if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null}}
 async function initAudio(){try{audioContext=new(window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive',sampleRate:48000});await loadSounds();await loadVoiceSounds();await initAudioWorklet()}catch(e){console.error('Audio initialization error:',e);showAlert('Error initializing audio system. Some features may not work correctly.')}}
 async function initAudioWorklet(){if(!audioContext)return;try{if(!audioContext.audioWorklet){console.warn('AudioWorklet not supported in this browser');return}await audioContext.audioWorklet.addModule('/tools/js/metronome-processor.js');metronomeProcessor=new AudioWorkletNode(audioContext,'metronome-processor',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[1],processorOptions:{beatsPerMeasure:beatsPerMeasure,subdivision:subdivision}});metronomeProcessor.port.onmessage=handleWorkletMessage;metronomeProcessor.connect(audioContext.destination);console.log('AudioWorklet initialized successfully')}catch(e){console.error('AudioWorklet initialization failed:',e);console.warn('Falling back to setInterval-based scheduling')}}
-function handleWorkletMessage(event){if(!isPlaying)return;const data=event.data;if(data.type==='batch'){data.events.forEach(event=>{const outputLatency=audioContext.outputLatency||0;const adjustedTime=event.time-outputLatency;if(adjustedTime-audioContext.currentTime<lateNoteScheduleThreshold){console.warn('Late scheduling detected');droppedNoteCount++;playTickSound(event)}else{perfectNoteCount++;playTickSound(event,adjustedTime)}scheduleVisual(()=>{if(event.isMainBeat){updateVisualBeat(event.beatInMeasure);desyncLogging.logBeat(false)}else if(event.subBeat>0){desyncLogging.logBeat(true)}},adjustedTime)})}}
+function handleWorkletMessage(event){
+  if(!isPlaying)return;
+  const data=event.data;
+  if(data.type==='batch'){
+    data.events.forEach(event=>{
+      // Add safety check for output latency
+      const outputLatency = audioContext.outputLatency ? 
+        Math.min(audioContext.outputLatency, 0.1) : 0; // Cap at 100ms
+      const adjustedTime = Math.max(event.time - outputLatency, audioContext.currentTime);
+      
+      if(adjustedTime - audioContext.currentTime < lateNoteScheduleThreshold){
+        console.warn('Late scheduling detected');
+        droppedNoteCount++;
+        playTickSound(event);
+      }else{
+        perfectNoteCount++;
+        playTickSound(event, adjustedTime);
+      }
+      
+      scheduleVisual(()=>{
+        if(event.isMainBeat){
+          updateVisualBeat(event.beatInMeasure);
+          desyncLogging.logBeat(false);
+        }else if(event.subBeat>0){
+          desyncLogging.logBeat(true);
+        }
+      }, adjustedTime);
+    });
+  }
+}
 const scheduledSources=new Map();
 function playSound(accent,atTime=null){if(!audioContext||!sounds[selectedSound])return;const buffer=accent?sounds[selectedSound].hi:sounds[selectedSound].lo;const source=audioContext.createBufferSource();const gainNode=audioContext.createGain();source.buffer=buffer;gainNode.gain.value=volume;source.connect(gainNode);gainNode.connect(audioContext.destination);const adjustedTime=Math.max(atTime,audioContext.currentTime+0.005);source.start(adjustedTime);scheduledSources.set(adjustedTime,{source,gainNode});setTimeout(()=>{scheduledSources.delete(adjustedTime)},(adjustedTime-audioContext.currentTime)*1000+1000)}
-function playVoiceSound(n,atTime=null){if(!audioContext||!voiceSounds[selectedVoice].numbers[n])return;const s=audioContext.createBufferSource(),g=audioContext.createGain();s.buffer=voiceSounds[selectedVoice].numbers[n];g.gain.value=voiceVolume*(n==='2'?0.9:1);s.connect(g);g.connect(audioContext.destination);s.start(atTime??0)}
-function playVoiceSubdivision(t,atTime=null){if(!audioContext||!voiceSounds[selectedVoice].subdivisions[t])return;const s=audioContext.createBufferSource(),g=audioContext.createGain();g.gain.value=voiceVolume*(t==='and'?0.64:0.8);s.buffer=voiceSounds[selectedVoice].subdivisions[t];s.connect(g);g.connect(audioContext.destination);s.start(atTime??0)}
+function playVoiceSound(n,atTime=null){
+  if(!audioContext||!voiceSounds[selectedVoice].numbers[n])return;
+  const s=audioContext.createBufferSource(),g=audioContext.createGain();
+  s.buffer=voiceSounds[selectedVoice].numbers[n];
+  g.gain.value=voiceVolume*(n==='2'?0.9:1);
+  s.connect(g);
+  g.connect(audioContext.destination);
+  // Ensure minimum safe scheduling time
+  const adjustedTime = atTime !== null ? Math.max(atTime, audioContext.currentTime + 0.005) : audioContext.currentTime;
+  s.start(adjustedTime);
+}
+function playVoiceSubdivision(t,atTime=null){
+  if(!audioContext||!voiceSounds[selectedVoice].subdivisions[t])return;
+  const s=audioContext.createBufferSource(),g=audioContext.createGain();
+  g.gain.value=voiceVolume*(t==='and'?0.64:0.8);
+  s.buffer=voiceSounds[selectedVoice].subdivisions[t];
+  s.connect(g);
+  g.connect(audioContext.destination);
+  // Ensure minimum safe scheduling time
+  const adjustedTime = atTime !== null ? Math.max(atTime, audioContext.currentTime + 0.005) : audioContext.currentTime;
+  s.start(adjustedTime);
+}
 function playSubdivisionSound(p,atTime=null){if(useVoiceCounting&&!useClickSubdivision){let s=null;if(subdivision===2)s='and';else if(subdivision===3){if(p===1)s='trip';else if(p===2)s='let'}else if(subdivision===4){if(p===1)s='e';else if(p===2)s='and';else if(p===3)s='a'}if(s){playVoiceSubdivision(s,atTime);return}}if(!audioContext||!sounds[selectedSound])return;const b=audioContext.createBufferSource(),g=audioContext.createGain();b.buffer=sounds[selectedSound].lo;if(!b.buffer)return;g.gain.value=volume*0.6;b.connect(g);g.connect(audioContext.destination);b.start(atTime??0)}
 function checkScheduledVisuals(){const now=audioContext?.currentTime||performance.now()/1000;for(let i=scheduledVisuals.length-1;i>=0;i--){if(now>=scheduledVisuals[i].time){scheduledVisuals[i].callback();scheduledVisuals.splice(i,1)}}requestAnimationFrame(checkScheduledVisuals)}
 function scheduleVisual(cb,time){scheduledVisuals.push({time:time,callback:cb})}
@@ -31,7 +80,32 @@ function updateBeatLights(){const c=document.querySelector('.beat-lights');c.inn
 function updateNoteValue(v){if(constValid.includes(v)){noteValue=v;timeSignatureDenominator.textContent=noteValue;updateAccentPattern();updateBeatLights();if(isPlaying)restartMetronome()}}
 function updateVisualBeat(i){document.querySelectorAll('.beat-light').forEach(l=>l.classList.remove('active'));const b=document.querySelector(`.beat-light[data-beat="${i+1}"]`);if(b)b.classList.add('active')}
 function animatePendulum(intervalMs){if(!audioContext)return;const intervalSec=intervalMs/1000;const audioTime=audioContext.currentTime-audioContextStartTime;const progress=(audioTime%intervalSec)/intervalSec;const direction=Math.floor(audioTime/intervalSec)%2===0?1:-1;pendulumAngle=Math.sin(progress*Math.PI)*0.392699*direction;pendulum.style.transform=`rotate(${pendulumAngle}rad) translate3d(0,0,0)`;pendulumRaf=requestAnimationFrame(()=>animatePendulum(intervalMs))}
-async function startMetronome(){if(isPlaying)return;isPlaying=true;if(audioContext===null)await initAudio();else if(audioContext.state==='suspended')await audioContext.resume();await requestWakeLock();currentBeat=0;pendulum.style.transform='rotate(0rad)';metronomeStartTime=performance.now();audioContextStartTime=audioContext.currentTime;tempoPlayBtn.innerHTML='<svg width="24" height="24"><path d="M6 19h4V5H6zm8-14v14h4V5z" fill="currentColor"/></svg>';const beatIntervalSec=(60/currentTempo)*(4/noteValue);const subIntervalSec=subdivision>1?beatIntervalSec/subdivision:beatIntervalSec;const beatIntervalMs=beatIntervalSec*1000;desyncLogging.initialize(subIntervalSec*1000);nextNoteTime=audioContext.currentTime+0.05;currentSub=0;if(pendulumRaf)cancelAnimationFrame(pendulumRaf);animatePendulum(beatIntervalMs);const accentPatterns=[];document.querySelectorAll('.accent-button').forEach(btn=>{accentPatterns.push(btn.dataset.state||'normal')});if(metronomeProcessor){metronomeProcessor.port.postMessage({type:'start',interval:subIntervalSec,tempo:currentTempo,beatsPerMeasure:beatsPerMeasure,subdivision:subdivision,beatPatterns:accentPatterns})}else{nextNoteTime=audioContext.currentTime+0.05;currentSub=0;schedulerId=setInterval(()=>scheduler(subIntervalSec),lookaheadMs)}droppedNoteCount=0;perfectNoteCount=0;console.log(`Metronome started: ${currentTempo} BPM, ${beatsPerMeasure}/${noteValue}, subdivision: ${subdivision}`);console.log(`Audio context: sampleRate=${audioContext.sampleRate}, baseLatency=${audioContext.baseLatency||'unknown'}, outputLatency=${audioContext.outputLatency||'unknown'}`)}
+async function startMetronome(){
+  if(isPlaying)return;
+  isPlaying=true;
+  if(audioContext===null)await initAudio();
+  else if(audioContext.state==='suspended')await audioContext.resume();
+  await requestWakeLock();
+  currentBeat=0;
+  pendulum.style.transform='rotate(0rad)';
+  // Use audio context time exclusively for audio timing
+  audioContextStartTime=audioContext.currentTime;
+  metronomeStartTime=audioContextStartTime * 1000; // Convert to ms for legacy code
+  tempoPlayBtn.innerHTML='<svg width="24" height="24"><path d="M6 19h4V5H6zm8-14v14h4V5z" fill="currentColor"/></svg>';
+  
+  const beatIntervalSec=(60/currentTempo)*(4/noteValue);
+  const subIntervalSec=subdivision>1?beatIntervalSec/subdivision:beatIntervalSec;
+  const beatIntervalMs=beatIntervalSec*1000;
+  
+  // Initialize logging with precise interval
+  desyncLogging.initialize(subIntervalSec*1000);
+  
+  // Set next note time with a small delay for initialization
+  nextNoteTime=audioContext.currentTime+0.05;
+  currentSub=0;
+  
+  // ...existing code...
+  if(pendulumRaf)cancelAnimationFrame(pendulumRaf);animatePendulum(beatIntervalMs);const accentPatterns=[];document.querySelectorAll('.accent-button').forEach(btn=>{accentPatterns.push(btn.dataset.state||'normal')});if(metronomeProcessor){metronomeProcessor.port.postMessage({type:'start',interval:subIntervalSec,tempo:currentTempo,beatsPerMeasure:beatsPerMeasure,subdivision:subdivision,beatPatterns:accentPatterns})}else{nextNoteTime=audioContext.currentTime+0.05;currentSub=0;schedulerId=setInterval(()=>scheduler(subIntervalSec),lookaheadMs)}droppedNoteCount=0;perfectNoteCount=0;console.log(`Metronome started: ${currentTempo} BPM, ${beatsPerMeasure}/${noteValue}, subdivision: ${subdivision}`);console.log(`Audio context: sampleRate=${audioContext.sampleRate}, baseLatency=${audioContext.baseLatency||'unknown'}, outputLatency=${audioContext.outputLatency||'unknown'}`)}
 function stopMetronome(){isPlaying=false;releaseWakeLock();if(metronomeProcessor){metronomeProcessor.port.postMessage({type:'stop'})}if(schedulerId){clearInterval(schedulerId);schedulerId=null}if(pendulumRaf){cancelAnimationFrame(pendulumRaf);pendulumRaf=null}pendulumAngle=0;pendulum.style.transition='transform 0.5s ease-out';pendulum.style.transform='rotate(0rad)';tempoPlayBtn.innerHTML='<svg width="24" height="24"><path d="M8 5V19L19 12Z" fill="currentColor"/></svg>';document.querySelectorAll('.beat-light').forEach(l=>l.classList.remove('active'));if(desyncLogging.enabled&&desyncLogging.beatCount>0){desyncLogging.log('Metronome Stopped - Final Stats:','error');desyncLogging.logStats();if(metronomeProcessor){const totalBeats=perfectNoteCount+droppedNoteCount;if(totalBeats>0){const percentPerfect=(perfectNoteCount/totalBeats*100).toFixed(2);desyncLogging.log('AudioWorklet timing stats:','heading');desyncLogging.log(`Perfect timing: ${perfectNoteCount} beats (${percentPerfect}%)`,'stat');desyncLogging.log(`Late scheduling: ${droppedNoteCount} beats (${(100-percentPerfect).toFixed(2)}%)`,'stat')}}}scheduledBeats.clear();}
 function restartMetronome(){if(isPlaying){stopMetronome();startMetronome()}}
 if(subdivisionSelector)subdivisionSelector.onchange=()=>{subdivision=parseInt(subdivisionSelector.value);if(isPlaying)restartMetronome()}
@@ -147,4 +221,4 @@ function playTickSound(data,atTime=null){
     }
   }else if(subdivision>1){
     playSubdivisionSound(data.subBeat,atTime);
-  }}}
+  }}
