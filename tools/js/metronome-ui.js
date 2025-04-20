@@ -491,4 +491,50 @@ function playTickSound(data,atTime=null){
 
 updateAccentPattern();updateBeatLights();
 initAudio();
-}
+
+window.addEventListener('keydown', e => {
+  const active = document.activeElement;
+  const isForm = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT');
+  
+  if (e.code === 'Space' && !isForm) {
+    e.preventDefault();
+    isPlaying ? stopMetronome() : startMetronome();
+  }
+  
+  if (!isForm) {
+    if (e.code === 'Enter') {
+      if (active === tempoDisplay) {
+        tempoDisplay.blur();
+        e.preventDefault();
+      } else {
+        tempoDisplay.focus();
+        tempoDisplay.select();
+        e.preventDefault();
+      }
+    }
+    
+    let step = e.shiftKey && e.ctrlKey ? 20 : e.ctrlKey ? 10 : e.shiftKey ? 5 : 1;
+    
+    if (e.code === 'ArrowUp' || e.code === 'ArrowRight') {
+      e.preventDefault();
+      updateTempo(currentTempo + step);
+    }
+    
+    if (e.code === 'ArrowDown' || e.code === 'ArrowLeft') {
+      e.preventDefault();
+      updateTempo(currentTempo - step);
+    }
+    
+    if (e.ctrlKey && e.altKey && e.code === 'KeyL') {
+      e.preventDefault();
+      toggleDesyncLogging();
+    }
+    
+    if (e.ctrlKey && e.altKey && e.code === 'KeyS') {
+      e.preventDefault();
+      desyncLogging.subdivisionDesync = !desyncLogging.subdivisionDesync;
+      desyncLogging.log(`Subdivision desync logging ${desyncLogging.subdivisionDesync ? 'enabled' : 'disabled'}`,
+        desyncLogging.subdivisionDesync ? 'heading' : 'error');
+    }
+  }
+});
