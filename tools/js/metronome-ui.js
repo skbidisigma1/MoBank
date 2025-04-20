@@ -872,3 +872,4 @@ async function updatePresetInBackend(p) { const t = await getAuthToken(); if (!t
 async function deletePresetFromBackend(id) { const t = await getAuthToken(); if (!t) throw new Error('Not authenticated'); const r = await fetch('/api/metronomePresets', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` }, body: JSON.stringify({ presetId: id }) }); if (!r.ok && r.status !== 204) { const d = await r.json().catch(() => ({})); throw new Error(d.message || 'Failed to delete preset') } }
 function initializePresets() { renderUserPresets(); loadUserPresetsToGrid() }
 initializePresets(); initializePresetControls(); initAudio()
+}
