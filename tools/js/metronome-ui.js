@@ -147,4 +147,4 @@ function playTickSound(data,atTime=null){
     }
   }else if(subdivision>1){
     playSubdivisionSound(data.subBeat,atTime);
-  }}
+  }}}
