@@ -38,7 +38,12 @@ let isPlaying = false,
     scheduledBeats = new Map(),
     // Debug counters
     droppedNoteCount = 0,
-    perfectNoteCount = 0
+    perfectNoteCount = 0,
+    // Fix for undefined variables
+    schedulerId = null,
+    lookaheadMs = 25,
+    nextNoteTime = 0,
+    currentSub = 0
 function createSimpleLoggingContainer() {
     const container = document.createElement('div')
     container.id = 'metronome-log-container'
@@ -209,13 +214,20 @@ async function initAudioWorklet() {
     if (!audioContext) return;
     
     try {
+        // Check if the browser actually supports AudioWorklet
+        if (!audioContext.audioWorklet) {
+            console.warn('AudioWorklet not supported in this browser');
+            return;
+        }
+
         // Load the AudioWorklet processor
         await audioContext.audioWorklet.addModule('/tools/js/metronome-processor.js');
         
-        // Create the AudioWorklet node
+        // Create the AudioWorklet node with at least one output
         metronomeProcessor = new AudioWorkletNode(audioContext, 'metronome-processor', {
             numberOfInputs: 0,
-            numberOfOutputs: 0,
+            numberOfOutputs: 1,  // Must have at least one output
+            outputChannelCount: [1],
             processorOptions: {
                 beatsPerMeasure: beatsPerMeasure,
                 subdivision: subdivision
@@ -860,4 +872,3 @@ async function updatePresetInBackend(p) { const t = await getAuthToken(); if (!t
 async function deletePresetFromBackend(id) { const t = await getAuthToken(); if (!t) throw new Error('Not authenticated'); const r = await fetch('/api/metronomePresets', { method: 'DELETE', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` }, body: JSON.stringify({ presetId: id }) }); if (!r.ok && r.status !== 204) { const d = await r.json().catch(() => ({})); throw new Error(d.message || 'Failed to delete preset') } }
 function initializePresets() { renderUserPresets(); loadUserPresetsToGrid() }
 initializePresets(); initializePresetControls(); initAudio()
-}

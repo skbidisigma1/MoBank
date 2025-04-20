@@ -39,6 +39,14 @@ class MetronomeProcessor extends AudioWorkletProcessor {
   }
 
   process(inputs, outputs, parameters) {
+    // Output silence to the audio output - we're just using this as a timing source
+    if (outputs.length > 0 && outputs[0].length > 0) {
+      const output = outputs[0][0];
+      for (let i = 0; i < output.length; i++) {
+        output[i] = 0; // Output silence
+      }
+    }
+    
     // Check if it's time to schedule the next tick
     if (this.isRunning) {
       const now = currentTime;
