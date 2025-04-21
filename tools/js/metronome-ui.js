@@ -354,7 +354,7 @@ function updateAccentPattern(p=null){
     if(st==='accent')b.classList.add('accent');
     else if(st==='silent')b.classList.add('silent');
     b.innerHTML=`<span>${i+1}</span>`;
-    b.onclick=()=>{const s=b.dataset.state;b.dataset.state=s==='normal'?'accent':s==='accent'?'silent':'normal';b.classList.toggle('accent',b.dataset.state==='accent');b.classList.toggle('silent',b.dataset.state==='silent');updateBeatLights()};
+    b.onclick=()=>{const s=b.dataset.state;b.dataset.state=s==='normal'?'accent':s==='accent'?'silent':'normal';b.classList.toggle('accent',b.dataset.state==='accent');b.classList.toggle('silent',b.dataset.state==='silent');updateBeatLights(); if (isPlaying) restartMetronome();};
     accentPattern.appendChild(b);
   }
   updateBeatLights();
@@ -652,27 +652,39 @@ async function savePreset() {
 
 async function loadAndDisplayPresets() {
   const presets = await fetchPresets();
-  const grid = document.getElementById('presets-grid');
+  const grid = presetList;
   grid.innerHTML = '';
   if (!presets.length) {
-    document.getElementById('empty-presets').style.display = 'block';
+    emptyPresets.style.display = 'block';
     return;
   }
-  document.getElementById('empty-presets').style.display = 'none';
+  emptyPresets.style.display = 'none';
   presets.forEach(preset => {
     const btn = document.createElement('button');
     btn.className = 'preset-button user-preset';
     btn.innerHTML = `<div class='preset-tempo'>${preset.settings?.tempo || '--'} BPM</div><div class='preset-name'>${preset.name}</div><div class='preset-description'>${preset.description || ''}</div>`;
     // TODO: Add edit/delete actions
     grid.appendChild(btn);
+    btn.addEventListener('click', () => { applyPreset(preset); presetModal.classList.remove('visible'); });
   });
 }
 
-if (savePresetBtn) {
-  savePresetBtn.addEventListener('click', loadAndDisplayPresets);
-}
-if (presetSaveBtn) {
-  presetSaveBtn.addEventListener('click', savePreset);
+// Helper to apply a loaded preset immediately
+function applyPreset(preset) {
+  const s = preset.settings || {};
+  if (s.tempo) updateTempo(s.tempo);
+  if (s.timeSignature) { updateBeatsPerMeasure(s.timeSignature[0]); updateNoteValue(s.timeSignature[1]); }
+  if (s.subdivision != null) { subdivision = s.subdivision; subdivisionSelector.value = subdivision; if (isPlaying) restartMetronome(); }
+  if (s.accentPattern) renderPresetAccentPattern(s.accentPattern);
+  if (s.sound) { selectedSound = s.sound; soundButtons.forEach(b => b.classList.remove('selected')); document.querySelector(`.sound-button[data-sound="${s.sound}"]`)?.classList.add('selected'); }
+  if (s.volume != null) { volume = s.volume; volumeSlider.value = volume / 1.5 * 100; }
+  if (s.voice) {
+    useVoiceCountingCheckbox.checked = s.voice.useVoiceCounting;
+    useClickSubdivisionCheckbox.checked = s.voice.useClickSubdivision;
+    voiceVolumeSlider.value = s.voice.voiceVolume * 100 / 1.5;
+    voiceOptionsPanel.style.display = useVoiceCountingCheckbox.checked ? 'block' : 'none';
+    if (isPlaying) restartMetronome();
+  }
 }
 
 // Build accent buttons inside the preset modal
@@ -753,6 +765,7 @@ presetTabs.forEach(tab => {
       if (c.id === tab.dataset.tab + '-tab') c.classList.add('active');
       else c.classList.remove('active');
     });
+    if (tab.dataset.tab === 'load') loadAndDisplayPresets();
   });
 });
 
@@ -784,4 +797,5 @@ presetSoundButtons.forEach(btn => {
 // Modal footer buttons
 presetCancelBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
 presetCancelEditBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
-presetSaveBtn.addEventListener('click', () => presetModal.classList.remove('visible'))};
+presetSaveBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
+}
