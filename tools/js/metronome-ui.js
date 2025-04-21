@@ -644,6 +644,7 @@ async function savePreset() {
       return;
     }
     showAlert('Preset saved!', 2000);
+    presetModal.classList.remove('visible');
     await loadAndDisplayPresets();
   } catch (e) {
     showAlert('Could not save preset.');
@@ -797,5 +798,4 @@ presetSoundButtons.forEach(btn => {
 // Modal footer buttons
 presetCancelBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
 presetCancelEditBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
-presetSaveBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
-}
+presetSaveBtn.addEventListener('click', savePreset)};
