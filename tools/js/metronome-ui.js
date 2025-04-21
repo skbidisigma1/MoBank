@@ -798,4 +798,21 @@ presetSoundButtons.forEach(btn => {
 // Modal footer buttons
 presetCancelBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
 presetCancelEditBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
-presetSaveBtn.addEventListener('click', savePreset)};
+presetSaveBtn.addEventListener('click', savePreset);
+
+// Populate main page presets grid
+async function loadAndDisplayPagePresets() {
+  const presets = await fetchPresets();
+  presetsGrid.innerHTML = '';
+  if (!presets.length) return;
+  presets.forEach(preset => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-button user-preset';
+    btn.innerHTML = `<div class='preset-tempo'>${preset.settings?.tempo || '--'} BPM</div><div class='preset-name'>${preset.name}</div><div class='preset-description'>${preset.description || ''}</div>`;
+    btn.addEventListener('click', () => applyPreset(preset));
+    presetsGrid.appendChild(btn);
+  });
+}
+// initial page load
+loadAndDisplayPagePresets();
+}
