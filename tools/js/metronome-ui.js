@@ -249,6 +249,7 @@ function handleWorkletMessage(event){
       const now=audioContext.currentTime;
       if(scheduledTime<now+lateNoteScheduleThreshold){droppedNoteCount++;playTickSound(ev)}
       else{perfectNoteCount++;playTickSound(ev,scheduledTime)}
+      // Always schedule visual for main beats, even if silent
       scheduleVisual(()=>{if(ev.isMainBeat)updateVisualBeat(ev.beatInMeasure)},scheduledTime);
     });
   }
@@ -436,6 +437,16 @@ useVoiceCountingCheckbox.onchange=()=>{useVoiceCounting=useVoiceCountingCheckbox
 useClickSubdivisionCheckbox.onchange=()=>{useClickSubdivision=useClickSubdivisionCheckbox.checked;if(isPlaying)restartMetronome()};
 voiceVolumeSlider.oninput=()=>{voiceVolume=parseFloat(voiceVolumeSlider.value)/100*1.5};
 
+soundButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const sound = btn.getAttribute('data-sound');
+    if (!sounds[sound]) return;
+    selectedSound = sound;
+    soundButtons.forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  });
+});
+
 function toggleDesyncLogging(){
   desyncLogging.enabled=!desyncLogging.enabled;
   if(desyncLogging.enabled){
@@ -535,6 +546,131 @@ window.addEventListener('keydown', e => {
       desyncLogging.subdivisionDesync = !desyncLogging.subdivisionDesync;
       desyncLogging.log(`Subdivision desync logging ${desyncLogging.subdivisionDesync ? 'enabled' : 'disabled'}`,
         desyncLogging.subdivisionDesync ? 'heading' : 'error');
-    }
+    }  
   }
-})};
+});
+
+tapButton.addEventListener('click', function() {
+  const now = Date.now();
+  if (tapTimes.length > 0 && now - tapTimes[tapTimes.length - 1] > 2000) {
+    tapTimes.length = 0;
+  }
+  tapTimes.push(now);
+  if (tapTimes.length > 8) tapTimes.shift();
+  if (tapTimes.length >= 2) {
+    const intervals = tapTimes.slice(1).map((t, i) => t - tapTimes[i]);
+    const avg = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+    const bpm = Math.round(60000 / avg);
+    if (bpm >= 10 && bpm <= 1000) {
+      updateTempo(bpm);
+      tapDisplay.textContent = bpm + ' BPM';
+    } else {
+      tapDisplay.textContent = '-- BPM';
+    }
+  } else {
+    tapDisplay.textContent = '-- BPM';
+  }
+  tapButton.classList.add('tapped');
+  setTimeout(() => tapButton.classList.remove('tapped'), 200);
+  clearTimeout(tapTimeout);
+  tapTimeout = setTimeout(() => {
+    tapTimes.length = 0;
+    tapDisplay.textContent = '-- BPM';
+  }, 2500);
+});
+
+// Open the preset modal when the Manage Presets button is clicked
+const savePresetBtn = document.getElementById('save-preset');
+if (savePresetBtn) {
+  savePresetBtn.addEventListener('click', () => {
+    presetModal.classList.add('visible');
+    // Optionally, reset modal state or load presets here
+  });
+}
+// Close modal on close button
+if (presetCloseBtn) {
+  presetCloseBtn.addEventListener('click', () => {
+    presetModal.classList.remove('visible');
+  });
+}
+
+// --- Preset Modal Logic ---
+async function fetchPresets() {
+  try {
+    const token = localStorage.getItem('id_token');
+    const res = await fetch('/api/metronomePresets', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error('Failed to load presets');
+    return await res.json();
+  } catch (e) {
+    showAlert('Could not load presets.');
+    return [];
+  }
+}
+
+async function savePreset() {
+  const name = presetNameInput.value.trim();
+  const description = presetDescInput.value.trim();
+  if (!name) return showAlert('Preset name is required.');
+  // Collect settings based on checked boxes
+  const settings = {};
+  if (includeTempoCheck.checked) settings.tempo = parseInt(document.getElementById('preset-tempo-value').value);
+  if (includeTimeSignatureCheck.checked) settings.timeSignature = [
+    parseInt(document.getElementById('preset-time-sig-numerator').textContent),
+    parseInt(document.getElementById('preset-time-sig-denominator').textContent)
+  ];
+  if (includeSubdivisionCheck.checked) settings.subdivision = parseInt(document.getElementById('preset-subdivision-selector').value);
+  if (includeAccentPatternCheck.checked) settings.accentPattern = Array.from(document.querySelectorAll('#preset-accent-pattern .preset-accent-button')).map(b => b.dataset.state);
+  if (includeSoundCheck.checked) settings.sound = document.querySelector('.preset-sound-button.selected')?.dataset.sound;
+  if (includeVolumeCheck.checked) settings.volume = parseFloat(document.getElementById('preset-volume-slider').value);
+  if (includeVoiceSettingsCheck.checked) {
+    settings.voice = {
+      useVoiceCounting: document.getElementById('preset-use-voice-counting').checked,
+      useClickSubdivision: document.getElementById('preset-use-click-subdivision').checked,
+      voiceVolume: parseFloat(document.getElementById('preset-voice-volume-slider').value)
+    };
+  }
+  try {
+    const token = localStorage.getItem('id_token');
+    const res = await fetch('/api/metronomePresets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ name, description, settings })
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      showAlert(data.message || 'Failed to save preset.');
+      return;
+    }
+    showAlert('Preset saved!', 2000);
+    await loadAndDisplayPresets();
+  } catch (e) {
+    showAlert('Could not save preset.');
+  }
+}
+
+async function loadAndDisplayPresets() {
+  const presets = await fetchPresets();
+  const grid = document.getElementById('presets-grid');
+  grid.innerHTML = '';
+  if (!presets.length) {
+    document.getElementById('empty-presets').style.display = 'block';
+    return;
+  }
+  document.getElementById('empty-presets').style.display = 'none';
+  presets.forEach(preset => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-button user-preset';
+    btn.innerHTML = `<div class='preset-tempo'>${preset.settings?.tempo || '--'} BPM</div><div class='preset-name'>${preset.name}</div><div class='preset-description'>${preset.description || ''}</div>`;
+    // TODO: Add edit/delete actions
+    grid.appendChild(btn);
+  });
+}
+
+if (savePresetBtn) {
+  savePresetBtn.addEventListener('click', loadAndDisplayPresets);
+}
+if (presetSaveBtn) {
+  presetSaveBtn.addEventListener('click', savePreset);
+}}
