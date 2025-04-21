@@ -673,4 +673,115 @@ if (savePresetBtn) {
 }
 if (presetSaveBtn) {
   presetSaveBtn.addEventListener('click', savePreset);
-}}
+}
+
+// Build accent buttons inside the preset modal
+function renderPresetAccentPattern(pattern = null) {
+  const container = document.getElementById('preset-accent-pattern');
+  const beats = parseInt(document.getElementById('preset-time-sig-numerator').textContent);
+  container.innerHTML = '';
+  for (let i = 0; i < beats; i++) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'preset-accent-button';
+    btn.dataset.beat = i + 1;
+    const state = pattern && pattern[i] ? pattern[i] : (i === 0 ? 'accent' : 'normal');
+    btn.dataset.state = state;
+    if (state === 'accent') btn.classList.add('accent');
+    if (state === 'silent') btn.classList.add('silent');
+    btn.innerHTML = `<span>${i + 1}</span>`;
+    btn.onclick = () => {
+      const s = btn.dataset.state;
+      btn.dataset.state = s === 'normal' ? 'accent' : s === 'accent' ? 'silent' : 'normal';
+      btn.classList.toggle('accent', btn.dataset.state === 'accent');
+      btn.classList.toggle('silent', btn.dataset.state === 'silent');
+    };
+    container.appendChild(btn);
+  }
+}
+// Preset modal control handlers
+presetDecreaseBeats?.addEventListener('click', () => {
+  const el = document.getElementById('preset-time-sig-numerator');
+  let v = parseInt(el.textContent);
+  if (v > 1) el.textContent = v - 1;
+  renderPresetAccentPattern();
+});
+presetIncreaseBeats?.addEventListener('click', () => {
+  const el = document.getElementById('preset-time-sig-numerator');
+  let v = parseInt(el.textContent);
+  if (v < 12) el.textContent = v + 1;
+  renderPresetAccentPattern();
+});
+presetDecreaseNoteValue?.addEventListener('click', () => {
+  const el = document.getElementById('preset-time-sig-denominator');
+  const valid = [1,2,4,8,16,32];
+  let v = parseInt(el.textContent);
+  const idx = valid.indexOf(v);
+  if (idx > 0) el.textContent = valid[idx - 1];
+});
+presetIncreaseNoteValue?.addEventListener('click', () => {
+  const el = document.getElementById('preset-time-sig-denominator');
+  const valid = [1,2,4,8,16,32];
+  let v = parseInt(el.textContent);
+  const idx = valid.indexOf(v);
+  if (idx < valid.length - 1) el.textContent = valid[idx + 1];
+});
+// Close alert & confirm popups
+alertConfirm?.addEventListener('click', () => alertModal.classList.remove('visible'));
+confirmOk?.addEventListener('click', () => confirmModal.classList.remove('visible'));
+confirmCancel?.addEventListener('click', () => confirmModal.classList.remove('visible'));
+// Open the preset modal when the Manage Presets button is clicked
+savePresetBtn.addEventListener('click', () => {
+  presetModal.classList.add('visible');
+  // initialize form defaults
+  presetNameInput.value = '';
+  presetDescInput.value = '';
+  document.getElementById('preset-time-sig-numerator').textContent = beatsPerMeasure;
+  document.getElementById('preset-time-sig-denominator').textContent = noteValue;
+  presetSoundButtons.forEach(b => b.classList.remove('selected'));
+  document.querySelector(`.preset-sound-button[data-sound="${selectedSound}"]`)?.classList.add('selected');
+  renderPresetAccentPattern();
+});
+
+// --- Preset modal interactivity ---
+// Tab switching
+presetTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    presetTabs.forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    presetTabContents.forEach(c => {
+      if (c.id === tab.dataset.tab + '-tab') c.classList.add('active');
+      else c.classList.remove('active');
+    });
+  });
+});
+
+// Sound type selection
+presetSoundButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    presetSoundButtons.forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    presetModalSelectedSound = btn.dataset.sound;
+  });
+});
+
+// Show/hide each control based on its checkbox
+[  {chk: includeTempoCheck, ctrl: document.getElementById('tempo-control')},
+   {chk: includeTimeSignatureCheck, ctrl: document.getElementById('time-sig-control')},
+   {chk: includeSubdivisionCheck, ctrl: document.getElementById('subdivision-control')},
+   {chk: includeAccentPatternCheck, ctrl: document.getElementById('accent-pattern-control')},
+   {chk: includeSoundCheck, ctrl: document.getElementById('sound-control')},
+   {chk: includeVolumeCheck, ctrl: document.getElementById('volume-control')},
+   {chk: includeVoiceSettingsCheck, ctrl: document.getElementById('voice-settings-control')}
+].forEach(({chk, ctrl}) => {
+  ctrl.style.display = chk.checked ? 'block' : 'none';
+  chk.addEventListener('change', () => {
+    ctrl.style.display = chk.checked ? 'block' : 'none';
+    if (chk === includeAccentPatternCheck) renderPresetAccentPattern();
+  });
+});
+
+// Modal footer buttons
+presetCancelBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
+presetCancelEditBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
+presetSaveBtn.addEventListener('click', () => presetModal.classList.remove('visible'))};
