@@ -597,7 +597,7 @@ if (presetCloseBtn) {
 // --- Preset Modal Logic ---
 async function fetchPresets() {
   try {
-    const token = localStorage.getItem('id_token');
+    const token = await getToken();
     const res = await fetch('/api/metronomePresets', {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -632,7 +632,7 @@ async function savePreset() {
     };
   }
   try {
-    const token = localStorage.getItem('id_token');
+    const token = await getToken();
     const res = await fetch('/api/metronomePresets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
