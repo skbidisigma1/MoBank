@@ -361,7 +361,20 @@ function updateAccentPattern(p=null){
     if(st==='accent')b.classList.add('accent');
     else if(st==='silent')b.classList.add('silent');
     b.innerHTML=`<span>${i+1}</span>`;
-    b.onclick=()=>{const s=b.dataset.state;b.dataset.state=s==='normal'?'accent':s==='accent'?'silent':'normal';b.classList.toggle('accent',b.dataset.state==='accent');b.classList.toggle('silent',b.dataset.state==='silent');updateBeatLights();if (isPlaying) restartPendulumLoop();};
+    b.onclick=()=>{
+      const s=b.dataset.state;
+      b.dataset.state=s==='normal'?'accent':s==='accent'?'silent':'normal';
+      b.classList.toggle('accent',b.dataset.state==='accent');
+      b.classList.toggle('silent',b.dataset.state==='silent');
+      updateBeatLights();
+      if (isPlaying) {
+        restartPendulumLoop();
+        if (metronomeProcessor) {
+          const patterns = Array.from(document.querySelectorAll('.accent-button')).map(btn => btn.dataset.state);
+          metronomeProcessor.port.postMessage({ type: 'updatePatterns', beatPatterns: patterns });
+        }
+      }
+    };
     accentPattern.appendChild(b);
   }
   updateBeatLights();
@@ -903,7 +916,13 @@ function applyPreset(preset) {
   if (s.accentPattern) {
     updateAccentPattern(s.accentPattern);
     updateBeatLights();
-    if (isPlaying) restartPendulumLoop();
+    if (isPlaying) {
+      restartPendulumLoop();
+      if (metronomeProcessor) {
+        const patterns = preset.settings.accentPattern;
+        metronomeProcessor.port.postMessage({ type: 'updatePatterns', beatPatterns: patterns });
+      }
+    }
   }
   if (s.sound) {
     selectedSound = s.sound;
