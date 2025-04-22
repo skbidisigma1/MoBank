@@ -70,7 +70,7 @@ let isPlaying               = false,
     currentBeat             = 0,
     pendulumAngle           = 0,
     selectedSound           = 'click',
-    volume                  = parseFloat(volumeSlider.value)/100*1.5,
+    volume                  = parseFloat(volumeSlider.value)/100,
     audioContext            = null,
     metronomeProcessor      = null,
     tempoDebounceTimeout    = null,
@@ -78,7 +78,7 @@ let isPlaying               = false,
     useVoiceCounting        = false,
     selectedVoice           = 'male',
     useClickSubdivision     = false,
-    voiceVolume             = parseFloat(voiceVolumeSlider.value)/100*1.5,
+    voiceVolume             = parseFloat(voiceVolumeSlider.value)/100,
     voiceSounds             = {male:{numbers:{},subdivisions:{}}},
     pendulumRaf             = null,
     constValid              = [1,2,4,8,16,32],
@@ -432,10 +432,10 @@ decreaseBeatsBtn.onclick=()=>updateBeatsPerMeasure(beatsPerMeasure-1);
 increaseBeatsBtn.onclick=()=>updateBeatsPerMeasure(beatsPerMeasure+1);
 decreaseNoteValueBtn.onclick=()=>{const i=constValid.indexOf(noteValue);if(i>0)updateNoteValue(constValid[i-1])};
 increaseNoteValueBtn.onclick=()=>{const i=constValid.indexOf(noteValue);if(i<constValid.length-1)updateNoteValue(constValid[i+1])};
-volumeSlider.oninput=()=>{volume=parseFloat(volumeSlider.value)/100*1.5};
+volumeSlider.oninput=()=>{volume=parseFloat(volumeSlider.value)/100};
 useVoiceCountingCheckbox.onchange=()=>{useVoiceCounting=useVoiceCountingCheckbox.checked;voiceOptionsPanel.style.display=useVoiceCounting?'block':'none';if(isPlaying)restartMetronome()};
 useClickSubdivisionCheckbox.onchange=()=>{useClickSubdivision=useClickSubdivisionCheckbox.checked;if(isPlaying)restartMetronome()};
-voiceVolumeSlider.oninput=()=>{voiceVolume=parseFloat(voiceVolumeSlider.value)/100*1.5};
+voiceVolumeSlider.oninput=()=>{voiceVolume=parseFloat(voiceVolumeSlider.value)/100};
 
 soundButtons.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -584,7 +584,20 @@ const savePresetBtn = document.getElementById('save-preset');
 if (savePresetBtn) {
   savePresetBtn.addEventListener('click', () => {
     presetModal.classList.add('visible');
-    // Optionally, reset modal state or load presets here
+    // always show Save tab when opening
+    presetTabs.forEach(t=>t.classList.remove('active'));
+    document.querySelector('.preset-tab[data-tab="save"]').classList.add('active');
+    presetTabContents.forEach(c=>{
+      c.id === 'save-tab' ? c.classList.add('active') : c.classList.remove('active');
+    });
+    // initialize form defaults
+    presetNameInput.value = '';
+    presetDescInput.value = '';
+    document.getElementById('preset-time-sig-numerator').textContent = beatsPerMeasure;
+    document.getElementById('preset-time-sig-denominator').textContent = noteValue;
+    presetSoundButtons.forEach(b => b.classList.remove('selected'));
+    document.querySelector(`.preset-sound-button[data-sound="${selectedSound}"]`)?.classList.add('selected');
+    renderPresetAccentPattern();
   });
 }
 // Close modal on close button
@@ -609,6 +622,19 @@ async function fetchPresets() {
   }
 }
 
+// Delete helper
+async function deletePreset(id) {
+  if (!confirm('Are you sure you want to delete this preset?')) return;
+  const token = await getToken();
+  await fetch('/api/metronomePresets', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ presetId: id })
+  });
+  await loadAndDisplayPresets();
+  await loadAndDisplayPagePresets();
+}
+
 async function savePreset() {
   const name = presetNameInput.value.trim();
   const description = presetDescInput.value.trim();
@@ -623,12 +649,12 @@ async function savePreset() {
   if (includeSubdivisionCheck.checked) settings.subdivision = parseInt(document.getElementById('preset-subdivision-selector').value);
   if (includeAccentPatternCheck.checked) settings.accentPattern = Array.from(document.querySelectorAll('#preset-accent-pattern .preset-accent-button')).map(b => b.dataset.state);
   if (includeSoundCheck.checked) settings.sound = document.querySelector('.preset-sound-button.selected')?.dataset.sound;
-  if (includeVolumeCheck.checked) settings.volume = parseFloat(document.getElementById('preset-volume-slider').value);
+  if (includeVolumeCheck.checked) settings.volume = parseFloat(document.getElementById('preset-volume-slider').value)/100;
   if (includeVoiceSettingsCheck.checked) {
     settings.voice = {
       useVoiceCounting: document.getElementById('preset-use-voice-counting').checked,
       useClickSubdivision: document.getElementById('preset-use-click-subdivision').checked,
-      voiceVolume: parseFloat(document.getElementById('preset-voice-volume-slider').value)
+      voiceVolume: parseFloat(document.getElementById('preset-voice-volume-slider').value)/100
     };
   }
   try {
@@ -664,9 +690,13 @@ async function loadAndDisplayPresets() {
     const btn = document.createElement('button');
     btn.className = 'preset-button user-preset';
     btn.innerHTML = `<div class='preset-tempo'>${preset.settings?.tempo || '--'} BPM</div><div class='preset-name'>${preset.name}</div><div class='preset-description'>${preset.description || ''}</div>`;
-    // TODO: Add edit/delete actions
     grid.appendChild(btn);
     btn.addEventListener('click', () => { applyPreset(preset); presetModal.classList.remove('visible'); });
+    const del = document.createElement('button');
+    del.className = 'preset-action-btn delete';
+    del.textContent = '×';
+    del.onclick = () => deletePreset(preset.id);
+    grid.appendChild(del);
   });
 }
 
@@ -678,11 +708,11 @@ function applyPreset(preset) {
   if (s.subdivision != null) { subdivision = s.subdivision; subdivisionSelector.value = subdivision; if (isPlaying) restartMetronome(); }
   if (s.accentPattern) renderPresetAccentPattern(s.accentPattern);
   if (s.sound) { selectedSound = s.sound; soundButtons.forEach(b => b.classList.remove('selected')); document.querySelector(`.sound-button[data-sound="${s.sound}"]`)?.classList.add('selected'); }
-  if (s.volume != null) { volume = s.volume; volumeSlider.value = volume / 1.5 * 100; }
+  if (s.volume != null) { volume = s.volume; volumeSlider.value = volume * 100; }
   if (s.voice) {
     useVoiceCountingCheckbox.checked = s.voice.useVoiceCounting;
     useClickSubdivisionCheckbox.checked = s.voice.useClickSubdivision;
-    voiceVolumeSlider.value = s.voice.voiceVolume * 100 / 1.5;
+    voiceVolumeSlider.value = s.voice.voiceVolume * 100;
     voiceOptionsPanel.style.display = useVoiceCountingCheckbox.checked ? 'block' : 'none';
     if (isPlaying) restartMetronome();
   }
