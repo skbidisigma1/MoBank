@@ -237,6 +237,8 @@ function handleWorkletMessage(event){
   const data=event.data;
   if(data.type==='batch'){
     data.events.forEach(ev=>{
+      const state = document.querySelector(`.accent-button[data-beat="${ev.beatInMeasure+1}"]`)?.dataset.state;
+      const isSilent = state === 'silent';
       const scheduledTime=ev.time;
       if(!desyncLogging.initialized){
         const beatMs=(60/currentTempo)*(4/noteValue)*1000;
@@ -247,10 +249,15 @@ function handleWorkletMessage(event){
       const desync=Math.round(scheduledTime*1000-expected);
       desyncLogging.logBeat(desync,!ev.isMainBeat);
       const now=audioContext.currentTime;
-      if(scheduledTime<now+lateNoteScheduleThreshold){droppedNoteCount++;playTickSound(ev)}
-      else{perfectNoteCount++;playTickSound(ev,scheduledTime)}
+      if(!isSilent) {
+        if(scheduledTime<now+lateNoteScheduleThreshold){droppedNoteCount++;playTickSound(ev)}
+        else{perfectNoteCount++;playTickSound(ev,scheduledTime)}
+      }
       // Always schedule visual for main beats, even if silent
       scheduleVisual(()=>{if(ev.isMainBeat)updateVisualBeat(ev.beatInMeasure)},scheduledTime);
+      if(!ev.isMainBeat && subdivision>1 && !isSilent) {
+        playSubdivisionSound(ev.subBeat,scheduledTime);
+      }
     });
   }
 }
@@ -500,6 +507,23 @@ function playTickSound(data,atTime=null){
   }else if(subdivision>1)playSubdivisionSound(data.subBeat,atTime);
 }
 
+function getCachedPresets() {
+  const raw = localStorage.getItem('presetsCache');
+  if (raw) {
+    try {
+      const { timestamp, data } = JSON.parse(raw);
+      if (Date.now() - timestamp < PRESET_CACHE_MS) return data;
+    } catch {}
+  }
+  return null;
+}
+function setCachedPresets(data) {
+  localStorage.setItem('presetsCache', JSON.stringify({ timestamp: Date.now(), data }));
+}
+function clearCachedPresets() {
+  localStorage.removeItem('presetsCache');
+}
+
 updateAccentPattern();updateBeatLights();
 initAudio();
 
@@ -612,13 +636,17 @@ if (presetCloseBtn) {
 
 // --- Preset Modal Logic ---
 async function fetchPresets() {
+  const cached = getCachedPresets();
+  if (cached) return cached;
   try {
     const token = await getToken();
     const res = await fetch('/api/metronomePresets', {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.ok) throw new Error('Failed to load presets');
-    return await res.json();
+    const presets = await res.json();
+    setCachedPresets(presets);
+    return presets;
   } catch (e) {
     showAlert('Could not load presets.');
     return [];
@@ -627,6 +655,7 @@ async function fetchPresets() {
 
 // Delete helper
 async function deletePreset(id) {
+  clearCachedPresets();
   if (!confirm('Are you sure you want to delete this preset?')) return;
   const token = await getToken();
   await fetch('/api/metronomePresets', {
@@ -719,6 +748,7 @@ async function renamePreset(preset) {
 
 // Update full preset
 async function updatePreset() {
+  clearCachedPresets();
   const name = presetNameInput.value.trim();
   const description = presetDescInput.value.trim();
   if (!name) return showAlert('Preset name is required.');
@@ -766,6 +796,7 @@ presetCancelEditBtn.addEventListener('click', () => {
 });
 
 async function savePreset() {
+  clearCachedPresets();
   const name = presetNameInput.value.trim();
   const description = presetDescInput.value.trim();
   if (!name) return showAlert('Preset name is required.');
