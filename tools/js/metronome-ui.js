@@ -635,6 +635,85 @@ async function deletePreset(id) {
   await loadAndDisplayPagePresets();
 }
 
+// Open modal in edit mode
+function openPresetEdit(preset) {
+  currentEditingPresetId = preset.id;
+  presetModal.classList.add('visible');
+  // switch to Save tab
+  presetTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === 'save'));
+  presetTabContents.forEach(c => c.classList.toggle('active', c.id === 'save-tab'));
+  // fill form
+  presetNameInput.value = preset.name;
+  presetDescInput.value = preset.description;
+  includeTempoCheck.checked = !!preset.settings.tempo; document.getElementById('preset-tempo-control').style.display = includeTempoCheck.checked ? 'block':'none';
+  // ...prefill other checks and controls similarly...
+  // show Update button, hide Save
+  presetSaveBtn.style.display = 'none';
+  presetUpdateBtn.style.display = 'inline-block';
+  presetCancelEditBtn.style.display = 'inline-block';
+}
+
+// Rename only
+async function renamePreset(preset) {
+  const newName = prompt('Enter new name:', preset.name);
+  if (!newName) return;
+  try {
+    const token = await getToken();
+    await fetch('/api/metronomePresets', { method: 'PUT', headers: { 'Content-Type':'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ presetId: preset.id, name: newName, description: preset.description, settings: preset.settings }) });
+    showAlert('Preset renamed',2000);
+    await loadAndDisplayPresets();
+    await loadAndDisplayPagePresets();
+  } catch (_) { showAlert('Rename failed'); }
+}
+
+// Update full preset
+async function updatePreset() {
+  const name = presetNameInput.value.trim();
+  const description = presetDescInput.value.trim();
+  if (!name) return showAlert('Preset name is required.');
+  const settings = {};
+  if (includeTempoCheck.checked) settings.tempo = parseInt(document.getElementById('preset-tempo-value').value);
+  if (includeTimeSignatureCheck.checked) settings.timeSignature = [
+    parseInt(document.getElementById('preset-time-sig-numerator').textContent),
+    parseInt(document.getElementById('preset-time-sig-denominator').textContent)
+  ];
+  if (includeSubdivisionCheck.checked) settings.subdivision = parseInt(document.getElementById('preset-subdivision-selector').value);
+  if (includeAccentPatternCheck.checked) settings.accentPattern = Array.from(document.querySelectorAll('#preset-accent-pattern .preset-accent-button')).map(b => b.dataset.state);
+  if (includeSoundCheck.checked) settings.sound = document.querySelector('.preset-sound-button.selected')?.dataset.sound;
+  if (includeVolumeCheck.checked) settings.volume = parseFloat(document.getElementById('preset-volume-slider').value)/100;
+  if (includeVoiceSettingsCheck.checked) {
+    settings.voice = {
+      useVoiceCounting: document.getElementById('preset-use-voice-counting').checked,
+      useClickSubdivision: document.getElementById('preset-use-click-subdivision').checked,
+      voiceVolume: parseFloat(document.getElementById('preset-voice-volume-slider').value)/100
+    };
+  }
+  try {
+    const token = await getToken();
+    const res = await fetch('/api/metronomePresets', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ presetId: currentEditingPresetId, name, description, settings })
+    });
+    if (!res.ok) throw new Error('Update failed');
+    showAlert('Preset updated!', 2000);
+    presetModal.classList.remove('visible');
+    await loadAndDisplayPresets();
+    await loadAndDisplayPagePresets();
+  } catch (e) {
+    showAlert('Could not update preset.');
+  }
+}
+
+// Wire up Update/Edit modal buttons
+presetUpdateBtn.addEventListener('click', updatePreset);
+presetCancelEditBtn.addEventListener('click', () => {
+  presetModal.classList.remove('visible');
+  presetUpdateBtn.style.display = 'none';
+  presetCancelEditBtn.style.display = 'none';
+  presetSaveBtn.style.display = 'inline-block';
+});
+
 async function savePreset() {
   const name = presetNameInput.value.trim();
   const description = presetDescInput.value.trim();
@@ -687,16 +766,30 @@ async function loadAndDisplayPresets() {
   }
   emptyPresets.style.display = 'none';
   presets.forEach(preset => {
-    const btn = document.createElement('button');
-    btn.className = 'preset-button user-preset';
-    btn.innerHTML = `<div class='preset-tempo'>${preset.settings?.tempo || '--'} BPM</div><div class='preset-name'>${preset.name}</div><div class='preset-description'>${preset.description || ''}</div>`;
-    grid.appendChild(btn);
-    btn.addEventListener('click', () => { applyPreset(preset); presetModal.classList.remove('visible'); });
-    const del = document.createElement('button');
-    del.className = 'preset-action-btn delete';
-    del.textContent = '×';
-    del.onclick = () => deletePreset(preset.id);
-    grid.appendChild(del);
+    const item = document.createElement('div');
+    item.className = 'preset-item';
+    const infoBtn = document.createElement('button');
+    infoBtn.className = 'preset-button user-preset';
+    infoBtn.innerHTML = `<div class='preset-tempo'>${preset.settings?.tempo || '--'} BPM</div><div class='preset-name'>${preset.name}</div>`;
+    infoBtn.onclick = () => { applyPreset(preset); presetModal.classList.remove('visible'); };
+    item.appendChild(infoBtn);
+    const actions = document.createElement('div');
+    actions.className = 'preset-item-actions';
+    const editBtn = document.createElement('button');
+    editBtn.className = 'preset-action-btn edit';
+    editBtn.textContent = 'Edit';
+    editBtn.onclick = () => openPresetEdit(preset);
+    const renameBtn = document.createElement('button');
+    renameBtn.className = 'preset-action-btn rename';
+    renameBtn.textContent = 'Rename';
+    renameBtn.onclick = () => renamePreset(preset);
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'preset-action-btn delete';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.onclick = () => deletePreset(preset.id);
+    [editBtn, renameBtn, deleteBtn].forEach(b => actions.appendChild(b));
+    item.appendChild(actions);
+    grid.appendChild(item);
   });
 }
 
