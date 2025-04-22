@@ -583,6 +583,9 @@ tapButton.addEventListener('click', function() {
 const savePresetBtn = document.getElementById('save-preset');
 if (savePresetBtn) {
   savePresetBtn.addEventListener('click', () => {
+    // ensure Save footer is visible
+    saveTabButtons.style.display = 'flex';
+    editTabButtons.style.display = 'none';
     presetModal.classList.add('visible');
     // always show Save tab when opening
     presetTabs.forEach(t=>t.classList.remove('active'));
@@ -637,7 +640,9 @@ async function deletePreset(id) {
 
 // Open modal in edit mode
 function openPresetEdit(preset) {
-  currentEditingPresetId = preset.id;
+  // hide Save footer and show Update footer
+  saveTabButtons.style.display = 'none';
+  editTabButtons.style.display = 'flex';
   presetModal.classList.add('visible');
   // switch to Save tab
   presetTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === 'save'));
@@ -687,7 +692,6 @@ function openPresetEdit(preset) {
     document.getElementById('preset-voice-volume-slider').value = preset.settings.voice.voiceVolume * 100;
   }
   // show Update button, hide Save
-  presetSaveBtn.style.display = 'none';
   presetUpdateBtn.style.display = 'inline-block';
   presetCancelEditBtn.style.display = 'inline-block';
 }
@@ -815,14 +819,19 @@ async function loadAndDisplayPresets() {
     const actions = document.createElement('div');
     actions.className = 'preset-item-actions';
     actions.style.display = 'flex';
-    actions.style.gap = '0.5rem';
+    actions.style.justifyContent = 'center';
+    actions.style.gap = '2rem';
     const editBtn = document.createElement('button');
     editBtn.className = 'preset-action-btn edit';
     editBtn.textContent = 'Edit';
+    editBtn.style.minWidth = '100px';
+    editBtn.style.padding = '0.5rem 1rem';
     editBtn.onclick = () => openPresetEdit(preset);
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'preset-action-btn delete';
     deleteBtn.textContent = 'Delete';
+    deleteBtn.style.minWidth = '100px';
+    deleteBtn.style.padding = '0.5rem 1rem';
     deleteBtn.onclick = () => deletePreset(preset.id);
     [editBtn, deleteBtn].forEach(b => actions.appendChild(b));
     item.appendChild(actions);
@@ -963,6 +972,7 @@ presetSoundButtons.forEach(btn => {
 presetCancelBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
 presetCancelEditBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
 presetSaveBtn.addEventListener('click', savePreset);
+
 async function loadAndDisplayPagePresets() {
   const presets = await fetchPresets();
   presetsGrid.innerHTML = '';
