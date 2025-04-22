@@ -963,7 +963,6 @@ presetSoundButtons.forEach(btn => {
 presetCancelBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
 presetCancelEditBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
 presetSaveBtn.addEventListener('click', savePreset);
-ok
 async function loadAndDisplayPagePresets() {
   const presets = await fetchPresets();
   presetsGrid.innerHTML = '';
