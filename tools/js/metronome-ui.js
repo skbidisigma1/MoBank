@@ -645,8 +645,47 @@ function openPresetEdit(preset) {
   // fill form
   presetNameInput.value = preset.name;
   presetDescInput.value = preset.description;
-  includeTempoCheck.checked = !!preset.settings.tempo; document.getElementById('preset-tempo-control').style.display = includeTempoCheck.checked ? 'block':'none';
-  // ...prefill other checks and controls similarly...
+  includeTempoCheck.checked = !!preset.settings.tempo;
+  document.getElementById('tempo-control').style.display = includeTempoCheck.checked ? 'block':'none';
+  // prefill time signature
+  if (preset.settings.timeSignature) {
+    includeTimeSignatureCheck.checked = true;
+    document.getElementById('time-sig-control').style.display = 'block';
+    timeSignatureNumerator.textContent = preset.settings.timeSignature[0];
+    timeSignatureDenominator.textContent = preset.settings.timeSignature[1];
+  }
+  // prefill subdivision
+  if (preset.settings.subdivision != null) {
+    includeSubdivisionCheck.checked = true;
+    document.getElementById('subdivision-control').style.display = 'block';
+    subdivisionSelector.value = preset.settings.subdivision;
+  }
+  // prefill accent pattern
+  if (preset.settings.accentPattern) {
+    includeAccentPatternCheck.checked = true;
+    document.getElementById('accent-pattern-control').style.display = 'block';
+    renderPresetAccentPattern(preset.settings.accentPattern);
+  }
+  // prefill sound
+  if (preset.settings.sound) {
+    includeSoundCheck.checked = true;
+    document.getElementById('sound-control').style.display = 'block';
+    presetSoundButtons.forEach(b=> b.classList.toggle('selected', b.dataset.sound===preset.settings.sound));
+  }
+  // prefill volume
+  if (preset.settings.volume != null) {
+    includeVolumeCheck.checked = true;
+    document.getElementById('volume-control').style.display = 'block';
+    document.getElementById('preset-volume-slider').value = preset.settings.volume * 100;
+  }
+  // prefill voice settings
+  if (preset.settings.voice) {
+    includeVoiceSettingsCheck.checked = true;
+    document.getElementById('voice-settings-control').style.display = 'block';
+    document.getElementById('preset-use-voice-counting').checked = preset.settings.voice.useVoiceCounting;
+    document.getElementById('preset-use-click-subdivision').checked = preset.settings.voice.useClickSubdivision;
+    document.getElementById('preset-voice-volume-slider').value = preset.settings.voice.voiceVolume * 100;
+  }
   // show Update button, hide Save
   presetSaveBtn.style.display = 'none';
   presetUpdateBtn.style.display = 'inline-block';
@@ -775,19 +814,17 @@ async function loadAndDisplayPresets() {
     item.appendChild(infoBtn);
     const actions = document.createElement('div');
     actions.className = 'preset-item-actions';
+    actions.style.display = 'flex';
+    actions.style.gap = '0.5rem';
     const editBtn = document.createElement('button');
     editBtn.className = 'preset-action-btn edit';
     editBtn.textContent = 'Edit';
     editBtn.onclick = () => openPresetEdit(preset);
-    const renameBtn = document.createElement('button');
-    renameBtn.className = 'preset-action-btn rename';
-    renameBtn.textContent = 'Rename';
-    renameBtn.onclick = () => renamePreset(preset);
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'preset-action-btn delete';
     deleteBtn.textContent = 'Delete';
     deleteBtn.onclick = () => deletePreset(preset.id);
-    [editBtn, renameBtn, deleteBtn].forEach(b => actions.appendChild(b));
+    [editBtn, deleteBtn].forEach(b => actions.appendChild(b));
     item.appendChild(actions);
     grid.appendChild(item);
   });
@@ -869,6 +906,10 @@ confirmCancel?.addEventListener('click', () => confirmModal.classList.remove('vi
 // Open the preset modal when the Manage Presets button is clicked
 savePresetBtn.addEventListener('click', () => {
   presetModal.classList.add('visible');
+  // always open Save tab
+  presetTabs.forEach(t => t.classList.remove('active'));
+  document.querySelector('.preset-tab[data-tab="save"]').classList.add('active');
+  presetTabContents.forEach(c => c.id === 'save-tab' ? c.classList.add('active') : c.classList.remove('active'));
   // initialize form defaults
   presetNameInput.value = '';
   presetDescInput.value = '';
@@ -922,8 +963,7 @@ presetSoundButtons.forEach(btn => {
 presetCancelBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
 presetCancelEditBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
 presetSaveBtn.addEventListener('click', savePreset);
-
-// Populate main page presets grid
+ok
 async function loadAndDisplayPagePresets() {
   const presets = await fetchPresets();
   presetsGrid.innerHTML = '';
