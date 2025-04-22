@@ -361,7 +361,7 @@ function updateAccentPattern(p=null){
     if(st==='accent')b.classList.add('accent');
     else if(st==='silent')b.classList.add('silent');
     b.innerHTML=`<span>${i+1}</span>`;
-    b.onclick=()=>{const s=b.dataset.state;b.dataset.state=s==='normal'?'accent':s==='accent'?'silent':'normal';b.classList.toggle('accent',b.dataset.state==='accent');b.classList.toggle('silent',b.dataset.state==='silent');updateBeatLights(); if (isPlaying) restartMetronome();};
+    b.onclick=()=>{const s=b.dataset.state;b.dataset.state=s==='normal'?'accent':s==='accent'?'silent':'normal';b.classList.toggle('accent',b.dataset.state==='accent');b.classList.toggle('silent',b.dataset.state==='silent');updateBeatLights();if (isPlaying) restartPendulumLoop();};
     accentPattern.appendChild(b);
   }
   updateBeatLights();
@@ -389,6 +389,13 @@ function animatePendulum(intervalMs){
   pendulumAngle=Math.sin(progress*Math.PI)*0.392699*direction;
   pendulum.style.transform=`rotate(${pendulumAngle}rad) translate3d(0,0,0)`;
   pendulumRaf=requestAnimationFrame(()=>animatePendulum(intervalMs));
+}
+
+function restartPendulumLoop() {
+  const beatSec = (60/currentTempo)*(4/noteValue);
+  const beatMs = beatSec * 1000;
+  if (pendulumRaf) cancelAnimationFrame(pendulumRaf);
+  animatePendulum(beatMs);
 }
 
 async function startMetronome(){
@@ -896,6 +903,7 @@ function applyPreset(preset) {
   if (s.accentPattern) {
     updateAccentPattern(s.accentPattern);
     updateBeatLights();
+    if (isPlaying) restartPendulumLoop();
   }
   if (s.sound) {
     selectedSound = s.sound;
@@ -912,7 +920,8 @@ function applyPreset(preset) {
     voiceVolumeSlider.value = s.voice.voiceVolume * 100;
     voiceOptionsPanel.style.display = useVoiceCountingCheckbox.checked ? 'block' : 'none';
   }
-  if (isPlaying) restartMetronome();
+  // only restart timing if core tempo or signature changed
+  if (isPlaying && (s.tempo || s.timeSignature || s.subdivision != null)) restartMetronome();
 }
 
 // Build accent buttons inside the preset modal
@@ -1056,4 +1065,4 @@ async function loadAndDisplayPagePresets() {
 }
 // initial page load
 loadAndDisplayPagePresets();
-}
+} // leave this brace here to match the opening brace at the top
