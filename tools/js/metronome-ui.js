@@ -371,7 +371,7 @@ function updateAccentPattern(p=null){
         restartPendulumLoop();
         if (metronomeProcessor) {
           const patterns = Array.from(document.querySelectorAll('.accent-button')).map(btn => btn.dataset.state);
-          metronomeProcessor.port.postMessage({ type: 'updatePatterns', beatPatterns: patterns });
+          metronomeProcessor.port.postMessage({ type: 'update', beatPatterns: patterns });
         }
       }
     };
@@ -921,7 +921,7 @@ function applyPreset(preset) {
       restartPendulumLoop();
       if (metronomeProcessor) {
         const patterns = preset.settings.accentPattern;
-        metronomeProcessor.port.postMessage({ type: 'updatePatterns', beatPatterns: patterns });
+        metronomeProcessor.port.postMessage({ type: 'update', beatPatterns: patterns });
       }
     }
   }
