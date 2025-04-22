@@ -1025,3 +1025,4 @@ async function loadAndDisplayPagePresets() {
 }
 // initial page load
 loadAndDisplayPagePresets();
+}
