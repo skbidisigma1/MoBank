@@ -640,6 +640,8 @@ async function deletePreset(id) {
 
 // Open modal in edit mode
 function openPresetEdit(preset) {
+  // remember which preset is being edited
+  currentEditingPresetId = preset.id;
   // hide Save footer and show Update footer
   saveTabButtons.style.display = 'none';
   editTabButtons.style.display = 'flex';
@@ -663,7 +665,7 @@ function openPresetEdit(preset) {
   if (preset.settings.subdivision != null) {
     includeSubdivisionCheck.checked = true;
     document.getElementById('subdivision-control').style.display = 'block';
-    subdivisionSelector.value = preset.settings.subdivision;
+    document.getElementById('preset-subdivision-selector').value = preset.settings.subdivision;
   }
   // prefill accent pattern
   if (preset.settings.accentPattern) {
@@ -682,6 +684,12 @@ function openPresetEdit(preset) {
     includeVolumeCheck.checked = true;
     document.getElementById('volume-control').style.display = 'block';
     document.getElementById('preset-volume-slider').value = preset.settings.volume * 100;
+  }
+  // prefill tempo
+  if (preset.settings.tempo != null) {
+    includeTempoCheck.checked = true;
+    document.getElementById('tempo-control').style.display = 'block';
+    document.getElementById('preset-tempo-value').value = preset.settings.tempo;
   }
   // prefill voice settings
   if (preset.settings.voice) {
@@ -750,11 +758,11 @@ async function updatePreset() {
 
 // Wire up Update/Edit modal buttons
 presetUpdateBtn.addEventListener('click', updatePreset);
+// Cancel editing: hide modal, swap back to Save footer
 presetCancelEditBtn.addEventListener('click', () => {
   presetModal.classList.remove('visible');
-  presetUpdateBtn.style.display = 'none';
-  presetCancelEditBtn.style.display = 'none';
-  presetSaveBtn.style.display = 'inline-block';
+  editTabButtons.style.display = 'none';
+  saveTabButtons.style.display = 'flex';
 });
 
 async function savePreset() {
@@ -794,6 +802,7 @@ async function savePreset() {
     showAlert('Preset saved!', 2000);
     presetModal.classList.remove('visible');
     await loadAndDisplayPresets();
+    await loadAndDisplayPagePresets();
   } catch (e) {
     showAlert('Could not save preset.');
   }
@@ -843,18 +852,36 @@ async function loadAndDisplayPresets() {
 function applyPreset(preset) {
   const s = preset.settings || {};
   if (s.tempo) updateTempo(s.tempo);
-  if (s.timeSignature) { updateBeatsPerMeasure(s.timeSignature[0]); updateNoteValue(s.timeSignature[1]); }
-  if (s.subdivision != null) { subdivision = s.subdivision; subdivisionSelector.value = subdivision; if (isPlaying) restartMetronome(); }
-  if (s.accentPattern) renderPresetAccentPattern(s.accentPattern);
-  if (s.sound) { selectedSound = s.sound; soundButtons.forEach(b => b.classList.remove('selected')); document.querySelector(`.sound-button[data-sound="${s.sound}"]`)?.classList.add('selected'); }
-  if (s.volume != null) { volume = s.volume; volumeSlider.value = volume * 100; }
+  if (s.timeSignature) {
+    updateBeatsPerMeasure(s.timeSignature[0]);
+    updateNoteValue(s.timeSignature[1]);
+  }
+  if (s.subdivision != null) {
+    subdivision = s.subdivision;
+    subdivisionSelector.value = subdivision;
+    // trigger subdivision control update
+    subdivisionSelector.onchange();
+  }
+  if (s.accentPattern) {
+    updateAccentPattern(s.accentPattern);
+    updateBeatLights();
+  }
+  if (s.sound) {
+    selectedSound = s.sound;
+    soundButtons.forEach(b => b.classList.remove('selected'));
+    document.querySelector(`.sound-button[data-sound="${s.sound}"]`)?.classList.add('selected');
+  }
+  if (s.volume != null) {
+    volume = s.volume;
+    volumeSlider.value = volume * 100;
+  }
   if (s.voice) {
     useVoiceCountingCheckbox.checked = s.voice.useVoiceCounting;
     useClickSubdivisionCheckbox.checked = s.voice.useClickSubdivision;
     voiceVolumeSlider.value = s.voice.voiceVolume * 100;
     voiceOptionsPanel.style.display = useVoiceCountingCheckbox.checked ? 'block' : 'none';
-    if (isPlaying) restartMetronome();
   }
+  if (isPlaying) restartMetronome();
 }
 
 // Build accent buttons inside the preset modal
@@ -971,7 +998,18 @@ presetSoundButtons.forEach(btn => {
 // Modal footer buttons
 presetCancelBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
 presetCancelEditBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
-presetSaveBtn.addEventListener('click', savePreset);
+presetSaveBtn.addEventListener('click', event => {
+  const activeTab = Array.from(presetTabs).find(t => t.classList.contains('active')).dataset.tab;
+  if (activeTab === 'load') {
+    // switch to Save tab
+    presetTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === 'save'));
+    presetTabContents.forEach(c => c.id === 'save-tab' ? c.classList.add('active') : c.classList.remove('active'));
+    saveTabButtons.style.display = 'flex';
+    editTabButtons.style.display = 'none';
+    return;
+  }
+  savePreset();
+});
 
 async function loadAndDisplayPagePresets() {
   const presets = await fetchPresets();
@@ -987,4 +1025,3 @@ async function loadAndDisplayPagePresets() {
 }
 // initial page load
 loadAndDisplayPagePresets();
-}
