@@ -417,6 +417,7 @@ async function startMetronome(){
   if(audioContext===null)await initAudio();else if(audioContext.state==='suspended')await audioContext.resume();
   await requestWakeLock();
   pendulum.style.transform='rotate(0rad)';
+  pendulum.style.transition='';
   audioContextStartTime=audioContext.currentTime;
   tempoPlayBtn.innerHTML='<svg width="24" height="24"><path d="M6 19h4V5H6zm8-14v14h4V5z" fill="currentColor"/></svg>';
   const beatSec=(60/currentTempo)*(4/noteValue);
