@@ -66,7 +66,7 @@ const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 if (isMobileDevice) {
   const warningEl = document.createElement('div');
   warningEl.id = 'mobile-silent-warning';
-  warningEl.textContent = "Note: Metronome probably won't work if your device is in silent mode";
+  warningEl.textContent = "Note: Make sure your device isn't in silent mode";
   warningEl.style.cssText = 'background: rgba(255, 165, 0, 0.1); color: #FFA500; font-size: 0.9rem; text-align: center; padding: 0.5rem 1rem; margin: 0.5rem 0; border-radius: 4px;';
   document.querySelector('.metronome-header')?.appendChild(warningEl);
 }
@@ -216,9 +216,34 @@ const desyncLogging={
 };
 
 async function requestWakeLock(){
-  try{if('wakeLock'in navigator){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{if(isPlaying)requestWakeLock()})}}catch{}
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      // re-acquire if released (e.g., system interruption)
+      wakeLock.addEventListener('release', async () => {
+        console.warn('Screen Wake Lock was released');
+        if (isPlaying) await requestWakeLock();
+      });
+    }
+  } catch (err) {
+    console.error('Failed to acquire Wake Lock:', err);
+  }
 }
-function releaseWakeLock(){if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null}}
+
+function releaseWakeLock(){
+  if (wakeLock) {
+    wakeLock.release().catch(err => console.error('Failed to release Wake Lock:', err));
+    wakeLock = null;
+  }
+}
+
+// Re-request wake lock when page becomes visible again
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && isPlaying) {
+    try { await requestWakeLock(); }
+    catch (err) { console.error('Wake Lock re-request on visibility change failed:', err); }
+  }
+});
 
 async function initAudio(){
   try{
