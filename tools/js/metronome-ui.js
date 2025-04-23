@@ -123,6 +123,7 @@ function createSimpleLoggingContainer(){
   content.id='metronome-log-content';
   container.append(heading,toggle,content);
   document.body.appendChild(container);
+  container.style.display = 'none';
   return container;
 }
 createSimpleLoggingContainer();
@@ -162,7 +163,7 @@ const desyncLogging={
     else if(type==='stat'){p.style.color='#2196F3';p.style.marginLeft='20px'}
     else if(type==='warning'){p.style.color='#FF9800'}
     el.appendChild(p);
-    window.scrollTo(0,document.body.scrollHeight);
+    // prevent auto-scrolling to avoid moving viewport
   },
   calculateJitter(){
     const mean=this.totalDesync/this.desyncs.length;
@@ -575,6 +576,9 @@ function toggleDesyncLogging(){
     desyncLogging.log('Metronome timing logging disabled','error');
     desyncLogging.stopLogging();
   }
+  // show or hide the logging container
+  const logContainer = document.getElementById('metronome-log-container');
+  if(logContainer) logContainer.style.display = desyncLogging.enabled ? 'block' : 'none';
 }
 
 function showAlert(message,duration=5000){
@@ -670,7 +674,7 @@ window.addEventListener('keydown', e => {
       updateTempo(currentTempo - step);
     }
     
-    if (e.ctrlKey && e.altKey && e.code === 'KeyL') {
+    if (e.ctrlKey && !e.altKey && e.code === 'KeyD') {
       e.preventDefault();
       toggleDesyncLogging();
     }
