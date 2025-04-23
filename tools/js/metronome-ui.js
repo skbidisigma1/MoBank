@@ -104,6 +104,8 @@ let isPlaying               = false,
     droppedNoteCount        = 0,
     perfectNoteCount        = 0,
     schedulerId             = null, silentNode = null;
+  const isIOS = /iP(ad|hone|od)/.test(navigator.platform) && !window.MSStream;
+  let iosWakeVideo = null;
 
 function createSimpleLoggingContainer(){
   const container=document.createElement('div');
@@ -228,12 +230,31 @@ async function requestWakeLock(){
   } catch (err) {
     console.error('Failed to acquire Wake Lock:', err);
   }
+  // iOS fallback: play hidden looping video to keep screen awake
+  if (isIOS) {
+    if (!iosWakeVideo) {
+      iosWakeVideo = document.createElement('video');
+      iosWakeVideo.src = '/tools/media/blank.mp4';
+      iosWakeVideo.setAttribute('playsinline', '');
+      iosWakeVideo.muted = true;
+      iosWakeVideo.loop = true;
+      iosWakeVideo.style.cssText = 'width:1px;height:1px;position:absolute;top:0;left:0;opacity:0;pointer-events:none';
+      document.body.appendChild(iosWakeVideo);
+    }
+    iosWakeVideo.play().catch(e => console.warn('iOS wake-video play failed', e));
+  }
 }
 
 function releaseWakeLock(){
   if (wakeLock) {
     wakeLock.release().catch(err => console.error('Failed to release Wake Lock:', err));
     wakeLock = null;
+  }
+  // iOS fallback: stop and remove hidden video
+  if (isIOS && iosWakeVideo) {
+    iosWakeVideo.pause();
+    iosWakeVideo.remove();
+    iosWakeVideo = null;
   }
 }
 
