@@ -473,11 +473,34 @@ async function startMetronome(){
   const patterns=[];document.querySelectorAll('.accent-button').forEach(btn=>patterns.push(btn.dataset.state||'normal'));
   if(metronomeProcessor){
     metronomeProcessor.port.postMessage({type:'start',interval:subSec,tempo:currentTempo,beatsPerMeasure,subdivision,beatPatterns:patterns});
+  } else {
+    // fallback scheduling without AudioWorklet
+    currentBeat = 0;
+    schedulerId = setInterval(() => {
+      const beatIndex = currentBeat % beatsPerMeasure;
+      const isMain = (currentBeat % subdivision) === 0;
+      const subBeat = currentBeat % subdivision;
+      const state = document.querySelector(`.accent-button[data-beat="${beatIndex+1}"]`)?.dataset.state;
+      const isSilent = state === 'silent';
+      // play audio
+      if (!isSilent) playTickSound({beatInMeasure: beatIndex, isMainBeat: isMain, subBeat, silent: false}, audioContext.currentTime);
+      // schedule visual
+      scheduleVisual(() => { if (isMain) updateVisualBeat(beatIndex); }, audioContext.currentTime);
+      // subdivision click
+      if (!isMain && subdivision > 1 && !isSilent) playSubdivisionSound(subBeat, audioContext.currentTime);
+      currentBeat++;
+    }, subSec * 1000);
   }
   droppedNoteCount=0;perfectNoteCount=0;
 }
 function stopMetronome(){
   isPlaying=false;
+  // stop silent audio unlock node to clean up resources
+  if (silentNode) {
+    try { silentNode.stop(); } catch {};
+    try { silentNode.disconnect(); } catch {};
+    silentNode = null;
+  }
   releaseWakeLock();
   if(metronomeProcessor)metronomeProcessor.port.postMessage({type:'stop'});
   if(schedulerId){clearInterval(schedulerId);schedulerId=null}
