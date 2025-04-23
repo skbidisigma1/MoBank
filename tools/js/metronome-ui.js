@@ -103,7 +103,7 @@ let isPlaying               = false,
     PRESET_CACHE_MS         = 20000,
     droppedNoteCount        = 0,
     perfectNoteCount        = 0,
-    schedulerId             = null;
+    schedulerId             = null, silentNode = null;
 
 function createSimpleLoggingContainer(){
   const container=document.createElement('div');
@@ -421,9 +421,20 @@ function restartPendulumLoop() {
 }
 
 async function startMetronome(){
-  if(isPlaying)return;
-  isPlaying=true;
-  if(audioContext===null)await initAudio();else if(audioContext.state==='suspended')await audioContext.resume();
+  if(isPlaying) return;
+  isPlaying = true;
+  if(audioContext===null) await initAudio(); else if(audioContext.state==='suspended') await audioContext.resume();
+  // Unlock audio output by playing a silent buffer (no CSP issues)
+  if(!silentNode){
+    const silentBuffer = audioContext.createBuffer(1, audioContext.sampleRate, audioContext.sampleRate);
+    silentNode = audioContext.createBufferSource();
+    silentNode.buffer = silentBuffer;
+    silentNode.loop = true;
+    const silentGain = audioContext.createGain();
+    silentGain.gain.value = 0;
+    silentNode.connect(silentGain).connect(audioContext.destination);
+    silentNode.start();
+  }
   await requestWakeLock();
   pendulum.style.transform='rotate(0rad)';
   pendulum.style.transition='';
