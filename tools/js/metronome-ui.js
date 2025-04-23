@@ -163,7 +163,6 @@ const desyncLogging={
     else if(type==='stat'){p.style.color='#2196F3';p.style.marginLeft='20px'}
     else if(type==='warning'){p.style.color='#FF9800'}
     el.appendChild(p);
-    // prevent auto-scrolling to avoid moving viewport
   },
   calculateJitter(){
     const mean=this.totalDesync/this.desyncs.length;
