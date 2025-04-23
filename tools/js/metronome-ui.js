@@ -94,7 +94,7 @@ let isPlaying               = false,
     PRESET_CACHE_MS         = 20000,
     droppedNoteCount        = 0,
     perfectNoteCount        = 0,
-    schedulerId             = null;
+    schedulerId             = null, silentAudio = null;
 
 function createSimpleLoggingContainer(){
   const container=document.createElement('div');
@@ -413,6 +413,13 @@ function restartPendulumLoop() {
 
 async function startMetronome(){
   if(isPlaying)return;
+  // Unlock audio in silent mode (iOS mute switch hack)
+  if(!silentAudio){
+    silentAudio = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=");
+    silentAudio.loop = true;
+    silentAudio.volume = 0;
+    silentAudio.play().catch(() => {});
+  }
   isPlaying=true;
   if(audioContext===null)await initAudio();else if(audioContext.state==='suspended')await audioContext.resume();
   await requestWakeLock();
