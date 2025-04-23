@@ -62,6 +62,15 @@ const tempoSlider               = document.getElementById('tempo-slider'),
       confirmOk                 = document.getElementById('confirm-ok'),
       confirmCancel             = document.getElementById('confirm-cancel');
 
+const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+if (isMobileDevice) {
+  const warningEl = document.createElement('div');
+  warningEl.id = 'mobile-silent-warning';
+  warningEl.textContent = "Note: Metronome probably won't work if your device is in silent mode";
+  warningEl.style.cssText = 'background: rgba(255, 165, 0, 0.1); color: #FFA500; font-size: 0.9rem; text-align: center; padding: 0.5rem 1rem; margin: 0.5rem 0; border-radius: 4px;';
+  document.querySelector('.metronome-header')?.appendChild(warningEl);
+}
+
 let isPlaying               = false,
     currentTempo            = parseInt(tempoDisplay.value),
     beatsPerMeasure         = parseInt(timeSignatureNumerator.textContent),
