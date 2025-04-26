@@ -303,10 +303,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     const user = await getUser();
-    const roles = (user && (user['https://mo-classroom.us/roles'] || user.roles)) || [];
-    const isAdmin = roles.includes('admin');
+    // Show period selector for all authenticated users
     const periodButtonsContainer = document.getElementById('period-buttons');
-    if (isAdmin) {
+    if (periodButtonsContainer) {
       periodButtonsContainer.classList.remove('hidden');
     }
     let defaultPeriod = 5;
