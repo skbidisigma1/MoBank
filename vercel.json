@@ -50,7 +50,7 @@
         },
         {
           "key": "Permissions-Policy",
-          "value": "fullscreen=(self)"
+          "value": "microphone=(self)"
         },
         {
           "key": "Access-Control-Allow-Origin",

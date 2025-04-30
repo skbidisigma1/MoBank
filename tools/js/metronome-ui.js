@@ -70,6 +70,42 @@ if (isMobileDevice) {
   warningEl.style.cssText = 'background: rgba(255, 165, 0, 0.1); color: #FFA500; font-size: 0.9rem; text-align: center; padding: 0.5rem 1rem; margin: 0.5rem 0; border-radius: 4px;';
   document.querySelector('.metronome-header')?.appendChild(warningEl);
 }
+  // --- Fuzzy wake word matching helper ---
+  function isWakeWord(text) {
+    // Accepts: "hey metronome", "hey metro", "hey metranome", "hey metrome", "a metronome", "i metronome", etc.
+    // Simple phonetic/fuzzy match: allow up to 2 character errors, or any of a set of common variants
+    const variants = [
+      'hey metronome', 'hey metronom', 'hey metranome', 'hey metrome', 'hey metro',
+      'hey matronome', 'hey metronoom', 'hey metron', 'hey metrono',
+      'a metronome', 'i metronome', 'a metronom', 'i metronom',
+      'hey metronomee', 'hey metronomey', 'hey metronome',
+      'hey metron', 'hey metro', 'hey metrome',
+      'hey metronome', 'hey metronome',
+    ];
+    // Quick exact/variant match
+    if (variants.includes(text)) return true;
+    // Levenshtein distance <= 2
+    function levenshtein(a, b) {
+      const m = a.length, n = b.length;
+      if (Math.abs(m - n) > 2) return 99;
+      const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));
+      for (let i = 0; i <= m; i++) dp[i][0] = i;
+      for (let j = 0; j <= n; j++) dp[0][j] = j;
+      for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
+          if (a[i - 1] === b[j - 1]) dp[i][j] = dp[i - 1][j - 1];
+          else dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+        }
+      }
+      return dp[m][n];
+    }
+    for (const v of variants) {
+      if (levenshtein(text, v) <= 2) return true;
+    }
+    // Accept if both words are present and similar ("metronome" in text, and a word like "hey", "a", "i", etc.)
+    if (/\b(metronome|metronom|metro|metranome|matronome)\b/.test(text) && /\b(hey|a|i|ei|ey|he)\b/.test(text)) return true;
+    return false;
+  }
 
 let isPlaying               = false,
     currentTempo            = parseInt(tempoDisplay.value),
@@ -388,10 +424,10 @@ function updateTempo(v){
   if(isPlaying){
     clearTimeout(tempoDebounceTimeout);
     if(metronomeProcessor){
+      // Instead of just sending update, always restart the metronome processor for robust timing
       tempoDebounceTimeout=setTimeout(()=>{
-        const beatSec=(60/currentTempo)*(4/noteValue);
-        const subSec=subdivision>1?beatSec/subdivision:beatSec;
-        metronomeProcessor.port.postMessage({type:'update',interval:subSec,tempo:currentTempo});
+        stopMetronome();
+        startMetronome();
       },150);
     }else tempoDebounceTimeout=setTimeout(restartMetronome,150);
   }
@@ -1177,4 +1213,268 @@ async function loadAndDisplayPagePresets() {
 }
 // initial page load
 loadAndDisplayPagePresets();
+
+
+  const microphoneToggle = document.getElementById('microphone-toggle');
+  const voiceIndicator = document.getElementById('voice-indicator');
+  const voiceDot = voiceIndicator?.querySelector('.voice-dot');
+  const voiceStatusText = document.getElementById('voice-status-text');
+
+  let micStream = null;
+  let audioContextMic = null;
+  let micAnalyser = null;
+  let micSource = null;
+  let micAnimationId = null;
+  let micPermissionGranted = false;
+
+  // --- Web Speech API integration ---
+  let recognition = null;
+  let recognizing = false;
+
+  // --- Speech inactivity and delayed logging logic ---
+  let speechInactivityTimer = null;
+  let logFinalTimer = null;
+  let lastFinalTranscript = '';
+
+  function startSpeechRecognition() {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      if (voiceStatusText) voiceStatusText.textContent = 'Speech recognition not supported';
+      return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = function() {
+      recognizing = true;
+      if (voiceStatusText) voiceStatusText.textContent = 'Listening...';
+    };
+    recognition.onerror = function(event) {
+      if (voiceStatusText) voiceStatusText.textContent = 'Speech error';
+      console.warn('SpeechRecognition error:', event.error);
+    };
+    recognition.onend = function() {
+      recognizing = false;
+      if (speechInactivityTimer) clearTimeout(speechInactivityTimer);
+      if (logFinalTimer) clearTimeout(logFinalTimer);
+      if (microphoneToggle && microphoneToggle.checked) {
+        // Auto-restart for continuous listening
+        recognition.start();
+      } else {
+        if (voiceStatusText) voiceStatusText.textContent = 'Say "Hey Metronome"';
+      }
+    };
+    recognition.onresult = function(event) {
+      let interim = '';
+      let final = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          final += event.results[i][0].transcript;
+        } else {
+          interim += event.results[i][0].transcript;
+        }
+      }
+
+      // --- Wake word detection logic ---
+      // Only process if not already in wake state
+      if (!window._metronomeWakeActive) {
+        // Fuzzy match for wake word
+        const spoken = (final || interim).toLowerCase().replace(/[^a-z ]/g, '').trim();
+        if (spoken) {
+          if (isWakeWord(spoken)) {
+            window._metronomeWakeActive = true;
+            window._metronomeCommandBuffer = '';
+            window._metronomeJustWoke = true; // flag to ignore first command
+            if (voiceStatusText) voiceStatusText.textContent = 'Yes?';
+            if (voiceIndicator) voiceIndicator.classList.add('awake');
+            // Wait for command for up to 7 seconds
+            if (window._metronomeWakeTimeout) clearTimeout(window._metronomeWakeTimeout);
+            window._metronomeWakeTimeout = setTimeout(() => {
+              window._metronomeWakeActive = false;
+              window._metronomeCommandBuffer = '';
+              window._metronomeJustWoke = false;
+              if (voiceStatusText) voiceStatusText.textContent = 'Say "Hey Metronome"';
+              if (voiceIndicator) voiceIndicator.classList.remove('awake');
+            }, 7000);
+            return;
+          }
+        }
+        // Show interim/final as usual if not wake word
+        if (voiceStatusText) {
+          voiceStatusText.textContent = interim ? interim : (final ? final : 'Say "Hey Metronome"');
+        }
+        // Reset inactivity timer on any result
+        if (speechInactivityTimer) clearTimeout(speechInactivityTimer);
+        speechInactivityTimer = setTimeout(() => {
+          if (voiceStatusText) voiceStatusText.textContent = 'Listening...';
+        }, 2000);
+      } else {
+        // Already in wake state, accumulate command and process on final
+        if (window._metronomeJustWoke) {
+          // Ignore the first final result after waking (it's the wake word)
+          if (final) {
+            window._metronomeJustWoke = false;
+            return;
+          }
+        } else if (final) {
+          window._metronomeCommandBuffer = (window._metronomeCommandBuffer || '') + ' ' + final;
+          // Send to server for parsing
+          const commandText = window._metronomeCommandBuffer.trim();
+          if (commandText) {
+            if (voiceStatusText) voiceStatusText.textContent = 'Processing...';
+            fetch('/api/parseMetronomeCommand', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: commandText })
+            })
+            .then(r => r.json())
+            .then(result => {
+              if (result.command === 'set_tempo' && result.params && typeof result.params.tempo === 'number') {
+                updateTempo(result.params.tempo);
+                if (voiceStatusText) voiceStatusText.textContent = `Tempo set to ${result.params.tempo} BPM`;
+              } else if (result.command === 'start') {
+                if (!isPlaying) startMetronome();
+                if (voiceStatusText) voiceStatusText.textContent = 'Metronome started';
+              } else if (result.command === 'stop') {
+                if (isPlaying) stopMetronome();
+                if (voiceStatusText) voiceStatusText.textContent = 'Metronome stopped';
+              } else if (result.command === 'unknown' || !result.command) {
+                if (voiceStatusText) voiceStatusText.textContent = 'Sorry, I didn\'t understand that command.';
+              } else {
+                if (voiceStatusText) voiceStatusText.textContent = 'Sorry, I didn\'t understand that command.';
+              }
+              // Reset wake state after command
+              window._metronomeWakeActive = false;
+              window._metronomeCommandBuffer = '';
+              if (voiceIndicator) voiceIndicator.classList.remove('awake');
+              if (window._metronomeWakeTimeout) clearTimeout(window._metronomeWakeTimeout);
+              setTimeout(() => {
+                if (voiceStatusText) voiceStatusText.textContent = 'Say "Hey Metronome"';
+              }, 1800);
+            })
+            .catch(() => {
+              if (voiceStatusText) voiceStatusText.textContent = 'Sorry, something went wrong.';
+              window._metronomeWakeActive = false;
+              window._metronomeCommandBuffer = '';
+              if (voiceIndicator) voiceIndicator.classList.remove('awake');
+              if (window._metronomeWakeTimeout) clearTimeout(window._metronomeWakeTimeout);
+              setTimeout(() => {
+                if (voiceStatusText) voiceStatusText.textContent = 'Say "Hey Metronome"';
+              }, 1800);
+            });
+          }
+        } else {
+          // Show interim/final as command
+          if (voiceStatusText) {
+            voiceStatusText.textContent = interim ? interim : (final ? final : 'Yes?');
+          }
+        }
+        // Reset wake timeout on any speech
+        if (window._metronomeWakeTimeout) clearTimeout(window._metronomeWakeTimeout);
+        window._metronomeWakeTimeout = setTimeout(() => {
+          window._metronomeWakeActive = false;
+          window._metronomeCommandBuffer = '';
+          if (voiceStatusText) voiceStatusText.textContent = 'Say "Hey Metronome"';
+          if (voiceIndicator) voiceIndicator.classList.remove('awake');
+        }, 7000);
+      }
+    };
+    recognition.start();
+  }
+
+  function stopSpeechRecognition() {
+    if (recognition) {
+      recognition.onend = null;
+      recognition.onerror = null;
+      recognition.onresult = null;
+      try { recognition.stop(); } catch {}
+      recognition = null;
+    }
+    recognizing = false;
+    if (logFinalTimer) clearTimeout(logFinalTimer);
+    if (speechInactivityTimer) clearTimeout(speechInactivityTimer);
+    lastFinalTranscript = '';
+    if (voiceStatusText) voiceStatusText.textContent = 'Say "Hey Metronome"';
+  }
+
+  async function enableMicrophone() {
+    if (micStream) return;
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micPermissionGranted = true;
+      audioContextMic = new (window.AudioContext || window.webkitAudioContext)();
+      micSource = audioContextMic.createMediaStreamSource(micStream);
+      micAnalyser = audioContextMic.createAnalyser();
+      micAnalyser.fftSize = 256;
+      micSource.connect(micAnalyser);
+      animateMicLevel();
+      startSpeechRecognition();
+    } catch (err) {
+      micPermissionGranted = false;
+      microphoneToggle.checked = false;
+      showAlert('Microphone access denied or unavailable.');
+    }
+  }
+
+  function disableMicrophone() {
+    if (micAnimationId) cancelAnimationFrame(micAnimationId);
+    if (micSource) try { micSource.disconnect(); } catch {}
+    if (micAnalyser) try { micAnalyser.disconnect(); } catch {}
+    if (audioContextMic) try { audioContextMic.close(); } catch {}
+    if (micStream) {
+      micStream.getTracks().forEach(track => track.stop());
+      micStream = null;
+    }
+    audioContextMic = null;
+    micAnalyser = null;
+    micSource = null;
+    micAnimationId = null;
+    if (voiceDot) {
+      voiceDot.style.transform = '';
+    }
+    stopSpeechRecognition();
+  }
+
+  function animateMicLevel() {
+    if (!micAnalyser || !voiceDot) return;
+    const dataArray = new Uint8Array(micAnalyser.frequencyBinCount);
+    micAnalyser.getByteTimeDomainData(dataArray);
+    // Calculate RMS (root mean square) for volume
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+      const v = (dataArray[i] - 128) / 128;
+      sum += v * v;
+    }
+    const rms = Math.sqrt(sum / dataArray.length);
+    // Dot grows when audio is detected
+    const minScale = 1, maxScale = 1.45;
+    const scale = minScale + Math.min(rms * 6, 1) * (maxScale - minScale);
+    voiceDot.style.transform = `scale(${scale})`;
+    micAnimationId = requestAnimationFrame(animateMicLevel);
+  }
+
+  function setVoiceIndicatorVisible(visible) {
+    if (!voiceIndicator) return;
+    if (visible) {
+      voiceIndicator.classList.remove('hidden');
+    } else {
+      voiceIndicator.classList.add('hidden');
+    }
+  }
+
+  if (microphoneToggle) {
+    microphoneToggle.addEventListener('change', async () => {
+      if (microphoneToggle.checked) {
+        setVoiceIndicatorVisible(true);
+        await enableMicrophone();
+      } else {
+        setVoiceIndicatorVisible(false);
+        disableMicrophone();
+      }
+    });
+    // On load, set initial state
+    setVoiceIndicatorVisible(microphoneToggle.checked);
+  }
 } // leave this brace here to match the opening brace at the top
