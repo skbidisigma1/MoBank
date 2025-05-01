@@ -2196,173 +2196,47 @@ select:after {
   transform: translateX(4px);
 }
 
-/* Override the form-group hover effect for suggestions */
-.form-group:hover .suggestions-container,
-.form-group:hover .suggestion-item {
-  transform: none;
-  box-shadow: none;
-}
-
-/* Ensure proper text color in dark mode */
-[data-theme="dark"] input[type="text"],
-[data-theme="dark"] input[type="number"],
-[data-theme="dark"] select,
-[data-theme="dark"] .suggestions-container,
-[data-theme="dark"] .suggestion-item {
-  color: #e0e0e0;
-}
-
-@media (max-width: 768px) {
-  .transfer-section {
-    padding: 1.5rem;
-    margin: 1rem 0 2rem;
-  }
-  
-  .page-heading {
-    font-size: 1.8rem;
-  }
-  
-  .page-description {
-    font-size: 1rem;
-  }
-  
-  .balance-card {
-    padding: 1rem;
-  }
-  
-  .balance-icon {
-    width: 36px;
-    height: 36px;
-  }
-  
-  .balance-amount {
-    font-size: 1.5rem;
-  }
-}
-
-/* Admin Panel Styles */
-.admin-section {
-  max-width: 800px;
-  margin: 0 auto 2rem;
-  padding: 2rem;
-  background: linear-gradient(
-    to bottom,
-    var(--color-bg) 0%,
-    var(--color-light-bg) 100%
-  );
-  border-radius: 1.5rem;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-}
-
-.admin-card {
-  background: var(--color-main-bg);
-  padding: 1.5rem;
-  border-radius: 1rem;
-  margin-top: 1.5rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.admin-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-}
-
-.admin-card-title {
-  font-size: 1.25rem;
-  margin-bottom: 1.5rem;
-  color: var(--color-text);
-  font-family: var(--font-main);
-  font-weight: 600;
-}
-
-.admin-form {
-  margin: 0 auto;
-  max-width: 500px;
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-}
-
-.tab-button[data-period="all"] {
-  background-color: var(--color-secondary);
-}
-
-.tab-button[data-period="all"]:hover {
-  background-color: var(--color-secondary-dark);
-}
-
-.tab-button[data-period="all"].active {
-  background-color: var(--color-secondary-dark);
-}
-
-@media (max-width: 768px) {
-  .admin-section {
-    padding: 1.5rem;
-    margin: 1rem;
-  }
-  
-  .admin-card {
-    padding: 1rem;
-  }
-  
-  .admin-card-title {
-    font-size: 1.1rem;
-  }
-  
-  .tab-container {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  
-  .tab-button {
-    padding: 8px 12px;
-    font-size: 0.9rem;
-  }
-}
-
 .confirmation-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(5px);
-  display: flex;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: none;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 2100;
   opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition: opacity 0.3s ease;
 }
 
 .confirmation-modal-overlay.active {
+  display: flex;
   opacity: 1;
-  visibility: visible;
 }
 
 .confirmation-modal {
-  background: var(--color-main-bg);
-  border-radius: 12px;
+  background-color: var(--container-color);
   padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   width: 90%;
-  max-width: 500px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-  transform: translateY(-20px);
+  max-width: 450px;
+  text-align: center;
+  transform: scale(0.95);
   transition: transform 0.3s ease;
 }
 
 .confirmation-modal-overlay.active .confirmation-modal {
-  transform: translateY(0);
+  transform: scale(1);
 }
 
 .confirmation-modal-message {
   font-size: 1.1rem;
   color: var(--color-text);
-  text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   line-height: 1.5;
 }
 
@@ -2373,13 +2247,14 @@ select:after {
 }
 
 .confirmation-modal-button {
-  padding: 0.8rem 2rem;
+  padding: 0.75rem 1.5rem;
   border-radius: 8px;
-  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  transition: all 0.2s ease;
   border: none;
+  font-size: 1rem;
+  min-width: 100px;
 }
 
 .confirmation-modal-button.confirm {
@@ -2390,172 +2265,109 @@ select:after {
 .confirmation-modal-button.confirm:hover {
   background-color: var(--color-primary-dark);
   transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .confirmation-modal-button.cancel {
-  background-color: transparent;
-  border: 2px solid var(--color-border);
+  background-color: var(--color-light-bg);
   color: var(--color-text);
+  border: 1px solid var(--color-border);
 }
 
 .confirmation-modal-button.cancel:hover {
   background-color: var(--color-hover-bg);
   transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-@media (max-width: 768px) {
-  .confirmation-modal {
-    padding: 1.5rem;
-  }
+/* End Confirmation Modal Styles */
 
-  .confirmation-modal-message {
-    font-size: 1rem;
-  }
-
-  .confirmation-modal-buttons {
-    flex-direction: column;
-  }
-
-  .confirmation-modal-button {
-    width: 100%;
-  }
+/* Toggle Switch Styles (from metronome-enhanced.css) */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
 }
 
-.pin-section {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 2rem;
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
 }
 
-.pin-container {
-  background: var(--color-light-bg);
-  border-radius: 16px;
-  padding: 2rem;
-  margin-top: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--color-border); /* Use theme variable */
+  transition: .4s;
+  border-radius: 34px;
+  border: 1px solid var(--color-border); /* Use theme variable */
+  box-sizing: border-box;
 }
 
-.pin-step {
-  display: flex;
-  gap: 1.5rem;
-  align-items: flex-start;
-  margin-bottom: 2.5rem;
-  padding: 1rem;
-  background: var(--color-bg);
-  border-radius: 12px;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.pin-step:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
-}
-
-.pin-step:last-of-type {
-  margin-bottom: 2rem;
-}
-
-.pin-step-number {
-  background: var(--color-primary);
-  color: var(--color-white);
-  width: 36px;
-  height: 36px;
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 4px;
+  bottom: 4px;
+  background-color: var(--color-white); /* Use theme variable */
+  transition: .4s;
   border-radius: 50%;
+  box-shadow: 0 0 5px rgba(0,0,0,.2);
+}
+
+input:checked + .toggle-slider {
+  background: var(--color-success); /* Use theme variable for checked state */
+  border-color: var(--color-success); /* Use theme variable for checked state */
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(23px);
+}
+
+/* Optional: Add focus styles */
+input:focus + .toggle-slider {
+  box-shadow: 0 0 1px var(--color-primary);
+}
+
+/* Optional: Disabled state */
+input:disabled + .toggle-slider {
+  background-color: var(--color-disabled-bg); /* Use theme variable */
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+input:disabled + .toggle-slider:before {
+  background-color: var(--color-muted); /* Use theme variable */
+}
+
+.toggle-label {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 1.2rem;
-  flex-shrink: 0;
+  gap: 0.75rem;
+  cursor: pointer;
 }
 
-.pin-step-content {
-  flex: 1;
+.toggle-text {
+  margin-left: 0.75rem;
+  font-weight: 500;
 }
 
-.pin-step-content p {
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
-  color: var(--color-text);
+/* End Toggle Switch Styles */
+
+.notification-item.fadeout {
+    animation: notification-fadeout 0.3s ease forwards;
 }
 
-.pin-image {
-  width: 100%;
-  max-width: 600px;
-  height: auto;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.pin-action {
-  text-align: center;
-  margin-top: 2rem;
-}
-
-.pin-action .action-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  font-size: 1.1rem;
-}
-
-.pin-action .button-icon {
-  width: 24px;
-  height: 24px;
-  margin-left: 0.25rem;
-}
-
-@media (max-width: 768px) {
-  .pin-section {
-    padding: 1rem;
-  }
-
-  .pin-container {
-    padding: 1rem;
-  }
-
-  .pin-step {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 1rem;
-  }
-
-  .pin-step-content {
-    width: 100%;
-  }
-
-  .pin-image {
-    max-width: 100%;
-  }
-}
-
-.action-button.danger {
-  background-color: var(--color-danger);
-  color: var(--color-white);
-}
-
-.action-button.danger:hover {
-  background-color: var(--color-danger-dark);
-}
-
-.action-button.success {
-  background-color: var(--color-success);
-  color: var(--color-white);
-}
-
-.action-button.success:hover {
-  background-color: var(--color-success-dark);
-}
-
-.action-button.motools {
-  background-color: var(--color-motools);
-  color: var(--color-white);
-}
-
-.action-button.motools:hover {
-  background-color: var(--color-motools-dark);
+.notification-item.fadeout {
+    animation-delay: calc(var(--item-index, 0) * 0.05s);
 }
 
 @keyframes notification-fadeout {
@@ -2567,12 +2379,4 @@ select:after {
         opacity: 0;
         transform: translateY(-10px);
     }
-}
-
-.notification-item.fadeout {
-    animation: notification-fadeout 0.3s ease forwards;
-}
-
-.notification-item.fadeout {
-    animation-delay: calc(var(--item-index, 0) * 0.05s);
 }
