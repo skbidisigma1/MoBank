@@ -19,6 +19,8 @@ async function loadAdminContent() {
 
   const tabButtons = document.querySelectorAll('.tab-button');
   const tabPanels = document.querySelectorAll('.tab-panel');
+  const manageAnnouncementsBtn = document.getElementById('manage-announcements-btn'); // Added
+  const announcementsPanel = document.getElementById('announcements-panel'); // Added
   const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
   const namesCache = {};
 
@@ -95,12 +97,19 @@ async function loadAdminContent() {
   tabButtons.forEach((button) => {
     button.addEventListener('click', async () => {
       const period = button.dataset.period;
-      
+
+      // Deactivate announcement button and hide its panel
+      manageAnnouncementsBtn.classList.remove('active'); // Added
+      announcementsPanel.classList.add('hidden'); // Added
+
       tabButtons.forEach((btn) => btn.classList.remove('active'));
       button.classList.add('active');
-      
+
       tabPanels.forEach((panel) => {
-        panel.classList.toggle('hidden', panel.id !== `period-${period}-panel`);
+        // Ensure announcement panel remains hidden unless explicitly shown
+        if (panel.id !== 'announcements-panel') { // Added condition
+          panel.classList.toggle('hidden', panel.id !== `period-${period}-panel`);
+        }
       });
       
       if (!namesCache[period]) {
@@ -120,6 +129,29 @@ async function loadAdminContent() {
       setupClassPeriodForm(period);
     });
   });
+
+  // Add event listener for the Manage Announcements button
+  if (manageAnnouncementsBtn) {
+    manageAnnouncementsBtn.addEventListener('click', () => {
+      // Deactivate all period tab buttons
+      tabButtons.forEach((btn) => btn.classList.remove('active'));
+      // Activate the announcement button
+      manageAnnouncementsBtn.classList.add('active');
+
+      // Hide all period tab panels
+      tabPanels.forEach((panel) => {
+         if (panel.id !== 'announcements-panel') { // Don't hide the announcement panel itself
+            panel.classList.add('hidden');
+         }
+      });
+
+      // Show the announcement panel
+      announcementsPanel.classList.remove('hidden');
+
+      // Optional: Load current announcements if not already loaded
+      // loadCurrentAnnouncements(); // We'll implement this function later
+    });
+  }
 
   function getCachedNames(period) {
     const cached = localStorage.getItem(`namesByPeriod-${period}`);
