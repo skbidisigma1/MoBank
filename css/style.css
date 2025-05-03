@@ -1728,6 +1728,7 @@ select:after {
   flex: 1;
   justify-content: center;
   min-width: 200px;
+  color: var(--color-white);
 }
 
 .action-button.primary {
