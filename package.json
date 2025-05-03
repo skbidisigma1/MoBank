@@ -2,8 +2,7 @@
   "name": "mobank",
   "version": "1.0.0",
   "type": "commonjs",
-  "description": "online **mobuck** tracker",
-  "main": "index.js",
+  "description": "online **mobuck** tracker",  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

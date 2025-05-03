@@ -1144,8 +1144,6 @@ savePresetBtn.addEventListener('click', () => {
   renderPresetAccentPattern();
 });
 
-// --- Preset modal interactivity ---
-// Tab switching
 presetTabs.forEach(tab => {
   tab.addEventListener('click', () => {
     presetTabs.forEach(t => t.classList.remove('active'));
@@ -1158,7 +1156,6 @@ presetTabs.forEach(tab => {
   });
 });
 
-// Sound type selection
 presetSoundButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     presetSoundButtons.forEach(b => b.classList.remove('selected'));
@@ -1167,7 +1164,6 @@ presetSoundButtons.forEach(btn => {
   });
 });
 
-// Show/hide each control based on its checkbox
 [  {chk: includeTempoCheck, ctrl: document.getElementById('tempo-control')},
    {chk: includeTimeSignatureCheck, ctrl: document.getElementById('time-sig-control')},
    {chk: includeSubdivisionCheck, ctrl: document.getElementById('subdivision-control')},
@@ -1183,13 +1179,11 @@ presetSoundButtons.forEach(btn => {
   });
 });
 
-// Modal footer buttons
 presetCancelBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
 presetCancelEditBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
 presetSaveBtn.addEventListener('click', event => {
   const activeTab = Array.from(presetTabs).find(t => t.classList.contains('active')).dataset.tab;
   if (activeTab === 'load') {
-    // switch to Save tab
     presetTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === 'save'));
     presetTabContents.forEach(c => c.id === 'save-tab' ? c.classList.add('active') : c.classList.remove('active'));
     saveTabButtons.style.display = 'flex';
@@ -1211,9 +1205,7 @@ async function loadAndDisplayPagePresets() {
     presetsGrid.appendChild(btn);
   });
 }
-// initial page load
 loadAndDisplayPagePresets();
-
 
   const microphoneToggle = document.getElementById('microphone-toggle');
   const voiceIndicator = document.getElementById('voice-indicator');
@@ -1227,11 +1219,9 @@ loadAndDisplayPagePresets();
   let micAnimationId = null;
   let micPermissionGranted = false;
 
-  // --- Web Speech API integration ---
   let recognition = null;
   let recognizing = false;
 
-  // --- Speech inactivity and delayed logging logic ---
   let speechInactivityTimer = null;
   let logFinalTimer = null;
   let lastFinalTranscript = '';
@@ -1260,7 +1250,6 @@ loadAndDisplayPagePresets();
       if (speechInactivityTimer) clearTimeout(speechInactivityTimer);
       if (logFinalTimer) clearTimeout(logFinalTimer);
       if (microphoneToggle && microphoneToggle.checked) {
-        // Auto-restart for continuous listening
         recognition.start();
       } else {
         if (voiceStatusText) voiceStatusText.textContent = 'Say "Hey Metronome"';
@@ -1277,19 +1266,15 @@ loadAndDisplayPagePresets();
         }
       }
 
-      // --- Wake word detection logic ---
-      // Only process if not already in wake state
       if (!window._metronomeWakeActive) {
-        // Fuzzy match for wake word
         const spoken = (final || interim).toLowerCase().replace(/[^a-z ]/g, '').trim();
         if (spoken) {
           if (isWakeWord(spoken)) {
             window._metronomeWakeActive = true;
             window._metronomeCommandBuffer = '';
-            window._metronomeJustWoke = true; // flag to ignore first command
+            window._metronomeJustWoke = true;
             if (voiceStatusText) voiceStatusText.textContent = 'Yes?';
             if (voiceIndicator) voiceIndicator.classList.add('awake');
-            // Wait for command for up to 7 seconds
             if (window._metronomeWakeTimeout) clearTimeout(window._metronomeWakeTimeout);
             window._metronomeWakeTimeout = setTimeout(() => {
               window._metronomeWakeActive = false;
@@ -1301,26 +1286,21 @@ loadAndDisplayPagePresets();
             return;
           }
         }
-        // Show interim/final as usual if not wake word
         if (voiceStatusText) {
           voiceStatusText.textContent = interim ? interim : (final ? final : 'Say "Hey Metronome"');
         }
-        // Reset inactivity timer on any result
         if (speechInactivityTimer) clearTimeout(speechInactivityTimer);
         speechInactivityTimer = setTimeout(() => {
           if (voiceStatusText) voiceStatusText.textContent = 'Listening...';
         }, 2000);
       } else {
-        // Already in wake state, accumulate command and process on final
         if (window._metronomeJustWoke) {
-          // Ignore the first final result after waking (it's the wake word)
           if (final) {
             window._metronomeJustWoke = false;
             return;
           }
         } else if (final) {
           window._metronomeCommandBuffer = (window._metronomeCommandBuffer || '') + ' ' + final;
-          // Send to server for parsing
           const commandText = window._metronomeCommandBuffer.trim();
           if (commandText) {
             if (voiceStatusText) voiceStatusText.textContent = 'Processing...';
@@ -1345,7 +1325,6 @@ loadAndDisplayPagePresets();
               } else {
                 if (voiceStatusText) voiceStatusText.textContent = 'Sorry, I didn\'t understand that command.';
               }
-              // Reset wake state after command
               window._metronomeWakeActive = false;
               window._metronomeCommandBuffer = '';
               if (voiceIndicator) voiceIndicator.classList.remove('awake');
