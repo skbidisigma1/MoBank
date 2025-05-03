@@ -1733,27 +1733,22 @@ select:after {
 
 .action-button.primary {
   background: var(--color-primary);
-  color: var(--color-white);
 }
 
 .action-button.secondary {
   background: var(--color-secondary);
-  color: var(--color-white);
 }
 
 .action-button.motools {
   background: var(--color-motools);
-  color: var(--color-motools-dark);
 }
 
 .action-button.success {
   background: var(--color-success);
-  color: var(--color-success-dark);
 }
 
 .action-button.danger {
   background: var(--color-danger);
-  color: var(--color-danger-dark);
 }
 
 .action-button:hover {
