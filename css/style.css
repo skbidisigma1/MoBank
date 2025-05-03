@@ -1740,6 +1740,21 @@ select:after {
   color: var(--color-white);
 }
 
+.action-button.motools {
+  background: var(--color-motools);
+  color: var(--color-motools-dark);
+}
+
+.action-button.success {
+  background: var(--color-success);
+  color: var(--color-success-dark);
+}
+
+.action-button.danger {
+  background: var(--color-danger);
+  color: var(--color-danger-dark);
+}
+
 .action-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
@@ -1750,7 +1765,6 @@ select:after {
   height: 20px;
 }
 
-/* Transactions Section */
 .transactions-section {
   background: var(--color-main-bg);
   border-radius: 1.5rem;
@@ -2359,8 +2373,6 @@ input:disabled + .toggle-slider:before {
   margin-left: 0.75rem;
   font-weight: 500;
 }
-
-/* End Toggle Switch Styles */
 
 .notification-item.fadeout {
     animation: notification-fadeout 0.3s ease forwards;
