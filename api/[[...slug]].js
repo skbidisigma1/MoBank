@@ -10,7 +10,6 @@ const profiler = {
   end: (label) => {
     const diff = process.hrtime(profiler.startTime[label]);
     const ms = (diff[0] * 1e9 + diff[1]) / 1e6;
-    // Logging removed for efficiency
     return ms;
   }
 };
