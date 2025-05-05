@@ -25,10 +25,16 @@ async function loadHeaderFooter() {
 
         const [headerContent, footerContent] = await Promise.all([headerResponse.text(), footerResponse.text()]);
 
-        document.getElementById('header-placeholder').innerHTML = headerContent;
-        document.getElementById('footer-placeholder').innerHTML = footerContent;
-
         const headerPlaceholder = document.getElementById('header-placeholder');
+        headerPlaceholder.innerHTML = '';
+        const headerDoc = new DOMParser().parseFromString(headerContent, 'text/html');
+        Array.from(headerDoc.body.childNodes).forEach(node => headerPlaceholder.appendChild(node));
+
+        const footerPlaceholder = document.getElementById('footer-placeholder');
+        footerPlaceholder.innerHTML = '';
+        const footerDoc = new DOMParser().parseFromString(footerContent, 'text/html');
+        Array.from(footerDoc.body.childNodes).forEach(node => footerPlaceholder.appendChild(node));
+
         const mobileMenuToggle = headerPlaceholder.querySelector('#mobileMenuToggle');
         const mobileNav = headerPlaceholder.querySelector('.mobile-nav');
 

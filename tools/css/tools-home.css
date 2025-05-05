@@ -1,3 +1,7 @@
+/* Hide auth links by default, shown by JS if needed */
+.hidden-auth-link {
+  display: none !important;
+}
 :root {
   --tools-primary: #4a4a4a;
   --tools-primary-dark: #333333;

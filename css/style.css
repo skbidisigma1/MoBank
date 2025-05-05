@@ -257,6 +257,14 @@ input[type="number"] {
   font-size: 16px;
   width: 100%;
   font-family: var(--font-main);
+  color: #222;
+}
+
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="number"] {
+  color: #fff;
 }
 input:focus {
   border-color: var(--color-primary);
@@ -2256,6 +2264,11 @@ select:after {
   gap: 1rem;
 }
 
+.modal-buttons {
+  text-align: right;
+  margin-top: 1rem;
+}
+
 .confirmation-modal-button {
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -2334,28 +2347,54 @@ select:after {
 }
 
 input:checked + .toggle-slider {
-  background: var(--color-success); /* Use theme variable for checked state */
-  border-color: var(--color-success); /* Use theme variable for checked state */
+  background: var(--color-success);
+  border-color: var(--color-success);
 }
 
 input:checked + .toggle-slider:before {
   transform: translateX(23px);
 }
 
-/* Optional: Add focus styles */
 input:focus + .toggle-slider {
   box-shadow: 0 0 1px var(--color-primary);
 }
 
-/* Optional: Disabled state */
 input:disabled + .toggle-slider {
-  background-color: var(--color-disabled-bg); /* Use theme variable */
+  background-color: var(--color-disabled-bg);
   cursor: not-allowed;
   opacity: 0.7;
 }
 
 input:disabled + .toggle-slider:before {
-  background-color: var(--color-muted); /* Use theme variable */
+  background-color: var(--color-muted);
+}
+
+.tinymce-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+}
+.tinymce-modal-overlay.active {
+  display: flex;
+}
+.tinymce-modal {
+  background: var(--container-color);
+  padding: 1rem;
+  border-radius: 8px;
+  max-width: 90%;
+  width: 600px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.notification-count.hidden {
+  display: none;
 }
 
 .toggle-label {

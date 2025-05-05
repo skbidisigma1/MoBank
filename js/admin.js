@@ -14,48 +14,34 @@ async function loadAdminContent() {
     window.location.href = '/dashboard';
     return;
   }
-  // TinyMCE editor modal logic for announcement body
-  const openEditorBtn = document.getElementById('open-editor-btn');
-  const editorModal = document.getElementById('editor-modal');
   const saveBtn = document.getElementById('editor-save-btn');
   const cancelBtn = document.getElementById('editor-cancel-btn');
   const hiddenTextarea = document.getElementById('announcement-body');
-  if (openEditorBtn && editorModal && saveBtn && cancelBtn && hiddenTextarea) {
-    openEditorBtn.addEventListener('click', () => {
-      openEditorBtn.disabled = true;
-      editorModal.classList.add('active');
-      editorModal.setAttribute('aria-hidden', 'false');
-      tinymce.init({
-        base_url: 'https://cdn.jsdelivr.net/npm/tinymce@6', // load plugins from jsdelivr CDN
-        suffix: '.min',
-        target: document.getElementById('tinymce-editor'),
-        height: 300,
-        menubar: false,
-        plugins: 'lists link image paste help wordcount',
-        toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
-        setup(editor) {
-          editor.on('init', () => {
-            editor.setContent(hiddenTextarea.value);
-          });
-        },
-      });
+  if (document.getElementById('tinymce-editor') && saveBtn && cancelBtn && hiddenTextarea) {
+    tinymce.init({
+      target: document.getElementById('tinymce-editor'),
+      height: 300,
+      menubar: false,
+      inline: true,
+      plugins: 'lists link wordcount table advlist autolink charmap code fullscreen emoticons media', // removed image
+      toolbar: 'undo redo | formatselect | bold italic underline backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link media table | charmap emoticons | code fullscreen | removeformat | help', // removed image
+      setup(editor) {
+        editor.on('init', () => {
+          editor.setContent(hiddenTextarea.value);
+        });
+      },
     });
+
     saveBtn.addEventListener('click', () => {
       const content = tinymce.get('tinymce-editor').getContent();
       hiddenTextarea.value = content;
-      tinymce.get('tinymce-editor').destroy();
-      editorModal.classList.remove('active');
-      editorModal.setAttribute('aria-hidden', 'true');
-      openEditorBtn.disabled = false;
     });
+
     cancelBtn.addEventListener('click', () => {
       const editor = tinymce.get('tinymce-editor');
       if (editor) {
-        editor.destroy();
+        editor.setContent(hiddenTextarea.value);
       }
-      editorModal.classList.remove('active');
-      editorModal.setAttribute('aria-hidden', 'true');
-      openEditorBtn.disabled = false;
     });
   }
 

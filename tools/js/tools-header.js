@@ -13,11 +13,15 @@ async function loadToolsHeaderFooter() {
         const footerPlaceholder = document.getElementById('footer-placeholder');
         
         if (headerPlaceholder) {
-            headerPlaceholder.innerHTML = headerContent;
+            headerPlaceholder.innerHTML = '';
+            const headerDoc = new DOMParser().parseFromString(headerContent, 'text/html');
+            Array.from(headerDoc.body.childNodes).forEach(node => headerPlaceholder.appendChild(node));
         }
-        
+
         if (footerPlaceholder) {
-            footerPlaceholder.innerHTML = footerContent;
+            footerPlaceholder.innerHTML = '';
+            const footerDoc = new DOMParser().parseFromString(footerContent, 'text/html');
+            Array.from(footerDoc.body.childNodes).forEach(node => footerPlaceholder.appendChild(node));
         }
 
         if (headerPlaceholder) {

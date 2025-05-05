@@ -15,11 +15,6 @@
   <script src="../js/toast.js" defer></script>
   <script src="../js/particles-config.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js"></script>
-  <style>
-    .tinymce-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 3000; }
-    .tinymce-modal-overlay.active { display: flex; }
-    .tinymce-modal { background: var(--container-color); padding: 1rem; border-radius: 8px; max-width: 90%; width: 600px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-  </style>
   <script src="../js/admin.js" defer></script>
 </head>
 <body>
@@ -604,19 +599,11 @@
                   <svg class="input-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
                   Body Text
                 </label>
-                <!-- Hidden textarea to hold content; use modal editor -->
                 <textarea id="announcement-body" placeholder="Enter the full announcement message" rows="4" required hidden></textarea>
-                <!-- Button to open TinyMCE modal editor -->
-                <button type="button" id="open-editor-btn" class="secondary-button editor-button">Edit Body</button>
-                <!-- TinyMCE editor modal -->
-                <div id="editor-modal" class="tinymce-modal-overlay hidden" aria-hidden="true">
-                  <div class="tinymce-modal">
-                    <textarea id="tinymce-editor"></textarea>
-                    <div class="modal-buttons" style="text-align:right; margin-top:1rem;">
-                      <button type="button" id="editor-save-btn" class="primary-button">Save</button>
-                      <button type="button" id="editor-cancel-btn" class="text-button">Cancel</button>
-                    </div>
-                  </div>
+                <div id="tinymce-editor"></div>
+                <div class="modal-buttons">
+                  <button type="button" id="editor-save-btn" class="primary-button">Save</button>
+                  <button type="button" id="editor-cancel-btn" class="text-button">Cancel</button>
                 </div>
               </div>
               <div class="form-group form-group-inline">
