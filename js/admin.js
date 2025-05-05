@@ -23,11 +23,34 @@ async function loadAdminContent() {
       height: 300,
       menubar: false,
       inline: true,
-      plugins: 'lists link wordcount table advlist autolink charmap code fullscreen emoticons media', // removed image
-      toolbar: 'undo redo | formatselect | bold italic underline backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link media table | charmap emoticons | code fullscreen | removeformat | help', // removed image
+      plugins: 'lists link wordcount table advlist autolink charmap code fullscreen emoticons media help',
+      toolbar: [
+        'undo redo | formatselect | bold italic underline | alignleft aligncenter alignright',
+        'bullist numlist | link media table | code fullscreen removeformat'
+      ],
+      toolbar_mode: 'wrap',
+      width: 'auto',
+      content_css: '/css/tinymce-custom.css',
+      fixed_toolbar_container: '#tinymce-toolbar-container',
       setup(editor) {
         editor.on('init', () => {
           editor.setContent(hiddenTextarea.value);
+          editor.execCommand('JustifyLeft');
+          
+          const observer = new MutationObserver(() => {
+            const toolbars = document.querySelectorAll('.tox-toolbar__primary');
+            toolbars.forEach(toolbar => {
+              if (toolbar.style.position === 'fixed') {
+                toolbar.style.position = 'relative';
+              }
+            });
+          });
+          
+          observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true
+          });
         });
       },
     });

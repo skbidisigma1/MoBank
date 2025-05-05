@@ -1,0 +1,31 @@
+body {
+  font-family: 'Poppins', Arial, sans-serif;
+}
+
+p {
+  margin-bottom: 1em;
+}
+
+ul, ol {
+  margin-left: 30px !important;
+  padding-left: 10px !important;
+}
+
+li {
+  margin-left: 10px !important;
+  list-style-position: outside !important;
+}
+
+.tox-tinymce-inline {
+  width: auto !important;
+  max-width: 100% !important;
+}
+
+.tox-editor-header {
+  position: relative !important;
+  width: auto !important;
+}
+
+.tox-toolbar__primary {
+  width: auto !important;
+}

@@ -2393,6 +2393,59 @@ input:disabled + .toggle-slider:before {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
+/* TinyMCE Custom Styling */
+#tinymce-editor {
+  border: 1px solid var(--color-border);
+  min-height: 250px;
+  padding: 10px;
+  margin-bottom: 15px;
+  background-color: var(--color-light-bg);
+  border-radius: 5px;
+  overflow: visible;
+  width: 100%;
+}
+
+/* Make the admin form wider to accommodate the TinyMCE toolbar */
+.admin-form {
+  max-width: 90%;
+  width: 700px;
+}
+
+/* Force the TinyMCE toolbar to be full width */
+.tox.tox-tinymce-inline {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.tox .tox-toolbar__primary {
+  justify-content: flex-start !important;
+  width: 100% !important;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.tinymce-full-width {
+  width: 100% !important;
+}
+
+.tox-tinymce-inline .tox-editor-header {
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+.mce-content-body ul, 
+.mce-content-body ol {
+  margin-left: 30px !important;
+  padding-left: 10px !important;
+}
+
+.mce-content-body li {
+  margin-left: 10px !important;
+  list-style-position: outside !important;
+  /* text-align property removed to allow alignment changes */
+}
+
+/* Ensure the notifications count is still visible */
 .notification-count.hidden {
   display: none;
 }
@@ -2426,4 +2479,47 @@ input:disabled + .toggle-slider:before {
         opacity: 0;
         transform: translateY(-10px);
     }
+}
+
+/* TinyMCE toolbar container */
+.tinymce-toolbar-container {
+  width: 100%;
+  margin-bottom: 5px;
+  position: relative;
+  z-index: 1;
+}
+
+/* TinyMCE Custom Styling Additions */
+#tinymce-editor {
+  border: 1px solid var(--color-border);
+  min-height: 250px;
+  padding: 10px;
+  margin-bottom: 15px;
+  background-color: var(--color-light-bg);
+  border-radius: 5px;
+  overflow: visible;
+  width: 100%;
+}
+
+/* Make sure the editor content is only as wide as it needs to be */
+.tox-tinymce-inline {
+  width: auto !important;
+  max-width: 100% !important;
+}
+
+/* Don't make the toolbar sticky/fixed when scrolling */
+.tox-editor-header {
+  position: static !important;
+}
+
+/* Format the TinyMCE toolbar properly */
+.tox .tox-toolbar {
+  background-color: var(--color-light-bg) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+}
+
+/* Make sure the admin form is wide enough */
+.admin-form {
+  max-width: 90%;
+  width: 700px;
 }
