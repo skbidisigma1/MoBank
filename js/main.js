@@ -6,9 +6,6 @@ let allAnnouncements = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        const loadingIndicator = document.getElementById('loading-indicator');
-        loadingIndicator.style.display = 'none';
-        
         await Promise.all([
             initializeInstallPrompt(),
             initializeAnnouncementsSystem(),
@@ -255,6 +252,19 @@ function initializeEventListeners() {
 }
 
 async function loadAndOpenAllAnnouncements() {
+    const announcementsModal = document.getElementById('announcements-modal');
+    const announcementsList = document.getElementById('announcements-list');
+    
+    // Show the modal immediately with a loading spinner
+    if (announcementsModal && announcementsList) {
+        announcementsModal.classList.remove('hidden');
+        announcementsList.innerHTML = `
+            <div class="loader" aria-label="Loading announcements...">
+                <span class="sr-only">Loading announcements...</span>
+            </div>
+        `;
+    }
+
     try {
         // Check cache first
         const cachedAnnouncements = getCachedAnnouncements();
@@ -287,6 +297,11 @@ async function loadAndOpenAllAnnouncements() {
     } catch (error) {
         console.error('Error loading announcements:', error);
         showToast('Error', 'Failed to load announcements. Please try again.');
+        
+        // Display error in modal if it's open
+        if (announcementsModal && !announcementsModal.classList.contains('hidden') && announcementsList) {
+            announcementsList.innerHTML = '<p class="error-message">Failed to load announcements. Please try again.</p>';
+        }
     }
 }
 
@@ -357,6 +372,16 @@ async function saveDontAskAgain(val) {
 }
 
 async function loadAnnouncements() {
+    const mainContainer = document.getElementById('main-announcement');
+    if (mainContainer) {
+        // Show loading spinner while fetching announcements
+        mainContainer.innerHTML = `
+            <div class="loader" aria-label="Loading announcements...">
+                <span class="sr-only">Loading announcements...</span>
+            </div>
+        `;
+    }
+
     try {
         // Check if we have cached announcements
         const cachedAnnouncements = getCachedAnnouncements();
@@ -391,7 +416,6 @@ async function loadAnnouncements() {
         
         if (announcements.length > 0) {
             const mainAnn = announcements[0];
-            const mainContainer = document.getElementById('main-announcement');
             
             if (mainContainer) {
                 const fragment = document.createDocumentFragment();
@@ -400,8 +424,16 @@ async function loadAnnouncements() {
                 title.textContent = mainAnn.title;
                 
                 const description = document.createElement('p');
-                description.innerHTML = mainAnn.description;
-                  const date = document.createElement('div');
+                description.innerHTML = mainAnn.description || '';
+                
+                fragment.appendChild(title);
+                fragment.appendChild(description);
+                
+                // Create a meta container for date and creator information
+                const metaContainer = document.createElement('div');
+                metaContainer.className = 'announcement-meta';
+                
+                const date = document.createElement('div');
                 date.className = 'announcement-date';
                 
                 // Format the date properly for Firestore timestamp
@@ -422,26 +454,64 @@ async function loadAnnouncements() {
                     date.textContent = 'Unknown Date';
                 }
                 
-                fragment.appendChild(title);
-                fragment.appendChild(description);
-                fragment.appendChild(date);
+                metaContainer.appendChild(date);
                 
                 // Add creator if available
                 if (mainAnn.createdBy) {
                     const creator = document.createElement('div');
                     creator.className = 'announcement-creator';
                     creator.textContent = `Posted by: ${mainAnn.createdBy}`;
-                    fragment.appendChild(creator);
+                    metaContainer.appendChild(creator);
+                    
+                    // Show edit info if the announcement has been edited
+                    if (mainAnn.isEdited && mainAnn.editedBy) {
+                        const editInfo = document.createElement('div');
+                        editInfo.className = 'announcement-edited';
+                        editInfo.innerHTML = `<span class="edited-badge">Edited</span> by ${mainAnn.editedBy}`;
+                        metaContainer.appendChild(editInfo);
+                    }
+                }
+                
+                // Add the meta container to the fragment
+                fragment.appendChild(metaContainer);
+                
+                // Apply any pinned styling if the announcement is pinned
+                if (mainAnn.pinned) {
+                    mainContainer.classList.add('pinned');
+                } else {
+                    mainContainer.classList.remove('pinned');
                 }
                 
                 mainContainer.innerHTML = '';
                 mainContainer.appendChild(fragment);
                 
-                mainContainer.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    openAnnouncementsModal(announcements);
+                // Make the entire container clickable and keyboard accessible
+                mainContainer.style.cursor = 'pointer';
+                mainContainer.tabIndex = 0;
+                mainContainer.setAttribute('role', 'button');
+                mainContainer.setAttribute('aria-label', `View announcement: ${mainAnn.title}`);
+                
+                // Clear any existing event listeners by cloning the node
+                const newContainer = mainContainer.cloneNode(true);
+                mainContainer.parentNode.replaceChild(newContainer, mainContainer);
+                
+                // Add click event to the new container
+                newContainer.addEventListener('click', () => {
+                    openAnnouncementsModal([mainAnn]);
                 });
+                
+                // Add keyboard accessibility
+                newContainer.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        openAnnouncementsModal([mainAnn]);
+                    }
+                });
+            }
+        } else {
+            // Handle case where there are no announcements
+            if (mainContainer) {
+                mainContainer.innerHTML = '<p>No announcements available</p>';
             }
         }
     } catch (error) {
@@ -457,21 +527,50 @@ function openAnnouncementsModal(announcements) {
     const modal = document.getElementById('announcements-modal');
     const list = document.getElementById('announcements-list');
     const closeBtn = document.getElementById('close-announcements-modal');
+    const modalHeading = document.getElementById('modal-heading');
     
     if (!modal || !list) return;
     
     lastActiveElement = document.activeElement;
     const fragment = document.createDocumentFragment();
     
-    // Check if we're viewing a single announcement in detail view
-    // This is only true if we're viewing a single announcement AND it's not the initial "all" view
-    isViewingSingleAnnouncement = announcements.length === 1 && 
-        allAnnouncements.length !== 1 && 
-        announcements[0].id === allAnnouncements.find(a => a.id === announcements[0].id)?.id;
+    // Track which view we're showing
+    // Three possible states:
+    // 1. Initial loading of all announcements
+    // 2. Showing detailed view of a specific announcement
+    // 3. Showing all announcements after viewing a detailed announcement
+    
+    // Store the view state in a marker attribute on the modal
+    const initialLoad = !modal.dataset.loaded;
+    const detailRequest = announcements.length === 1 && !initialLoad;
+    
+    // If this is the first time opening the modal, mark it as loaded
+    if (initialLoad) {
+        modal.dataset.loaded = "true";
+    }
+    
+    isViewingSingleAnnouncement = detailRequest;
+    
+    // Update modal title based on view mode
+    if (modalHeading) {
+        modalHeading.textContent = isViewingSingleAnnouncement ? 'Announcement' : 'All Announcements';
+    }
     
     if (closeBtn) {
-        closeBtn.textContent = isViewingSingleAnnouncement ? 'Back to All' : 'Close';
-        closeBtn.setAttribute('aria-label', isViewingSingleAnnouncement ? 'Back to all announcements' : 'Close announcements');
+        if (isViewingSingleAnnouncement) {
+            // When showing a single announcement and allAnnouncements has more than 1 item
+            if (allAnnouncements.length > 1) {
+                closeBtn.textContent = 'Back to All';
+                closeBtn.setAttribute('aria-label', 'Back to all announcements');
+            } else {
+                // Special case: when viewing the only announcement in detail
+                closeBtn.textContent = 'Close';
+                closeBtn.setAttribute('aria-label', 'Close announcement');
+            }
+        } else {
+            closeBtn.textContent = 'Close';
+            closeBtn.setAttribute('aria-label', 'Close announcements');
+        }
     }
     
     announcements.forEach(ann => {
@@ -481,8 +580,9 @@ function openAnnouncementsModal(announcements) {
         card.setAttribute('role', 'article');
         card.setAttribute('aria-labelledby', `announcement-title-${ann.id}`);
         
-        if (ann.id === 1) {
-            card.classList.add('highlighted-announcement');
+        // Apply pinned styling if the announcement is pinned
+        if (ann.pinned) {
+            card.classList.add('pinned');
         }
         
         const title = document.createElement('h4');
@@ -491,15 +591,22 @@ function openAnnouncementsModal(announcements) {
         
         // When viewing all announcements, show description instead of full body
         const contentElement = document.createElement('div');
-        if (isViewingSingleAnnouncement || announcements.length === allAnnouncements.length) {
-            // If single detail view OR initial view of all announcements
+        contentElement.className = 'announcement-body-content';
+        if (isViewingSingleAnnouncement) {
+            // In single detail view, show the full body
             contentElement.innerHTML = ann.body;
         } else {
             // For the "all announcements" view with condensed items
-            contentElement.innerHTML = ann.description;
+            contentElement.innerHTML = ann.description || ann.body.substring(0, 200) + (ann.body.length > 200 ? '...' : '');
         }
-          const date = document.createElement('div');
+        
+        // Create a meta container for date and creator information
+        const metaContainer = document.createElement('div');
+        metaContainer.className = 'announcement-meta';
+        
+        const date = document.createElement('div');
         date.className = 'announcement-date';
+        
         // Format Firestore timestamp
         try {
             let formattedDate;
@@ -518,21 +625,29 @@ function openAnnouncementsModal(announcements) {
             date.textContent = 'Unknown Date';
         }
         
+        metaContainer.appendChild(date);
+        
         // Add creator name if available
-        const creator = document.createElement('div');
-        creator.className = 'announcement-creator';
         if (ann.createdBy) {
+            const creator = document.createElement('div');
+            creator.className = 'announcement-creator';
             creator.textContent = `Posted by: ${ann.createdBy}`;
+            metaContainer.appendChild(creator);
+            
+            // Show edited information if available
+            if (ann.isEdited && ann.editedBy) {
+                const editInfo = document.createElement('div');
+                editInfo.className = 'announcement-edited';
+                editInfo.innerHTML = `<span class="edited-badge">Edited</span> by ${ann.editedBy}`;
+                metaContainer.appendChild(editInfo);
+            }
         }
         
         card.appendChild(title);
         card.appendChild(contentElement);
-        card.appendChild(date);
-        if (ann.createdBy) {
-            card.appendChild(creator);
-        }
+        card.appendChild(metaContainer);
         
-        // Add click handlers only if not already in detail view or if there are multiple announcements
+        // Add click handlers only if not already in detail view
         if (!isViewingSingleAnnouncement) {
             card.addEventListener('click', (e) => {
                 e.preventDefault();

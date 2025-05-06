@@ -248,15 +248,57 @@ async function loadAdminContent() {
 
   // --- Announcement Management Functions ---
 
-  async function loadCurrentAnnouncements() {
+  // Helper function to get cached announcements
+  function getAdminCachedAnnouncements() {
+    const cached = localStorage.getItem('admin-announcements');
+    const ADMIN_ANNOUNCEMENTS_COOLDOWN_MILLISECONDS = 30 * 1000; // 30 seconds cache
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Date.now() - parsed.timestamp < ADMIN_ANNOUNCEMENTS_COOLDOWN_MILLISECONDS) {
+        return parsed.data;
+      }
+    }
+    return null;
+  }
+
+  // Helper function to cache announcements
+  function setAdminCachedAnnouncements(data) {
+    const cacheEntry = {
+      data: data,
+      timestamp: Date.now()
+    };
+    localStorage.setItem('admin-announcements', JSON.stringify(cacheEntry));
+  }
+
+  // Helper function to clear announcements cache
+  function clearAdminAnnouncementsCache() {
+    localStorage.removeItem('admin-announcements');
+    // Also clear the main homepage cache to ensure consistency
+    localStorage.removeItem('announcements');
+  }
+
+  // Function to reload announcements with force refresh
+  async function loadCurrentAnnouncements(forceRefresh = false) {
     if (!currentAnnouncementsList) return; // Exit if the list element doesn't exist
 
-    currentAnnouncementsList.innerHTML = '<p>Loading announcements...</p>'; // Show loading state
+    // Check cache first, unless we're forcing a refresh
+    const cachedAnnouncements = forceRefresh ? null : getAdminCachedAnnouncements();
+    
+    if (cachedAnnouncements) {
+      // Use cached data
+      displayAnnouncements(cachedAnnouncements);
+      return;
+    }
+    
+    // Show loading state if no cache is available
+    currentAnnouncementsList.innerHTML = '<p>Loading announcements...</p>';
 
     try {
       const token = await getToken();
       const response = await fetch('/api/announcements', {
         headers: { Authorization: `Bearer ${token}` },
+        // Add cache busting parameter when forcing refresh
+        cache: forceRefresh ? 'no-cache' : 'default'
       });
 
       if (!response.ok) {
@@ -264,6 +306,11 @@ async function loadAdminContent() {
       }
 
       const announcements = await response.json();
+      
+      // Cache the announcements
+      setAdminCachedAnnouncements(announcements);
+      
+      // Display the announcements
       displayAnnouncements(announcements);
 
     } catch (error) {
@@ -289,55 +336,109 @@ async function loadAdminContent() {
       const li = document.createElement('li');
       li.className = 'announcement-admin-item';
       li.dataset.id = ann.id;
+      
+      // Apply pinned styling if the announcement is pinned
+      if (ann.pinned) {
+        li.classList.add('pinned');
+      }
 
+      // Title
       const title = document.createElement('span');
       title.className = 'announcement-admin-title';
       title.textContent = ann.title;
       if (ann.pinned) {
         title.textContent += ' (Pinned)';
-        li.classList.add('pinned');
-      }      const dateSpan = document.createElement('span');
+      }
+      
+      // Meta container for date and creator
+      const metaContainer = document.createElement('div');
+      metaContainer.className = 'announcement-admin-meta';
+      
+      // Date with icon
+      const dateSpan = document.createElement('span');
       dateSpan.className = 'announcement-admin-date';
+      dateSpan.innerHTML = `
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path fill="currentColor" d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+        </svg>
+      `;
+      
       try {
         // Firestore timestamp handling
         let date;
         if (ann.date && ann.date.seconds) {
-           date = new Date(ann.date.seconds * 1000);
+          date = new Date(ann.date.seconds * 1000);
         } else if (ann.date && ann.date._seconds) { // Handle potential alternative structure
-           date = new Date(ann.date._seconds * 1000);
+          date = new Date(ann.date._seconds * 1000);
         } else if (ann.date) { // Fallback if it's already a string/number
-           date = new Date(ann.date);
+          date = new Date(ann.date);
         }
-        dateSpan.textContent = date ? date.toLocaleString() : 'Invalid Date';
+        dateSpan.innerHTML += (date ? date.toLocaleString() : 'Unknown Date');
       } catch (e) {
-         console.error("Error parsing date:", ann.date, e);
-         dateSpan.textContent = 'Invalid Date';
+        console.error("Error parsing date:", ann.date, e);
+        dateSpan.innerHTML += 'Unknown Date';
       }
       
-      // Add creator name if available
-      const creatorSpan = document.createElement('span');
-      creatorSpan.className = 'announcement-admin-creator';
-      creatorSpan.textContent = ann.createdBy ? `Posted by: ${ann.createdBy}` : '';
+      metaContainer.appendChild(dateSpan);
       
+      // Creator with icon if available
+      if (ann.createdBy) {
+        const creatorSpan = document.createElement('span');
+        creatorSpan.className = 'announcement-admin-creator';
+        creatorSpan.innerHTML = `
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+          </svg>
+          Posted by: ${ann.createdBy}
+        `;
+        metaContainer.appendChild(creatorSpan);
+      }
 
+      // Show edited info if available
+      if (ann.isEdited && ann.editedBy) {
+        const editedSpan = document.createElement('span');
+        editedSpan.className = 'announcement-admin-edited';
+        editedSpan.innerHTML = `
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+          </svg>
+          Edited by: ${ann.editedBy}
+        `;
+        metaContainer.appendChild(editedSpan);
+      }
 
+      // Action buttons
       const actions = document.createElement('div');
       actions.className = 'announcement-admin-actions';
 
+      // Edit button with icon
       const editButton = document.createElement('button');
-      editButton.textContent = 'Edit';
-      editButton.className = 'edit-button small-button';
+      editButton.className = 'edit-button';
+      editButton.innerHTML = `
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+        </svg>
+        Edit
+      `;
       editButton.addEventListener('click', () => handleEditAnnouncement(ann));
 
+      // Delete button with icon
       const deleteButton = document.createElement('button');
-      deleteButton.textContent = 'Delete';
-      deleteButton.className = 'delete-button small-button';
+      deleteButton.className = 'delete-button';
+      deleteButton.innerHTML = `
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+        </svg>
+        Delete
+      `;
       deleteButton.addEventListener('click', () => handleDeleteAnnouncement(ann.id));
 
       actions.appendChild(editButton);
-      actions.appendChild(deleteButton);      li.appendChild(title);
-      li.appendChild(dateSpan);
-      li.appendChild(creatorSpan);
+      actions.appendChild(deleteButton);
+      
+      // Append all elements to list item
+      li.appendChild(title);
+      li.appendChild(metaContainer);
       li.appendChild(actions);
       ul.appendChild(li);
     });
@@ -382,17 +483,22 @@ async function loadAdminContent() {
     // Scroll to the form
     document.getElementById('announcement-form').scrollIntoView({ behavior: 'smooth' });
     
-    // Update form submission handler
+    // Get the form and remove any existing event listeners
     const form = document.getElementById('announcement-form');
     
     // Store the announcement ID
     form.dataset.announcementId = announcement.id;
     
-    // Change form submission to update instead of create
-    form.onsubmit = async (e) => {
+    // Need to clone the form to remove all previous event listeners
+    const oldForm = form;
+    const newForm = oldForm.cloneNode(true);
+    oldForm.parentNode.replaceChild(newForm, oldForm);
+    
+    // Now attach the update handler to the new form
+    newForm.addEventListener('submit', async function(e) {
         e.preventDefault();
-        await handleUpdateAnnouncement(form);
-    };
+        await handleUpdateAnnouncement(newForm);
+    });
   }
 
   // Function to handle announcement update
@@ -407,6 +513,11 @@ async function loadAdminContent() {
     const descriptionInput = document.getElementById('announcement-description');
     const bodyTextarea = document.getElementById('announcement-body');
     const pinnedCheckbox = document.getElementById('announcement-pinned');
+    const submitButton = form.querySelector('button[type="submit"]');
+    
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
     
     // Get the content from TinyMCE
     let body = bodyTextarea.value;
@@ -417,6 +528,9 @@ async function loadAdminContent() {
     
     if (!titleInput.value || !body) {
       showToast('Error', 'Title and body are required');
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
       return;
     }
     
@@ -440,10 +554,12 @@ async function loadAdminContent() {
         throw new Error(`Failed to update announcement: ${response.statusText}`);
       }
       
-      const updated = await response.json();
       showToast('Success', 'Announcement updated successfully');
       
-      // Reset form
+      // Clear cache when an announcement is updated
+      clearAdminAnnouncementsCache();
+      
+      // Reset form to create mode
       resetAnnouncementForm();
       
       // Reload announcements list
@@ -452,9 +568,13 @@ async function loadAdminContent() {
     } catch (error) {
       console.error('Error updating announcement:', error);
       showToast('Error', `Failed to update announcement: ${error.message}`);
+    } finally {
+      if (submitButton) {
+        setTimeout(() => { submitButton.disabled = false; }, 1000);
+      }
     }
   }
-  
+
   // Function to reset announcement form
   function resetAnnouncementForm() {
     const form = document.getElementById('announcement-form');
@@ -562,6 +682,43 @@ async function loadAdminContent() {
     announcementForm.addEventListener('submit', originalAnnouncementFormSubmit);
   }
 
+  // Function to handle announcement deletion
+  async function handleDeleteAnnouncement(announcementId) {
+    if (!announcementId) {
+      showToast('Error', 'Missing announcement ID');
+      return;
+    }
+
+    // Ask for confirmation before deleting
+    const confirmed = await showConfirmationModal('Are you sure you want to delete this announcement?');
+    if (!confirmed) return;
+
+    try {
+      const token = await getToken();
+      const response = await fetch(`/api/announcements?id=${announcementId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to delete announcement: ${response.statusText}`);
+      }
+      
+      showToast('Success', 'Announcement deleted successfully');
+      
+      // Clear cache when an announcement is deleted
+      clearAdminAnnouncementsCache();
+      
+      // Reload announcements list to reflect changes
+      loadCurrentAnnouncements();
+      
+    } catch (error) {
+      console.error('Error deleting announcement:', error);
+      showToast('Error', `Failed to delete announcement: ${error.message}`);
+    }
+  }
 
   // --- End Announcement Management Functions ---
 
