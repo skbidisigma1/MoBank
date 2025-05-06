@@ -29,3 +29,53 @@ li {
 .tox-toolbar__primary {
   width: auto !important;
 }
+
+/* Dark Mode Overrides for TinyMCE Toolbar */
+html[data-theme="dark"] .tox-toolbar,
+html[data-theme="dark"] .tox-toolbar__primary,
+html[data-theme="dark"] .tox-toolbar__overflow {
+  background-color: #f0f0f0 !important; /* Light background for the toolbar */
+  border-color: #d1d1d1 !important;
+}
+
+html[data-theme="dark"] .tox .tox-tbtn {
+  color: #333 !important; /* Darker color for button text/icons */
+  background-color: transparent !important;
+}
+
+html[data-theme="dark"] .tox .tox-tbtn svg {
+  fill: #333 !important; /* Darker color for SVG icons */
+}
+
+html[data-theme="dark"] .tox .tox-tbtn:hover {
+  background-color: #e0e0e0 !important; /* Slightly darker background on hover */
+  color: #111 !important;
+}
+
+html[data-theme="dark"] .tox .tox-tbtn:hover svg {
+  fill: #111 !important;
+}
+
+html[data-theme="dark"] .tox .tox-tbtn--enabled,
+html[data-theme="dark"] .tox .tox-tbtn--active {
+  background-color: #d0d0d0 !important; /* Background for active/selected buttons */
+  color: #000 !important;
+}
+
+html[data-theme="dark"] .tox .tox-tbtn--enabled svg,
+html[data-theme="dark"] .tox .tox-tbtn--active svg {
+  fill: #000 !important;
+}
+
+/* Ensure toolbar container background matches */
+html[data-theme="dark"] .tinymce-toolbar-container {
+    background-color: #f0f0f0 !important; 
+}
+
+/* Adjust editor content area for dark mode if needed */
+/* html[data-theme="dark"] .tox-edit-area__iframe {
+  background-color: #2d2d2d; 
+} */
+/* Note: TinyMCE might handle content area styling separately. 
+   If the content area itself is also wrong, we might need to use 
+   TinyMCE's `content_css_dark` option during initialization in admin.js */

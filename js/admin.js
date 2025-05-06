@@ -74,6 +74,8 @@ async function loadAdminContent() {
   const tabPanels = document.querySelectorAll('.tab-panel');
   const manageAnnouncementsBtn = document.getElementById('manage-announcements-btn'); // Added
   const announcementsPanel = document.getElementById('announcements-panel'); // Added
+  const announcementForm = document.getElementById('announcement-form'); // Added
+  const currentAnnouncementsList = document.getElementById('current-announcements-list'); // Added
   const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
   const namesCache = {};
 
@@ -201,10 +203,218 @@ async function loadAdminContent() {
       // Show the announcement panel
       announcementsPanel.classList.remove('hidden');
 
-      // Optional: Load current announcements if not already loaded
-      // loadCurrentAnnouncements(); // We'll implement this function later
+      // Load current announcements when the tab is clicked
+      loadCurrentAnnouncements(); 
     });
   }
+
+  // --- Announcement Management Functions ---
+
+  async function loadCurrentAnnouncements() {
+    if (!currentAnnouncementsList) return; // Exit if the list element doesn't exist
+
+    currentAnnouncementsList.innerHTML = '<p>Loading announcements...</p>'; // Show loading state
+
+    try {
+      const token = await getToken();
+      const response = await fetch('/api/announcements', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch announcements: ${response.statusText}`);
+      }
+
+      const announcements = await response.json();
+      displayAnnouncements(announcements);
+
+    } catch (error) {
+      console.error('Error loading announcements:', error);
+      currentAnnouncementsList.innerHTML = '<p class="error-message">Failed to load announcements.</p>';
+      showToast('Error', 'Failed to load announcements.');
+    }
+  }
+
+  function displayAnnouncements(announcements) {
+    if (!currentAnnouncementsList) return;
+
+    if (announcements.length === 0) {
+      currentAnnouncementsList.innerHTML = '<p>No announcements found.</p>';
+      return;
+    }
+
+    currentAnnouncementsList.innerHTML = ''; // Clear previous content
+    const ul = document.createElement('ul');
+    ul.className = 'announcements-admin-list';
+
+    announcements.forEach(ann => {
+      const li = document.createElement('li');
+      li.className = 'announcement-admin-item';
+      li.dataset.id = ann.id;
+
+      const title = document.createElement('span');
+      title.className = 'announcement-admin-title';
+      title.textContent = ann.title;
+      if (ann.pinned) {
+        title.textContent += ' (Pinned)';
+        li.classList.add('pinned');
+      }
+
+
+      const dateSpan = document.createElement('span');
+      dateSpan.className = 'announcement-admin-date';
+      try {
+        // Firestore timestamp handling
+        let date;
+        if (ann.date && ann.date.seconds) {
+           date = new Date(ann.date.seconds * 1000);
+        } else if (ann.date && ann.date._seconds) { // Handle potential alternative structure
+           date = new Date(ann.date._seconds * 1000);
+        } else if (ann.date) { // Fallback if it's already a string/number
+           date = new Date(ann.date);
+        }
+        dateSpan.textContent = date ? date.toLocaleString() : 'Invalid Date';
+      } catch (e) {
+         console.error("Error parsing date:", ann.date, e);
+         dateSpan.textContent = 'Invalid Date';
+      }
+
+
+      const actions = document.createElement('div');
+      actions.className = 'announcement-admin-actions';
+
+      const editButton = document.createElement('button');
+      editButton.textContent = 'Edit';
+      editButton.className = 'edit-button small-button';
+      editButton.addEventListener('click', () => handleEditAnnouncement(ann));
+
+      const deleteButton = document.createElement('button');
+      deleteButton.textContent = 'Delete';
+      deleteButton.className = 'delete-button small-button';
+      deleteButton.addEventListener('click', () => handleDeleteAnnouncement(ann.id));
+
+      actions.appendChild(editButton);
+      actions.appendChild(deleteButton);
+
+      li.appendChild(title);
+      li.appendChild(dateSpan);
+      li.appendChild(actions);
+      ul.appendChild(li);
+    });
+
+    currentAnnouncementsList.appendChild(ul);
+  }
+  
+  // Placeholder for edit functionality
+  function handleEditAnnouncement(announcement) {
+    console.log('Edit announcement:', announcement);
+    showToast('Info', 'Edit functionality not yet implemented.');
+    // TODO: Populate form, change submit handler to PUT
+  }
+
+  // Placeholder for delete functionality
+  async function handleDeleteAnnouncement(id) {
+     const confirmed = await showConfirmationModal(`Are you sure you want to delete this announcement? This action cannot be undone.`);
+     if (!confirmed) return;
+
+     try {
+        const token = await getToken();
+        const response = await fetch(`/api/announcements?id=${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to delete announcement');
+        }
+
+        showToast('Success', 'Announcement deleted successfully.');
+        loadCurrentAnnouncements(); // Refresh the list
+
+     } catch (error) {
+        console.error('Error deleting announcement:', error);
+        showToast('Error', `Failed to delete announcement: ${error.message}`);
+     }
+  }
+
+
+  // Add submit event listener for the announcement form
+  if (announcementForm) {
+    announcementForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitButton = announcementForm.querySelector('button[type="submit"]');
+      if (submitButton.disabled) return;
+
+      submitButton.disabled = true;
+
+      // Get form data
+      const titleInput = document.getElementById('announcement-title');
+      const descriptionInput = document.getElementById('announcement-description');
+      const pinnedInput = document.getElementById('announcement-pinned');
+      const bodyContent = tinymce.get('tinymce-editor')?.getContent(); // Get content from TinyMCE
+
+      const title = titleInput.value.trim();
+      const description = descriptionInput.value.trim();
+      const pinned = pinnedInput.checked;
+
+      // Basic validation
+      if (!title) {
+        showToast('Validation Error', 'Please enter a title for the announcement.');
+        submitButton.disabled = false;
+        return;
+      }
+      if (!bodyContent) {
+        showToast('Validation Error', 'Please enter the announcement body text.');
+        submitButton.disabled = false;
+        return;
+      }
+
+      const announcementData = {
+        title,
+        description,
+        body: bodyContent,
+        pinned,
+      };
+
+      try {
+        const token = await getToken();
+        const response = await fetch('/api/announcements', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(announcementData),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          showToast('Success', 'Announcement created successfully!');
+          // Clear the form
+          titleInput.value = '';
+          descriptionInput.value = '';
+          pinnedInput.checked = false;
+          tinymce.get('tinymce-editor')?.setContent('');
+          // Refresh the list of announcements
+          loadCurrentAnnouncements();
+        } else {
+          showToast('Error', result.message || 'Failed to create announcement.');
+        }
+      } catch (error) {
+        console.error('Error creating announcement:', error);
+        showToast('Network Error', 'Failed to create announcement. Please try again later.');
+      } finally {
+        // Re-enable submit button after a short delay or immediately
+         setTimeout(() => { submitButton.disabled = false; }, 1000);
+      }
+    });
+  }
+
+
+  // --- End Announcement Management Functions ---
+
 
   function getCachedNames(period) {
     const cached = localStorage.getItem(`namesByPeriod-${period}`);
@@ -522,5 +732,5 @@ async function loadAdminContent() {
     activeButton.click();
   }
 }
-
+s
 document.addEventListener('DOMContentLoaded', loadAdminContent);

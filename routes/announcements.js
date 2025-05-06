@@ -58,12 +58,20 @@ module.exports = async (req, res) => {
   const id = req.query.id;
   // Create new announcement
   if (req.method === 'POST') {
-    const { title, description, body, date } = req.body;
-    if (!title || !body || !date) {
+    const { title, description, body, pinned } = req.body;
+    if (!title || !body) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
     try {
-      const ref = await db.collection('announcements').add({ title, description: description || '', body, date });
+      // Use server timestamp instead of client-provided date
+      const data = { 
+        title, 
+        description: description || '', 
+        body, 
+        date: admin.firestore.FieldValue.serverTimestamp(),
+        pinned: Boolean(pinned) // Ensure pinned is a boolean
+      };
+      const ref = await db.collection('announcements').add(data);
       const doc = await ref.get();
       return res.status(201).json({ id: ref.id, ...doc.data() });
     } catch (error) {
@@ -74,7 +82,16 @@ module.exports = async (req, res) => {
   if (req.method === 'PUT') {
     if (!id) return res.status(400).json({ message: 'Missing announcement id' });
     try {
-      await db.collection('announcements').doc(id).update(req.body);
+      // Make sure pinned is a boolean if it's included in the update
+      const updates = { ...req.body };
+      if ('pinned' in updates) {
+        updates.pinned = Boolean(updates.pinned);
+      }
+      // If we're updating the body or title, update the lastModified timestamp
+      if (updates.body || updates.title) {
+        updates.lastModified = admin.firestore.FieldValue.serverTimestamp();
+      }
+      await db.collection('announcements').doc(id).update(updates);
       const updated = await db.collection('announcements').doc(id).get();
       return res.status(200).json({ id, ...updated.data() });
     } catch (error) {
