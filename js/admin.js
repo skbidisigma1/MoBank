@@ -13,14 +13,10 @@ async function loadAdminContent() {
   if (!roles.includes('admin')) {
     window.location.href = '/dashboard';
     return;
-  }
-  const saveBtn = document.getElementById('editor-save-btn');
-  const cancelBtn = document.getElementById('editor-cancel-btn');
-  const hiddenTextarea = document.getElementById('announcement-body');
-  if (document.getElementById('tinymce-editor') && saveBtn && cancelBtn && hiddenTextarea) {
+  }  const cancelBtn = document.getElementById('editor-cancel-btn');
+  const hiddenTextarea = document.getElementById('announcement-body');  if (document.getElementById('tinymce-editor') && cancelBtn && hiddenTextarea) {
     tinymce.init({
-      target: document.getElementById('tinymce-editor'),
-      height: 300,
+      target: document.getElementById('tinymce-editor'),      height: 300,
       menubar: false,
       inline: true,
       plugins: 'lists link wordcount table advlist autolink charmap code fullscreen emoticons media help',
@@ -32,7 +28,55 @@ async function loadAdminContent() {
       width: 'auto',
       content_css: '/css/tinymce-custom.css',
       fixed_toolbar_container: '#tinymce-toolbar-container',
+      forced_root_block: 'p',
+      forced_root_block_attrs: {
+        'class': 'editor-paragraph'
+      },
+      valid_classes: {
+        '*': 'align-left align-center align-right align-justify font-bold font-italic font-underline editor-paragraph'
+      },
+      formats: {
+        alignleft: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li', classes: 'align-left' },
+        aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li', classes: 'align-center' },
+        alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li', classes: 'align-right' },
+        alignjustify: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li', classes: 'align-justify' },
+        bold: { inline: 'span', classes: 'font-bold' },
+        italic: { inline: 'span', classes: 'font-italic' },
+        underline: { inline: 'span', classes: 'font-underline' },
+        paragraph: { block: 'p', classes: 'editor-paragraph' },
+      },
+      style_formats: [
+        { title: 'Alignment', items: [
+          { title: 'Left', format: 'alignleft' },
+          { title: 'Center', format: 'aligncenter' },
+          { title: 'Right', format: 'alignright' },
+          { title: 'Justify', format: 'alignjustify' }
+        ]},
+        { title: 'Text', items: [
+          { title: 'Bold', format: 'bold' },
+          { title: 'Italic', format: 'italic' },
+          { title: 'Underline', format: 'underline' }
+        ]}
+      ],      inline_styles: false,
+      // Disable any direct style entry
+      valid_elements: '*[*]',  
+      extended_valid_elements: '*[*]',
+      invalid_elements: 'style',
+      invalid_styles: '*',
+      
       setup(editor) {
+        // Add a sanitizer to strip any inline styles that might slip through
+        editor.on('BeforeSetContent', function(e) {
+          if (!e.content) return;
+          // Simple regex to strip style attributes
+          e.content = e.content.replace(/ style="[^"]*"/g, '');
+        });
+        
+        // Also sanitize content when retrieved
+        editor.on('GetContent', function(e) {
+          if (!e.content) return;
+          e.content = e.content.replace(/ style="[^"]*"/g, '');
+        });
         editor.on('init', () => {
           editor.setContent(hiddenTextarea.value);
           editor.execCommand('JustifyLeft');
@@ -54,12 +98,6 @@ async function loadAdminContent() {
         });
       },
     });
-
-    saveBtn.addEventListener('click', () => {
-      const content = tinymce.get('tinymce-editor').getContent();
-      hiddenTextarea.value = content;
-    });
-
     cancelBtn.addEventListener('click', () => {
       const editor = tinymce.get('tinymce-editor');
       if (editor) {
@@ -258,10 +296,7 @@ async function loadAdminContent() {
       if (ann.pinned) {
         title.textContent += ' (Pinned)';
         li.classList.add('pinned');
-      }
-
-
-      const dateSpan = document.createElement('span');
+      }      const dateSpan = document.createElement('span');
       dateSpan.className = 'announcement-admin-date';
       try {
         // Firestore timestamp handling
@@ -278,6 +313,12 @@ async function loadAdminContent() {
          console.error("Error parsing date:", ann.date, e);
          dateSpan.textContent = 'Invalid Date';
       }
+      
+      // Add creator name if available
+      const creatorSpan = document.createElement('span');
+      creatorSpan.className = 'announcement-admin-creator';
+      creatorSpan.textContent = ann.createdBy ? `Posted by: ${ann.createdBy}` : '';
+      
 
 
       const actions = document.createElement('div');
@@ -294,10 +335,9 @@ async function loadAdminContent() {
       deleteButton.addEventListener('click', () => handleDeleteAnnouncement(ann.id));
 
       actions.appendChild(editButton);
-      actions.appendChild(deleteButton);
-
-      li.appendChild(title);
+      actions.appendChild(deleteButton);      li.appendChild(title);
       li.appendChild(dateSpan);
+      li.appendChild(creatorSpan);
       li.appendChild(actions);
       ul.appendChild(li);
     });
@@ -308,40 +348,141 @@ async function loadAdminContent() {
   // Placeholder for edit functionality
   function handleEditAnnouncement(announcement) {
     console.log('Edit announcement:', announcement);
-    showToast('Info', 'Edit functionality not yet implemented.');
-    // TODO: Populate form, change submit handler to PUT
+    
+    // Get form elements
+    const titleInput = document.getElementById('announcement-title');
+    const descriptionInput = document.getElementById('announcement-description');
+    const bodyTextarea = document.getElementById('announcement-body');
+    const pinnedCheckbox = document.getElementById('announcement-pinned');
+    const submitButton = document.querySelector('#announcement-form .submit-button');
+    
+    // Set current values
+    titleInput.value = announcement.title || '';
+    descriptionInput.value = announcement.description || '';
+    bodyTextarea.value = announcement.body || '';
+    
+    // Set tinymce content
+    if (tinymce.get('tinymce-editor')) {
+        tinymce.get('tinymce-editor').setContent(announcement.body || '');
+    }
+    
+    // Set pinned status
+    pinnedCheckbox.checked = announcement.pinned || false;
+    
+    // Update form for edit mode
+    submitButton.innerHTML = `
+        <svg class="button-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z"/></svg>
+        Update Announcement`;
+    
+    // Show creator name in toast
+    if (announcement.createdBy) {
+        showToast('Info', `Editing announcement created by ${announcement.createdBy}`);
+    }
+    
+    // Scroll to the form
+    document.getElementById('announcement-form').scrollIntoView({ behavior: 'smooth' });
+    
+    // Update form submission handler
+    const form = document.getElementById('announcement-form');
+    
+    // Store the announcement ID
+    form.dataset.announcementId = announcement.id;
+    
+    // Change form submission to update instead of create
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        await handleUpdateAnnouncement(form);
+    };
   }
 
-  // Placeholder for delete functionality
-  async function handleDeleteAnnouncement(id) {
-     const confirmed = await showConfirmationModal(`Are you sure you want to delete this announcement? This action cannot be undone.`);
-     if (!confirmed) return;
+  // Function to handle announcement update
+  async function handleUpdateAnnouncement(form) {
+    const id = form.dataset.announcementId;
+    if (!id) {
+      showToast('Error', 'Missing announcement ID');
+      return;
+    }
 
-     try {
-        const token = await getToken();
-        const response = await fetch(`/api/announcements?id=${id}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to delete announcement');
-        }
-
-        showToast('Success', 'Announcement deleted successfully.');
-        loadCurrentAnnouncements(); // Refresh the list
-
-     } catch (error) {
-        console.error('Error deleting announcement:', error);
-        showToast('Error', `Failed to delete announcement: ${error.message}`);
-     }
+    const titleInput = document.getElementById('announcement-title');
+    const descriptionInput = document.getElementById('announcement-description');
+    const bodyTextarea = document.getElementById('announcement-body');
+    const pinnedCheckbox = document.getElementById('announcement-pinned');
+    
+    // Get the content from TinyMCE
+    let body = bodyTextarea.value;
+    if (tinymce.get('tinymce-editor')) {
+      body = tinymce.get('tinymce-editor').getContent();
+      bodyTextarea.value = body;
+    }
+    
+    if (!titleInput.value || !body) {
+      showToast('Error', 'Title and body are required');
+      return;
+    }
+    
+    try {
+      const token = await getToken();
+      const response = await fetch(`/api/announcements?id=${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: titleInput.value,
+          description: descriptionInput.value,
+          body: body,
+          pinned: pinnedCheckbox.checked
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to update announcement: ${response.statusText}`);
+      }
+      
+      const updated = await response.json();
+      showToast('Success', 'Announcement updated successfully');
+      
+      // Reset form
+      resetAnnouncementForm();
+      
+      // Reload announcements list
+      loadCurrentAnnouncements();
+      
+    } catch (error) {
+      console.error('Error updating announcement:', error);
+      showToast('Error', `Failed to update announcement: ${error.message}`);
+    }
   }
-
-
-  // Add submit event listener for the announcement form
+  
+  // Function to reset announcement form
+  function resetAnnouncementForm() {
+    const form = document.getElementById('announcement-form');
+    form.reset();
+    
+    // Reset TinyMCE content
+    if (tinymce.get('tinymce-editor')) {
+      tinymce.get('tinymce-editor').setContent('');
+    }
+    
+    // Reset form submission handler to create mode
+    const submitButton = document.querySelector('#announcement-form .submit-button');
+    submitButton.innerHTML = `
+      <svg class="button-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z"/></svg>
+      Save & Create Announcement`;
+    
+    // Remove stored announcement ID
+    delete form.dataset.announcementId;
+    
+    // Reset form submission to create mode
+    form.onsubmit = originalAnnouncementFormSubmit;
+  }
+  
+  // Store the original form submission handler
+  let originalAnnouncementFormSubmit;  // Define and store the original form submission handler
   if (announcementForm) {
-    announcementForm.addEventListener('submit', async (e) => {
+    // Create the handler function
+    originalAnnouncementFormSubmit = async function(e) {
       e.preventDefault();
       const submitButton = announcementForm.querySelector('button[type="submit"]');
       if (submitButton.disabled) return;
@@ -352,7 +493,13 @@ async function loadAdminContent() {
       const titleInput = document.getElementById('announcement-title');
       const descriptionInput = document.getElementById('announcement-description');
       const pinnedInput = document.getElementById('announcement-pinned');
-      const bodyContent = tinymce.get('tinymce-editor')?.getContent(); // Get content from TinyMCE
+      const hiddenTextarea = document.getElementById('announcement-body');
+      
+      // Get content from TinyMCE and update the hidden textarea
+      const bodyContent = tinymce.get('tinymce-editor')?.getContent();
+      if (hiddenTextarea && bodyContent) {
+        hiddenTextarea.value = bodyContent;
+      }
 
       const title = titleInput.value.trim();
       const description = descriptionInput.value.trim();
@@ -407,9 +554,12 @@ async function loadAdminContent() {
         showToast('Network Error', 'Failed to create announcement. Please try again later.');
       } finally {
         // Re-enable submit button after a short delay or immediately
-         setTimeout(() => { submitButton.disabled = false; }, 1000);
+        setTimeout(() => { submitButton.disabled = false; }, 1000);
       }
-    });
+    };
+    
+    // Now attach the handler to the form
+    announcementForm.addEventListener('submit', originalAnnouncementFormSubmit);
   }
 
 

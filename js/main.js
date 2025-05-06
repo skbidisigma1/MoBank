@@ -256,12 +256,34 @@ function initializeEventListeners() {
 
 async function loadAndOpenAllAnnouncements() {
     try {
-        const response = await fetch('/data/announcements.json');
+        // Check cache first
+        const cachedAnnouncements = getCachedAnnouncements();
+        if (cachedAnnouncements) {
+            openAnnouncementsModal(cachedAnnouncements);
+            return;
+        }
+        
+        // Fetch from API if not cached
+        const response = await fetch('/api/announcements');
         if (!response.ok) throw new Error('Failed to fetch announcements');
         
-        allAnnouncements = await response.json();
-        allAnnouncements.sort((a, b) => new Date(b.date) - new Date(a.date));
-        openAnnouncementsModal(allAnnouncements);
+        const announcements = await response.json();
+        // Store globally and cache
+        allAnnouncements = announcements;
+        setCachedAnnouncements(announcements);
+        
+        // Sort and open modal
+        announcements.sort((a, b) => {
+            const dateA = a.date && a.date.seconds ? new Date(a.date.seconds * 1000) : 
+                         a.date && a.date._seconds ? new Date(a.date._seconds * 1000) :
+                         new Date(a.date);
+            const dateB = b.date && b.date.seconds ? new Date(b.date.seconds * 1000) : 
+                         b.date && b.date._seconds ? new Date(b.date._seconds * 1000) :
+                         new Date(b.date);
+            return dateB - dateA;
+        });
+        
+        openAnnouncementsModal(announcements);
     } catch (error) {
         console.error('Error loading announcements:', error);
         showToast('Error', 'Failed to load announcements. Please try again.');
@@ -336,11 +358,36 @@ async function saveDontAskAgain(val) {
 
 async function loadAnnouncements() {
     try {
-        const response = await fetch('/data/announcements.json');
-        if (!response.ok) throw new Error('Failed to fetch announcements');
+        // Check if we have cached announcements
+        const cachedAnnouncements = getCachedAnnouncements();
+        let announcements;
         
-        const announcements = await response.json();
-        announcements.sort((a, b) => new Date(b.date) - new Date(a.date));
+        if (cachedAnnouncements) {
+            announcements = cachedAnnouncements;
+            allAnnouncements = cachedAnnouncements;
+        } else {
+            // Fetch from API if no cache
+            const response = await fetch('/api/announcements');
+            if (!response.ok) throw new Error('Failed to fetch announcements');
+            
+            announcements = await response.json();
+            // Store all announcements globally for later use
+            allAnnouncements = announcements;
+            
+            // Cache the announcements
+            setCachedAnnouncements(announcements);
+        }
+        
+        // Sort by date, handling Firestore timestamp objects
+        announcements.sort((a, b) => {
+            const dateA = a.date && a.date.seconds ? new Date(a.date.seconds * 1000) : 
+                        a.date && a.date._seconds ? new Date(a.date._seconds * 1000) :
+                        new Date(a.date);
+            const dateB = b.date && b.date.seconds ? new Date(b.date.seconds * 1000) : 
+                        b.date && b.date._seconds ? new Date(b.date._seconds * 1000) :
+                        new Date(b.date);
+            return dateB - dateA;
+        });
         
         if (announcements.length > 0) {
             const mainAnn = announcements[0];
@@ -354,14 +401,38 @@ async function loadAnnouncements() {
                 
                 const description = document.createElement('p');
                 description.innerHTML = mainAnn.description;
-                
-                const date = document.createElement('div');
+                  const date = document.createElement('div');
                 date.className = 'announcement-date';
-                date.textContent = mainAnn.date;
+                
+                // Format the date properly for Firestore timestamp
+                try {
+                    let formattedDate;
+                    if (mainAnn.date && mainAnn.date.seconds) {
+                        formattedDate = new Date(mainAnn.date.seconds * 1000).toLocaleString();
+                    } else if (mainAnn.date && mainAnn.date._seconds) {
+                        formattedDate = new Date(mainAnn.date._seconds * 1000).toLocaleString();
+                    } else if (mainAnn.date) {
+                        formattedDate = new Date(mainAnn.date).toLocaleString();
+                    } else {
+                        formattedDate = 'Unknown Date';
+                    }
+                    date.textContent = formattedDate;
+                } catch (e) {
+                    console.error("Error parsing date:", mainAnn.date, e);
+                    date.textContent = 'Unknown Date';
+                }
                 
                 fragment.appendChild(title);
                 fragment.appendChild(description);
                 fragment.appendChild(date);
+                
+                // Add creator if available
+                if (mainAnn.createdBy) {
+                    const creator = document.createElement('div');
+                    creator.className = 'announcement-creator';
+                    creator.textContent = `Posted by: ${mainAnn.createdBy}`;
+                    fragment.appendChild(creator);
+                }
                 
                 mainContainer.innerHTML = '';
                 mainContainer.appendChild(fragment);
@@ -427,14 +498,39 @@ function openAnnouncementsModal(announcements) {
             // For the "all announcements" view with condensed items
             contentElement.innerHTML = ann.description;
         }
-        
-        const date = document.createElement('div');
+          const date = document.createElement('div');
         date.className = 'announcement-date';
-        date.textContent = ann.date;
+        // Format Firestore timestamp
+        try {
+            let formattedDate;
+            if (ann.date && ann.date.seconds) {
+                formattedDate = new Date(ann.date.seconds * 1000).toLocaleString();
+            } else if (ann.date && ann.date._seconds) {
+                formattedDate = new Date(ann.date._seconds * 1000).toLocaleString();
+            } else if (ann.date) {
+                formattedDate = new Date(ann.date).toLocaleString();
+            } else {
+                formattedDate = 'Unknown Date';
+            }
+            date.textContent = formattedDate;
+        } catch (e) {
+            console.error("Error parsing date:", ann.date, e);
+            date.textContent = 'Unknown Date';
+        }
+        
+        // Add creator name if available
+        const creator = document.createElement('div');
+        creator.className = 'announcement-creator';
+        if (ann.createdBy) {
+            creator.textContent = `Posted by: ${ann.createdBy}`;
+        }
         
         card.appendChild(title);
         card.appendChild(contentElement);
         card.appendChild(date);
+        if (ann.createdBy) {
+            card.appendChild(creator);
+        }
         
         // Add click handlers only if not already in detail view or if there are multiple announcements
         if (!isViewingSingleAnnouncement) {
@@ -486,5 +582,27 @@ function showToast(title, message) {
         detail: { title, message }
     });
     document.dispatchEvent(event);
+}
+
+// Helper function to get cached announcements
+function getCachedAnnouncements() {
+    const cached = localStorage.getItem('announcements');
+    const ANNOUNCEMENTS_COOLDOWN_MILLISECONDS = 60 * 1000; // 1 minute cache
+    if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.timestamp < ANNOUNCEMENTS_COOLDOWN_MILLISECONDS) {
+            return parsed.data;
+        }
+    }
+    return null;
+}
+
+// Helper function to cache announcements
+function setCachedAnnouncements(data) {
+    const cacheEntry = {
+        data: data,
+        timestamp: Date.now()
+    };
+    localStorage.setItem('announcements', JSON.stringify(cacheEntry));
 }
 

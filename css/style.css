@@ -1017,6 +1017,14 @@ select:after {
   color: var(--color-muted);
   margin-top: 10px;
 }
+
+#announcements-list .announcement-card .announcement-creator {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  margin-top: 5px;
+  font-style: italic;
+}
+
 #announcements-modal.hidden {
   display: none !important;
 }

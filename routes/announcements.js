@@ -1,47 +1,8 @@
-const jwt = require('jsonwebtoken');
-const jwksClient = require('jwks-rsa');
 const { admin, db } = require('../firebase');
 
-// JWKS client for Auth0 token verification
-const client = jwksClient({
-  jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
-});
-
-function getKey(header, callback) {
-  client.getSigningKey(header.kid, (err, key) => {
-    if (err) return callback(err);
-    callback(null, key.getPublicKey());
-  });
-}
-
-// Verify JWT and ensure 'admin' role
-function verifyAdmin(req, res) {
-  const authHeader = req.headers.authorization || '';
-  if (!authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return null;
-  }
-  const token = authHeader.split(' ')[1];
-  try {
-    const decoded = jwt.verify(token, getKey, {
-      audience: process.env.AUTH0_AUDIENCE,
-      issuer: `https://${process.env.AUTH0_DOMAIN}/`,
-      algorithms: ['RS256'],
-    });
-    const roles = decoded['https://mo-classroom.us/roles'] || [];
-    if (!roles.includes('admin')) {
-      res.status(403).json({ message: 'Forbidden: Admins only' });
-      return null;
-    }
-    return decoded;
-  } catch (err) {
-    res.status(401).json({ message: 'Token verification failed', error: err.toString() });
-    return null;
-  }
-}
+const { verifyToken, getTokenFromHeader } = require('../auth-helper');
 
 module.exports = async (req, res) => {
-  // Public: list all announcements
   if (req.method === 'GET') {
     try {
       const snapshot = await db.collection('announcements').orderBy('date', 'desc').get();
@@ -51,25 +12,51 @@ module.exports = async (req, res) => {
       return res.status(500).json({ message: 'Failed to load announcements', error: error.toString() });
     }
   }
-  // Other methods require admin access
-  const adminUser = verifyAdmin(req, res);
-  if (!adminUser) return;
 
-  const id = req.query.id;
-  // Create new announcement
-  if (req.method === 'POST') {
+  const token = getTokenFromHeader(req);
+  if (!token) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+  let decoded;
+  try {
+    decoded = await verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: 'Token verification failed' });
+    }
+    const roles = decoded['https://mo-classroom.us/roles'] || [];
+    if (!roles.includes('admin')) {
+      return res.status(403).json({ message: 'Forbidden: Admins only' });
+    }
+  } catch (err) {
+    return res.status(401).json({ message: 'Token verification failed', error: err.toString() });
+  }
+
+  const id = req.query.id;  if (req.method === 'POST') {
     const { title, description, body, pinned } = req.body;
     if (!title || !body) {
       return res.status(400).json({ message: 'Missing required fields' });
-    }
-    try {
-      // Use server timestamp instead of client-provided date
+    }    try {
+      // Get the creator's name from the token or user data
+      let creatorName = decoded.name;
+      
+      // If no name in token, check for email
+      if (!creatorName && decoded.email) {
+        // Default to the part of email before @ if name is not available
+        creatorName = decoded.email.split('@')[0];
+      }
+      
+      // Fallback to sub (unique identifier) or Anonymous Admin
+      if (!creatorName) {
+        creatorName = decoded.sub ? `Admin (${decoded.sub.slice(-6)})` : 'Anonymous Admin';
+      }
+      
       const data = { 
         title, 
         description: description || '', 
         body, 
         date: admin.firestore.FieldValue.serverTimestamp(),
-        pinned: Boolean(pinned) // Ensure pinned is a boolean
+        pinned: Boolean(pinned),
+        createdBy: creatorName
       };
       const ref = await db.collection('announcements').add(data);
       const doc = await ref.get();
@@ -78,16 +65,13 @@ module.exports = async (req, res) => {
       return res.status(500).json({ message: 'Failed to create announcement', error: error.toString() });
     }
   }
-  // Update an announcement
   if (req.method === 'PUT') {
     if (!id) return res.status(400).json({ message: 'Missing announcement id' });
     try {
-      // Make sure pinned is a boolean if it's included in the update
       const updates = { ...req.body };
       if ('pinned' in updates) {
         updates.pinned = Boolean(updates.pinned);
       }
-      // If we're updating the body or title, update the lastModified timestamp
       if (updates.body || updates.title) {
         updates.lastModified = admin.firestore.FieldValue.serverTimestamp();
       }
@@ -98,7 +82,6 @@ module.exports = async (req, res) => {
       return res.status(500).json({ message: 'Failed to update announcement', error: error.toString() });
     }
   }
-  // Delete an announcement
   if (req.method === 'DELETE') {
     if (!id) return res.status(400).json({ message: 'Missing announcement id' });
     try {
@@ -108,7 +91,6 @@ module.exports = async (req, res) => {
       return res.status(500).json({ message: 'Failed to delete announcement', error: error.toString() });
     }
   }
-  // Method not allowed
   res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
   return res.status(405).json({ message: 'Method Not Allowed' });
 };
