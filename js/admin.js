@@ -732,5 +732,5 @@ async function loadAdminContent() {
     activeButton.click();
   }
 }
-s
+
 document.addEventListener('DOMContentLoaded', loadAdminContent);
