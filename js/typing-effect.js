@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const CONFIG = {
-        words: ['Ease', 'Speed', 'Efficiency', 'Trust', 'Confidence'],
+        words: ['Ease', 'Speed', 'Efficiency', 'Trust', 'Confidence', 'MoBank'],
         timing: {
             typeSpeed: 120,
             deleteSpeed: 80,
