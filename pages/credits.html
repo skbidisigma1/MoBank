@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoBank Credits</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            color: #fff;
+            font-family: 'Poppins', Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        h1 {
+            letter-spacing: 2px;
+            margin-bottom: 0.5em;
+            font-size: 2.5rem;
+            text-shadow: 0 2px 12px #000a;
+        }
+        .podium {
+            display: flex;
+            align-items: flex-end;
+            gap: 2.5rem;
+            margin-top: 3rem;
+            margin-bottom: 2rem;
+        }
+        .podium-place {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            min-width: 140px;
+        }
+        .podium-block {
+            width: 110px;
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 8px 24px #0005;
+            border: 2px solid #fff3;
+            position: relative;
+        }
+        .first {
+            height: 220px;
+            background: linear-gradient(180deg, #ffe066 0%, #ffd700 100%);
+            color: #222;
+        }
+        .second {
+            height: 170px;
+            background: linear-gradient(180deg, #e0e0e0 0%, #bdbdbd 100%);
+            color: #222;
+        }
+        .third {
+            height: 130px;
+            background: linear-gradient(180deg, #cd7f32 0%, #a0522d 100%);
+            color: #fff;
+        }
+        .fourth {
+            height: 100px;
+            background: linear-gradient(180deg, #7f8c8d 0%, #636e72 100%);
+            color: #fff;
+        }
+        .dev-name {
+            margin-top: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .dev-title {
+            font-size: 1.05rem;
+            color: #ffd700;
+            margin-bottom: 0.2rem;
+            text-align: center;
+            font-style: italic;
+        }
+        .dev-desc {
+            font-size: 0.95rem;
+            color: #aaa;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .secret-msg {
+            margin-top: 2em;
+            color: #888;
+            font-size: 1em;
+            text-align: center;
+        }
+        @media (max-width: 800px) {
+            .podium { flex-direction: column-reverse; align-items: center; gap: 1.5rem; }
+            .podium-place { min-width: 0; }
+        }
+    </style>
+</head>
+<body>
+    <h1>🏆 MoBank Credits 🏆</h1>
+    <div class="podium">
+        <div class="podium-place">
+            <div class="podium-block second">2</div>
+            <div class="dev-name">Eli Nelson</div>
+            <div class="dev-title">Systematic Knowledge Implementation & Backend Intelligence Deployment Instructor (SKIBIDI)</div>
+            <div class="dev-desc">Side Dev, Moral Support, Marketing Manager</div>
+        </div>
+        <div class="podium-place">
+            <div class="podium-block first">1</div>
+            <div class="dev-name">Luke Collingridge</div>
+            <div class="dev-title">Supreme Dictator of Sigma Operations (SDSO)</div>
+            <div class="dev-desc">Main dev, over 500 hours on project</div>
+        </div>
+        <div class="podium-place">
+            <div class="podium-block third">3</div>
+            <div class="dev-name">Stewart</div>
+            <div class="dev-title">Supreme Architect of Sigma Systems and Influence (SASSI)</div>
+            <div class="dev-desc">Dev Team Member</div>
+        </div>
+        <div class="podium-place">
+            <div class="podium-block fourth">4</div>
+            <div class="dev-name">Dallin Roberts</div>
+            <div class="dev-title">JavaScript Python HTMLer (JSPH)</div>
+            <div class="dev-desc">Bug Fixer, Minor Dev</div>
+        </div>
+    </div>
+    <div class="secret-msg">This page is a hidden tribute to the MoBank creators. ✨<br>Only accessible to those who know the way.</div>
+</body>
+</html>
