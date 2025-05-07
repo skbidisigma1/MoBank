@@ -9,7 +9,8 @@
     { "source": "/profile", "destination": "/pages/profile.html" },
     { "source": "/tos", "destination": "/pages/tos.html" },
     { "source": "/transfer", "destination": "/pages/transfer.html" },
-    { "source": "/tools/metronome", "destination": "/tools/metronome.html" }
+    { "source": "/tools/metronome", "destination": "/tools/metronome.html" },
+    { "source": "/credits", "destination": "/pages/credits.html" }
   ],
 
   "headers": [
