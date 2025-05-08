@@ -307,10 +307,13 @@ async function loadAndOpenAllAnnouncements(targetAnnouncementId) {
             if (targetAnnouncement) {
                 openAnnouncementsModal([targetAnnouncement]);
                 return;
+            } else {
+                // If not found, still open all announcements but highlight the target
+                openAnnouncementsModal(announcements, targetAnnouncementId);
+                return;
             }
         }
-        
-        openAnnouncementsModal(announcements, targetAnnouncementId);
+        openAnnouncementsModal(announcements);
     } catch (error) {
         console.error('Error loading announcements:', error);
         showToast('Error', 'Failed to load announcements. Please try again.');
@@ -554,8 +557,7 @@ function openAnnouncementsModal(announcements, targetAnnouncementId) {
     
     lastActiveElement = document.activeElement;
     const fragment = document.createDocumentFragment();
-    
-    // Track which view we're showing
+      // Track which view we're showing
     // Three possible states:
     // 1. Initial loading of all announcements
     // 2. Showing detailed view of a specific announcement
@@ -563,14 +565,15 @@ function openAnnouncementsModal(announcements, targetAnnouncementId) {
     
     // Store the view state in a marker attribute on the modal
     const initialLoad = !modal.dataset.loaded;
-    const detailRequest = announcements.length === 1 && !initialLoad;
     
+    // Simpler logic: If we're displaying exactly one announcement, show it in detail view
+    // regardless of any other conditions
+    isViewingSingleAnnouncement = (announcements.length === 1);
+
     // If this is the first time opening the modal, mark it as loaded
     if (initialLoad) {
         modal.dataset.loaded = "true";
     }
-    
-    isViewingSingleAnnouncement = detailRequest;
     
     // Update modal title based on view mode
     if (modalHeading) {

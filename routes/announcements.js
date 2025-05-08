@@ -2,50 +2,49 @@ const { admin, db } = require('../firebase');
 
 const { verifyToken, getTokenFromHeader } = require('../auth-helper');
 
-// Helper function to add notifications to all users
 async function notifyAllUsers(announcement) {
   try {
-    // Get all users
+    console.log('Starting notification process for announcement:', announcement.id);
     const usersSnapshot = await db.collection('users').get();
     
-    // Create a notification object
-    const notification = {
+    if (usersSnapshot.empty) {
+      console.log('No users found to notify');
+      return true;
+    }
+      const notification = {
       type: 'announcement',
       message: `New announcement: ${announcement.title}`,
       read: false,
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      timestamp: new Date(),
       announcementId: announcement.id
     };
     
-    // Batch operations for better performance
-    const batchSize = 500; // Firestore has a limit of 500 operations per batch
+    const batchSize = 500;
     let batch = db.batch();
     let operationCount = 0;
     
     for (const userDoc of usersSnapshot.docs) {
-      // Get current notifications or initialize empty array
       const userData = userDoc.data();
       const currentNotifications = userData.notifications || [];
       
-      // Add the new notification to the beginning of the array
+      // Create a new array with the notification at the beginning
       const updatedNotifications = [notification, ...currentNotifications];
       
-      // Update the user document
       const userRef = db.collection('users').doc(userDoc.id);
       batch.update(userRef, { notifications: updatedNotifications });
       
       operationCount++;
       
-      // If we've reached the batch size limit, commit and start a new batch
       if (operationCount >= batchSize) {
+        console.log(`Committing batch of ${operationCount} notification updates`);
         await batch.commit();
         batch = db.batch();
         operationCount = 0;
       }
     }
     
-    // Commit any remaining operations
     if (operationCount > 0) {
+      console.log(`Committing final batch of ${operationCount} notification updates`);
       await batch.commit();
     }
     
@@ -53,7 +52,9 @@ async function notifyAllUsers(announcement) {
     return true;
   } catch (error) {
     console.error('Error sending notifications to users:', error);
-    return false;
+    console.error('Error details:', error.message);
+    console.error('Stack trace:', error.stack);
+    throw error; // Re-throw to make sure the error is properly handled
   }
 }
 
@@ -115,8 +116,7 @@ module.exports = async (req, res) => {
   };
 
   const id = req.query.id;  
-  
-  if (req.method === 'POST') {
+    if (req.method === 'POST') {
     const { title, description, body, pinned } = req.body;
     if (!title || !body) {
       return res.status(400).json({ message: 'Missing required fields' });
@@ -136,21 +136,27 @@ module.exports = async (req, res) => {
       };
       
       const ref = await db.collection('announcements').add(data);
-      const doc = await ref.get();
+      console.log('Created new announcement with ID:', ref.id);
       
-      // Create announcement object with ID for notifications
       const announcement = { 
         id: ref.id,
-        ...doc.data()
+        ...data,
+        date: new Date()
       };
       
-      // Notify all users about the new announcement (non-blocking)
-      notifyAllUsers(announcement).catch(error => 
-        console.error('Failed to send notifications for new announcement:', error)
-      );
+      try {
+        await notifyAllUsers(announcement);
+        console.log('Successfully sent notifications for announcement:', ref.id);
+      } catch (notifyError) {
+        console.error('Failed to send notifications:', notifyError);
+      }
       
-      return res.status(201).json(announcement);
+      const doc = await ref.get();
+      const finalData = { id: ref.id, ...doc.data() };
+      
+      return res.status(201).json(finalData);
     } catch (error) {
+      console.error('Error creating announcement:', error);
       return res.status(500).json({ message: 'Failed to create announcement', error: error.toString() });
     }
   }
@@ -164,12 +170,10 @@ module.exports = async (req, res) => {
         updates.pinned = Boolean(updates.pinned);
       }
       
-      // Only mark as edited if content is changed (not just pinned status)
       if (updates.body || updates.title || updates.description) {
         updates.lastModified = admin.firestore.FieldValue.serverTimestamp();
         updates.isEdited = true;
         
-        // Get editor's name
         updates.editedBy = await getAdminName();
       }
       
@@ -194,3 +198,4 @@ module.exports = async (req, res) => {
   res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
   return res.status(405).json({ message: 'Method Not Allowed' });
 };
+  
