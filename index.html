@@ -27,8 +27,8 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/concert.css">
   <link rel="stylesheet" href="/css/tinymce-global.css">
   <link rel="manifest" href="/manifest.json">
 
@@ -55,7 +55,16 @@
       <p class="hero-cta">Log in to view your balance, send MoBucks, and keep track of recent transactions.</p>
       <button id="get-started-btn" class="primary-button" aria-label="Get started with MoBank">Get Started!</button>
       <button id="motools-btn" class="secondary-button" aria-label="Continue to MoTools">Continue to MoTools (Beta)</button>
+    </section>    <section id="concert-schedule-section" class="container" aria-labelledby="concert-schedule-heading">
+      <div class="concert-section-header" id="concert-header">
+        <h2 id="concert-schedule-heading">Upcoming Concerts</h2>
+        <span class="toggle-icon" aria-hidden="true">▼</span>
+      </div>
+      <div id="concert-list" class="concert-list-container">
+        <p>Loading concert schedule...</p>
+      </div>
     </section>
+    <script src="js/concert.js" defer></script>
 
     <section id="announcements-section" class="container" aria-labelledby="announcements-heading">
       <h2 id="announcements-heading">Announcements</h2>

@@ -1,0 +1,120 @@
+.concert-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: var(--container-color);
+  margin-bottom: 10px;
+  transition: background-color 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.concert-section-header:hover {
+  background-color: var(--color-hover);
+}
+
+.concert-section-header h2 {
+  margin: 0;
+  color: var(--color-primary);
+}
+
+.toggle-icon {
+  transition: transform 0.3s ease;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--color-primary);
+}
+
+.concert-list-container {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease-in-out, opacity 0.4s ease;
+  opacity: 0;
+}
+
+.concert-section-expanded .concert-list-container {
+  max-height: 2000px;
+  opacity: 1;
+  margin-top: 15px;
+  padding: 5px;
+}
+
+.concert-section-expanded .toggle-icon {
+  transform: rotate(180deg);
+}
+
+.concert-item {
+  background-color: var(--container-color);
+  border-radius: 12px;
+  padding: 20px 25px;
+  margin-bottom: 25px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid var(--color-primary);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.concert-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.concert-item h3 {
+  margin-top: 0;
+  color: var(--color-primary);
+  font-family: var(--font-heading);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 8px;
+  margin-bottom: 15px;
+}
+
+.concert-date, .concert-location, .concert-attire {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: baseline;
+  line-height: 1.5;
+}
+
+.concert-date strong, .concert-location strong, .concert-attire strong {
+  min-width: 90px;
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+.concert-rehearsals {
+  margin: 15px 0;
+}
+
+.concert-rehearsals strong {
+  color: var(--color-muted);
+  display: block;
+  margin-bottom: 5px;
+}
+
+.concert-rehearsals ul {
+  list-style-type: none;
+  padding-left: 15px;
+}
+
+.concert-rehearsals li {
+  padding: 4px 0;
+}
+
+.concert-notes {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  padding: 12px 15px;
+  margin-top: 15px;
+  line-height: 1.6;
+  color: var(--color-text);
+  border-left: 2px solid var(--color-secondary);
+}
+
+[data-theme="dark"] .concert-item {
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .concert-notes {
+  background-color: rgba(255, 255, 255, 0.05);
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "title": "High School Concert",
+    "date": "2025-05-12 19:00",
+    "location": "SFHS Auditorium",
+    "attire": "All Black",
+    "rehearsals": [
+      "2:00–2:30 PM – Full Orchestra",
+      "5:45–6:15 PM – Chamber Orchestra",
+      "6:15–6:45 PM – Symphonic Orchestra"
+    ],
+    "notes": "Senior celebration and end-of-year awards will be included in this performance."
+  },
+  {
+    "title": "Junior High Concert",
+    "date": "2025-05-13 19:00",
+    "location": "SFHS Auditorium",
+    "attire": "White Top / Black Bottoms",
+    "rehearsals": [
+      "5:45–6:15 PM – 5th Period",
+      "6:15–6:45 PM – 6th–7th Periods"
+    ],
+    "notes": "End-of-year awards will be presented during this concert."
+  },  {
+    "title": "Graduation Performance",
+    "date": "2025-05-21 13:00",
+    "location": "Departing from school by bus",
+    "attire": "",
+    "rehearsals": [],
+    "notes": "High school sophomores and juniors will be performing at graduation. Students with graduating family members may ride separately. Orchestra will leave the ceremony early."
+  }
+]
