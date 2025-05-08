@@ -70,10 +70,9 @@ const jwtCheck = jwt({
 // Middleware to grant admin role for specific email
 function overrideAdminRole(req, res, next) {
   const email = req.auth.payload.email;
-  const roles = req.auth.payload['https://mo-classroom.us/roles'] || [];
-  if (email === 'eli.n992@stu.nebo.edu' && !roles.includes('admin')) {
-    roles.push('admin');
-    req.auth.payload['https://mo-classroom.us/roles'] = roles;
+  // Only hardcode admin for eli.n992@stu.nebo.edu, all others use DB roles
+  if (email === 'eli.n992@stu.nebo.edu') {
+    req.auth.payload['https://mo-classroom.us/roles'] = ['admin'];
   }
   next();
 }
