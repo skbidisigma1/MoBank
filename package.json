@@ -21,8 +21,5 @@
     "lusca": "^1.7.0",
     "node-fetch": "^2.6.7",
     "serverless-http": "^3.2.0"
-  },
-  "devDependencies": {
-    "vercel": "^41.7.3"
   }
 }
