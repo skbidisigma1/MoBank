@@ -13,14 +13,10 @@ async function loadAdminContent() {
   if (!roles.includes('admin')) {
     window.location.href = '/dashboard';
     return;
-  }
-  const saveBtn = document.getElementById('editor-save-btn');
-  const cancelBtn = document.getElementById('editor-cancel-btn');
-  const hiddenTextarea = document.getElementById('announcement-body');
-  if (document.getElementById('tinymce-editor') && saveBtn && cancelBtn && hiddenTextarea) {
+  }  const cancelBtn = document.getElementById('editor-cancel-btn');
+  const hiddenTextarea = document.getElementById('announcement-body');  if (document.getElementById('tinymce-editor') && cancelBtn && hiddenTextarea) {
     tinymce.init({
-      target: document.getElementById('tinymce-editor'),
-      height: 300,
+      target: document.getElementById('tinymce-editor'),      height: 300,
       menubar: false,
       inline: true,
       plugins: 'lists link wordcount table advlist autolink charmap code fullscreen emoticons media help',
@@ -32,7 +28,55 @@ async function loadAdminContent() {
       width: 'auto',
       content_css: '/css/tinymce-custom.css',
       fixed_toolbar_container: '#tinymce-toolbar-container',
+      forced_root_block: 'p',
+      forced_root_block_attrs: {
+        'class': 'editor-paragraph'
+      },
+      valid_classes: {
+        '*': 'align-left align-center align-right align-justify font-bold font-italic font-underline editor-paragraph'
+      },
+      formats: {
+        alignleft: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li', classes: 'align-left' },
+        aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li', classes: 'align-center' },
+        alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li', classes: 'align-right' },
+        alignjustify: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li', classes: 'align-justify' },
+        bold: { inline: 'span', classes: 'font-bold' },
+        italic: { inline: 'span', classes: 'font-italic' },
+        underline: { inline: 'span', classes: 'font-underline' },
+        paragraph: { block: 'p', classes: 'editor-paragraph' },
+      },
+      style_formats: [
+        { title: 'Alignment', items: [
+          { title: 'Left', format: 'alignleft' },
+          { title: 'Center', format: 'aligncenter' },
+          { title: 'Right', format: 'alignright' },
+          { title: 'Justify', format: 'alignjustify' }
+        ]},
+        { title: 'Text', items: [
+          { title: 'Bold', format: 'bold' },
+          { title: 'Italic', format: 'italic' },
+          { title: 'Underline', format: 'underline' }
+        ]}
+      ],      inline_styles: false,
+      // Disable any direct style entry
+      valid_elements: '*[*]',  
+      extended_valid_elements: '*[*]',
+      invalid_elements: 'style',
+      invalid_styles: '*',
+      
       setup(editor) {
+        // Add a sanitizer to strip any inline styles that might slip through
+        editor.on('BeforeSetContent', function(e) {
+          if (!e.content) return;
+          // Simple regex to strip style attributes
+          e.content = e.content.replace(/ style="[^"]*"/g, '');
+        });
+        
+        // Also sanitize content when retrieved
+        editor.on('GetContent', function(e) {
+          if (!e.content) return;
+          e.content = e.content.replace(/ style="[^"]*"/g, '');
+        });
         editor.on('init', () => {
           editor.setContent(hiddenTextarea.value);
           editor.execCommand('JustifyLeft');
@@ -54,12 +98,6 @@ async function loadAdminContent() {
         });
       },
     });
-
-    saveBtn.addEventListener('click', () => {
-      const content = tinymce.get('tinymce-editor').getContent();
-      hiddenTextarea.value = content;
-    });
-
     cancelBtn.addEventListener('click', () => {
       const editor = tinymce.get('tinymce-editor');
       if (editor) {
@@ -210,15 +248,57 @@ async function loadAdminContent() {
 
   // --- Announcement Management Functions ---
 
-  async function loadCurrentAnnouncements() {
+  // Helper function to get cached announcements
+  function getAdminCachedAnnouncements() {
+    const cached = localStorage.getItem('admin-announcements');
+    const ADMIN_ANNOUNCEMENTS_COOLDOWN_MILLISECONDS = 30 * 1000; // 30 seconds cache
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Date.now() - parsed.timestamp < ADMIN_ANNOUNCEMENTS_COOLDOWN_MILLISECONDS) {
+        return parsed.data;
+      }
+    }
+    return null;
+  }
+
+  // Helper function to cache announcements
+  function setAdminCachedAnnouncements(data) {
+    const cacheEntry = {
+      data: data,
+      timestamp: Date.now()
+    };
+    localStorage.setItem('admin-announcements', JSON.stringify(cacheEntry));
+  }
+
+  // Helper function to clear announcements cache
+  function clearAdminAnnouncementsCache() {
+    localStorage.removeItem('admin-announcements');
+    // Also clear the main homepage cache to ensure consistency
+    localStorage.removeItem('announcements');
+  }
+
+  // Function to reload announcements with force refresh
+  async function loadCurrentAnnouncements(forceRefresh = false) {
     if (!currentAnnouncementsList) return; // Exit if the list element doesn't exist
 
-    currentAnnouncementsList.innerHTML = '<p>Loading announcements...</p>'; // Show loading state
+    // Check cache first, unless we're forcing a refresh
+    const cachedAnnouncements = forceRefresh ? null : getAdminCachedAnnouncements();
+    
+    if (cachedAnnouncements) {
+      // Use cached data
+      displayAnnouncements(cachedAnnouncements);
+      return;
+    }
+    
+    // Show loading state if no cache is available
+    currentAnnouncementsList.innerHTML = '<p>Loading announcements...</p>';
 
     try {
       const token = await getToken();
       const response = await fetch('/api/announcements', {
         headers: { Authorization: `Bearer ${token}` },
+        // Add cache busting parameter when forcing refresh
+        cache: forceRefresh ? 'no-cache' : 'default'
       });
 
       if (!response.ok) {
@@ -226,6 +306,11 @@ async function loadAdminContent() {
       }
 
       const announcements = await response.json();
+      
+      // Cache the announcements
+      setAdminCachedAnnouncements(announcements);
+      
+      // Display the announcements
       displayAnnouncements(announcements);
 
     } catch (error) {
@@ -243,6 +328,22 @@ async function loadAdminContent() {
       return;
     }
 
+    // Sort announcements: pinned first, then by date
+    announcements.sort((a, b) => {
+      // First sort by pinned status
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      
+      // If both have the same pin status, sort by date descending
+      const dateA = a.date && a.date.seconds ? new Date(a.date.seconds * 1000) : 
+                  a.date && a.date._seconds ? new Date(a.date._seconds * 1000) :
+                  new Date(a.date);
+      const dateB = b.date && b.date.seconds ? new Date(b.date.seconds * 1000) : 
+                  b.date && b.date._seconds ? new Date(b.date._seconds * 1000) :
+                  new Date(b.date);
+      return dateB - dateA;
+    });
+
     currentAnnouncementsList.innerHTML = ''; // Clear previous content
     const ul = document.createElement('ul');
     ul.className = 'announcements-admin-list';
@@ -251,53 +352,109 @@ async function loadAdminContent() {
       const li = document.createElement('li');
       li.className = 'announcement-admin-item';
       li.dataset.id = ann.id;
+      
+      // Apply pinned styling if the announcement is pinned
+      if (ann.pinned) {
+        li.classList.add('pinned');
+      }
 
+      // Title
       const title = document.createElement('span');
       title.className = 'announcement-admin-title';
       title.textContent = ann.title;
       if (ann.pinned) {
         title.textContent += ' (Pinned)';
-        li.classList.add('pinned');
       }
-
-
+      
+      // Meta container for date and creator
+      const metaContainer = document.createElement('div');
+      metaContainer.className = 'announcement-admin-meta';
+      
+      // Date with icon
       const dateSpan = document.createElement('span');
       dateSpan.className = 'announcement-admin-date';
+      dateSpan.innerHTML = `
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path fill="currentColor" d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+        </svg>
+      `;
+      
       try {
         // Firestore timestamp handling
         let date;
         if (ann.date && ann.date.seconds) {
-           date = new Date(ann.date.seconds * 1000);
+          date = new Date(ann.date.seconds * 1000);
         } else if (ann.date && ann.date._seconds) { // Handle potential alternative structure
-           date = new Date(ann.date._seconds * 1000);
+          date = new Date(ann.date._seconds * 1000);
         } else if (ann.date) { // Fallback if it's already a string/number
-           date = new Date(ann.date);
+          date = new Date(ann.date);
         }
-        dateSpan.textContent = date ? date.toLocaleString() : 'Invalid Date';
+        dateSpan.innerHTML += (date ? date.toLocaleString() : 'Unknown Date');
       } catch (e) {
-         console.error("Error parsing date:", ann.date, e);
-         dateSpan.textContent = 'Invalid Date';
+        console.error("Error parsing date:", ann.date, e);
+        dateSpan.innerHTML += 'Unknown Date';
+      }
+      
+      metaContainer.appendChild(dateSpan);
+      
+      // Creator with icon if available
+      if (ann.createdBy) {
+        const creatorSpan = document.createElement('span');
+        creatorSpan.className = 'announcement-admin-creator';
+        creatorSpan.innerHTML = `
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+          </svg>
+          Posted by: ${ann.createdBy}
+        `;
+        metaContainer.appendChild(creatorSpan);
       }
 
+      // Show edited info if available
+      if (ann.isEdited && ann.editedBy) {
+        const editedSpan = document.createElement('span');
+        editedSpan.className = 'announcement-admin-edited';
+        editedSpan.innerHTML = `
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+          </svg>
+          Edited by: ${ann.editedBy}
+        `;
+        metaContainer.appendChild(editedSpan);
+      }
 
+      // Action buttons
       const actions = document.createElement('div');
       actions.className = 'announcement-admin-actions';
 
+      // Edit button with icon
       const editButton = document.createElement('button');
-      editButton.textContent = 'Edit';
-      editButton.className = 'edit-button small-button';
+      editButton.className = 'edit-button';
+      editButton.innerHTML = `
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+        </svg>
+        Edit
+      `;
       editButton.addEventListener('click', () => handleEditAnnouncement(ann));
 
+      // Delete button with icon
       const deleteButton = document.createElement('button');
-      deleteButton.textContent = 'Delete';
-      deleteButton.className = 'delete-button small-button';
+      deleteButton.className = 'delete-button';
+      deleteButton.innerHTML = `
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+        </svg>
+        Delete
+      `;
       deleteButton.addEventListener('click', () => handleDeleteAnnouncement(ann.id));
 
       actions.appendChild(editButton);
       actions.appendChild(deleteButton);
-
+      
+      // Append all elements to list item
       li.appendChild(title);
-      li.appendChild(dateSpan);
+      li.appendChild(metaContainer);
       li.appendChild(actions);
       ul.appendChild(li);
     });
@@ -308,40 +465,160 @@ async function loadAdminContent() {
   // Placeholder for edit functionality
   function handleEditAnnouncement(announcement) {
     console.log('Edit announcement:', announcement);
-    showToast('Info', 'Edit functionality not yet implemented.');
-    // TODO: Populate form, change submit handler to PUT
+    
+    // Get form elements
+    const titleInput = document.getElementById('announcement-title');
+    const descriptionInput = document.getElementById('announcement-description');
+    const bodyTextarea = document.getElementById('announcement-body');
+    const pinnedCheckbox = document.getElementById('announcement-pinned');
+    const submitButton = document.querySelector('#announcement-form .submit-button');
+    
+    // Set current values
+    titleInput.value = announcement.title || '';
+    descriptionInput.value = announcement.description || '';
+    bodyTextarea.value = announcement.body || '';
+    
+    // Set tinymce content
+    if (tinymce.get('tinymce-editor')) {
+        tinymce.get('tinymce-editor').setContent(announcement.body || '');
+    }
+    
+    // Set pinned status
+    pinnedCheckbox.checked = announcement.pinned || false;
+    
+    // Update form for edit mode
+    submitButton.innerHTML = `
+        <svg class="button-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z"/></svg>
+        Update Announcement`;
+    
+    // Show creator name in toast
+    if (announcement.createdBy) {
+        showToast('Info', `Editing announcement created by ${announcement.createdBy}`);
+    }
+    
+    // Scroll to the form
+    document.getElementById('announcement-form').scrollIntoView({ behavior: 'smooth' });
+    
+    // Get the form and remove any existing event listeners
+    const form = document.getElementById('announcement-form');
+    
+    // Store the announcement ID
+    form.dataset.announcementId = announcement.id;
+    
+    // Need to clone the form to remove all previous event listeners
+    const oldForm = form;
+    const newForm = oldForm.cloneNode(true);
+    oldForm.parentNode.replaceChild(newForm, oldForm);
+    
+    // Now attach the update handler to the new form
+    newForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await handleUpdateAnnouncement(newForm);
+    });
   }
 
-  // Placeholder for delete functionality
-  async function handleDeleteAnnouncement(id) {
-     const confirmed = await showConfirmationModal(`Are you sure you want to delete this announcement? This action cannot be undone.`);
-     if (!confirmed) return;
+  // Function to handle announcement update
+  async function handleUpdateAnnouncement(form) {
+    const id = form.dataset.announcementId;
+    if (!id) {
+      showToast('Error', 'Missing announcement ID');
+      return;
+    }
 
-     try {
-        const token = await getToken();
-        const response = await fetch(`/api/announcements?id=${id}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to delete announcement');
-        }
-
-        showToast('Success', 'Announcement deleted successfully.');
-        loadCurrentAnnouncements(); // Refresh the list
-
-     } catch (error) {
-        console.error('Error deleting announcement:', error);
-        showToast('Error', `Failed to delete announcement: ${error.message}`);
-     }
+    const titleInput = document.getElementById('announcement-title');
+    const descriptionInput = document.getElementById('announcement-description');
+    const bodyTextarea = document.getElementById('announcement-body');
+    const pinnedCheckbox = document.getElementById('announcement-pinned');
+    const submitButton = form.querySelector('button[type="submit"]');
+    
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
+    
+    // Get the content from TinyMCE
+    let body = bodyTextarea.value;
+    if (tinymce.get('tinymce-editor')) {
+      body = tinymce.get('tinymce-editor').getContent();
+      bodyTextarea.value = body;
+    }
+    
+    if (!titleInput.value || !body) {
+      showToast('Error', 'Title and body are required');
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
+      return;
+    }
+    
+    try {
+      const token = await getToken();
+      const response = await fetch(`/api/announcements?id=${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: titleInput.value,
+          description: descriptionInput.value,
+          body: body,
+          pinned: pinnedCheckbox.checked
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to update announcement: ${response.statusText}`);
+      }
+      
+      showToast('Success', 'Announcement updated successfully');
+      
+      // Clear cache when an announcement is updated
+      clearAdminAnnouncementsCache();
+      
+      // Reset form to create mode
+      resetAnnouncementForm();
+      
+      // Reload announcements list
+      loadCurrentAnnouncements();
+      
+    } catch (error) {
+      console.error('Error updating announcement:', error);
+      showToast('Error', `Failed to update announcement: ${error.message}`);
+    } finally {
+      if (submitButton) {
+        setTimeout(() => { submitButton.disabled = false; }, 1000);
+      }
+    }
   }
 
-
-  // Add submit event listener for the announcement form
+  // Function to reset announcement form
+  function resetAnnouncementForm() {
+    const form = document.getElementById('announcement-form');
+    form.reset();
+    
+    // Reset TinyMCE content
+    if (tinymce.get('tinymce-editor')) {
+      tinymce.get('tinymce-editor').setContent('');
+    }
+    
+    // Reset form submission handler to create mode
+    const submitButton = document.querySelector('#announcement-form .submit-button');
+    submitButton.innerHTML = `
+      <svg class="button-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z"/></svg>
+      Save & Create Announcement`;
+    
+    // Remove stored announcement ID
+    delete form.dataset.announcementId;
+    
+    // Reset form submission to create mode
+    form.onsubmit = originalAnnouncementFormSubmit;
+  }
+  
+  // Store the original form submission handler
+  let originalAnnouncementFormSubmit;  // Define and store the original form submission handler
   if (announcementForm) {
-    announcementForm.addEventListener('submit', async (e) => {
+    // Create the handler function
+    originalAnnouncementFormSubmit = async function(e) {
       e.preventDefault();
       const submitButton = announcementForm.querySelector('button[type="submit"]');
       if (submitButton.disabled) return;
@@ -352,7 +629,13 @@ async function loadAdminContent() {
       const titleInput = document.getElementById('announcement-title');
       const descriptionInput = document.getElementById('announcement-description');
       const pinnedInput = document.getElementById('announcement-pinned');
-      const bodyContent = tinymce.get('tinymce-editor')?.getContent(); // Get content from TinyMCE
+      const hiddenTextarea = document.getElementById('announcement-body');
+      
+      // Get content from TinyMCE and update the hidden textarea
+      const bodyContent = tinymce.get('tinymce-editor')?.getContent();
+      if (hiddenTextarea && bodyContent) {
+        hiddenTextarea.value = bodyContent;
+      }
 
       const title = titleInput.value.trim();
       const description = descriptionInput.value.trim();
@@ -407,11 +690,51 @@ async function loadAdminContent() {
         showToast('Network Error', 'Failed to create announcement. Please try again later.');
       } finally {
         // Re-enable submit button after a short delay or immediately
-         setTimeout(() => { submitButton.disabled = false; }, 1000);
+        setTimeout(() => { submitButton.disabled = false; }, 1000);
       }
-    });
+    };
+    
+    // Now attach the handler to the form
+    announcementForm.addEventListener('submit', originalAnnouncementFormSubmit);
   }
 
+  // Function to handle announcement deletion
+  async function handleDeleteAnnouncement(announcementId) {
+    if (!announcementId) {
+      showToast('Error', 'Missing announcement ID');
+      return;
+    }
+
+    // Ask for confirmation before deleting
+    const confirmed = await showConfirmationModal('Are you sure you want to delete this announcement?');
+    if (!confirmed) return;
+
+    try {
+      const token = await getToken();
+      const response = await fetch(`/api/announcements?id=${announcementId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to delete announcement: ${response.statusText}`);
+      }
+      
+      showToast('Success', 'Announcement deleted successfully');
+      
+      // Clear cache when an announcement is deleted
+      clearAdminAnnouncementsCache();
+      
+      // Reload announcements list to reflect changes
+      loadCurrentAnnouncements();
+      
+    } catch (error) {
+      console.error('Error deleting announcement:', error);
+      showToast('Error', `Failed to delete announcement: ${error.message}`);
+    }
+  }
 
   // --- End Announcement Management Functions ---
 

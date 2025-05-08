@@ -79,3 +79,52 @@ html[data-theme="dark"] .tinymce-toolbar-container {
 /* Note: TinyMCE might handle content area styling separately. 
    If the content area itself is also wrong, we might need to use 
    TinyMCE's `content_css_dark` option during initialization in admin.js */
+
+/* Custom CSS classes for TinyMCE editor to replace inline styles */
+.align-left {
+  text-align: left !important;
+}
+
+.align-center {
+  text-align: center !important;
+}
+
+.align-right {
+  text-align: right !important;
+}
+
+.align-justify {
+  text-align: justify !important;
+}
+
+.font-bold {
+  font-weight: bold !important;
+}
+
+.font-italic {
+  font-style: italic !important;
+}
+
+.font-underline {
+  text-decoration: underline !important;
+}
+
+/* Default paragraph styling */
+.editor-paragraph {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.5;
+}
+
+/* Ensure these styles work in dark mode too */
+html[data-theme="dark"] .align-left,
+html[data-theme="dark"] .align-center,
+html[data-theme="dark"] .align-right,
+html[data-theme="dark"] .align-justify,
+html[data-theme="dark"] .font-bold,
+html[data-theme="dark"] .font-italic,
+html[data-theme="dark"] .font-underline {
+  color: inherit;
+}

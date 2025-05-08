@@ -6,8 +6,8 @@
   <title>MoBank - Admin Panel</title>
   <script src="../js/theme.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
   <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
   <script src="../js/auth.js"></script>
@@ -599,11 +599,9 @@
                   <svg class="input-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
                   Body Text
                 </label>
-                <textarea id="announcement-body" placeholder="Enter the full announcement message" rows="4" required hidden></textarea>
-                <div id="tinymce-toolbar-container" class="tinymce-toolbar-container"></div>
-                <div id="tinymce-editor"></div>
+                <textarea id="announcement-body" placeholder="Enter the full announcement message" rows="4" hidden></textarea>
+                <div id="tinymce-toolbar-container" class="tinymce-toolbar-container"></div>                <div id="tinymce-editor"></div>
                 <div class="modal-buttons">
-                  <button type="button" id="editor-save-btn" class="primary-button">Save</button>
                   <button type="button" id="editor-cancel-btn" class="text-button">Cancel</button>
                 </div>
               </div>
@@ -616,10 +614,9 @@
                   <input type="checkbox" id="announcement-pinned">
                   <span class="toggle-slider"></span>
                 </label>
-              </div>
-              <button type="submit" class="submit-button">
+              </div>              <button type="submit" class="submit-button">
                 <svg class="button-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z"/></svg>
-                Create Announcement
+                Save & Create Announcement
               </button>
             </form>
           </div>

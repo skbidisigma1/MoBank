@@ -25,13 +25,18 @@ const getTokenFromHeader = (req) => {
 };
 
 async function verifyToken(token) {
+  // Use environment variables or fallback to defaults
+  const audience = process.env.AUTH0_AUDIENCE || 'https://mo-classroom.us/api';
+  const issuer = process.env.AUTH0_DOMAIN
+    ? `https://${process.env.AUTH0_DOMAIN}/`
+    : 'https://dev-nqdfwemz14t8nf7w.us.auth0.com/';
   return jwtVerify(
-    token, 
-    getKey, 
+    token,
+    getKey,
     {
-      audience: process.env.AUTH0_AUDIENCE,
-      issuer: `https://${process.env.AUTH0_DOMAIN}/`,
-      algorithms: ['RS256']
+      audience,
+      issuer,
+      algorithms: ['RS256'],
     }
   );
 }
