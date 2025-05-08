@@ -67,18 +67,7 @@ const jwtCheck = jwt({
   algorithms: ['RS256'],
 });
 
-// Middleware to grant admin role for specific email
-function overrideAdminRole(req, res, next) {
-  const email = req.auth.payload.email;
-  // If Eli, set admin and skip DB check
-  if (email === 'eli.n992@stu.nebo.edu') {
-    req.auth.payload['https://mo-classroom.us/roles'] = ['admin'];
-    return next();
-  }
-  next();
-}
-
-app.use('/api', jwtCheck, overrideAdminRole, conditionalRateLimiter);
+app.use('/api', jwtCheck, conditionalRateLimiter);
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker
