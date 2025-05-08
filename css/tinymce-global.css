@@ -1,0 +1,139 @@
+.align-left {
+  text-align: left !important;
+}
+
+.align-center {
+  text-align: center !important;
+}
+
+.align-right {
+  text-align: right !important;
+}
+
+.align-justify {
+  text-align: justify !important;
+}
+
+.font-bold {
+  font-weight: bold !important;
+}
+
+.font-italic {
+  font-style: italic !important;
+}
+
+.font-underline {
+  text-decoration: underline !important;
+}
+
+.editor-paragraph {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.5;
+}
+
+.mce-content-body ul, 
+ul.mce-content-body,
+.announcement-body-content ul {
+  list-style-type: disc;
+  margin-left: 1.5em;
+  padding-left: 1.5em;
+}
+
+.mce-content-body ol, 
+ol.mce-content-body,
+.announcement-body-content ol {
+  list-style-type: decimal;
+  margin-left: 1.5em;
+  padding-left: 1.5em;
+}
+
+.mce-content-body li, 
+li.mce-content-body,
+.announcement-body-content li {
+  display: list-item;
+  margin-bottom: 0.5em;
+}
+
+.mce-content-body table,
+table.mce-content-body,
+.announcement-body-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 1em;
+}
+
+.mce-content-body th,
+th.mce-content-body,
+.announcement-body-content th {
+  background-color: rgba(0, 0, 0, 0.05);
+  font-weight: bold;
+  text-align: left;
+  padding: 8px;
+  border: 1px solid #ccc;
+}
+
+.mce-content-body td,
+td.mce-content-body,
+.announcement-body-content td {
+  padding: 8px;
+  border: 1px solid #ccc;
+}
+
+.mce-content-body a,
+a.mce-content-body,
+.announcement-body-content a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.mce-content-body a:hover,
+a.mce-content-body:hover,
+.announcement-body-content a:hover {
+  color: var(--color-primary-dark);
+}
+
+.mce-content-body img,
+img.mce-content-body,
+.announcement-body-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+html[data-theme="dark"] .align-left,
+html[data-theme="dark"] .align-center,
+html[data-theme="dark"] .align-right,
+html[data-theme="dark"] .align-justify,
+html[data-theme="dark"] .font-bold,
+html[data-theme="dark"] .font-italic,
+html[data-theme="dark"] .font-underline,
+html[data-theme="dark"] .editor-paragraph {
+  color: inherit;
+}
+
+html[data-theme="dark"] .mce-content-body th,
+html[data-theme="dark"] th.mce-content-body,
+html[data-theme="dark"] .announcement-body-content th {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: #444;
+}
+
+html[data-theme="dark"] .mce-content-body td,
+html[data-theme="dark"] td.mce-content-body,
+html[data-theme="dark"] .announcement-body-content td {
+  border-color: #444;
+}
+
+html[data-theme="dark"] .mce-content-body a,
+html[data-theme="dark"] a.mce-content-body,
+html[data-theme="dark"] .announcement-body-content a {
+  color: var(--color-primary);
+}
+
+html[data-theme="dark"] .mce-content-body a:hover,
+html[data-theme="dark"] a.mce-content-body:hover,
+html[data-theme="dark"] .announcement-body-content a:hover {
+  color: var(--color-primary-dark);
+}

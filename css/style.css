@@ -2563,7 +2563,6 @@ input:disabled + .toggle-slider:before {
     }
 }
 
-/* TinyMCE toolbar container */
 .tinymce-toolbar-container {
   width: 100%;
   margin-bottom: 5px;
@@ -2571,7 +2570,6 @@ input:disabled + .toggle-slider:before {
   z-index: 1;
 }
 
-/* TinyMCE Custom Styling Additions */
 #tinymce-editor {
   border: 1px solid var(--color-border);
   min-height: 250px;
@@ -2583,30 +2581,25 @@ input:disabled + .toggle-slider:before {
   width: 100%;
 }
 
-/* Make sure the editor content is only as wide as it needs to be */
 .tox-tinymce-inline {
   width: auto !important;
   max-width: 100% !important;
 }
 
-/* Don't make the toolbar sticky/fixed when scrolling */
 .tox-editor-header {
   position: static !important;
 }
 
-/* Format the TinyMCE toolbar properly */
 .tox .tox-toolbar {
   background-color: var(--color-light-bg) !important;
   border-bottom: 1px solid var(--color-border) !important;
 }
 
-/* Make sure the admin form is wide enough */
 .admin-form {
   max-width: 90%;
   width: 700px;
 }
 
-/* Loading Spinner Styles */
 .loader {
   display: flex;
   justify-content: center;
@@ -2637,7 +2630,6 @@ input:disabled + .toggle-slider:before {
   }
 }
 
-/* Visually hidden text for screen readers */
 .sr-only {
   position: absolute;
   width: 1px;
