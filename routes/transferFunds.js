@@ -123,7 +123,7 @@ module.exports = async (req, res) => {
             timestamp: admin.firestore.Timestamp.now(),
           },
           ...(sSnap.data().transactions || []),
-        ].slice(0, 5);
+        ].slice(0, 8);
         tx.update(senderRef, { transactions: sTx });
 
         const rTx = [
@@ -134,7 +134,7 @@ module.exports = async (req, res) => {
             timestamp: admin.firestore.Timestamp.now(),
           },
           ...(rSnap.data().transactions || []),
-        ].slice(0, 5);
+        ].slice(0, 8);
         tx.update(recipientRef, { transactions: rTx });
 
         const newNote = {
