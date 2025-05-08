@@ -14,7 +14,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('showAnnouncements') === 'true') {
-            setTimeout(() => loadAndOpenAllAnnouncements(), 500);
+            // If there is a specific announcement ID in the URL, highlight that announcement
+            const announcementId = urlParams.get('announcementId');
+            setTimeout(() => loadAndOpenAllAnnouncements(announcementId), 500);
         }
 
     } catch (error) {
@@ -115,20 +117,12 @@ async function initializeAnnouncementsSystem() {
 
     if (closeModalBtn) {
         closeModalBtn.addEventListener('click', () => {
-            if (isViewingSingleAnnouncement) {
-                openAnnouncementsModal(allAnnouncements);
-            } else {
-                closeAnnouncementsModal();
-            }
+            closeAnnouncementsModal();
         });
         closeModalBtn.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                if (isViewingSingleAnnouncement) {
-                    openAnnouncementsModal(allAnnouncements);
-                } else {
-                    closeAnnouncementsModal();
-                }
+                closeAnnouncementsModal();
             }
         });
     }
@@ -136,11 +130,7 @@ async function initializeAnnouncementsSystem() {
     if (modal) {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                if (isViewingSingleAnnouncement) {
-                    openAnnouncementsModal(allAnnouncements);
-                } else {
-                    closeAnnouncementsModal();
-                }
+                closeAnnouncementsModal();
             }
         });
 
@@ -251,7 +241,7 @@ function initializeEventListeners() {
     });
 }
 
-async function loadAndOpenAllAnnouncements() {
+async function loadAndOpenAllAnnouncements(targetAnnouncementId) {
     const announcementsModal = document.getElementById('announcements-modal');
     const announcementsList = document.getElementById('announcements-list');
     
@@ -268,8 +258,21 @@ async function loadAndOpenAllAnnouncements() {
     try {
         // Check cache first
         const cachedAnnouncements = getCachedAnnouncements();
+        let announcements;
+        
         if (cachedAnnouncements) {
-            openAnnouncementsModal(cachedAnnouncements);
+            announcements = cachedAnnouncements;
+            
+            // If a specific announcement is requested, find it and display it directly
+            if (targetAnnouncementId) {
+                const targetAnnouncement = announcements.find(ann => ann.id === targetAnnouncementId);
+                if (targetAnnouncement) {
+                    openAnnouncementsModal([targetAnnouncement]);
+                    return;
+                }
+            }
+            
+            openAnnouncementsModal(announcements, targetAnnouncementId);
             return;
         }
         
@@ -277,23 +280,37 @@ async function loadAndOpenAllAnnouncements() {
         const response = await fetch('/api/announcements');
         if (!response.ok) throw new Error('Failed to fetch announcements');
         
-        const announcements = await response.json();
+        announcements = await response.json();
         // Store globally and cache
         allAnnouncements = announcements;
         setCachedAnnouncements(announcements);
         
-        // Sort and open modal
+        // Sort announcements: pinned first, then by date
         announcements.sort((a, b) => {
+            // First sort by pinned status
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
+            
+            // If both have the same pin status, sort by date descending
             const dateA = a.date && a.date.seconds ? new Date(a.date.seconds * 1000) : 
-                         a.date && a.date._seconds ? new Date(a.date._seconds * 1000) :
-                         new Date(a.date);
+                        a.date && a.date._seconds ? new Date(a.date._seconds * 1000) :
+                        new Date(a.date);
             const dateB = b.date && b.date.seconds ? new Date(b.date.seconds * 1000) : 
-                         b.date && b.date._seconds ? new Date(b.date._seconds * 1000) :
-                         new Date(b.date);
+                        b.date && b.date._seconds ? new Date(b.date._seconds * 1000) :
+                        new Date(b.date);
             return dateB - dateA;
         });
         
-        openAnnouncementsModal(announcements);
+        // If a specific announcement is requested, find it and display it directly
+        if (targetAnnouncementId) {
+            const targetAnnouncement = announcements.find(ann => ann.id === targetAnnouncementId);
+            if (targetAnnouncement) {
+                openAnnouncementsModal([targetAnnouncement]);
+                return;
+            }
+        }
+        
+        openAnnouncementsModal(announcements, targetAnnouncementId);
     } catch (error) {
         console.error('Error loading announcements:', error);
         showToast('Error', 'Failed to load announcements. Please try again.');
@@ -383,7 +400,6 @@ async function loadAnnouncements() {
     }
 
     try {
-        // Check if we have cached announcements
         const cachedAnnouncements = getCachedAnnouncements();
         let announcements;
         
@@ -403,8 +419,13 @@ async function loadAnnouncements() {
             setCachedAnnouncements(announcements);
         }
         
-        // Sort by date, handling Firestore timestamp objects
+        // Sort announcements: pinned first, then by date
         announcements.sort((a, b) => {
+            // First sort by pinned status
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
+            
+            // If both have the same pin status, sort by date descending
             const dateA = a.date && a.date.seconds ? new Date(a.date.seconds * 1000) : 
                         a.date && a.date._seconds ? new Date(a.date._seconds * 1000) :
                         new Date(a.date);
@@ -523,7 +544,7 @@ async function loadAnnouncements() {
     }
 }
 
-function openAnnouncementsModal(announcements) {
+function openAnnouncementsModal(announcements, targetAnnouncementId) {
     const modal = document.getElementById('announcements-modal');
     const list = document.getElementById('announcements-list');
     const closeBtn = document.getElementById('close-announcements-modal');
@@ -558,18 +579,24 @@ function openAnnouncementsModal(announcements) {
     
     if (closeBtn) {
         if (isViewingSingleAnnouncement) {
-            // When showing a single announcement and allAnnouncements has more than 1 item
             if (allAnnouncements.length > 1) {
-                closeBtn.textContent = 'Back to All';
+                closeBtn.textContent = 'Back to All Announcements';
                 closeBtn.setAttribute('aria-label', 'Back to all announcements');
+                
+                // Override the normal close button behavior when viewing a single announcement
+                closeBtn.onclick = () => {
+                    openAnnouncementsModal(allAnnouncements);
+                };
             } else {
-                // Special case: when viewing the only announcement in detail
                 closeBtn.textContent = 'Close';
                 closeBtn.setAttribute('aria-label', 'Close announcement');
             }
         } else {
             closeBtn.textContent = 'Close';
             closeBtn.setAttribute('aria-label', 'Close announcements');
+            
+            // Reset the close button behavior
+            closeBtn.onclick = closeAnnouncementsModal;
         }
     }
     
@@ -579,10 +606,22 @@ function openAnnouncementsModal(announcements) {
         card.tabIndex = 0;
         card.setAttribute('role', 'article');
         card.setAttribute('aria-labelledby', `announcement-title-${ann.id}`);
+        card.dataset.id = ann.id;
         
         // Apply pinned styling if the announcement is pinned
         if (ann.pinned) {
             card.classList.add('pinned');
+        }
+        
+        // Highlight the specific announcement if requested
+        if (targetAnnouncementId && ann.id === targetAnnouncementId) {
+            card.classList.add('highlighted-announcement');
+            
+            // Scroll into view with a small delay to ensure the DOM is ready
+            setTimeout(() => {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                card.focus();
+            }, 100);
         }
         
         const title = document.createElement('h4');

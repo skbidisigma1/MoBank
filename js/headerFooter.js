@@ -244,7 +244,9 @@ async function loadHeaderFooter() {
                         } else if (type === 'transfer_received' || type === 'user_transfer') {
                             window.location.href = 'transfer';
                         } else if (type === 'announcement') {
-                            window.location.href = `${window.location.origin}?showAnnouncements=true`;
+                            // Include the announcement ID in the URL if available
+                            const announcementId = notification.announcementId || '';
+                            window.location.href = `${window.location.origin}?showAnnouncements=true&announcementId=${announcementId}`;
                         }
                     });
 

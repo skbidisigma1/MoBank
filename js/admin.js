@@ -328,6 +328,22 @@ async function loadAdminContent() {
       return;
     }
 
+    // Sort announcements: pinned first, then by date
+    announcements.sort((a, b) => {
+      // First sort by pinned status
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      
+      // If both have the same pin status, sort by date descending
+      const dateA = a.date && a.date.seconds ? new Date(a.date.seconds * 1000) : 
+                  a.date && a.date._seconds ? new Date(a.date._seconds * 1000) :
+                  new Date(a.date);
+      const dateB = b.date && b.date.seconds ? new Date(b.date.seconds * 1000) : 
+                  b.date && b.date._seconds ? new Date(b.date._seconds * 1000) :
+                  new Date(b.date);
+      return dateB - dateA;
+    });
+
     currentAnnouncementsList.innerHTML = ''; // Clear previous content
     const ul = document.createElement('ul');
     ul.className = 'announcements-admin-list';

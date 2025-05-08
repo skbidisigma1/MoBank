@@ -2,6 +2,61 @@ const { admin, db } = require('../firebase');
 
 const { verifyToken, getTokenFromHeader } = require('../auth-helper');
 
+// Helper function to add notifications to all users
+async function notifyAllUsers(announcement) {
+  try {
+    // Get all users
+    const usersSnapshot = await db.collection('users').get();
+    
+    // Create a notification object
+    const notification = {
+      type: 'announcement',
+      message: `New announcement: ${announcement.title}`,
+      read: false,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      announcementId: announcement.id
+    };
+    
+    // Batch operations for better performance
+    const batchSize = 500; // Firestore has a limit of 500 operations per batch
+    let batch = db.batch();
+    let operationCount = 0;
+    
+    for (const userDoc of usersSnapshot.docs) {
+      // Get current notifications or initialize empty array
+      const userData = userDoc.data();
+      const currentNotifications = userData.notifications || [];
+      
+      // Add the new notification to the beginning of the array
+      const updatedNotifications = [notification, ...currentNotifications];
+      
+      // Update the user document
+      const userRef = db.collection('users').doc(userDoc.id);
+      batch.update(userRef, { notifications: updatedNotifications });
+      
+      operationCount++;
+      
+      // If we've reached the batch size limit, commit and start a new batch
+      if (operationCount >= batchSize) {
+        await batch.commit();
+        batch = db.batch();
+        operationCount = 0;
+      }
+    }
+    
+    // Commit any remaining operations
+    if (operationCount > 0) {
+      await batch.commit();
+    }
+    
+    console.log(`Notification sent to ${usersSnapshot.size} users about announcement: ${announcement.title}`);
+    return true;
+  } catch (error) {
+    console.error('Error sending notifications to users:', error);
+    return false;
+  }
+}
+
 module.exports = async (req, res) => {
   if (req.method === 'GET') {
     try {
@@ -82,7 +137,19 @@ module.exports = async (req, res) => {
       
       const ref = await db.collection('announcements').add(data);
       const doc = await ref.get();
-      return res.status(201).json({ id: ref.id, ...doc.data() });
+      
+      // Create announcement object with ID for notifications
+      const announcement = { 
+        id: ref.id,
+        ...doc.data()
+      };
+      
+      // Notify all users about the new announcement (non-blocking)
+      notifyAllUsers(announcement).catch(error => 
+        console.error('Failed to send notifications for new announcement:', error)
+      );
+      
+      return res.status(201).json(announcement);
     } catch (error) {
       return res.status(500).json({ message: 'Failed to create announcement', error: error.toString() });
     }
