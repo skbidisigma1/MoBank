@@ -228,6 +228,14 @@ main {
   box-sizing: border-box;
   width: 100%;
 }
+#concert-schedule-section.container {
+  max-width: 1200px;
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 0;
+  padding-right: 0;
+}
 form {
   margin: 20px auto;
   display: flex;
