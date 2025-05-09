@@ -4,6 +4,10 @@ const { verifyToken, getTokenFromHeader } = require('../auth-helper');
 
 async function notifyAllUsers(announcement) {
   try {
+    if (announcement.patchnote) {
+      console.log('Announcement is patch note, skipping notifications for', announcement.id);
+      return true;
+    }
     console.log('Starting notification process for announcement:', announcement.id);
     const usersSnapshot = await db.collection('users').get();
     
@@ -117,7 +121,7 @@ module.exports = async (req, res) => {
 
   const id = req.query.id;  
     if (req.method === 'POST') {
-    const { title, description, body, pinned } = req.body;
+    const { title, description, body, pinned, patchnote } = req.body;
     if (!title || !body) {
       return res.status(400).json({ message: 'Missing required fields' });
     }    
@@ -131,6 +135,7 @@ module.exports = async (req, res) => {
         body, 
         date: admin.firestore.FieldValue.serverTimestamp(),
         pinned: Boolean(pinned),
+        patchnote: Boolean(patchnote),
         createdBy: creatorName,
         isEdited: false
       };
@@ -168,6 +173,9 @@ module.exports = async (req, res) => {
       
       if ('pinned' in updates) {
         updates.pinned = Boolean(updates.pinned);
+      }
+      if ('patchnote' in updates) {
+        updates.patchnote = Boolean(updates.patchnote);
       }
       
       if (updates.body || updates.title || updates.description) {

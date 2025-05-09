@@ -531,6 +531,12 @@ async function loadAnnouncements() {
                         openAnnouncementsModal([mainAnn]);
                     }
                 });
+
+                newContainer.appendChild(Object.assign(document.createElement('span'), {
+                  className: 'announcement-hint',
+                  style: 'display:block;margin-top:0.5em;font-size:0.95em;color:var(--secondary-text,#666);text-align:right;',
+                  textContent: 'Click to view announcement'
+                }));
             }
         } else {
             // Handle case where there are no announcements

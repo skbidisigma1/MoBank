@@ -589,6 +589,8 @@ async function loadAdminContent() {
       const title = titleInput.value.trim();
       const description = descriptionInput.value.trim();
       const pinned = pinnedInput.checked;
+      const patchnoteInput = document.getElementById('announcement-patchnote');
+      const patchnote = patchnoteInput ? patchnoteInput.checked : false;
 
       if (!title) {
         showToast('Validation Error', 'Please enter a title for the announcement.');
@@ -606,6 +608,7 @@ async function loadAdminContent() {
         description,
         body: bodyContent,
         pinned,
+        patchnote,
       };
 
       try {

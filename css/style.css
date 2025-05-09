@@ -236,6 +236,9 @@ main {
   padding-left: 0;
   padding-right: 0;
 }
+#concert-schedule-heading {
+  color: var(--color-secondary);
+}
 form {
   margin: 20px auto;
   display: flex;
@@ -1836,7 +1839,6 @@ select:after {
 .action-button.secondary {
   background: var(--color-secondary);
 }
-
 .action-button.motools {
   background: var(--color-motools);
 }
@@ -2393,9 +2395,10 @@ select:after {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-/* End Confirmation Modal Styles */
+.toggle-icon.secondary {
+  color: var(--color-secondary);
+}
 
-/* Toggle Switch Styles (from metronome-enhanced.css) */
 .toggle-switch {
   position: relative;
   display: inline-block;
@@ -2648,4 +2651,14 @@ input:disabled + .toggle-slider:before {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+.announcement-hint {
+  display: block;
+  margin-top: 0.5em;
+  font-size: 0.95em;
+  color: var(--color-muted);
+  text-align: center;
+  font-style: italic;
+  letter-spacing: 0.01em;
 }
