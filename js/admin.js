@@ -1,4 +1,4 @@
-async function loadAdminContent() {
+aasync function loadAdminContent() {
   await window.auth0Promise;
   const user = await getUser();
   const roles = (user && user['https://mo-classroom.us/roles']) || [];
