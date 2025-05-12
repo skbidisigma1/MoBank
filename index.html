@@ -55,7 +55,37 @@
       <p class="hero-cta">Log in to view your balance, send MoBucks, and keep track of recent transactions.</p>
       <button id="get-started-btn" class="primary-button" aria-label="Get started with MoBank">Get Started!</button>
       <button id="motools-btn" class="secondary-button" aria-label="Continue to MoTools">Continue to MoTools (Beta)</button>
-    </section>    <section id="concert-schedule-section" class="container" aria-labelledby="concert-schedule-heading">
+    </section>
+
+    <section id="concert-flyer-carousel-section" class="concert-flyer-carousel">
+      <h3 class="concert-flyer-heading">Concert Program</h3>
+      <div class="carousel-flex-container">
+        <div class="carousel-viewport">
+          <div class="carousel-slides-container">
+            <img src="/images/concert/concert1.png" alt="Concert Flyer Page 1" class="carousel-slide">
+            <img src="/images/concert/concert2.png" alt="Concert Flyer Page 2" class="carousel-slide">
+            <img src="/images/concert/concert3.png" alt="Concert Flyer Page 3" class="carousel-slide">
+            <img src="/images/concert/concert4.png" alt="Concert Flyer Page 4" class="carousel-slide">
+          </div>
+        </div>
+        <div class="carousel-nav-container">
+          <button id="carousel-prev-btn" class="carousel-button prev" aria-label="Previous Slide">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <button id="carousel-next-btn" class="carousel-button next" aria-label="Next Slide">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div id="carousel-indicators-container" class="carousel-indicators">
+      </div>
+    </section>
+
+    <section id="concert-schedule-section" class="container" aria-labelledby="concert-schedule-heading">
       <div class="concert-section-header" id="concert-header">
         <h2 id="concert-schedule-heading">Concert Information
         </h2>
