@@ -31,10 +31,8 @@ const auth0Promise = (async () => {
 
 async function getToken() {
   try {
-    // Request an access token for the API audience
     return await auth0Client.getTokenSilently({
-      audience: 'https://mo-classroom.us/api',
-      ignoreCache: true
+      audience: 'https://mo-classroom.us/api'
     });
   } catch (e) {
     if (e.error === 'login_required' ||
