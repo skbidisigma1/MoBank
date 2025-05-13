@@ -14,7 +14,6 @@ const createLimiter = max =>
     (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
     req.socket.remoteAddress ||
     '';
-  console.log('🔑 Rate key being used:', key);
   return key;
     }
   });

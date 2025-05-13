@@ -122,6 +122,10 @@
   <div id="announcements-modal" class="modal hidden" role="dialog" aria-labelledby="modal-heading" aria-hidden="true">
     <div id="announcements-modal-content" class="modal-content">
       <h2 id="modal-heading">All Announcements</h2>
+      <div class="announcements-tabs" role="tablist">
+        <button id="tab-announcements" class="announcements-tab active" role="tab" aria-selected="true" tabindex="0">Announcements</button>
+        <button id="tab-patchnotes" class="announcements-tab" role="tab" aria-selected="false" tabindex="-1">Patch Notes</button>
+      </div>
       <div id="announcements-list" role="list" aria-label="List of all announcements"></div>
       <button id="close-announcements-modal" class="tab-button" aria-label="Close announcements">
         Close

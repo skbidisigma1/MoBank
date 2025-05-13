@@ -2507,7 +2507,6 @@ input:disabled + .toggle-slider:before {
 /* Force the TinyMCE toolbar to be full width */
 .tox.tox-tinymce-inline {
   width: 100% !important;
-  max-width: 100% !important;
 }
 
 .tox .tox-toolbar__primary {
@@ -2661,4 +2660,44 @@ input:disabled + .toggle-slider:before {
   text-align: center;
   font-style: italic;
   letter-spacing: 0.01em;
+}
+
+.announcements-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.announcements-tab {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-primary, #0056b3);
+  padding: 0.5em 1.5em;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.2s, color 0.2s;
+}
+.announcements-tab.active,
+.announcements-tab:focus {
+  background: var(--color-main-bg, #f5f7fa);
+  color: var(--color-accent, #222);
+  border-bottom: 2px solid var(--color-primary, #0056b3);
+  z-index: 2;
+}
+.announcements-tab:not(.active):hover {
+  background: rgba(0,86,179,0.08);
+}
+
+[data-theme="dark"] .announcements-tab.active,
+[data-theme="dark"] .announcements-tab:focus {
+  background: #18263a;
+  color: #5ea2ff;
+  border-bottom: 2px solid #5ea2ff;
+}
+[data-theme="dark"] .announcements-tab:not(.active):hover {
+  background: rgba(94,162,255,0.08);
+  color: #5ea2ff;
 }

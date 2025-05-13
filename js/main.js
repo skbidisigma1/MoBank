@@ -272,7 +272,7 @@ async function loadAndOpenAllAnnouncements(targetAnnouncementId) {
                 }
             }
             
-            openAnnouncementsModal(announcements, targetAnnouncementId);
+            openAnnouncementsModal(announcements, targetAnnouncementId, 'announcements');
             return;
         }
         
@@ -309,11 +309,11 @@ async function loadAndOpenAllAnnouncements(targetAnnouncementId) {
                 return;
             } else {
                 // If not found, still open all announcements but highlight the target
-                openAnnouncementsModal(announcements, targetAnnouncementId);
+                openAnnouncementsModal(announcements, targetAnnouncementId, 'announcements');
                 return;
             }
         }
-        openAnnouncementsModal(announcements);
+        openAnnouncementsModal(announcements, undefined, 'announcements');
     } catch (error) {
         console.error('Error loading announcements:', error);
         showToast('Error', 'Failed to load announcements. Please try again.');
@@ -553,29 +553,48 @@ async function loadAnnouncements() {
     }
 }
 
-function openAnnouncementsModal(announcements, targetAnnouncementId) {
+function openAnnouncementsModal(announcements, targetAnnouncementId, tabType = 'announcements') {
     const modal = document.getElementById('announcements-modal');
     const list = document.getElementById('announcements-list');
     const closeBtn = document.getElementById('close-announcements-modal');
     const modalHeading = document.getElementById('modal-heading');
+    const tabAnnouncements = document.getElementById('tab-announcements');
+    const tabPatchnotes = document.getElementById('tab-patchnotes');
     
     if (!modal || !list) return;
-    
     lastActiveElement = document.activeElement;
-    const fragment = document.createDocumentFragment();
-      // Track which view we're showing
-    // Three possible states:
-    // 1. Initial loading of all announcements
-    // 2. Showing detailed view of a specific announcement
-    // 3. Showing all announcements after viewing a detailed announcement
-    
+    // Determine which tab is active
+    let activeTab = tabType;
+    if (tabAnnouncements && tabPatchnotes) {
+        tabAnnouncements.classList.toggle('active', activeTab === 'announcements');
+        tabPatchnotes.classList.toggle('active', activeTab === 'patchnotes');
+        tabAnnouncements.setAttribute('aria-selected', activeTab === 'announcements');
+        tabPatchnotes.setAttribute('aria-selected', activeTab === 'patchnotes');
+        tabAnnouncements.tabIndex = activeTab === 'announcements' ? 0 : -1;
+        tabPatchnotes.tabIndex = activeTab === 'patchnotes' ? 0 : -1;
+    }
+
+    // Determine if we're showing a single announcement or the full list
+    const viewingSingle = announcements.length === 1;
+    // Update global flag from current array
+    isViewingSingleAnnouncement = viewingSingle;
+
+    // Filter announcements for the selected tab when in list view
+    let filtered = announcements;
+    if (!viewingSingle) {
+        if (activeTab === 'patchnotes') {
+            filtered = announcements.filter(a => a.patchnote === true);
+        } else {
+            filtered = announcements.filter(a => !a.patchnote);
+        }
+    }
+
     // Store the view state in a marker attribute on the modal
     const initialLoad = !modal.dataset.loaded;
-    
-    // Simpler logic: If we're displaying exactly one announcement, show it in detail view
-    // regardless of any other conditions
-    isViewingSingleAnnouncement = (announcements.length === 1);
 
+    // Use original announcements count to determine single-view; do not auto-detail when a tab filter has one item
+    // isViewingSingleAnnouncement remains as set by viewingSingle
+    
     // If this is the first time opening the modal, mark it as loaded
     if (initialLoad) {
         modal.dataset.loaded = "true";
@@ -591,25 +610,25 @@ function openAnnouncementsModal(announcements, targetAnnouncementId) {
             if (allAnnouncements.length > 1) {
                 closeBtn.textContent = 'Back to All Announcements';
                 closeBtn.setAttribute('aria-label', 'Back to all announcements');
-                
-                // Override the normal close button behavior when viewing a single announcement
+                // Always return to Announcements tab, not Patch Notes
                 closeBtn.onclick = () => {
-                    openAnnouncementsModal(allAnnouncements);
+                    openAnnouncementsModal(allAnnouncements, undefined, 'announcements');
                 };
             } else {
                 closeBtn.textContent = 'Close';
                 closeBtn.setAttribute('aria-label', 'Close announcement');
+                closeBtn.onclick = closeAnnouncementsModal;
             }
         } else {
             closeBtn.textContent = 'Close';
             closeBtn.setAttribute('aria-label', 'Close announcements');
-            
-            // Reset the close button behavior
             closeBtn.onclick = closeAnnouncementsModal;
         }
     }
     
-    announcements.forEach(ann => {
+    const fragment = document.createDocumentFragment();
+    
+    filtered.forEach(ann => {
         const card = document.createElement('div');
         card.className = 'announcement-card';
         card.tabIndex = 0;
@@ -695,6 +714,14 @@ function openAnnouncementsModal(announcements, targetAnnouncementId) {
         card.appendChild(contentElement);
         card.appendChild(metaContainer);
         
+        // Add hint only in list view (not single detail view)
+        if (!isViewingSingleAnnouncement) {
+            const hint = document.createElement('span');
+            hint.className = 'announcement-hint';
+            hint.textContent = 'Click to view announcement';
+            card.appendChild(hint);
+        }
+        
         // Add click handlers only if not already in detail view
         if (!isViewingSingleAnnouncement) {
             card.addEventListener('click', (e) => {
@@ -722,6 +749,29 @@ function openAnnouncementsModal(announcements, targetAnnouncementId) {
     const firstCard = list.querySelector('.announcement-card');
     if (firstCard) {
         firstCard.focus();
+    }
+    
+    // Tab event listeners (only set up once)
+    if (tabAnnouncements && tabPatchnotes && !modal.dataset.tabsInitialized) {
+        tabAnnouncements.addEventListener('click', () => {
+            openAnnouncementsModal(allAnnouncements, undefined, 'announcements');
+        });
+        tabPatchnotes.addEventListener('click', () => {
+            openAnnouncementsModal(allAnnouncements, undefined, 'patchnotes');
+        });
+        tabAnnouncements.addEventListener('keydown', (e) => {
+            if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'Tab') && !e.shiftKey) {
+                e.preventDefault();
+                tabPatchnotes.focus();
+            }
+        });
+        tabPatchnotes.addEventListener('keydown', (e) => {
+            if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Tab') && !e.shiftKey) {
+                e.preventDefault();
+                tabAnnouncements.focus();
+            }
+        });
+        modal.dataset.tabsInitialized = 'true';
     }
 }
 
