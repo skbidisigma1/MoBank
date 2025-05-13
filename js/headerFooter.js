@@ -398,7 +398,7 @@ async function loadHeaderFooter() {
         }
 
         async function updateNotificationsFromUserData() {
-            if (isAuthenticated()) {
+            if (await isAuthenticated()) {
                 let userData = getCachedUserData();
 
                 if (!userData) {
