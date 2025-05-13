@@ -1,129 +1,98 @@
 const rateLimit = require('express-rate-limit');
+const { getTokenFromHeader, verifyToken } = require('../auth-helper');
 
-const createLimiter = (max) =>
+const createLimiter = max =>
   rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    windowMs: 10 * 60 * 1000,
     max,
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: 'Too many requests, please try again later.' },
-    keyGenerator: (req) =>
-      (req.auth?.payload?.sub) ||
-      (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
-      req.socket.remoteAddress ||
-      ''
+    keyGenerator: req => {
+      const key =
+    req.auth?.payload?.sub ||
+    (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
+    req.socket.remoteAddress ||
+    '';
+  console.log('🔑 Rate key being used:', key);
+  return key;
+    }
   });
 
-const regularLimiter = createLimiter(200);
-const adminLimiter   = createLimiter(600);
+const regularLimiter = createLimiter(400);
+const adminLimiter = createLimiter(750);
+
+const attachAuth = async req => {
+  const token = getTokenFromHeader(req);
+  if (!token) return;
+  try {
+    const decoded = await verifyToken(token);
+    req.auth = { payload: decoded };
+  } catch {}
+};
 
 const enforceRateLimit = (req, res) =>
-  new Promise((resolve) => {
+  new Promise(resolve => {
     const roles = req.auth?.payload?.['https://mo-classroom.us/roles'] || [];
-    const isAdmin = roles.includes('admin');
-    const limiter = isAdmin ? adminLimiter : regularLimiter;
-    limiter(req, res, () => resolve());
+    (roles.includes('admin') ? adminLimiter : regularLimiter)(req, res, () => resolve());
   });
 
 const handlers = {};
-
 const profiler = {
-  startTime: {},
-  start: (label) => {
-    profiler.startTime[label] = process.hrtime();
-  },
-  end: (label) => {
-    const diff = process.hrtime(profiler.startTime[label]);
-    return (diff[0] * 1e9 + diff[1]) / 1e6;
-  },
+  t: {},
+  start: l => (profiler.t[l] = process.hrtime()),
+  end: l => {
+    const d = process.hrtime(profiler.t[l]);
+    return (d[0] * 1e9 + d[1]) / 1e6;
+  }
 };
 
-const parseBody = (req) => {
-  const contentLength = parseInt(req.headers['content-length'] || '0', 10);
-  if (contentLength > 1e6 || contentLength === 0) return Promise.resolve({});
-
-  return new Promise((resolve) => {
-    let body = '';
-    req.on('data', (chunk) => {
-      body += chunk;
-    });
+const parseBody = req =>
+  new Promise(resolve => {
+    const len = +req.headers['content-length'] || 0;
+    if (!len || len > 1e6) return resolve({});
+    let b = '';
+    req.on('data', c => (b += c));
     req.on('end', () => {
-      if (!body) return resolve({});
       try {
-        resolve(JSON.parse(body));
+        resolve(JSON.parse(b));
       } catch {
         resolve({});
       }
     });
   });
+
+const getRoutePath = url => {
+  const i = url.indexOf('/api/');
+  if (i === -1) return '';
+  let p = url.slice(i + 5);
+  const q = p.indexOf('?');
+  if (q !== -1) p = p.slice(0, q);
+  if (p.endsWith('/')) p = p.slice(0, -1);
+  return p || '';
 };
 
-function getRoutePath(url) {
-  const apiIndex = url.indexOf('/api/');
-  if (apiIndex === -1) return '';
-
-  let path = url.substring(apiIndex + 5);
-  const queryIndex = path.indexOf('?');
-  if (queryIndex !== -1) path = path.substring(0, queryIndex);
-  if (path.endsWith('/')) path = path.slice(0, -1);
-
-  return path || '';
-}
-
 module.exports = async (req, res) => {
-  profiler.start('total-request');
-
+  profiler.start('total');
+  await attachAuth(req);
   await enforceRateLimit(req, res);
   if (res.headersSent) return;
-
   try {
-    const contentType = req.headers['content-type'] || '';
-    if (
-      (req.method === 'POST' || req.method === 'PUT') &&
-      (contentType.includes('application/json') || contentType === '')
-    ) {
-      profiler.start('body-parsing');
+    const ct = req.headers['content-type'] || '';
+    if (['POST', 'PUT'].includes(req.method) && (ct.includes('application/json') || !ct))
       req.body = await parseBody(req);
-      profiler.end('body-parsing');
-    } else {
-      req.body = {};
-    }
-
-    profiler.start('path-extraction');
+    else req.body = {};
     const routePath = getRoutePath(req.url);
-    profiler.end('path-extraction');
-
-    if (!routePath) {
-      return res.status(404).json({ message: 'API endpoint not found' });
-    }
-
-    const handlerPath = `../routes/${routePath}`;
-
-    try {
-      profiler.start('handler-loading');
-      const handler = handlers[routePath] || (handlers[routePath] = require(handlerPath));
-      profiler.end('handler-loading');
-
-      profiler.start('handler-execution');
-      const result = await handler(req, res);
-      profiler.end('handler-execution');
-
-      profiler.end('total-request');
-      return result;
-    } catch (error) {
-      if (error.code === 'MODULE_NOT_FOUND') {
-        return res.status(404).json({ message: `API endpoint '${routePath}' not found` });
-      }
-
-      return res.status(500).json({
+    if (!routePath) return res.status(404).json({ message: 'API endpoint not found' });
+    const handler = handlers[routePath] || (handlers[routePath] = require(`../routes/${routePath}`));
+    await handler(req, res);
+  } catch (e) {
+    if (!res.headersSent)
+      res.status(500).json({
         message: 'Internal server error',
-        error: process.env.NODE_ENV === 'production' ? undefined : error.toString(),
+        error: process.env.NODE_ENV === 'production' ? undefined : e.toString()
       });
-    }
-  } catch (error) {
-    return res.status(500).json({
-      message: 'Internal server error',
-      error: process.env.NODE_ENV === 'production' ? undefined : error.toString(),
-    });
+  } finally {
+    profiler.end('total');
   }
 };
