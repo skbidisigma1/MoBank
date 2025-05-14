@@ -739,6 +739,7 @@ async function loadAdminContent() {
           descriptionInput.value = '';
           pinnedInput.checked = false;
           tinymce.get('tinymce-editor')?.setContent('');
+          clearAdminAnnouncementsCache(); // <-- Added to clear cache before reloading
           loadCurrentAnnouncements();
         } else {
           showToast('Error', result.message || 'Failed to create announcement.');
