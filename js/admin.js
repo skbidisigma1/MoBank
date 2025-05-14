@@ -411,7 +411,7 @@ async function loadAdminContent() {
           </svg>
           Delete
         `;
-        deleteButton.addEventListener('click', () => handleDeleteAnnouncement(ann.id));
+        deleteButton.addEventListener('click', () => handleDeleteAnnouncement(ann.id, ann.title));
   
         actions.appendChild(editButton);
         actions.appendChild(deleteButton);
@@ -520,7 +520,7 @@ async function loadAdminContent() {
           </svg>
           Delete
         `;
-        deleteButton.addEventListener('click', () => handleDeleteAnnouncement(ann.id));
+        deleteButton.addEventListener('click', () => handleDeleteAnnouncement(ann.id, ann.title));
   
         actions.appendChild(editButton);
         actions.appendChild(deleteButton);
@@ -753,43 +753,27 @@ async function loadAdminContent() {
     
     announcementForm.addEventListener('submit', originalAnnouncementFormSubmit);
   }
-  async function handleDeleteAnnouncement(announcementId) {
-    if (!announcementId) {
-      showToast('Error', 'Missing announcement ID');
-      return;
-    }
-
-    const confirmed = await showConfirmationModal('Are you sure you want to delete this announcement?');
-    if (!confirmed) return;
-
-    try {
-      const token = await getToken();
-      const response = await fetch(`/api/announcements?id=${announcementId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
+  async function handleDeleteAnnouncement(announcementId, announcementTitle) {
+    const name = announcementTitle ? `"${announcementTitle}"` : 'this announcement';
+    showConfirmationModal(`Are you sure you want to delete ${name}?`).then(async (confirmed) => {
+      if (!confirmed) return;
+      try {
+        const token = await getToken();
+        const response = await fetch(`/api/announcements?id=${announcementId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!response.ok) {
+          throw new Error('Failed to delete announcement');
         }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to delete announcement: ${response.statusText}`);
+        showToast('Success', 'Announcement deleted successfully');
+        clearAdminAnnouncementsCache();
+        loadCurrentAnnouncements();
+      } catch (error) {
+        console.error('Error deleting announcement:', error);
+        showToast('Error', 'Failed to delete announcement.');
       }
-      
-      showToast('Success', 'Announcement deleted successfully');
-      
-      const form = document.getElementById('announcement-form');
-      if (form && form.dataset.announcementId === announcementId) {
-        resetAnnouncementForm();
-      }
-      
-      clearAdminAnnouncementsCache();
-      
-      loadCurrentAnnouncements();
-      
-    } catch (error) {
-      console.error('Error deleting announcement:', error);
-      showToast('Error', `Failed to delete announcement: ${error.message}`);
-    }
+    });
   }
 
   function getCachedNames(period) {
