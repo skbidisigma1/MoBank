@@ -56,9 +56,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       instrumentDisplay += `<span class="period-tag">${periodDisplay}</span>`;
     }
 
+    let displayName = user.name;
+    if (user.name === 'Luke Collingridge') {
+      displayName = '🛠️ ' + user.name;
+    } else if (user.name === 'Stewart Collett') {
+      displayName = 'Stewart Collett (likes Bailey)';
+    } else if (user.name === 'Eli Nelson') {
+      displayName = '💸 ' + user.name;
+    }
+
     card.innerHTML = `
       <div class="card-rank ${rank <= 3 ? `rank-${rank}` : ''}">${rankDisplay}</div>
-      <div class="card-name">${user.name === 'Luke Collingridge' ? '🛠️ ' + user.name : user.name}</div>
+      <div class="card-name">${displayName}</div>
       <div class="card-divider"></div>
       <div class="card-balance">${user.balance} MoBucks</div>
       <div class="card-instrument">${instrumentDisplay}</div>
@@ -99,9 +108,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const nameCell = document.createElement('td');
       nameCell.className = 'name-cell';
-      nameCell.textContent = user.name;
       if (user.name === 'Luke Collingridge') {
         nameCell.innerHTML = '🛠️ ' + user.name;
+      } else if (user.name === 'Stewart Collett') {
+        nameCell.textContent = 'Stewart Collett (likes Bailey)';
+      } else if (user.name === 'Eli Nelson') {
+        nameCell.innerHTML = '💸 ' + user.name;
+      } else {
+        nameCell.textContent = user.name;
       }
       row.appendChild(nameCell);
 
