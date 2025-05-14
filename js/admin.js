@@ -94,10 +94,10 @@ async function loadAdminContent() {
         });
       },
     });
-    cancelBtn.addEventListener('click', () => {
-      const editor = tinymce.get('tinymce-editor');
-      if (editor) {
-        editor.setContent(hiddenTextarea.value);
+    // Use event delegation so cloned cancel buttons still work
+    document.body.addEventListener('click', (e) => {
+      if (e.target && e.target.id === 'editor-cancel-btn') {
+        resetAnnouncementForm();
       }
     });
   }
@@ -298,129 +298,240 @@ async function loadAdminContent() {
   function displayAnnouncements(announcements) {
     if (!currentAnnouncementsList) return;
 
-    if (announcements.length === 0) {
+    // Sort and group announcements
+    const items = announcements.sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      const dateA = a.date?.seconds ? new Date(a.date.seconds * 1000) : a.date?._seconds ? new Date(a.date._seconds * 1000) : new Date(a.date);
+      const dateB = b.date?.seconds ? new Date(b.date.seconds * 1000) : b.date?._seconds ? new Date(b.date._seconds * 1000) : new Date(b.date);
+      return dateB - dateA;
+    });
+    const regular = items.filter(a => !a.patchnote);
+    const patchnotes = items.filter(a => a.patchnote);
+
+    currentAnnouncementsList.innerHTML = '';
+    if (regular.length === 0 && patchnotes.length === 0) {
       currentAnnouncementsList.innerHTML = '<p>No announcements found.</p>';
       return;
     }
 
-    announcements.sort((a, b) => {
-      if (a.pinned && !b.pinned) return -1;
-      if (!a.pinned && b.pinned) return 1;
-      
-      const dateA = a.date && a.date.seconds ? new Date(a.date.seconds * 1000) : 
-                  a.date && a.date._seconds ? new Date(a.date._seconds * 1000) :
-                  new Date(a.date);
-      const dateB = b.date && b.date.seconds ? new Date(b.date.seconds * 1000) : 
-                  b.date && b.date._seconds ? new Date(b.date._seconds * 1000) :
-                  new Date(b.date);
-      return dateB - dateA;
-    });
-
-    currentAnnouncementsList.innerHTML = '';
-    const ul = document.createElement('ul');
-    ul.className = 'announcements-admin-list';
-
-    announcements.forEach(ann => {
-      const li = document.createElement('li');
-      li.className = 'announcement-admin-item';
-      li.dataset.id = ann.id;
-      
-      if (ann.pinned) {
-        li.classList.add('pinned');
-      }
-
-      const title = document.createElement('span');
-      title.className = 'announcement-admin-title';
-      title.textContent = ann.title;
-      if (ann.pinned) {
-        title.textContent += ' (Pinned)';
-      }
-      
-      const metaContainer = document.createElement('div');
-      metaContainer.className = 'announcement-admin-meta';
-      
-      const dateSpan = document.createElement('span');
-      dateSpan.className = 'announcement-admin-date';
-      dateSpan.innerHTML = `
-        <svg viewBox="0 0 24 24" width="16" height="16">
-          <path fill="currentColor" d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
-        </svg>
-      `;
-      
-      try {
-        let date;
-        if (ann.date && ann.date.seconds) {
-          date = new Date(ann.date.seconds * 1000);
-        } else if (ann.date && ann.date._seconds) {
-          date = new Date(ann.date._seconds * 1000);
-        } else if (ann.date) {
-          date = new Date(ann.date);
+    // Render regular announcements section
+    if (regular.length > 0) {
+      const headerA = document.createElement('h4');
+      headerA.textContent = 'Announcements';
+      currentAnnouncementsList.appendChild(headerA);
+      const ulA = document.createElement('ul');
+      ulA.className = 'announcements-admin-list';
+      regular.forEach(ann => {
+        const li = document.createElement('li');
+        li.className = 'announcement-admin-item';
+        li.dataset.id = ann.id;
+        
+        if (ann.pinned) {
+          li.classList.add('pinned');
         }
-        dateSpan.innerHTML += (date ? date.toLocaleString() : 'Unknown Date');
-      } catch (e) {
-        console.error("Error parsing date:", ann.date, e);
-        dateSpan.innerHTML += 'Unknown Date';
-      }
-      
-      metaContainer.appendChild(dateSpan);
-      
-      if (ann.createdBy) {
-        const creatorSpan = document.createElement('span');
-        creatorSpan.className = 'announcement-admin-creator';
-        creatorSpan.innerHTML = `
+  
+        const title = document.createElement('span');
+        title.className = 'announcement-admin-title';
+        title.textContent = ann.title;
+        if (ann.pinned) {
+          title.textContent += ' (Pinned)';
+        }
+        
+        const metaContainer = document.createElement('div');
+        metaContainer.className = 'announcement-admin-meta';
+        
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'announcement-admin-date';
+        dateSpan.innerHTML = `
           <svg viewBox="0 0 24 24" width="16" height="16">
-            <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+            <path fill="currentColor" d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
           </svg>
-          Posted by: ${ann.createdBy}
         `;
-        metaContainer.appendChild(creatorSpan);
-      }
-
-      if (ann.isEdited && ann.editedBy) {
-        const editedSpan = document.createElement('span');
-        editedSpan.className = 'announcement-admin-edited';
-        editedSpan.innerHTML = `
+        
+        try {
+          let date;
+          if (ann.date && ann.date.seconds) {
+            date = new Date(ann.date.seconds * 1000);
+          } else if (ann.date && ann.date._seconds) {
+            date = new Date(ann.date._seconds * 1000);
+          } else if (ann.date) {
+            date = new Date(ann.date);
+          }
+          dateSpan.innerHTML += (date ? date.toLocaleString() : 'Unknown Date');
+        } catch (e) {
+          console.error("Error parsing date:", ann.date, e);
+          dateSpan.innerHTML += 'Unknown Date';
+        }
+        
+        metaContainer.appendChild(dateSpan);
+        
+        if (ann.createdBy) {
+          const creatorSpan = document.createElement('span');
+          creatorSpan.className = 'announcement-admin-creator';
+          creatorSpan.innerHTML = `
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+            </svg>
+            Posted by: ${ann.createdBy}
+          `;
+          metaContainer.appendChild(creatorSpan);
+        }
+  
+        if (ann.isEdited && ann.editedBy) {
+          const editedSpan = document.createElement('span');
+          editedSpan.className = 'announcement-admin-edited';
+          editedSpan.innerHTML = `
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+            </svg>
+            Edited by: ${ann.editedBy}
+          `;
+          metaContainer.appendChild(editedSpan);
+        }
+  
+        const actions = document.createElement('div');
+        actions.className = 'announcement-admin-actions';
+  
+        const editButton = document.createElement('button');
+        editButton.className = 'edit-button';
+        editButton.innerHTML = `
           <svg viewBox="0 0 24 24" width="16" height="16">
             <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
           </svg>
-          Edited by: ${ann.editedBy}
+          Edit
         `;
-        metaContainer.appendChild(editedSpan);
-      }
+        editButton.addEventListener('click', () => handleEditAnnouncement(ann));
+  
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'delete-button';
+        deleteButton.innerHTML = `
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+          </svg>
+          Delete
+        `;
+        deleteButton.addEventListener('click', () => handleDeleteAnnouncement(ann.id));
+  
+        actions.appendChild(editButton);
+        actions.appendChild(deleteButton);
+        
+        li.appendChild(title);
+        li.appendChild(metaContainer);
+        li.appendChild(actions);
+        ulA.appendChild(li);
+      });
+      currentAnnouncementsList.appendChild(ulA);
+    }
 
-      const actions = document.createElement('div');
-      actions.className = 'announcement-admin-actions';
-
-      const editButton = document.createElement('button');
-      editButton.className = 'edit-button';
-      editButton.innerHTML = `
-        <svg viewBox="0 0 24 24" width="16" height="16">
-          <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
-        </svg>
-        Edit
-      `;
-      editButton.addEventListener('click', () => handleEditAnnouncement(ann));
-
-      const deleteButton = document.createElement('button');
-      deleteButton.className = 'delete-button';
-      deleteButton.innerHTML = `
-        <svg viewBox="0 0 24 24" width="16" height="16">
-          <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
-        </svg>
-        Delete
-      `;
-      deleteButton.addEventListener('click', () => handleDeleteAnnouncement(ann.id));
-
-      actions.appendChild(editButton);
-      actions.appendChild(deleteButton);
-      
-      li.appendChild(title);
-      li.appendChild(metaContainer);
-      li.appendChild(actions);
-      ul.appendChild(li);
-    });
-
-    currentAnnouncementsList.appendChild(ul);
+    // Render patch notes section
+    if (patchnotes.length > 0) {
+      const headerP = document.createElement('h4');
+      headerP.textContent = 'Patch Notes';
+      currentAnnouncementsList.appendChild(headerP);
+      const ulP = document.createElement('ul');
+      ulP.className = 'announcements-admin-list';
+      patchnotes.forEach(ann => {
+        const li = document.createElement('li');
+        li.className = 'announcement-admin-item';
+        li.dataset.id = ann.id;
+        
+        if (ann.pinned) {
+          li.classList.add('pinned');
+        }
+  
+        const title = document.createElement('span');
+        title.className = 'announcement-admin-title';
+        title.textContent = ann.title;
+        if (ann.pinned) {
+          title.textContent += ' (Pinned)';
+        }
+        
+        const metaContainer = document.createElement('div');
+        metaContainer.className = 'announcement-admin-meta';
+        
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'announcement-admin-date';
+        dateSpan.innerHTML = `
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+          </svg>
+        `;
+        
+        try {
+          let date;
+          if (ann.date && ann.date.seconds) {
+            date = new Date(ann.date.seconds * 1000);
+          } else if (ann.date && ann.date._seconds) {
+            date = new Date(ann.date._seconds * 1000);
+          } else if (ann.date) {
+            date = new Date(ann.date);
+          }
+          dateSpan.innerHTML += (date ? date.toLocaleString() : 'Unknown Date');
+        } catch (e) {
+          console.error("Error parsing date:", ann.date, e);
+          dateSpan.innerHTML += 'Unknown Date';
+        }
+        
+        metaContainer.appendChild(dateSpan);
+        
+        if (ann.createdBy) {
+          const creatorSpan = document.createElement('span');
+          creatorSpan.className = 'announcement-admin-creator';
+          creatorSpan.innerHTML = `
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path fill="currentColor" d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+            </svg>
+            Posted by: ${ann.createdBy}
+          `;
+          metaContainer.appendChild(creatorSpan);
+        }
+  
+        if (ann.isEdited && ann.editedBy) {
+          const editedSpan = document.createElement('span');
+          editedSpan.className = 'announcement-admin-edited';
+          editedSpan.innerHTML = `
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+            </svg>
+            Edited by: ${ann.editedBy}
+          `;
+          metaContainer.appendChild(editedSpan);
+        }
+  
+        const actions = document.createElement('div');
+        actions.className = 'announcement-admin-actions';
+  
+        const editButton = document.createElement('button');
+        editButton.className = 'edit-button';
+        editButton.innerHTML = `
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+          </svg>
+          Edit
+        `;
+        editButton.addEventListener('click', () => handleEditAnnouncement(ann));
+  
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'delete-button';
+        deleteButton.innerHTML = `
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+          </svg>
+          Delete
+        `;
+        deleteButton.addEventListener('click', () => handleDeleteAnnouncement(ann.id));
+  
+        actions.appendChild(editButton);
+        actions.appendChild(deleteButton);
+        
+        li.appendChild(title);
+        li.appendChild(metaContainer);
+        li.appendChild(actions);
+        ulP.appendChild(li);
+      });
+      currentAnnouncementsList.appendChild(ulP);
+    }
   }
   
   function handleEditAnnouncement(announcement) {
@@ -456,13 +567,11 @@ async function loadAdminContent() {
     
     form.dataset.announcementId = announcement.id;
     
-    const oldForm = form;
-    const newForm = oldForm.cloneNode(true);
-    oldForm.parentNode.replaceChild(newForm, oldForm);
-    
-    newForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        await handleUpdateAnnouncement(newForm);
+    // Unbind creation submit and bind update handler on the same form (preserves TinyMCE)
+    form.removeEventListener('submit', originalAnnouncementFormSubmit);
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      await handleUpdateAnnouncement(form);
     });
   }
 
