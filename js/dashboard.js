@@ -169,7 +169,22 @@ function populateDashboard(userData) {
     const dashboardContent = document.getElementById('dashboard-content');
 
     profileName.textContent = `Welcome, ${name}!`;
-    profileCurrency.textContent = `MoBuck Balance: $${currency_balance}`;
+
+    let formattedBalance;
+    if (currency_balance < 0) {
+        formattedBalance = `-$${Math.abs(currency_balance)}`;
+    } else {
+        formattedBalance = `$${currency_balance}`;
+    }
+
+    profileCurrency.innerHTML = `MoBuck Balance: <span id="currency-value">${formattedBalance}</span>`;
+
+    const currencyValueSpan = document.getElementById('currency-value');
+    if (currency_balance < 0) {
+        currencyValueSpan.style.color = 'rgb(220, 53, 69)';
+    } else {
+        currencyValueSpan.style.color = '';
+    }
 
     const periodName = periodNames[userData.class_period] || `Period ${userData.class_period}`;
 
