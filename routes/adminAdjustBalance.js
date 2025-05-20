@@ -110,6 +110,10 @@ module.exports = async (req, res) => {
         const doc = await tx.get(userRef);
         if (!doc.exists) throw new Error('User does not exist');
 
+        let newBalance = (doc.data().currency_balance || 0) + numericAmount;
+        if (newBalance > 100000000) newBalance = 100000000;
+        if (newBalance < -100000000) newBalance = -100000000;
+
         const transactions = [txn(numericAmount), ...(doc.data().transactions || [])].slice(0, 5);
         const notifications = [
           ...(doc.data().notifications || []),
@@ -119,7 +123,7 @@ module.exports = async (req, res) => {
           .slice(0, 10);
 
         tx.update(userRef, {
-          currency_balance: (doc.data().currency_balance || 0) + numericAmount,
+          currency_balance: newBalance,
           transactions,
           notifications,
         });
@@ -149,6 +153,9 @@ module.exports = async (req, res) => {
             const d = await tx.get(ref);
             if (!d.exists) throw new Error('User does not exist');
 
+            let newBalance = (d.data().currency_balance || 0) + numericAmount;
+            if (newBalance > 100000000) newBalance = 100000000;
+
             const transactions = [txn(numericAmount), ...(d.data().transactions || [])].slice(0, 5);
             const notifications = [
               ...(d.data().notifications || []),
@@ -158,7 +165,7 @@ module.exports = async (req, res) => {
               .slice(0, 10);
 
             tx.update(ref, {
-              currency_balance: admin.firestore.FieldValue.increment(numericAmount),
+              currency_balance: newBalance,
               transactions,
               notifications,
             });
@@ -186,6 +193,9 @@ module.exports = async (req, res) => {
           const d = await tx.get(ref);
           if (!d.exists) throw new Error('User does not exist');
 
+          let newBalance = (d.data().currency_balance || 0) + numericAmount;
+          if (newBalance > 100000000) newBalance = 100000000;
+
           const transactions = [txn(numericAmount), ...(d.data().transactions || [])].slice(0, 5);
           const notifications = [
             ...(d.data().notifications || []),
@@ -195,7 +205,7 @@ module.exports = async (req, res) => {
             .slice(0, 10);
 
           tx.update(ref, {
-            currency_balance: admin.firestore.FieldValue.increment(numericAmount),
+            currency_balance: newBalance,
             transactions,
             notifications,
           });

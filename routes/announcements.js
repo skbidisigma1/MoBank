@@ -1,5 +1,4 @@
 const { admin, db } = require('../firebase');
-
 const { verifyToken, getTokenFromHeader } = require('../auth-helper');
 
 async function notifyAllUsers(announcement) {
@@ -31,7 +30,6 @@ async function notifyAllUsers(announcement) {
       const userData = userDoc.data();
       const currentNotifications = userData.notifications || [];
       
-      // Create a new array with the notification at the beginning
       const updatedNotifications = [notification, ...currentNotifications];
       
       const userRef = db.collection('users').doc(userDoc.id);
@@ -58,7 +56,7 @@ async function notifyAllUsers(announcement) {
     console.error('Error sending notifications to users:', error);
     console.error('Error details:', error.message);
     console.error('Stack trace:', error.stack);
-    throw error; // Re-throw to make sure the error is properly handled
+    throw error;
   }
 }
 
@@ -124,41 +122,46 @@ module.exports = async (req, res) => {
     const { title, description, body, pinned, patchnote } = req.body;
     if (!title || !body) {
       return res.status(400).json({ message: 'Missing required fields' });
-    }    
-    
+    }
+
+    const teacherId = process.env.TEACHER_ID;
+    if (!patchnote && decoded.sub !== teacherId) {
+      return res.status(403).json({ message: 'Only the teacher may post announcements' });
+    }
+
     try {
       const creatorName = await getAdminName();
-      
-      const data = { 
-        title, 
-        description: description || '', 
-        body, 
+
+      const data = {
+        title,
+        description: description || '',
+        body,
         date: admin.firestore.FieldValue.serverTimestamp(),
         pinned: Boolean(pinned),
         patchnote: Boolean(patchnote),
         createdBy: creatorName,
         isEdited: false
       };
-      
+
       const ref = await db.collection('announcements').add(data);
       console.log('Created new announcement with ID:', ref.id);
-      
-      const announcement = { 
+
+      const announcement = {
         id: ref.id,
         ...data,
         date: new Date()
       };
-      
+
       try {
         await notifyAllUsers(announcement);
         console.log('Successfully sent notifications for announcement:', ref.id);
       } catch (notifyError) {
         console.error('Failed to send notifications:', notifyError);
       }
-      
+
       const doc = await ref.get();
       const finalData = { id: ref.id, ...doc.data() };
-      
+
       return res.status(201).json(finalData);
     } catch (error) {
       console.error('Error creating announcement:', error);
