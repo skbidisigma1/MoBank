@@ -2,6 +2,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loader = document.getElementById('loader');
     loader.classList.remove('hidden');
 
+    const error = getUrlParameter('error');
+    const errorDescription = getUrlParameter('error_description');
+    if (error && errorDescription) {
+        const loginUrl = `login?error=${encodeURIComponent(error)}&error_description=${encodeURIComponent(errorDescription)}`;
+        window.location.replace(loginUrl);
+        return;
+    }
+
     try {
         await window.auth0Promise;
 

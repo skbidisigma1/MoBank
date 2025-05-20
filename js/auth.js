@@ -74,10 +74,29 @@ async function initializeUser(token) {
       const msg = await res.text();
       console.error('Init error:', msg);
       showToast('Initialization Error', `Error initializing user: ${msg}`);
+      
+      // If the status is 403 (forbidden), the user doesn't have access
+      if (res.status === 403) {
+        // Redirect to login page with access denied error
+        const errorParams = new URLSearchParams();
+        errorParams.append('error', 'access_denied');
+        errorParams.append('error_description', 'Access denied. Make sure you are using an authorized school account.');
+        await auth0Client.logout({
+          logoutParams: { returnTo: `${window.location.origin}/login?${errorParams.toString()}` },
+          federated: false
+        });
+        return;
+      }
     }
   } catch (e) {
     console.error('Init error:', e);
     showToast('Initialization Error', `Error initializing user: ${e}`);
+    
+    // Redirect to login page with general error
+    const errorParams = new URLSearchParams();
+    errorParams.append('error', 'init_error');
+    errorParams.append('error_description', 'Error initializing user. Please try again.');
+    window.location.href = `/login?${errorParams.toString()}`;
   }
 }
 
@@ -101,6 +120,11 @@ async function handleAuthRedirect() {
       window.history.replaceState({}, document.title, '/dashboard');
     } catch (e) {
       console.error('callback error:', e);
+      // Redirect to login page with error information
+      const errorParams = new URLSearchParams();
+      errorParams.append('error', 'auth_error');
+      errorParams.append('error_description', 'Failed to log in. Are you using a school account?');
+      window.location.href = `/login?${errorParams.toString()}`;
     }
   }
 }
@@ -149,6 +173,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   await auth0Promise;
   const btn = document.getElementById('auth0-signin');
   if (btn) btn.addEventListener('click', signInWithAuth0);
+  
+  if (window.location.pathname.endsWith('login') || window.location.pathname.endsWith('login.html')) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    const errorDescription = urlParams.get('error_description');
+    
+    if (error) {
+      const errorMsg = errorDescription || 'Failed to log in. Are you using a school account?';
+      showToast('Login Failed', errorMsg, 'error');
+      
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }
 });
 
 window.signInWithAuth0 = signInWithAuth0;

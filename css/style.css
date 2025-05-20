@@ -18,6 +18,9 @@
   --color-toast-bg: rgb(33, 33, 33);
   --color-toast-border: rgb(85, 85, 85);
   --color-border: #cccccc;
+  --color-modal-overlay: rgba(0, 0, 0, 0.5);
+  --color-modal-bg: var(--color-white);
+  --color-modal-shadow: rgba(0, 0, 0, 0.2);
   --color-disabled-bg: rgba(255, 255, 255, 0.61);
   --color-main-bg: var(--color-white);
   --color-footer-bg: #333333;
@@ -58,6 +61,9 @@
   --color-toast-bg: #2c2c2c;
   --color-toast-border: #3a3a3a;
   --color-border: #3a3a3a;
+  --color-modal-overlay: rgba(0, 0, 0, 0.7);
+  --color-modal-bg: #1e1e1e;
+  --color-modal-shadow: rgba(0, 0, 0, 0.3);
   --color-disabled-bg: rgba(255, 255, 255, 0.1);
   --color-main-bg: #1a1a1a;
   --color-footer-bg: #1a1a1a;
@@ -2356,348 +2362,59 @@ select:after {
   gap: 1rem;
 }
 
-.modal-buttons {
-  text-align: right;
-  margin-top: 1rem;
-}
-
-.confirmation-modal-button {
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-  font-size: 1rem;
-  min-width: 100px;
-}
-
-.confirmation-modal-button.confirm {
-  background-color: var(--color-primary);
-  color: var(--color-white);
-}
-
-.confirmation-modal-button.confirm:hover {
-  background-color: var(--color-primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.confirmation-modal-button.cancel {
-  background-color: var(--color-light-bg);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-}
-
-.confirmation-modal-button.cancel:hover {
-  background-color: var(--color-hover-bg);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-}
-
-.toggle-icon.secondary {
-  color: var(--color-secondary);
-}
-
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 26px;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--color-border); /* Use theme variable */
-  transition: .4s;
-  border-radius: 34px;
-  border: 1px solid var(--color-border); /* Use theme variable */
-  box-sizing: border-box;
-}
-
-.toggle-slider:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 4px;
-  bottom: 4px;
-  background-color: var(--color-white); /* Use theme variable */
-  transition: .4s;
-  border-radius: 50%;
-  box-shadow: 0 0 5px rgba(0,0,0,.2);
-}
-
-input:checked + .toggle-slider {
-  background: var(--color-success);
-  border-color: var(--color-success);
-}
-
-input:checked + .toggle-slider:before {
-  transform: translateX(23px);
-}
-
-input:focus + .toggle-slider {
-  box-shadow: 0 0 1px var(--color-primary);
-}
-
-input:disabled + .toggle-slider {
-  background-color: var(--color-disabled-bg);
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-input:disabled + .toggle-slider:before {
-  background-color: var(--color-muted);
-}
-
-.tinymce-modal-overlay {
+.modal {
+  display: none;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  display: none;
-  align-items: center;
+  background-color: var(--color-modal-overlay);
+  z-index: 1000;
   justify-content: center;
-  z-index: 3000;
+  align-items: center;
 }
-.tinymce-modal-overlay.active {
-  display: flex;
-}
-.tinymce-modal {
-  background: var(--container-color);
-  padding: 1rem;
+
+.modal-content {
+  background-color: var(--color-modal-bg);
+  padding: 30px;
   border-radius: 8px;
-  max-width: 90%;
-  width: 600px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-/* TinyMCE Custom Styling */
-#tinymce-editor {
-  border: 1px solid var(--color-border);
-  min-height: 250px;
-  padding: 10px;
-  margin-bottom: 15px;
-  background-color: var(--color-light-bg);
-  border-radius: 5px;
-  overflow: visible;
-  width: 100%;
-}
-
-/* Make the admin form wider to accommodate the TinyMCE toolbar */
-.admin-form {
-  max-width: 90%;
-  width: 700px;
-}
-
-/* Force the TinyMCE toolbar to be full width */
-.tox.tox-tinymce-inline {
-  width: 100% !important;
-}
-
-.tox .tox-toolbar__primary {
-  justify-content: flex-start !important;
-  width: 100% !important;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.tinymce-full-width {
-  width: 100% !important;
-}
-
-.tox-tinymce-inline .tox-editor-header {
-  width: 100% !important;
-  box-sizing: border-box;
-}
-
-.mce-content-body ul, 
-.mce-content-body ol {
-  margin-left: 30px !important;
-  padding-left: 10px !important;
-}
-
-.mce-content-body li {
-  margin-left: 10px !important;
-  list-style-position: outside !important;
-  /* text-align property removed to allow alignment changes */
-}
-
-/* Ensure the notifications count is still visible */
-.notification-count.hidden {
-  display: none;
-}
-
-.toggle-label {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-}
-
-.toggle-text {
-  margin-left: 0.75rem;
-  font-weight: 500;
-}
-
-.notification-item.fadeout {
-    animation: notification-fadeout 0.3s ease forwards;
-}
-
-.notification-item.fadeout {
-    animation-delay: calc(var(--item-index, 0) * 0.05s);
-}
-
-@keyframes notification-fadeout {
-    0% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-}
-
-.tinymce-toolbar-container {
-  width: 100%;
-  margin-bottom: 5px;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 0 4px 20px var(--color-modal-shadow);
+  text-align: center;
   position: relative;
-  z-index: 1;
 }
 
-#tinymce-editor {
-  border: 1px solid var(--color-border);
-  min-height: 250px;
-  padding: 10px;
+.modal-content h2 {
+  margin-top: 0;
+  color: var(--color-error-text);
+  font-size: 1.5rem;
   margin-bottom: 15px;
-  background-color: var(--color-light-bg);
-  border-radius: 5px;
-  overflow: visible;
-  width: 100%;
 }
 
-.tox-tinymce-inline {
-  width: auto !important;
-  max-width: 100% !important;
+.modal-content p {
+  margin-bottom: 25px;
+  line-height: 1.5;
 }
 
-.tox-editor-header {
-  position: static !important;
+.modal-content .primary-button {
+  min-width: 100px;
+  padding: 10px 20px;
+  margin-top: 10px;
 }
 
-.tox .tox-toolbar {
-  background-color: var(--color-light-bg) !important;
-  border-bottom: 1px solid var(--color-border) !important;
+[data-theme="dark"] .modal-content {
+  background-color: #2c3e50;
+  color: #ecf0f1;
 }
 
-.admin-form {
-  max-width: 90%;
-  width: 700px;
-}
-
-.loader {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-  width: 100%;
-}
-
-.loader::after {
-  content: "";
-  width: 40px;
-  height: 40px;
-  border: 4px solid var(--color-border);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: spinner 0.8s linear infinite;
-}
-
-.error-message {
-  color: var(--color-danger);
-  text-align: center;
-  padding: 1rem;
-}
-
-@keyframes spinner {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.announcement-hint {
-  display: block;
-  margin-top: 0.5em;
-  font-size: 0.95em;
-  color: var(--color-muted);
-  text-align: center;
-  font-style: italic;
-  letter-spacing: 0.01em;
-}
-
-.announcements-tabs {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-.announcements-tab {
-  background: none;
-  border: none;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--color-primary, #0056b3);
-  padding: 0.5em 1.5em;
-  border-radius: 6px 6px 0 0;
-  cursor: pointer;
-  outline: none;
-  transition: background 0.2s, color 0.2s;
-}
-.announcements-tab.active,
-.announcements-tab:focus {
-  background: var(--color-main-bg, #f5f7fa);
-  color: var(--color-accent, #222);
-  border-bottom: 2px solid var(--color-primary, #0056b3);
-  z-index: 2;
-}
-.announcements-tab:not(.active):hover {
-  background: rgba(0,86,179,0.08);
+[data-theme="dark"] .modal-content h2 {
+  color: #e74c3c;
 }
 
 [data-theme="dark"] .announcements-tab.active,
 [data-theme="dark"] .announcements-tab:focus {
   background: #18263a;
-  color: #5ea2ff;
-  border-bottom: 2px solid #5ea2ff;
-}
-[data-theme="dark"] .announcements-tab:not(.active):hover {
-  background: rgba(94,162,255,0.08);
   color: #5ea2ff;
 }
