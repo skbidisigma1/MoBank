@@ -5,34 +5,31 @@
 
 # MoBank
 
-MoBank is a web-based application that helps teachers manage and monitor student currency—MoBucks—in a fun and efficient way.
+**MoBank** is a classroom banking system designed for teachers to manage student currency—**MoBucks**—in a secure, fun, and friendly environment.
 
-## Key Features
-- **Real-Time Updates:** Instantly track your MoBuck balance.
-- **Transaction History:** View detailed logs of your recent transactions.
-- **Peer Transfers:** Easily send MoBucks to classmates.
-- **Secure Authentication:** Protect user data with Google OAuth via Auth0.
-- **Admin Controls:** Use a dedicated admin panel to manage student balances and class periods.
-- **Firebase Integration:** Benefit from fast, secure, and scalable data storage with Firebase Firestore.
-- **Responsive Design:** Enjoy a seamless experience on both desktop and mobile devices.
+## Features
 
-## How It Works
-- **Access the App:** Visit [mo-classroom.us](https://mo-classroom.us).
-- **Sign In:** Use the login page to authenticate.
-- **Set Up:** On your first login, configure your profile with your class period and preferred settings.
-- **Transact:** Use the “Send MoBucks” feature to transfer currency.
-- **Admin Management:** Teachers and admins can update student balances and class settings through the admin panel.
+- **Real-Time Balance Tracking** – Instantly view MoBuck balances and updates.
+- **Transaction History** – See detailed logs of MoBuck activity.
+- **Peer-to-Peer Transfers** – Students can send MoBucks to each other.
+- **Secure Authentication** – Google OAuth powered by Auth0.
+- **Admin Dashboard** – Easily manage balances and class periods.
+- **Responsive Design** – Optimized for both desktop and mobile.
 
-## Technical Overview
-- **Backend:** Node.js with Express
-- **Deployment:** Hosted on Vercel
-- **Database:** Firebase Firestore
-- **Authentication:** Auth0 (Google OAuth, JWT)
-- **Security:** CSRF protection (Lusca), rate limiting (express-rate-limit), and Content Security Policy enforced by Vercel
-- **Configuration:** Managed through Vercel for streamlined deployment
+## Getting Started
+
+1. **Visit the App:** [mo-classroom.us](https://mo-classroom.us)
+2. **Sign In:** Use your Google account via the login page.
+3. **Set Up Profile:** Choose your class period and settings.
+4. **Send MoBucks:** Use the transfer feature to interact with peers.
+5. **Admin Tools:** Teachers can adjust balances and manage settings from the admin panel.
+
+## Contributing
+
+Contributions, suggestions, or issues are welcome! Feel free to [open an issue](https://github.com/skbidisigma1/MoBank/issues) or submit a pull request.
 
 ## Contact
-For support or feedback, please reach out:
+
 - **Email:** [support@mo-classroom.us](mailto:support@mo-classroom.us)
-- **GitHub:** [skbidisigma1](https://github.com/skbidisigma1)
-- **GitHub:** [Papaya-Voldemort](https://github.com/Papaya-Voldemort)
+- **GitHub (Owner):** [skbidisigma1](https://github.com/skbidisigma1)
+- **GitHub ("Contributor"):** [Papaya-Voldemort](https://github.com/Papaya-Voldemort)
