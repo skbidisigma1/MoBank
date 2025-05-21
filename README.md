@@ -1,3 +1,8 @@
+[![Source](https://img.shields.io/badge/source-GitHub-blue?logo=github)](https://github.com/skbidisigma1/MoBank)
+[![License](https://img.shields.io/github/license/skbidisigma1/MoBank)](https://github.com/skbidisigma1/MoBank/blob/main/LICENSE)
+[![Stars](https://img.shields.io/github/stars/skbidisigma1/MoBank?style=social)](https://github.com/skbidisigma1/MoBank/stargazers)
+[![Website](https://img.shields.io/badge/website-live-green)](https://mo-classroom.us)
+
 # MoBank
 
 MoBank is a web-based application that helps teachers manage and monitor student currency—MoBucks—in a fun and efficient way.
