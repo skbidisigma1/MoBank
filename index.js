@@ -1,4 +1,4 @@
-const serverless = require('serverless-http');
+/*const serverless = require('serverless-http');
 const express = require('express');
 const { expressjwt: jwt } = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
@@ -452,4 +452,4 @@ app.use((err, req, res, next) => {
   }
 });
 
-module.exports = serverless(app);
+module.exports = serverless(app);*/
