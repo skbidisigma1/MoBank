@@ -25,7 +25,7 @@ const getTokenFromHeader = (req) => {
 };
 
 async function verifyToken(token) {
-  // Use environment variables or fallback to defaults
+
   const audience = process.env.AUTH0_AUDIENCE || 'https://mo-classroom.us/api';
   const issuer = process.env.AUTH0_DOMAIN
     ? `https://${process.env.AUTH0_DOMAIN}/`
