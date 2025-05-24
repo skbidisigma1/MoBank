@@ -27,7 +27,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Error during dashboard initialization:', error);
         showToast('Error', 'Failed to initialize dashboard. Please try again later.');
     } finally {
-        // Ensure the loader is hidden
         loader.style.display = 'none';
         loader.classList.add('hidden');
     }

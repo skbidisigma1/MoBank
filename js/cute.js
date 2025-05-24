@@ -187,89 +187,246 @@ document.addEventListener('DOMContentLoaded', async () => {
             levelElement.style.color = color;
             levelElement.style.borderColor = color + '40';
         }
-    }    // Download chart functionality
-    const downloadBtn = document.getElementById('download-chart');
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', async () => {
+    }    // Function to generate chart image with metadata
+    async function generateChartImage(ratedUser) {
+        // Get current user name for display
+        let currentUserName = 'User';
+        try {
+            await window.auth0Promise;
+            const user = await getUser();
+            if (user && user.name) {
+                currentUserName = user.name;
+            }
+        } catch (error) {
+            console.error('Error getting current user:', error);
+            // Continue with default 'User' name
+        }
+        
+        // Create a temporary canvas with white background and extra padding
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        // Add padding (whitespace) around the chart
+        const padding = 80; // Increased padding for more text
+        tempCanvas.width = ctx.canvas.width + (padding * 2);
+        tempCanvas.height = ctx.canvas.height + (padding * 2);
+        
+        // Fill with white background
+        tempCtx.fillStyle = '#ffffff';
+        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        
+        // Draw the chart centered with padding
+        tempCtx.drawImage(ctx.canvas, padding, padding);
+        
+        // Add rating information and simp score to the image
+        const currentScore = document.getElementById('simp-score')?.textContent || '0';
+        const currentLevel = document.getElementById('simp-level')?.textContent || 'Completely Rational';
+        
+        // Set up text styling
+        tempCtx.fillStyle = '#333333';
+        tempCtx.textAlign = 'center';
+        
+        // Add main title
+        tempCtx.font = 'bold 28px Poppins, Arial, sans-serif';
+        tempCtx.fillText('Cuteness Chart', tempCanvas.width / 2, 35);
+        
+        // Add rating information
+        tempCtx.font = 'bold 18px Poppins, Arial, sans-serif';
+        tempCtx.fillStyle = '#2196F3';
+        tempCtx.fillText(`${currentUserName} rates ${ratedUser.trim()}`, tempCanvas.width / 2, 60);
+        
+        // Add simp score
+        tempCtx.font = 'bold 20px Poppins, Arial, sans-serif';
+        tempCtx.fillStyle = '#ff1493';
+        tempCtx.fillText(`Simp Score: ${currentScore} / 100`, tempCanvas.width / 2, tempCanvas.height - 45);
+        
+        // Add simp level
+        tempCtx.font = '16px Poppins, Arial, sans-serif';
+        tempCtx.fillStyle = '#666666';
+        tempCtx.fillText(`Level: ${currentLevel}`, tempCanvas.width / 2, tempCanvas.height - 22);
+        
+        return new Promise(resolve => {
+            tempCanvas.toBlob(resolve, 'image/png', 1.0);
+        });
+    }    // Save to photos functionality
+    async function saveToPhotos(blob, filename) {        // Check if we're on desktop and File System Access API is supported (Chrome/Edge)
+        // Prioritize this for desktop to show proper file explorer/finder window
+        if ('showSaveFilePicker' in window) {
+            try {
+                const fileHandle = await window.showSaveFilePicker({
+                    suggestedName: filename,
+                    types: [{
+                        description: 'PNG images',
+                        accept: { 'image/png': ['.png'] }
+                    }]
+                });
+                
+                const writable = await fileHandle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+                return true;
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    // User cancelled the dialog - don't fallback to download
+                    console.log('User cancelled save dialog');
+                    return 'cancelled';
+                } else {
+                    console.log('File System Access API failed:', error);
+                    // Continue to next method for other errors
+                }
+            }
+        }
+
+        // Check if we're on mobile and Web Share API is available
+        // Only use this on mobile devices to avoid weird desktop share UI
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                         (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+        
+        if (isMobile && navigator.share && navigator.canShare) {
+            try {
+                const file = new File([blob], filename, { type: 'image/png' });
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: 'Cuteness Chart',
+                        text: 'Check out this cuteness chart!',
+                        files: [file]
+                    });
+                    return true;
+                }
+            } catch (error) {
+                console.log('Web Share API failed, trying other methods:', error);
+            }
+        }
+
+        // Fallback to traditional download
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = url;
+        link.click();
+        URL.revokeObjectURL(url);
+        return false;
+    }    // Save chart functionality - consolidated from download and save buttons
+    const saveChartBtn = document.getElementById('save-chart');
+    if (saveChartBtn) {
+        saveChartBtn.addEventListener('click', async () => {
             // Ask user who they are rating
             const ratedUser = prompt("Who are you rating?");
             if (!ratedUser || ratedUser.trim() === '') {
                 return; // User cancelled or entered empty name
             }
-            
-            // Get current user name for display
-            let currentUserName = 'User';
-            try {
-                await window.auth0Promise;
-                const user = await getUser();
-                if (user && user.name) {
-                    currentUserName = user.name;
-                }
-            } catch (error) {
-                console.error('Error getting current user:', error);
-                // Continue with default 'User' name
-            }
-            
-            // Create a temporary canvas with white background and extra padding
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            // Add padding (whitespace) around the chart
-            const padding = 80; // Increased padding for more text
-            tempCanvas.width = ctx.canvas.width + (padding * 2);
-            tempCanvas.height = ctx.canvas.height + (padding * 2);
-            
-            // Fill with white background
-            tempCtx.fillStyle = '#ffffff';
-            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-            
-            // Draw the chart centered with padding
-            tempCtx.drawImage(ctx.canvas, padding, padding);
-            
-            // Add rating information and simp score to the image
-            const currentScore = document.getElementById('simp-score')?.textContent || '0';
-            const currentLevel = document.getElementById('simp-level')?.textContent || 'Completely Rational';
-            
-            // Set up text styling
-            tempCtx.fillStyle = '#333333';
-            tempCtx.textAlign = 'center';
-            
-            // Add main title
-            tempCtx.font = 'bold 28px Poppins, Arial, sans-serif';
-            tempCtx.fillText('Cuteness Chart', tempCanvas.width / 2, 35);
-            
-            // Add rating information
-            tempCtx.font = 'bold 18px Poppins, Arial, sans-serif';
-            tempCtx.fillStyle = '#2196F3';
-            tempCtx.fillText(`${currentUserName} rates ${ratedUser.trim()}`, tempCanvas.width / 2, 60);
-            
-            // Add simp score
-            tempCtx.font = 'bold 20px Poppins, Arial, sans-serif';
-            tempCtx.fillStyle = '#ff1493';
-            tempCtx.fillText(`Simp Score: ${currentScore} / 100`, tempCanvas.width / 2, tempCanvas.height - 45);
-            
-            // Add simp level
-            tempCtx.font = '16px Poppins, Arial, sans-serif';
-            tempCtx.fillStyle = '#666666';
-            tempCtx.fillText(`Level: ${currentLevel}`, tempCanvas.width / 2, tempCanvas.height - 22);
-            
-            // Generate filename with current date and rated user
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
-            const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-            const safeName = ratedUser.trim().replace(/[^a-zA-Z0-9]/g, '-');
-            const filename = `cuteness-chart-${safeName}-${dateStr}-${timeStr}.png`;
-            
-            // Create download link
-            tempCanvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.download = filename;
-                link.href = url;
-                link.click();
+              try {
+                // Generate chart image
+                const blob = await generateChartImage(ratedUser);
                 
-                // Clean up
-                URL.revokeObjectURL(url);            }, 'image/png', 1.0);
+                // Generate filename with current date and rated user
+                const now = new Date();
+                const dateStr = now.toISOString().split('T')[0];
+                const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+                const safeName = ratedUser.trim().replace(/[^a-zA-Z0-9]/g, '-');
+                const filename = `cuteness-chart-${safeName}-${dateStr}-${timeStr}.png`;
+                
+                // Try to save using the best available method
+                const result = await saveToPhotos(blob, filename);
+                
+                if (result === 'cancelled') {
+                    // User cancelled - don't show any message or download
+                    return;
+                } else if (result === true) {
+                    // Show success message for mobile/modern browser save
+                    if (navigator.share || 'showSaveFilePicker' in window) {
+                        alert('Chart saved successfully!');
+                    }
+                } else {
+                    // Fallback download happened
+                    alert('Chart downloaded to your Downloads folder.');
+                }
+                
+            } catch (error) {
+                console.error('Error saving chart:', error);
+                alert('Failed to save chart. Please try again.');
+            }
         });
     }
+    
+    // Debug function to test different platform behaviors
+    window.testPlatformSave = function(platform) {
+        console.log(`Testing save functionality for: ${platform}`);
+        
+        // Temporarily override detection
+        let originalUserAgent = navigator.userAgent;
+        let originalMaxTouchPoints = navigator.maxTouchPoints;
+        let originalShowSaveFilePicker = window.showSaveFilePicker;
+        let originalShare = navigator.share;
+        
+        try {
+            switch(platform) {
+                case 'android':
+                    Object.defineProperty(navigator, 'userAgent', {
+                        value: 'Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36',
+                        writable: true
+                    });
+                    Object.defineProperty(navigator, 'maxTouchPoints', { value: 5, writable: true });
+                    delete window.showSaveFilePicker;
+                    navigator.share = function(data) {
+                        console.log('Android Web Share API called with:', data);
+                        return Promise.resolve();
+                    };
+                    navigator.canShare = () => true;
+                    break;
+                    
+                case 'ios':
+                    Object.defineProperty(navigator, 'userAgent', {
+                        value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1',
+                        writable: true
+                    });
+                    Object.defineProperty(navigator, 'maxTouchPoints', { value: 5, writable: true });
+                    delete window.showSaveFilePicker;
+                    navigator.share = function(data) {
+                        console.log('iOS Web Share API called with:', data);
+                        return Promise.resolve();
+                    };
+                    navigator.canShare = () => true;
+                    break;
+                    
+                case 'macos-chrome':
+                    Object.defineProperty(navigator, 'userAgent', {
+                        value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Safari/537.36',
+                        writable: true
+                    });
+                    Object.defineProperty(navigator, 'maxTouchPoints', { value: 0, writable: true });
+                    window.showSaveFilePicker = function(options) {
+                        console.log('macOS Chrome File System Access API called with:', options);
+                        return Promise.resolve({
+                            createWritable: () => Promise.resolve({
+                                write: (data) => console.log('Writing data to macOS file'),
+                                close: () => Promise.resolve()
+                            })
+                        });
+                    };
+                    delete navigator.share;
+                    break;
+                    
+                case 'macos-safari':
+                    Object.defineProperty(navigator, 'userAgent', {
+                        value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15',
+                        writable: true
+                    });
+                    Object.defineProperty(navigator, 'maxTouchPoints', { value: 0, writable: true });
+                    delete window.showSaveFilePicker;
+                    delete navigator.share;
+                    break;
+            }
+            
+            console.log(`Platform simulation active. Click "Save to Photos" to test ${platform} behavior.`);
+            
+        } catch (error) {
+            console.error('Error setting up platform simulation:', error);
+        }
+    };
+
+    // Reset function
+    window.resetPlatformTest = function() {
+        location.reload(); // Simple way to reset everything
+    };
 });
