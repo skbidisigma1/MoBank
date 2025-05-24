@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuteness Chart - MoBank</title>    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/cute.css">    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/toast.js" defer></script>
+    <script src="js/headerFooter.js" defer></script>
+    <script src="js/cute.js" defer></script>
+</head>
+<body>
+    <div id="header-placeholder"></div>    <main>
+        <h1 class="cute-title">Cuteness Chart</h1>
+        <canvas id="cuteChart"></canvas>
+        <button id="download-chart" class="download-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7,10 12,15 17,10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download Chart        </button>
+        
+        <div class="simp-calculator">
+            <h2 class="simp-title">Simp Level Calculator</h2>
+            <div class="simp-score">
+                <span class="score-label">Simp Score:</span>
+                <span id="simp-score" class="score-value">0</span>
+                <span class="score-max">/ 100</span>
+            </div>
+            <div class="simp-bar-container">
+                <div id="simp-bar" class="simp-bar"></div>
+            </div>
+            <div id="simp-level" class="simp-level">Not a Simp</div>
+        </div>
+
+        <div class="sliders">
+            <div class="slider-container">
+                <label for="slider-smile">Smile</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="slider-smile" min="0" max="5" step="1" value="0" data-category="Smile">
+                    <span class="slider-value">0</span>
+                </div>
+            </div>
+            <div class="slider-container">
+                <label for="slider-eyes">Eyes</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="slider-eyes" min="0" max="5" step="1" value="0" data-category="Eyes">
+                    <span class="slider-value">0</span>
+                </div>
+            </div>
+            <div class="slider-container">
+                <label for="slider-voice">Voice</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="slider-voice" min="0" max="5" step="1" value="0" data-category="Voice">
+                    <span class="slider-value">0</span>
+                </div>
+            </div>
+            <div class="slider-container">
+                <label for="slider-laugh">Laugh</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="slider-laugh" min="0" max="5" step="1" value="0" data-category="Laugh">
+                    <span class="slider-value">0</span>
+                </div>
+            </div>
+            <div class="slider-container">
+                <label for="slider-face">Face</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="slider-face" min="0" max="5" step="1" value="0" data-category="Face">
+                    <span class="slider-value">0</span>
+                </div>
+            </div>
+            <div class="slider-container">
+                <label for="slider-style">Style</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="slider-style" min="0" max="5" step="1" value="0" data-category="Style">
+                    <span class="slider-value">0</span>
+                </div>
+            </div>
+            <div class="slider-container">
+                <label for="slider-body">Body Language</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="slider-body" min="0" max="5" step="1" value="0" data-category="Body Language">
+                    <span class="slider-value">0</span>
+                </div>
+            </div>
+            <div class="slider-container">
+                <label for="slider-hair">Hair</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="slider-hair" min="0" max="5" step="1" value="0" data-category="Hair">
+                    <span class="slider-value">0</span>
+                </div>
+            </div>
+            <div class="slider-container">
+                <label for="slider-height">Height</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="slider-height" min="0" max="5" step="1" value="0" data-category="Height">
+                    <span class="slider-value">0</span>
+                </div>
+            </div>
+            <div class="slider-container">
+                <label for="slider-personality">Personality</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="slider-personality" min="0" max="5" step="1" value="0" data-category="Personality">
+                    <span class="slider-value">0</span>
+                </div>
+            </div>
+            <div class="slider-container">
+                <label for="slider-shyness">Shyness</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="slider-shyness" min="0" max="5" step="1" value="0" data-category="Shyness">
+                    <span class="slider-value">0</span>
+                </div>
+            </div>
+            <div class="slider-container">
+                <label for="slider-playfulness">Playfulness</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="slider-playfulness" min="0" max="5" step="1" value="0" data-category="Playfulness">
+                    <span class="slider-value">0</span>
+                </div>
+            </div>
+        </div>
+    </main>
+    <div id="footer-placeholder"></div>
+</body>
+</html>

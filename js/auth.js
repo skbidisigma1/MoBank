@@ -1,7 +1,7 @@
 let auth0Client = null;
 const protectedPages = [
-  'dashboard.html', 'admin.html', 'transfer.html', 'leaderboard.html',
-  'dashboard', 'admin', 'transfer', 'leaderboard'
+  'dashboard.html', 'admin.html', 'transfer.html', 'leaderboard.html', 'cute.html',
+  'dashboard', 'admin', 'transfer', 'leaderboard', 'cute'
 ];
 
 const auth0Promise = (async () => {
