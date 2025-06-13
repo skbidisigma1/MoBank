@@ -483,14 +483,14 @@ async function loadAnnouncements() {
                 // Add creator if available
                 if (mainAnn.createdBy) {
                     const creator = document.createElement('div');
-                    creator.className = 'announcement-creator';
+                    creator.className = 'announcement-info';
                     creator.textContent = `Posted by: ${mainAnn.createdBy}`;
                     metaContainer.appendChild(creator);
                     
                     // Show edit info if the announcement has been edited
                     if (mainAnn.isEdited && mainAnn.editedBy) {
                         const editInfo = document.createElement('div');
-                        editInfo.className = 'announcement-edited';
+                        editInfo.className = 'announcement-info';
                         editInfo.innerHTML = `<span class="edited-badge">Edited</span> by ${mainAnn.editedBy}`;
                         metaContainer.appendChild(editInfo);
                     }
@@ -534,7 +534,6 @@ async function loadAnnouncements() {
 
                 newContainer.appendChild(Object.assign(document.createElement('span'), {
                   className: 'announcement-hint',
-                  style: 'display:block;margin-top:0.5em;font-size:0.95em;color:var(--secondary-text,#666);text-align:right;',
                   textContent: 'Click to view announcement'
                 }));
             }
@@ -697,14 +696,14 @@ function openAnnouncementsModal(announcements, targetAnnouncementId, tabType = '
         // Add creator name if available
         if (ann.createdBy) {
             const creator = document.createElement('div');
-            creator.className = 'announcement-creator';
+            creator.className = 'announcement-info';
             creator.textContent = `Posted by: ${ann.createdBy}`;
             metaContainer.appendChild(creator);
             
             // Show edited information if available
             if (ann.isEdited && ann.editedBy) {
                 const editInfo = document.createElement('div');
-                editInfo.className = 'announcement-edited';
+                editInfo.className = 'announcement-info';
                 editInfo.innerHTML = `<span class="edited-badge">Edited</span> by ${ann.editedBy}`;
                 metaContainer.appendChild(editInfo);
             }

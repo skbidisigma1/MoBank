@@ -27,9 +27,9 @@
   --input-color: #F2F2F2;
   --suggestions-container-color: #F2F2F2;
   --container-color: var(--color-white);
-  --font-main: 'Poppins', Arial, sans-serif;
-  --font-heading: 'Montserrat', sans-serif;
-  --font-tech: 'Orbitron', sans-serif;
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-heading: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-tech: 'Orbitron', monospace, sans-serif;
   --typing-text-color: var(--color-primary-dark);
   --typing-cursor-color: var(--color-secondary);
   --heading-gradient-from: #2a4d69;
@@ -93,7 +93,7 @@
   padding: 0;
 }
 body {
-  font-family: var(--font-main);
+  font-family: var(--font-heading);
   background-color: var(--color-bg);
   color: var(--color-text);
   line-height: 1.6;
@@ -105,6 +105,7 @@ body {
 header {
   background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   color: var(--color-white);
+  font-family: var(--font-heading);
   padding: 20px;
   position: sticky;
   top: 0;
@@ -188,7 +189,7 @@ nav ul {
   gap: 20px;
 }
 nav a {
-  font-family: var(--font-main);
+  font-family: var(--font-heading);
   color: var(--color-white);
   text-decoration: none;
   font-weight: 600;
@@ -213,27 +214,43 @@ nav a:hover {
   transform: scale(1.1);
   opacity: 0.8;
 }
+/* ===== LAYOUT SYSTEM ===== */
 main {
   flex: 1;
-  padding: 40px;
   width: 100%;
-  margin: 20px auto;
-  text-align: center;
-  background-color: var(--color-main-bg);
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  box-sizing: border-box;
+  min-height: calc(100vh - 120px); /* Account for header/footer */
+  background-color: var(--color-bg);
 }
+
+/* Container system for consistent max-widths */
 .container {
-  padding: 40px;
-  margin: 20px auto;
-  text-align: center;
-  background-color: var(--container-color);
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  box-sizing: border-box;
-  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
 }
+
+.container--narrow {
+  max-width: 800px;
+}
+
+.container--wide {
+  max-width: 1400px;
+}
+
+/* Section spacing */
+.section {
+  padding: 3rem 0;
+}
+
+.section--hero {
+  padding: 4rem 0;
+}
+
+.section--compact {
+  padding: 2rem 0;
+}
+
+/* Special container overrides */
 #concert-schedule-section.container {
   max-width: 1200px;
   width: 90%;
@@ -246,17 +263,12 @@ main {
   color: var(--color-secondary);
 }
 form {
-  margin: 20px auto;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  background: var(--color-main-bg);
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
+  align-items: stretch;  max-width: 600px;
+  margin: 0 auto;
 }
+
 label {
   font-family: var(--font-main);
   font-weight: bold;
@@ -289,7 +301,7 @@ input:focus {
   box-shadow: 0 0 5px rgba(0, 86, 179, 0.5);
 }
 button {
-  font-family: var(--font-main);
+  font-family: var(--font-heading);
   background-color: var(--color-primary);
   color: var(--color-white);
   border: none;
@@ -329,7 +341,7 @@ footer a {
   background-color: var(--color-footer-bg);
   color: var(--color-white);
   padding: 0.75rem 1rem;
-  margin-top: auto;
+  margin-top: 40px;
 }
 .footer-container {
   max-width: 1200px;
@@ -547,8 +559,8 @@ select:after {
   display: flex;
   align-items: center;
   gap: 15px;
-  margin: 20px auto;
   max-width: 600px;
+  margin: 0 auto;
 }
 .dashboard-profile-icon {
   width: 80px;
@@ -611,6 +623,11 @@ select:after {
   border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spinner 0.8s linear infinite;
+}
+
+@keyframes spinner {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .admin-title {
@@ -694,7 +711,7 @@ select:after {
   font-weight: 600;
   color: var(--color-white);
   margin-bottom: 4px;
-  font-family: var(--font-main);
+  font-family: var(--font-heading);
 }
 
 .toast-message {
@@ -1162,6 +1179,9 @@ select:after {
   justify-content: center;
   align-items: center;
 }
+.notification-count.hidden {
+  display: none !important;
+}
 .notification-header {
   display: flex;
   justify-content: space-between;
@@ -1199,7 +1219,7 @@ select:after {
   }
 }
 .hero-heading {
-  min-height: 3.2em;
+  min-height: 1.8em;
   font-family: var(--font-tech);
   font-size: 2.5rem;
   font-weight: 700;
@@ -1270,23 +1290,17 @@ select:after {
     border: 0;
 }
 
+/* Main container - now just extends our base container */
 .main-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 0 1.5rem;
 }
 
 .hero-section {
   text-align: center;
-  padding: 4rem 1rem;
-  margin-bottom: 3rem;
-  background: linear-gradient(
-    to bottom,
-    var(--color-bg) 0%,
-    var(--color-light-bg) 100%
-  );
-  border-radius: 1rem;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  padding: 5rem 0;
+  margin-bottom: 2rem;
 }
 
 .hero-heading {
@@ -1384,6 +1398,7 @@ select:after {
 
 .announcement-meta {
   display: flex;
+  font-family: var(--font-main);
   justify-content: space-between;
   align-items: center;
   margin-top: 1rem;
@@ -1394,22 +1409,16 @@ select:after {
 }
 
 .announcement-card .announcement-date,
-.announcement-card .announcement-creator,
-.announcement-card .announcement-edited {
+.announcement-card .announcement-info {
   font-size: 0.85rem;
   color: var(--color-muted);
   margin-top: 0;
 }
 
-.announcement-card .announcement-creator {
-  font-style: italic;
-}
-
-.announcement-card .announcement-edited {
+.announcement-card .announcement-info {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  font-style: italic;
 }
 
 .announcement-card .edited-badge {
@@ -1421,6 +1430,7 @@ select:after {
   font-weight: bold;
   text-transform: uppercase;
   font-style: normal;
+  margin-right: 0.2rem;
 }
 
 .announcement-admin-edited {
@@ -1431,6 +1441,14 @@ select:after {
   color: var(--color-muted);
   margin-top: 5px;
   font-style: italic;
+}
+
+.announcement-hint {
+  display:block;
+  margin-top:0.5em;
+  font-size:0.95em;
+  color:var(--color-muted,#838383);
+  text-align:right;
 }
 
 #view-all-announcements {
@@ -1923,6 +1941,7 @@ select:after {
 .transaction-amount {
   font-weight: 600;
   font-size: 1.1rem;
+  font-family: var(--font-tech);
 }
 
 .transaction-amount.credit {
@@ -2158,7 +2177,7 @@ select:after {
 
 .page-heading {
   font-size: clamp(2rem, 4vw, 2.5rem);
-  font-family: var(--font-main);
+  font-family: var(--font-heading);
   font-weight: 800;
   margin-bottom: 1rem;
   background: linear-gradient(120deg, var(--heading-gradient-from), var(--heading-gradient-to));
@@ -2208,7 +2227,7 @@ select:after {
 .balance-info h3 {
   font-size: 1rem;
   color: var(--color-text);
-  font-family: var(--font-main);
+  font-family: var(--font-heading);
   opacity: 0.8;
   margin-bottom: 0.25rem;
 }
@@ -2217,7 +2236,7 @@ select:after {
   font-size: 1.8rem;
   font-weight: 700;
   color: var(--color-text);
-  font-family: var(--font-main);
+  font-family: var(--font-heading);
 }
 
 .input-wrapper {
@@ -2275,7 +2294,7 @@ select:after {
   padding: 1rem;
   font-size: 1.1rem;
   font-weight: 600;
-  font-family: var(--font-main);
+  font-family: var(--font-heading);
   color: var (--color-white);
   background: var(--color-primary);
   border: none;
@@ -2418,3 +2437,75 @@ select:after {
   background: #18263a;
   color: #5ea2ff;
 }
+
+/* ===== RESPONSIVE UTILITIES ===== */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+  
+  .section {
+    padding: 2rem 0;
+  }
+  
+  .section--hero {
+    padding: 3rem 0;
+  }
+}
+
+/* ===== CARD SYSTEM ===== */
+.card {
+  background: var(--color-white);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .card {
+  background: var(--color-light-bg);
+  border-color: var(--color-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.card--compact {
+  padding: 1.5rem;
+}
+
+.card--spacious {
+  padding: 3rem;
+}
+
+/* ===== CONTENT WIDTHS ===== */
+.content-narrow {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.content-medium {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* ===== FLEX UTILITIES ===== */
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.gap-1 { gap: 0.5rem; }
+.gap-2 { gap: 1rem; }
+.gap-3 { gap: 1.5rem; }
+.gap-4 { gap: 2rem; }
