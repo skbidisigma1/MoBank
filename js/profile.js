@@ -13,10 +13,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     const instrumentSelect = document.getElementById('instrument');
     const themeSelect = document.getElementById('theme');
 
-    if (!themeSelect) return;
-
-    async function fetchAndCacheUserData() {
+    if (!themeSelect) return;    async function fetchAndCacheUserData() {
         try {
+            // Check cache first
+            const cachedData = CACHE.read(CACHE.USER_KEY);
+            if (cachedData) {
+                autofillForm(cachedData);
+                return;
+            }
+
+            // Wait for headerFooter.js userDataPromise
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            while (!window.userDataPromise && attempts < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (window.userDataPromise) {
+                const userData = await window.userDataPromise;
+                if (userData) {
+                    autofillForm(userData);
+                    return;
+                }
+            }
+            
+            // Fallback to direct API call if needed
             const token = await auth0Client.getTokenSilently();
             const response = await fetch('/api/getUserData', {
                 method: 'GET',
@@ -25,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (response.ok) {
                 const userData = await response.json();
-                setCachedUserData(userData);
+                CACHE.write(CACHE.USER_KEY, userData, CACHE.USER_MAX_AGE);
                 autofillForm(userData);
             }
         } catch (error) {
@@ -55,15 +78,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         document.documentElement.setAttribute('data-theme', mergedData.theme.toLowerCase());
-    }
-
-    function setCachedUserData(data) {
-        localStorage.setItem('userData', JSON.stringify({ data, timestamp: Date.now() }));
+    }    function setCachedUserData(data) {
+        CACHE.write(CACHE.USER_KEY, data, CACHE.USER_MAX_AGE);
     }
 
     function getCachedUserData() {
-        const cached = localStorage.getItem('userData');
-        return cached ? JSON.parse(cached).data : null;
+        return CACHE.read(CACHE.USER_KEY);
     }
 
     themeSelect.addEventListener('change', () => {
@@ -111,15 +131,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({ class_period: classPeriod, instrument, theme }),
-            });
-
-            if (response.ok) {
+            });            if (response.ok) {
                 sessionStorage.setItem('cooldownTimestamp', Date.now().toString());
-                const userDataResponse = await fetch('/api/getUserData', {
-                    method: 'GET',
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (userDataResponse.ok) setCachedUserData(await userDataResponse.json());
+                // Clear cache so it gets refreshed on next page load
+                localStorage.removeItem(CACHE.USER_KEY);
                 window.location.href = 'dashboard?profile_successful=true';
                 return;
             }

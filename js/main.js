@@ -98,6 +98,11 @@ async function initializeAnnouncementsSystem() {
     const closeModalBtn = document.getElementById('close-announcements-modal');
     const modal = document.getElementById('announcements-modal');
 
+    // Initialize modal with proper aria-hidden state
+    if (modal) {
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
     if (viewAllBtn) {
         const handler = (e) => {
             e.preventDefault();
@@ -244,10 +249,10 @@ function initializeEventListeners() {
 async function loadAndOpenAllAnnouncements(targetAnnouncementId) {
     const announcementsModal = document.getElementById('announcements-modal');
     const announcementsList = document.getElementById('announcements-list');
-    
-    // Show the modal immediately with a loading spinner
+      // Show the modal immediately with a loading spinner
     if (announcementsModal && announcementsList) {
         announcementsModal.classList.remove('hidden');
+        announcementsModal.setAttribute('aria-hidden', 'false');
         announcementsList.innerHTML = `
             <div class="loader" aria-label="Loading announcements...">
                 <span class="sr-only">Loading announcements...</span>
@@ -561,7 +566,12 @@ function openAnnouncementsModal(announcements, targetAnnouncementId, tabType = '
     const tabPatchnotes = document.getElementById('tab-patchnotes');
     
     if (!modal || !list) return;
-    lastActiveElement = document.activeElement;
+    
+    // Only set lastActiveElement if the modal is currently hidden (initial open)
+    const wasHidden = modal.classList.contains('hidden');
+    if (wasHidden) {
+        lastActiveElement = document.activeElement;
+    }
     // Determine which tab is active
     let activeTab = tabType;
     if (tabAnnouncements && tabPatchnotes) {
@@ -575,10 +585,8 @@ function openAnnouncementsModal(announcements, targetAnnouncementId, tabType = '
 
     // Determine if we're showing a single announcement or the full list
     const viewingSingle = announcements.length === 1;
-    // Update global flag from current array
     isViewingSingleAnnouncement = viewingSingle;
 
-    // Filter announcements for the selected tab when in list view
     let filtered = announcements;
     if (!viewingSingle) {
         if (activeTab === 'patchnotes') {
@@ -588,40 +596,71 @@ function openAnnouncementsModal(announcements, targetAnnouncementId, tabType = '
         }
     }
 
-    // Store the view state in a marker attribute on the modal
     const initialLoad = !modal.dataset.loaded;
 
-    // Use original announcements count to determine single-view; do not auto-detail when a tab filter has one item
-    // isViewingSingleAnnouncement remains as set by viewingSingle
-    
-    // If this is the first time opening the modal, mark it as loaded
     if (initialLoad) {
         modal.dataset.loaded = "true";
     }
     
-    // Update modal title based on view mode
     if (modalHeading) {
         modalHeading.textContent = isViewingSingleAnnouncement ? 'Announcement' : 'All Announcements';
-    }
-    
-    if (closeBtn) {
+    }    if (closeBtn) {
+        // Remove all existing event listeners by cloning the button
+        const newCloseBtn = closeBtn.cloneNode(true);
+        closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+        
+        const updatedCloseBtn = document.getElementById('close-announcements-modal');
+        
         if (isViewingSingleAnnouncement) {
             if (allAnnouncements.length > 1) {
-                closeBtn.textContent = 'Back to All Announcements';
-                closeBtn.setAttribute('aria-label', 'Back to all announcements');
-                // Always return to Announcements tab, not Patch Notes
-                closeBtn.onclick = () => {
+                updatedCloseBtn.textContent = 'Back to All Announcements';
+                updatedCloseBtn.setAttribute('aria-label', 'Back to all announcements');
+                const backHandler = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     openAnnouncementsModal(allAnnouncements, undefined, 'announcements');
                 };
+                updatedCloseBtn.addEventListener('click', backHandler);
+                updatedCloseBtn.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        backHandler(e);
+                    }
+                });
             } else {
-                closeBtn.textContent = 'Close';
-                closeBtn.setAttribute('aria-label', 'Close announcement');
-                closeBtn.onclick = closeAnnouncementsModal;
+                updatedCloseBtn.textContent = 'Close';
+                updatedCloseBtn.setAttribute('aria-label', 'Close announcement');
+                const closeHandler = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeAnnouncementsModal();
+                };
+                updatedCloseBtn.addEventListener('click', closeHandler);
+                updatedCloseBtn.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        closeHandler(e);
+                    }
+                });
             }
         } else {
-            closeBtn.textContent = 'Close';
-            closeBtn.setAttribute('aria-label', 'Close announcements');
-            closeBtn.onclick = closeAnnouncementsModal;
+            updatedCloseBtn.textContent = 'Close';
+            updatedCloseBtn.setAttribute('aria-label', 'Close announcements');
+            const closeHandler = (e) => {
+                e.preventDefault(); 
+                e.stopPropagation();
+                closeAnnouncementsModal();
+            };
+            updatedCloseBtn.addEventListener('click', closeHandler);
+            updatedCloseBtn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeHandler(e);
+                }
+            });
         }
     }
     
@@ -635,16 +674,13 @@ function openAnnouncementsModal(announcements, targetAnnouncementId, tabType = '
         card.setAttribute('aria-labelledby', `announcement-title-${ann.id}`);
         card.dataset.id = ann.id;
         
-        // Apply pinned styling if the announcement is pinned
         if (ann.pinned) {
             card.classList.add('pinned');
         }
         
-        // Highlight the specific announcement if requested
         if (targetAnnouncementId && ann.id === targetAnnouncementId) {
             card.classList.add('highlighted-announcement');
             
-            // Scroll into view with a small delay to ensure the DOM is ready
             setTimeout(() => {
                 card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 card.focus();
@@ -655,25 +691,20 @@ function openAnnouncementsModal(announcements, targetAnnouncementId, tabType = '
         title.id = `announcement-title-${ann.id}`;
         title.textContent = ann.title;
         
-        // When viewing all announcements, show description instead of full body
         const contentElement = document.createElement('div');
         contentElement.className = 'announcement-body-content';
         if (isViewingSingleAnnouncement) {
-            // In single detail view, show the full body
             contentElement.innerHTML = ann.body;
         } else {
-            // For the "all announcements" view with condensed items
             contentElement.innerHTML = ann.description || ann.body.substring(0, 200) + (ann.body.length > 200 ? '...' : '');
         }
         
-        // Create a meta container for date and creator information
         const metaContainer = document.createElement('div');
         metaContainer.className = 'announcement-meta';
         
         const date = document.createElement('div');
         date.className = 'announcement-date';
         
-        // Format Firestore timestamp
         try {
             let formattedDate;
             if (ann.date && ann.date.seconds) {
@@ -693,14 +724,12 @@ function openAnnouncementsModal(announcements, targetAnnouncementId, tabType = '
         
         metaContainer.appendChild(date);
         
-        // Add creator name if available
         if (ann.createdBy) {
             const creator = document.createElement('div');
             creator.className = 'announcement-info';
             creator.textContent = `Posted by: ${ann.createdBy}`;
             metaContainer.appendChild(creator);
             
-            // Show edited information if available
             if (ann.isEdited && ann.editedBy) {
                 const editInfo = document.createElement('div');
                 editInfo.className = 'announcement-info';
@@ -713,7 +742,6 @@ function openAnnouncementsModal(announcements, targetAnnouncementId, tabType = '
         card.appendChild(contentElement);
         card.appendChild(metaContainer);
         
-        // Add hint only in list view (not single detail view)
         if (!isViewingSingleAnnouncement) {
             const hint = document.createElement('span');
             hint.className = 'announcement-hint';
@@ -721,7 +749,6 @@ function openAnnouncementsModal(announcements, targetAnnouncementId, tabType = '
             card.appendChild(hint);
         }
         
-        // Add click handlers only if not already in detail view
         if (!isViewingSingleAnnouncement) {
             card.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -740,10 +767,10 @@ function openAnnouncementsModal(announcements, targetAnnouncementId, tabType = '
         
         fragment.appendChild(card);
     });
-    
-    list.innerHTML = '';
+      list.innerHTML = '';
     list.appendChild(fragment);
     modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
     
     const firstCard = list.querySelector('.announcement-card');
     if (firstCard) {
@@ -777,10 +804,28 @@ function openAnnouncementsModal(announcements, targetAnnouncementId, tabType = '
 function closeAnnouncementsModal() {
     const modal = document.getElementById('announcements-modal');
     if (modal) {
-        modal.classList.add('hidden');
-        if (lastActiveElement) {
-            lastActiveElement.focus();
+        // First, move focus away from the modal before setting aria-hidden
+        let focusTarget = null;
+        
+        if (lastActiveElement && !modal.contains(lastActiveElement)) {
+            focusTarget = lastActiveElement;
+        } else {
+            const mainContent = document.getElementById('main-content');
+            if (mainContent) {
+                focusTarget = mainContent;
+            } else {
+                focusTarget = document.body;
+            }
         }
+        
+        if (focusTarget) {
+            focusTarget.focus();
+        }
+
+        requestAnimationFrame(() => {
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
+        });
     }
 }
 
@@ -809,7 +854,6 @@ function getCachedAnnouncements() {
     return null;
 }
 
-// Helper function to cache announcements
 function setCachedAnnouncements(data) {
     const cacheEntry = {
         data: data,

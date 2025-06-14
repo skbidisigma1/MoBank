@@ -107,10 +107,8 @@ async function loadAdminContent() {
   const tabButtons = document.querySelectorAll('.tab-button');
   const tabPanels = document.querySelectorAll('.tab-panel');
   const manageAnnouncementsBtn = document.getElementById('manage-announcements-btn'); // Added
-  const announcementsPanel = document.getElementById('announcements-panel'); // Added
-  const announcementForm = document.getElementById('announcement-form'); // Added
+  const announcementsPanel = document.getElementById('announcements-panel'); // Added  const announcementForm = document.getElementById('announcement-form'); // Added
   const currentAnnouncementsList = document.getElementById('current-announcements-list'); // Added
-  const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
   const namesCache = {};
 
   const modalOverlay = document.createElement('div');
@@ -200,15 +198,7 @@ async function loadAdminContent() {
       });
       
       if (!namesCache[period]) {
-        const loadingIndicator = document.createElement('div');
-        loadingIndicator.classList.add('loader');
-        loadingIndicator.id = `period-${period}-loader`;
-        document.querySelector(`#period-${period}-panel`).appendChild(loadingIndicator);
-        
         namesCache[period] = await getNamesForPeriod(period);
-        
-        const loader = document.getElementById(`period-${period}-loader`);
-        if (loader) loader.remove();
       }
       
       setupFormForPeriod(period, namesCache[period]);
@@ -318,6 +308,7 @@ async function loadAdminContent() {
     // Render regular announcements section
     if (regular.length > 0) {
       const headerA = document.createElement('h4');
+      headerA.className = 'announcements-section-subheader';
       headerA.textContent = 'Announcements';
       currentAnnouncementsList.appendChild(headerA);
       const ulA = document.createElement('ul');
@@ -358,13 +349,26 @@ async function loadAdminContent() {
           } else if (ann.date) {
             date = new Date(ann.date);
           }
-          dateSpan.innerHTML += (date ? date.toLocaleString() : 'Unknown Date');
-        } catch (e) {
+          dateSpan.innerHTML += (date ? date.toLocaleString() : 'Unknown Date');        } catch (e) {
           console.error("Error parsing date:", ann.date, e);
           dateSpan.innerHTML += 'Unknown Date';
         }
         
         metaContainer.appendChild(dateSpan);
+        
+        // Add announcement ID
+        const idSpan = document.createElement('span');
+        idSpan.className = 'announcement-admin-id';
+        idSpan.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" x2="20" y1="9" y2="9"/>
+            <line x1="4" x2="20" y1="15" y2="15"/>
+            <line x1="10" x2="8" y1="3" y2="21"/>
+            <line x1="16" x2="14" y1="3" y2="21"/>
+          </svg>
+          ID: ${ann.id}
+        `;
+        metaContainer.appendChild(idSpan);
         
         if (ann.createdBy) {
           const creatorSpan = document.createElement('span');
@@ -428,6 +432,8 @@ async function loadAdminContent() {
     if (patchnotes.length > 0) {
       const headerP = document.createElement('h4');
       headerP.textContent = 'Patch Notes';
+      headerP.className = 'announcements-section-subheader';
+      headerP.id = 'patchnotes-header';
       currentAnnouncementsList.appendChild(headerP);
       const ulP = document.createElement('ul');
       ulP.className = 'announcements-admin-list';
@@ -470,10 +476,23 @@ async function loadAdminContent() {
           dateSpan.innerHTML += (date ? date.toLocaleString() : 'Unknown Date');
         } catch (e) {
           console.error("Error parsing date:", ann.date, e);
-          dateSpan.innerHTML += 'Unknown Date';
-        }
+          dateSpan.innerHTML += 'Unknown Date';        }
         
         metaContainer.appendChild(dateSpan);
+        
+        // Add announcement ID
+        const idSpan = document.createElement('span');
+        idSpan.className = 'announcement-admin-id';
+        idSpan.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" x2="20" y1="9" y2="9"/>
+            <line x1="4" x2="20" y1="15" y2="15"/>
+            <line x1="10" x2="8" y1="3" y2="21"/>
+            <line x1="16" x2="14" y1="3" y2="21"/>
+          </svg>
+          ID: ${ann.id}
+        `;
+        metaContainer.appendChild(idSpan);
         
         if (ann.createdBy) {
           const creatorSpan = document.createElement('span');
@@ -535,7 +554,6 @@ async function loadAdminContent() {
   }
   
   function handleEditAnnouncement(announcement) {
-    console.log('Edit announcement:', announcement);
     
     const titleInput = document.getElementById('announcement-title');
     const descriptionInput = document.getElementById('announcement-description');

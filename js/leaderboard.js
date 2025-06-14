@@ -2,13 +2,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const loader = document.getElementById('loader');
   const periodButtons = document.querySelectorAll('.period-button');
   const leaderboardBody = document.getElementById('leaderboard-body');
-  const leaderboardCards = document.getElementById('leaderboard-cards');
-  const lastUpdatedElement = document.getElementById('last-updated');
+  const leaderboardCards = document.getElementById('leaderboard-cards');  const lastUpdatedElement = document.getElementById('last-updated');
   const errorContainer = document.getElementById('error-container');
   const errorMessage = document.getElementById('error-message');
   const leaderboardTitle = document.getElementById('leaderboard-title');
 
-  const CACHE_DURATION = 30 * 1000; // 30 seconds
+  // Keep 30 seconds for leaderboard cache since it's more frequently updated
+  const LEADERBOARD_CACHE_DURATION = 30 * 1000;
 
   function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
@@ -178,13 +178,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       lastUpdatedElement.setAttribute('title', '');
     }
   }
-
   function getCachedLeaderboard(period) {
     const cached = localStorage.getItem(`leaderboard_period_${period}`);
     if (cached) {
       const parsed = JSON.parse(cached);
       const now = Date.now();
-      if (now - parsed.timestamp < CACHE_DURATION) {
+      if (now - parsed.timestamp < LEADERBOARD_CACHE_DURATION) {
         return parsed.data;
       }
     }
@@ -308,7 +307,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   periodButtons.forEach(button => {
     button.addEventListener('click', handleTabClick);
   });
-
   async function initializeLeaderboard() {
     await window.auth0Promise;
     const isLoggedIn = await isAuthenticated();
@@ -322,21 +320,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (periodButtonsContainer) {
       periodButtonsContainer.classList.remove('hidden');
     }
+    
     let defaultPeriod = 5;
-    try {
-      const token = await getToken();
-      const response = await fetch('/api/getUserData', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const userData = await response.json();
-        defaultPeriod = userData.class_period || 5;
+    
+    // Check cache first for user data
+    const cachedUserData = CACHE.read(CACHE.USER_KEY);
+    if (cachedUserData && cachedUserData.class_period) {
+      defaultPeriod = cachedUserData.class_period;
+    } else {
+      // Wait for headerFooter.js to set up userDataPromise
+      let attempts = 0;
+      const maxAttempts = 10; // Wait up to 1 second
+      
+      while (!window.userDataPromise && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
       }
-    } catch (error) {
-        console.log("bro theres an error i think", error)
+      
+      if (window.userDataPromise) {
+        try {
+          const userData = await window.userDataPromise;
+          if (userData && userData.class_period) {
+            defaultPeriod = userData.class_period;
+          }
+        } catch (error) {
+        }
+      }
     }
+    
     const defaultButton = document.querySelector(`.period-button[data-period="${defaultPeriod}"]`);
     if (defaultButton) {
       defaultButton.classList.add('active');

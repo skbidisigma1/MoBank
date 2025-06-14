@@ -1,453 +1,268 @@
-function getRelativeTimeString(timestamp) {
-    const now = new Date();
-    const date = new Date(timestamp);
-    const secondsAgo = Math.floor((now - date) / 1000);
-    const minutesAgo = Math.floor(secondsAgo / 60);
-    const hoursAgo = Math.floor(minutesAgo / 60);
-    const daysAgo = Math.floor(hoursAgo / 24);
+/* Loads header & footer, manages auth-aware links + notifications  */
+(async () => {
+  await documentReady();
 
-    if (secondsAgo < 60) return 'just now';
-    if (minutesAgo < 60) return `${minutesAgo}m ago`;
-    if (hoursAgo < 24) return `${hoursAgo}h ago`;
-    if (daysAgo < 7) return `${daysAgo}d ago`;
-    
-    return `${date.getMonth() + 1}/${date.getDate()}/${String(date.getFullYear()).slice(-2)}`;
-}
+  const [$header, $footer] = await Promise.all([
+    fetchFragment(headerPath()).then(insert('#header-placeholder')),
+    fetchFragment(footerPath()).then(insert('#footer-placeholder'))
+  ]);
+  await window.auth0Promise;
 
-async function loadHeaderFooter() {
-    try {
-        const headerPath = window.location.pathname.includes('/pages/') ? '../header.html' : 'header.html';
-        const footerPath = window.location.pathname.includes('/pages/') ? '../footer.html' : 'footer.html';
+  const isLoggedIn = await isAuthenticated();
 
-        const [headerResponse, footerResponse] = await Promise.all([fetch(headerPath), fetch(footerPath)]);
-
-        if (!headerResponse.ok || !footerResponse.ok) return;
-
-        const [headerContent, footerContent] = await Promise.all([headerResponse.text(), footerResponse.text()]);
-
-        const headerPlaceholder = document.getElementById('header-placeholder');
-        headerPlaceholder.innerHTML = '';
-        const headerDoc = new DOMParser().parseFromString(headerContent, 'text/html');
-        Array.from(headerDoc.body.childNodes).forEach(node => headerPlaceholder.appendChild(node));
-
-        const footerPlaceholder = document.getElementById('footer-placeholder');
-        footerPlaceholder.innerHTML = '';
-        const footerDoc = new DOMParser().parseFromString(footerContent, 'text/html');
-        Array.from(footerDoc.body.childNodes).forEach(node => footerPlaceholder.appendChild(node));
-
-        const mobileMenuToggle = headerPlaceholder.querySelector('#mobileMenuToggle');
-        const mobileNav = headerPlaceholder.querySelector('.mobile-nav');
-
-        if (mobileMenuToggle && mobileNav) {
-            mobileMenuToggle.addEventListener('click', () => {
-                const isActive = mobileNav.classList.toggle('active');
-                mobileMenuToggle.classList.toggle('active');
-                mobileMenuToggle.setAttribute('aria-expanded', isActive);
-            });
-        }
-
-        const profilePicElement = document.getElementById('profile-pic');
-
-        await window.auth0Promise;
-
-        const user = await getUser();
-        const roles = user && user['https://mo-classroom.us/roles'] || [];
-        const isAdmin = roles.includes('admin');
-        const isLoggedIn = await isAuthenticated();
-
-        const adminLink = headerPlaceholder.querySelector('#admin-link');
-        const adminLinkMobile = headerPlaceholder.querySelector('#admin-link-mobile');
-        if (adminLink) adminLink.style.display = isAdmin ? 'block' : 'none';
-        if (adminLinkMobile) adminLinkMobile.style.display = isAdmin ? 'block' : 'none';
-
-        const leaderboardLink = headerPlaceholder.querySelector('#leaderboard-link');
-        const leaderboardLinkMobile = headerPlaceholder.querySelector('#leaderboard-link-mobile');
-
-        if (leaderboardLink) leaderboardLink.style.display = isLoggedIn ? 'block' : 'none';
-        if (leaderboardLinkMobile) leaderboardLinkMobile.style.display = isLoggedIn ? 'block' : 'none';
-
-        const authLink = headerPlaceholder.querySelector('#auth-link');
-        const authLinkMobile = headerPlaceholder.querySelector('#auth-link-mobile');
-        const dashboardLink = headerPlaceholder.querySelector('#dashboard-link');
-        const dashboardLinkMobile = headerPlaceholder.querySelector('#dashboard-link-mobile');
-
-        function getCachedUserData() {
-            const cached = localStorage.getItem('userData');
-            const USER_DATA_COOLDOWN_MILLISECONDS = 20 * 1000; // 20 seconds
-            if (cached) {
-                const parsed = JSON.parse(cached);
-                if (Date.now() - parsed.timestamp < USER_DATA_COOLDOWN_MILLISECONDS) {
-                    return parsed.data;
-                }
-            }
-            return null;
-        }
-
-        const TOKEN_COOLDOWN_MILLISECONDS = 5 * 60 * 1000; // 5 minutes
-        let cachedToken = null;
-        let tokenTimestamp = 0;
-
-        async function getCachedToken() {
-            if (!cachedToken || Date.now() - tokenTimestamp > TOKEN_COOLDOWN_MILLISECONDS) {
-                try {
-                    cachedToken = await auth0Client.getTokenSilently();
-                    tokenTimestamp = Date.now();
-                } catch (error) {
-                    console.error('Error fetching token:', error);
-                    await signInWithAuth0();
-                }
-            }
-            return cachedToken;
-        }
-        
-        function setCachedUserData(data) {
-            localStorage.setItem('userData', JSON.stringify({ data, timestamp: Date.now() }));
-        }
-
-        async function fetchUserData() {
-            try {
-                const token = await getCachedToken();
-                
-                const response = await fetch('/api/getUserData', {
-                    method: 'GET',
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                
-                if (response.ok) {
-                    const userData = await response.json();
-                    setCachedUserData(userData);
-                    return userData;
-                } else {
-                    console.error('Failed to fetch user data, status:', response.status);
-                    return null;
-                }
-            } catch (error) {
-                console.error('Error fetching user data:', error);
-                return null;
-            }
-        }
-
-        if (isLoggedIn) {
-            if (authLink) {
-                authLink.textContent = 'Logout';
-                authLink.href = '#';
-                authLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    sessionStorage.clear();
-                    logoutUser();
-                });
-            }
-            if (authLinkMobile) {
-                authLinkMobile.textContent = 'Logout';
-                authLinkMobile.href = '#';
-                authLinkMobile.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    sessionStorage.clear();
-                    logoutUser();
-                });
-            }
-
-            if (user && user.picture) {
-                profilePicElement.src = user.picture;
-                sessionStorage.setItem('userData', JSON.stringify({ ...user, picture: user.picture }));
-            }
-        } else {
-            if (authLink) {
-                authLink.textContent = 'Login';
-                authLink.href = 'login';
-            }
-            if (authLinkMobile) {
-                authLinkMobile.textContent = 'Login';
-                authLinkMobile.href = 'login';
-            }
-        }
-
-        if (dashboardLink) {
-            dashboardLink.addEventListener('click', (e) => {
-                if (!isLoggedIn) {
-                    e.preventDefault();
-                    window.location.href = `login?redirect=dashboard`;
-                }
-            });
-        }
-
-        if (dashboardLinkMobile) {
-            dashboardLinkMobile.addEventListener('click', (e) => {
-                if (!isLoggedIn) {
-                    e.preventDefault();
-                    window.location.href = `login?redirect=dashboard`;
-                }
-            });
-        }
-
-        if (leaderboardLink) {
-            leaderboardLink.addEventListener('click', (e) => {
-                if (!isLoggedIn) {
-                    e.preventDefault();
-                    window.location.href = `login?redirect=leaderboard`;
-                }
-            });
-        }
-
-        if (leaderboardLinkMobile) {
-            leaderboardLinkMobile.addEventListener('click', (e) => {
-                if (!isLoggedIn) {
-                    e.preventDefault();
-                    window.location.href = `login?redirect=leaderboard`;
-                }
-            });
-        }
-
-        profilePicElement.addEventListener('click', () => {
-            window.location.href = isLoggedIn ? 'dashboard' : 'login';
-        });
-
-        const notifIcon = document.getElementById('notification-icon');
-        const notifDropdown = document.getElementById('notification-dropdown');
-        const notifCount = document.getElementById('notification-count');
-        let notifications = [];
-        let unreadCount = 0;
-
-        function updateNotificationsUI() {
-            if (notifications.length > 0) {
-                notifCount.textContent = unreadCount;
-                notifCount.style.display = unreadCount > 0 ? '' : 'none';
-                notifCount.classList.toggle('hidden', unreadCount === 0);
-
-                notifDropdown.innerHTML = `
-                    <div class="notification-header">
-                        <h4>Notifications (${unreadCount} unread)</h4>
-                        <button class="notification-clear">Clear all</button>
-                    </div>
-                `;
-                
-                notifications.forEach((notification, index) => {
-                    const notifItem = document.createElement('div');
-                    notifItem.className = 'notification-item';
-                    notifItem.style.setProperty('--item-index', index);
-                    if (!notification.read) {
-                        notifItem.classList.add('unread');
-                    }
-                    
-                    const message = document.createElement('div');
-                    message.className = 'notification-message';
-                    message.textContent = notification.message || notification;
-                    
-                    const time = document.createElement('span');
-                    time.className = 'notification-time';
-                    time.dataset.timestamp = '';
-
-                    notifItem.addEventListener('click', () => {
-                        const type = notification.type;
-                        if (type === 'admin_transfer') {
-                            window.location.href = 'dashboard';
-                        } else if (type === 'transfer_received' || type === 'user_transfer') {
-                            window.location.href = 'transfer';
-                        } else if (type === 'announcement') {
-                            // Include the announcement ID in the URL if available
-                            const announcementId = notification.announcementId || '';
-                            window.location.href = `${window.location.origin}?showAnnouncements=true&announcementId=${announcementId}`;
-                        }
-                    });
-
-                    if (notification.timestamp) {
-                        try {
-                            let timestamp;
-
-                            if (notification.timestamp.seconds) {
-                                timestamp = notification.timestamp.seconds * 1000;
-                            } else if (notification.timestamp._seconds) {
-                                timestamp = notification.timestamp._seconds * 1000;
-                            } else if (notification.timestamp.toDate) {
-                                timestamp = notification.timestamp.toDate().getTime();
-                            } else if (typeof notification.timestamp === 'string') {
-                                timestamp = new Date(notification.timestamp).getTime();
-                            } else if (typeof notification.timestamp === 'number') {
-                                timestamp = notification.timestamp;
-                            }
-
-                            if (!isNaN(timestamp)) {
-                                time.dataset.timestamp = timestamp;
-                                time.textContent = getRelativeTimeString(timestamp);
-                            } else {
-                                time.textContent = "Unknown";
-                            }
-                        } catch (e) {
-                            console.error("Error parsing timestamp:", e, notification.timestamp);
-                            time.textContent = "Unknown";
-                        }
-                    } else {
-                        time.textContent = "Unknown";
-                    }
-                    
-                    notifItem.appendChild(message);
-                    notifItem.appendChild(time);
-                    notifDropdown.appendChild(notifItem);
-                });
-
-                const clearBtn = notifDropdown.querySelector('.notification-clear');
-                if (clearBtn) {
-                    clearBtn.addEventListener('click', async (e) => {
-                        e.stopPropagation();
-                        
-                        if (notifications.length > 0) {
-                            // Add fadeout animation to all notification items
-                            const notifItems = notifDropdown.querySelectorAll('.notification-item');
-                            notifItems.forEach(item => item.classList.add('fadeout'));
-
-                            // Wait for the animation to complete
-                            await new Promise(resolve => setTimeout(resolve, 500));
-
-                            try {
-                                const token = await getCachedToken();
-                                const response = await fetch('/api/notifications', {
-                                    method: 'POST',
-                                    headers: { 
-                                        'Authorization': `Bearer ${token}`,
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({ action: 'clearAll' })
-                                });
-                                
-                                if (response.ok) {
-                                    notifications = [];
-                                    unreadCount = 0;
-                                    updateNotificationsUI();
-                                    localStorage.removeItem('userData');
-                                } else {
-                                    console.error('Failed to clear notifications');
-                                }
-                            } catch (error) {
-                                console.error('Error clearing notifications:', error);
-                            }
-                        }
-                    });
-                }
-            } else {
-                notifCount.textContent = '0';
-                notifCount.style.display = 'none';
-                notifCount.classList.add('hidden');
-                notifDropdown.innerHTML = '<p class="notification-empty">No notifications</p>';
-            }
-        }
-
-        async function handleNotificationToggle(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const wasHidden = !notifDropdown.classList.contains('visible');
-            
-            notifDropdown.classList.toggle('visible');
-            notifIcon.classList.toggle('active');
-            
-            if (wasHidden && isLoggedIn && unreadCount > 0) {
-                try {
-                    const token = await getCachedToken();
-                    const response = await fetch('/api/notifications', {
-                        method: 'POST',
-                        headers: { 
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ action: 'markAsRead' })
-                    });
-                    
-                    if (response.ok) {
-                        notifications = notifications.map(notif => ({
-                            ...notif,
-                            read: true
-                        }));
-                        unreadCount = 0;
-                        updateNotificationsUI();
-                        fetchUserData();
-                    }
-                } catch (error) {
-                    console.error('Error marking notifications as read:', error);
-                }
-            }
-        }
-
-        if (notifIcon) {
-            notifIcon.addEventListener('touchstart', handleNotificationToggle, {passive: false});
-            notifIcon.addEventListener('click', handleNotificationToggle);
-            
-            if (notifCount) {
-                notifCount.classList.add('hidden');
-                notifCount.style.display = 'none';
-                notifCount.addEventListener('touchstart', handleNotificationToggle, {passive: false});
-                notifCount.addEventListener('click', handleNotificationToggle);
-            }
-
-            notifIcon.classList.remove('hidden');
-            
-            document.addEventListener('click', (e) => {
-                if (e.target !== notifIcon && e.target !== notifCount && !notifDropdown.contains(e.target)) {
-                    notifDropdown.classList.remove('visible');
-                    notifIcon.classList.remove('active');
-                }
-            });
-
-            document.addEventListener('touchstart', (e) => {
-                if (e.target !== notifIcon && e.target !== notifCount && !notifDropdown.contains(e.target)) {
-                    notifDropdown.classList.add('hidden');
-                    notifIcon.classList.remove('active');
-                }
-            }, {passive: true});
-
-            updateNotificationsFromUserData();
-        }
-
-        async function updateNotificationsFromUserData() {
-            if (await isAuthenticated()) {
-                let userData = getCachedUserData();
-
-                if (!userData) {
-                    userData = await fetchUserData();
-                }
-
-                if (userData && userData.notifications && Array.isArray(userData.notifications)) {
-                    notifications = userData.notifications;
-                    unreadCount = notifications.filter(n => !n.read).length;
-                    updateNotificationsUI();
-                } else {
-                    notifCount.style.display = 'none';
-                    notifCount.classList.add('hidden');
-                }
-            } else {
-                notifCount.style.display = 'none';
-                notifCount.classList.add('hidden');
-            }
-        }
-
-        function startTimestampUpdates() {
-            const updateTimestamps = () => {
-                const timeElements = document.querySelectorAll('.notification-time[data-timestamp]');
-                timeElements.forEach(el => {
-                    const timestamp = parseInt(el.dataset.timestamp);
-                    if (!isNaN(timestamp)) {
-                        el.textContent = getRelativeTimeString(timestamp);
-                    }
-                });
-            };
-
-            updateTimestamps();
-            setInterval(updateTimestamps, 60000);
-        }
-
-        startTimestampUpdates();
-
-    } catch (error) {
-        console.error('Error loading header and footer:', error);
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  if (!document.querySelector('link[rel="manifest"]')) {
-    const manifestLink = document.createElement("link");
-    manifestLink.rel = "manifest";
-    manifestLink.href = "/manifest.json";
-    document.head.appendChild(manifestLink);
+  const user = isLoggedIn ? await getUser() : null;
+  setupNavLinks($header, isLoggedIn);
+  setupProfilePic($header, user);
+  await initNotifications($header, isLoggedIn);
+  // kick off a fresh user-data fetch for the whole app
+  window.userDataPromise = isLoggedIn ? fetchAndCacheUserData() : Promise.resolve(null);
+  
+  // Update navigation links after user data is loaded
+  if (isLoggedIn && window.userDataPromise) {
+    window.userDataPromise.then(userData => {
+      if (userData) {
+        updateAdminLinks($header, userData);
+      }
+    }).catch(e => {
+      console.error('HeaderFooter: Failed to update navigation with user data:', e);
+    });
   }
-});
+})().catch(console.error);
 
-document.addEventListener('DOMContentLoaded', loadHeaderFooter);
+/* ---------- helpers ---------- */
+const $$ = (sel) => document.querySelectorAll(sel);
+function documentReady() {
+  return new Promise((r) =>
+    document.readyState === 'loading'
+      ? document.addEventListener('DOMContentLoaded', r, { once: true })
+      : r()
+  );
+}
+
+const insert = (sel) => async (html) => {
+  const holder = document.querySelector(sel);
+  holder.innerHTML = '';
+  holder.append(...new DOMParser().parseFromString(html, 'text/html').body.children);
+  return holder;
+};
+
+const fetchFragment = async (url) => {
+  const res = await fetch(url);
+  return res.ok ? res.text() : '';
+};
+
+const headerPath = () =>
+  location.pathname.includes('/pages/') ? '../header.html' : 'header.html';
+const footerPath = () =>
+  location.pathname.includes('/pages/') ? '../footer.html' : 'footer.html';
+
+async function fetchAndCacheUserData() {
+  try {
+    // Check cache first
+    const cachedData = CACHE.read(CACHE.USER_KEY);
+    if (cachedData) {
+      return cachedData;
+    }
+
+    const token = await auth0Client.getTokenSilently();
+    
+    const res = await fetch('/api/getUserData', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('fetchAndCacheUserData: Request failed:', errorText);
+      throw new Error(`status ${res.status}: ${errorText}`);
+    }
+      const responseData = await res.json();
+    const data = responseData;
+    
+    CACHE.write(CACHE.USER_KEY, data, CACHE.USER_MAX_AGE);
+    
+    return data;
+  } catch (e) {
+    console.error('fetchAndCacheUserData: User data fetch failed:', e);
+    return null;
+  }
+}
+
+/* ---------- header nav / auth ---------- */
+function setupNavLinks($header, loggedIn) {
+  const show = (sel, visible) => $header.querySelectorAll(sel).forEach((n) => (n.style.display = visible ? '' : 'none'));
+
+  // admin - check both the roles array and the isAdmin boolean claim
+  const user = loggedIn ? JSON.parse(sessionStorage.getItem('user') || '{}') : {};
+  const roles = user['https://mo-classroom.us/roles'] || [];
+  const isAdminFromRoles = roles.includes('admin');
+  const isAdminFromClaim = user['https://mo-classroom.us/isAdmin'] === true;
+  const isAdmin = isAdminFromRoles || isAdminFromClaim;
+  
+  show('#admin-link, #admin-link-mobile', isAdmin);
+
+  // logged-in links
+  show('#leaderboard-link, #leaderboard-link-mobile', loggedIn);
+  show('#dashboard-link, #dashboard-link-mobile', true);
+
+  // auth link text/handler
+  $header.querySelectorAll('#auth-link, #auth-link-mobile').forEach((lnk) => {
+    if (loggedIn) {
+      lnk.textContent = 'Logout';
+      lnk.href = '#';
+      lnk.addEventListener('click', (e) => {
+        e.preventDefault();
+        sessionStorage.clear();
+        logoutUser();
+      });
+    } else {
+      lnk.textContent = 'Login';
+      lnk.href = 'login';
+    }
+  });
+}
+
+/* ---------- profile picture ---------- */
+function setupProfilePic($header, user) {
+  const img = $header.querySelector('#profile-pic');
+  if (!img) return;
+
+  img.src = user?.picture || '/images/default_profile.svg';
+  img.addEventListener('click', () => (location.href = user ? 'dashboard' : 'login'));
+}
+
+/* ---------- notifications ---------- */
+async function initNotifications($header, loggedIn) {
+  const icon = $header.querySelector('#notification-icon');
+  const countEl = $header.querySelector('#notification-count');
+  const dropdown = $header.querySelector('#notification-dropdown');
+  if (!icon || !dropdown || !countEl) return;
+
+  let notifications = [];
+  let unread = 0;
+
+  function render() {
+    countEl.textContent = unread;
+    countEl.classList.toggle('hidden', unread === 0);
+
+    dropdown.innerHTML = notifications.length
+      ? `<div class="notification-header">
+           <h4>Notifications (${unread} unread)</h4>
+           <button class="notification-clear">Clear all</button>
+         </div>`
+      : '<p class="notification-empty">No notifications</p>';
+
+    notifications.forEach((n, i) => {
+      const ts = parseTimestamp(n.timestamp);
+      const item = document.createElement('div');
+      item.className = `notification-item ${n.read ? '' : 'unread'}`;
+      item.style.setProperty('--item-index', i);
+      item.innerHTML = `
+        <div class="notification-message">${n.message}</div>
+        <span class="notification-time" data-ts="${ts}">${relTime(ts)}</span>`;
+      item.addEventListener('click', () => handleNotifClick(n));
+      dropdown.appendChild(item);
+    });
+
+    dropdown.querySelector('.notification-clear')?.addEventListener('click', clearAll);
+  }
+
+  async function loadFromUser() {
+    const data = await window.userDataPromise;
+    if (data?.notifications) {
+      notifications = [...data.notifications];
+      unread = notifications.filter((n) => !n.read).length;
+      render();
+    }
+  }
+
+  async function markAllRead() {
+    if (!loggedIn || !unread) return;
+    unread = 0;
+    notifications = notifications.map((n) => ({ ...n, read: true }));
+    render();
+    try {
+      const token = await auth0Client.getTokenSilently();
+      await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'markAsRead' })
+      });
+    } catch (e) {
+      console.error('mark read failed:', e);
+    }
+  }
+
+  async function clearAll(e) {
+    e.stopPropagation();
+    dropdown.querySelectorAll('.notification-item').forEach((el) => el.classList.add('fadeout'));
+    setTimeout(render, 500);
+    notifications = [];
+    unread = 0;
+    try {
+      const token = await auth0Client.getTokenSilently();
+      await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clearAll' })
+      });
+      localStorage.removeItem('userData');
+    } catch (e) {
+      console.error('clear notifications failed:', e);
+    }
+  }
+
+  function handleNotifClick(n) {
+    const url =
+      n.type === 'admin_transfer' ? 'dashboard' :
+      n.type === 'transfer_received' || n.type === 'user_transfer' ? 'transfer' :
+      n.type === 'announcement' ? `${location.origin}?showAnnouncements=true&announcementId=${n.announcementId || ''}` :
+      '';
+    if (url) location.href = url;
+  }
+
+  /* toggle */
+  const toggle = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropdown.classList.toggle('visible');
+    icon.classList.toggle('active');
+    if (dropdown.classList.contains('visible')) markAllRead();
+  };
+  icon.addEventListener('click', toggle);
+  icon.addEventListener('touchstart', toggle, { passive: false });
+  document.addEventListener('click', (e) => !dropdown.contains(e.target) && dropdown.classList.remove('visible'));
+
+  /* relative timestamp updater */
+  setInterval(() => $$('[data-ts]').forEach((el) => (el.textContent = relTime(el.dataset.ts))), 60_000);
+
+  await loadFromUser();
+}
+
+/* utilities */
+const parseTimestamp = (ts) =>
+  ts?._seconds * 1000 || ts?.seconds * 1000 || ts?.toDate?.().getTime() || Date.parse(ts) || Date.now();
+const relTime = (ms) => {
+  const diff = Date.now() - ms;
+  const sec = diff / 1000 | 0, min = sec / 60 | 0, hr = min / 60 | 0, day = hr / 24 | 0;
+  return sec < 60 ? 'just now' :
+         min < 60 ? `${min}m ago` :
+         hr < 24 ? `${hr}h ago` :
+         day < 7 ? `${day}d ago` :
+         new Date(ms).toLocaleDateString();
+};
+
+/* PWA manifest injection */
+if (!document.querySelector('link[rel="manifest"]')) {
+  const l = document.createElement('link');
+  l.rel = 'manifest';
+  l.href = '/manifest.json';
+  document.head.appendChild(l);
+}
+
+function updateAdminLinks($header, userData) {
+  const show = (sel, visible) => $header.querySelectorAll(sel).forEach((n) => (n.style.display = visible ? '' : 'none'));
+  
+  // Use the isAdmin flag from the API user data instead of Auth0 roles
+  const isAdmin = userData && userData.isAdmin === true;
+  show('#admin-link, #admin-link-mobile', isAdmin);
+}

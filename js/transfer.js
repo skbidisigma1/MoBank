@@ -26,7 +26,54 @@ async function loadTransferPage() {
 
 document.addEventListener('DOMContentLoaded', loadTransferPage);
 
-const CACHE_DURATION = 10 * 60 * 1000;
+async function getCachedUser() {
+    try {
+        // Check cache first
+        const cachedData = CACHE.read(CACHE.USER_KEY);
+        if (cachedData) {
+            return cachedData;
+        }
+
+        // If no cache, fetch fresh data
+        return await refreshUserData();
+    } catch (error) {
+        console.error('Error getting cached user:', error);
+        throw error;
+    }
+}
+
+async function refreshUserData() {
+    try {
+        const response = await fetch('/api/user/data', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const userData = await response.json();
+        
+        // Cache the fresh data
+        CACHE.write(CACHE.USER_KEY, userData, CACHE.USER_MAX_AGE);
+        
+        return userData;
+    } catch (error) {
+        console.error('Error fetching user data:', error);
+        throw error;
+    }
+}
+
+function getCachedUserData() {
+  return CACHE.read(CACHE.USER_KEY);
+}
+
+function setCachedUserData(data) {
+  CACHE.write(CACHE.USER_KEY, data, CACHE.USER_MAX_AGE);
+}
 
 // Map period numbers to user-friendly names
 const periodNames = {
@@ -42,37 +89,13 @@ function getPeriodName(period) {
   return periodNames[period] || `Period ${period}`;
 }
 
-function getCachedUserData() {
-  const cached = localStorage.getItem('userData');
-  if (cached) {
-    try {
-      const parsed = JSON.parse(cached);
-      const now = Date.now();
-      if (now - parsed.timestamp < CACHE_DURATION) {
-        return parsed.data;
-      }
-    } catch (e) {
-      return null;
-    }
-  }
-  return null;
-}
-
-function setCachedUserData(data) {
-  const cacheEntry = {
-    data: data,
-    timestamp: Date.now(),
-  };
-  localStorage.setItem('userData', JSON.stringify(cacheEntry));
-}
-
 function getCachedNames(period) {
   const cached = localStorage.getItem(`namesByPeriod-${period}`);
   if (cached) {
     try {
       const parsed = JSON.parse(cached);
       const now = Date.now();
-      if (now - parsed.timestamp < CACHE_DURATION) {
+      if (now - parsed.timestamp < (10 * 60 * 1000)) { // Keep 10 minutes for names cache
         return parsed.data;
       }
     } catch (e) {
@@ -91,6 +114,32 @@ function setCachedNames(period, data) {
 }
 
 async function getUserData() {
+  // Check cache first
+  const cachedData = CACHE.read(CACHE.USER_KEY);
+  if (cachedData) {
+    return cachedData;
+  }
+
+  // Wait for headerFooter.js userDataPromise
+  let attempts = 0;
+  const maxAttempts = 10;
+  
+  while (!window.userDataPromise && attempts < maxAttempts) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    attempts++;
+  }
+  
+  if (window.userDataPromise) {
+    try {
+      const userData = await window.userDataPromise;
+      if (userData) {
+        return userData;
+      }
+    } catch (error) {
+    }
+  }
+  
+  // Fallback to direct API call if needed
   const token = await getToken();
   const response = await fetch('/api/getUserData', {
     headers: {
@@ -100,7 +149,9 @@ async function getUserData() {
   if (!response.ok) {
     throw new Error('Failed to fetch user data.');
   }
-  return response.json();
+  const userData = await response.json();
+  CACHE.write(CACHE.USER_KEY, userData, CACHE.USER_MAX_AGE);
+  return userData;
 }
 
 async function getNamesForPeriod(period) {

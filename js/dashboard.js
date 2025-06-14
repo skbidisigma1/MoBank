@@ -1,267 +1,189 @@
+async function getCachedUser() {
+  try {
+    // Check cache first
+    const cachedData = CACHE.read(CACHE.USER_KEY);
+    if (cachedData) {
+      return { data: cachedData, fresh: true };
+    }
+
+    // Don't fetch fresh data here - let headerFooter.js handle it
+    return { data: null, fresh: false };
+  } catch (error) {
+    console.error('getCachedUser: Error getting cached user:', error);
+    return { data: null, fresh: false };
+  }
+}
+
+async function getToken() {
+  const cached = CACHE.read(CACHE.TOKEN_KEY);
+  
+  if (cached && Date.now() - cached.timestamp < CACHE.TOKEN_MAX_AGE) {
+    return cached.token;
+  }
+  
+  try {
+    const token = await auth0Client.getTokenSilently();
+    CACHE.write(CACHE.TOKEN_KEY, { token, timestamp: Date.now() });
+    return token;
+  } catch (err) {
+    console.error('getToken: Token fetch failed:', err);
+    await signInWithAuth0();
+    throw err;
+  }
+}
+
+/* ---------- ui helpers ---------- */
+const $ = (sel) => document.querySelector(sel);
+const periodNames = {
+  5: 'Period 5',
+  6: 'Period 6',
+  7: 'Period 7',
+  8: 'Symphonic Orchestra',
+  9: 'Full Orchestra',
+  10: 'Chamber Orchestra'
+};
+const cap = (s = '') => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+
+/* ---------- main ---------- */
 document.addEventListener('DOMContentLoaded', async () => {
-    const loader = document.getElementById('loader');
-    loader.classList.remove('hidden');
+  const loader = $('#loader');
+  loader.classList.remove('hidden');
 
-    const error = getUrlParameter('error');
-    const errorDescription = getUrlParameter('error_description');
-    if (error && errorDescription) {
-        const loginUrl = `login?error=${encodeURIComponent(error)}&error_description=${encodeURIComponent(errorDescription)}`;
-        window.location.replace(loginUrl);
-        return;
-    }
+  // auth callback error passthrough
+  const err = new URLSearchParams(location.search);
+  if (err.get('error')) {
+    location.replace(
+      `login?error=${encodeURIComponent(err.get('error'))}&error_description=${encodeURIComponent(err.get('error_description') || '')}`
+    );
+    return;
+  }
 
+  await window.auth0Promise;          // ensure Auth0 ready
+  
+  await setProfileImage();            // doesn't depend on user data
+  const { data: cachedUser, fresh } = await getCachedUser();
+  if (cachedUser) {
+    renderDashboard(cachedUser); // show immediately (even if stale)
+  }
+  // Wait a bit for headerFooter.js to set up the userDataPromise
+  let attempts = 0;
+  const maxAttempts = 10; // Wait up to 1 second (10 * 100ms)
+  
+  while (!window.userDataPromise && attempts < maxAttempts) {
+    await new Promise(resolve => setTimeout(resolve, 100)); // Wait 100ms
+    attempts++;
+  }
+  
+  if (window.userDataPromise) {
     try {
-        await window.auth0Promise;
-
-        await fetchUserData();
-        await setProfileImage();
-
-        setupButtons();
-
-        const profileSuccessful = getUrlParameter('profile_successful');
-        if (profileSuccessful === 'true') {
-            showToast('Success', 'Profile updated successfully!');
-        }
-        
-    } catch (error) {
-        console.error('Error during dashboard initialization:', error);
-        showToast('Error', 'Failed to initialize dashboard. Please try again later.');
-    } finally {
-        loader.style.display = 'none';
-        loader.classList.add('hidden');
+      const liveUser = await window.userDataPromise;
+      renderDashboard(liveUser);
+    } catch (e) {
+      console.error('Dashboard: Live user fetch failed:', e);
     }
+  } else {
+    // If we have cached data, we've already rendered it above
+    if (!cachedUser) {
+      console.warn('Dashboard: No cached data and no userDataPromise - this should not happen normally');
+    }
+  }
+  initButtons();
+
+  if (err.get('profile_successful') === 'true') {
+    showToast('Success', 'Profile updated successfully!');
+  }
+
+  // Don't hide loader here - let it hide after data loads
 });
 
-function getUrlParameter(name) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(name);
+/* ---------- dashboard rendering ---------- */
+function renderDashboard(u = {}) {
+  const loader = $('#loader');
+  if (loader) {
+    loader.classList.add('hidden');
+  }
+  
+  $('#profile-name').textContent = `Welcome, ${u.name || 'User'}!`;
+
+  const balance = Number(u.currency_balance || 0);
+  const balStr = `${balance < 0 ? '-' : ''}$${Math.abs(balance)}`;
+  $('#profile-currency').innerHTML = `MoBuck Balance: <span id="currency-value">${balStr}</span>`;
+  $('#currency-value').style.color = balance < 0 ? 'rgb(220,53,69)' : '';
+
+  $('#dashboard-content').innerHTML = `
+    <div class="dashboard-card"><strong>Class Period:</strong> ${periodNames[u.class_period] || `Period ${u.class_period}`}</div>
+    <div class="dashboard-card"><strong>Instrument:</strong> ${cap(u.instrument)}</div>
+  `;
+  renderTransactions(u.transactions || []);
 }
 
-function setupButtons() {
-    const transferButton = document.getElementById('transfer-mobucks-btn');
-    const moToolsButton = document.getElementById('motools-btn');
-    const logoutButton = document.getElementById('logout-btn');
-    const profileButton = document.getElementById('profile-btn');
-    const leaderboardButton = document.getElementById('leaderboard-btn');
+function renderTransactions(txns) {
+  const list = $('#transactions');
+  list.innerHTML = '';
 
-    if (moToolsButton) {
-        moToolsButton.addEventListener('click', () => {
-            window.location.href = 'tools';
-        });
-    }
+  if (!txns.length) {
+    list.innerHTML = '<li class="transaction-empty">No transactions to show.</li>';
+    return;
+  }
 
-    if (transferButton) {
-        transferButton.addEventListener('click', () => {
-            window.location.href = 'transfer';
-        });
-    }
-
-    if (logoutButton) {
-        logoutButton.addEventListener('click', async () => {
-            await logoutUser();
-            window.location.href = 'login';
-        });
-    }
-
-    if (profileButton) {
-        profileButton.addEventListener('click', () => {
-            window.location.href = 'profile';
-        });
-    }
-    
-    if (leaderboardButton) {
-        leaderboardButton.addEventListener('click', () => {
-            window.location.href = 'leaderboard';
-        });
-    }
+  txns.forEach((t) => {
+    const ts = t.timestamp?._seconds * 1000 + (t.timestamp?._nanoseconds || 0) / 1e6 || Date.now();
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <span class="transaction-amount ${t.type}">${t.type === 'credit' ? '+' : '-'}$${t.amount}</span>
+      <span class="transaction-details">
+        <span class="transaction-type">${t.type === 'credit' ? 'from' : 'to'} ${t.counterpart}</span>
+        <span class="transaction-date">${new Date(ts).toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</span>
+      </span>`;
+    list.appendChild(li);
+  });
 }
 
-const USER_DATA_COOLDOWN_MILLISECONDS = 20 * 1000;
-const TOKEN_COOLDOWN_MILLISECONDS = 5 * 60 * 1000;
-let cachedToken = null;
-let tokenTimestamp = 0;
-
-async function fetchUserData() {
-    try {
-        const cachedUserData = getCachedUserData();
-        if (cachedUserData) {
-            validateUserData(cachedUserData);
-            populateDashboard(cachedUserData);
-            displayTransactionHistory(cachedUserData.transactions || []);
-            return;
-        }
-
-        const token = await getCachedToken();
-
-        const response = await fetch('/api/getUserData', {
-            method: 'GET',
-            headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (response.ok) {
-            const userData = await response.json();
-            validateUserData(userData);
-            setCachedUserData(userData);
-            populateDashboard(userData);
-            displayTransactionHistory(userData.transactions || []);
-        } else if (response.status === 404) {
-            redirectTo('profile');
-        } else {
-            throw new Error('Failed to fetch user data');
-        }
-    } catch (error) {
-        console.error('Error fetching user data:', error);
-        showToast('Error', 'Failed to fetch user data. Please try again later.');
-        redirectTo('profile');
-    }
-}
-
-async function getCachedToken() {
-    if (!cachedToken || Date.now() - tokenTimestamp > TOKEN_COOLDOWN_MILLISECONDS) {
-        try {
-            cachedToken = await auth0Client.getTokenSilently();
-            tokenTimestamp = Date.now();
-        } catch (error) {
-            console.error('Error fetching token:', error);
-            await signInWithAuth0();
-        }
-    }
-    return cachedToken;
-}
-
-function getCachedUserData() {
-    const cached = localStorage.getItem('userData');
-    if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Date.now() - parsed.timestamp < USER_DATA_COOLDOWN_MILLISECONDS) {
-            return parsed.data;
-        }
-    }
-    return null;
-}
-
-function setCachedUserData(data) {
-    localStorage.setItem('userData', JSON.stringify({ data, timestamp: Date.now() }));
-}
-
-function validateUserData(userData) {
-    const validInstruments = ['violin', 'viola', 'cello', 'bass', 'other'];
-    const validClassPeriods = [5, 6, 7, 8, 9, 10];
-    const validThemes = ['light', 'dark'];
-    if (
-        !validInstruments.includes(userData.instrument.toLowerCase()) ||
-        !validClassPeriods.includes(userData.class_period) ||
-        !validThemes.includes(userData.theme)
-    ) {
-        redirectTo('profile');
-    }
-}
-
-const periodNames = {
-    '5': 'Period 5',
-    '6': 'Period 6',
-    '7': 'Period 7',
-    '8': 'Symphonic Orchestra',
-    '9': 'Full Orchestra',
-    '10': 'Chamber Orchestra'
-};
-
-function populateDashboard(userData) {
-    const name = userData.name || 'User';
-    const currency_balance = userData.currency_balance || 0;
-    const instrument = capitalizeFirstLetter(userData.instrument || 'N/A');
-
-    const profileName = document.getElementById('profile-name');
-    const profileCurrency = document.getElementById('profile-currency');
-    const dashboardContent = document.getElementById('dashboard-content');
-
-    profileName.textContent = `Welcome, ${name}!`;
-
-    let formattedBalance;
-    if (currency_balance < 0) {
-        formattedBalance = `-$${Math.abs(currency_balance)}`;
+/* ---------- misc helpers ---------- */
+async function refreshUserData() {
+  try {
+    const token = await getToken();
+    const res = await fetch('/api/getUserData', { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) {
+      const responseData = await res.json();
+      
+      // The API returns the user data directly, not wrapped in a 'data' property
+      const data = responseData;
+      
+      CACHE.write(CACHE.USER_KEY, data, CACHE.USER_MAX_AGE);
+      
+      renderDashboard(data);
+      return data;
     } else {
-        formattedBalance = `$${currency_balance}`;
+      const errorText = await res.text();
+      console.error('refreshUserData: API request failed with status', res.status, 'and response:', errorText);
+      throw new Error(`API request failed: ${res.status}`);
     }
-
-    profileCurrency.innerHTML = `MoBuck Balance: <span id="currency-value">${formattedBalance}</span>`;
-
-    const currencyValueSpan = document.getElementById('currency-value');
-    if (currency_balance < 0) {
-        currencyValueSpan.style.color = 'rgb(220, 53, 69)';
-    } else {
-        currencyValueSpan.style.color = '';
-    }
-
-    const periodName = periodNames[userData.class_period] || `Period ${userData.class_period}`;
-
-    dashboardContent.innerHTML = `
-        <div class="dashboard-card"><strong>Class Period:</strong> ${periodName}</div>
-        <div class="dashboard-card"><strong>Instrument:</strong> ${instrument}</div>
-    `;
-}
-
-function capitalizeFirstLetter(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+  } catch (e) {
+    console.error('refreshUserData: User refresh failed:', e);
+    throw e;
+  }
 }
 
 async function setProfileImage() {
-    const profileImage = document.querySelector('.dashboard-profile-icon');
-    const placeholderPath = '/images/default_profile.svg';
-
-    try {
-        const user = await auth0Client.getUser();
-        if (user && user.picture) {
-            profileImage.src = user.picture;
-        } else {
-            profileImage.src = placeholderPath;
-        }
-    } catch (error) {
-        console.error('Error fetching profile picture:', error);
-        profileImage.src = placeholderPath;
-        showToast('Warning', 'Unable to load your profile picture.');
-    }
+  const img = $('.dashboard-profile-icon');
+  img.src = '/images/default_profile.svg';
+  try {
+    const user = await auth0Client.getUser();
+    if (user?.picture) img.src = user.picture;
+  } catch (e) {
+    console.error('profile img:', e);
+  }
 }
 
-function redirectTo(url) {
-    window.location.href = url;
-}
-
-function displayTransactionHistory(transactions) {
-    const list = document.getElementById('transactions');
-    list.innerHTML = '';
-    
-    if (!transactions || transactions.length === 0) {
-        const li = document.createElement('li');
-        li.className = 'transaction-empty';
-        li.textContent = 'No transactions to show.';
-        list.appendChild(li);
-        return;
-    }
-
-    transactions.forEach(tx => {
-        const li = document.createElement('li');
-        const date = tx.timestamp 
-            ? new Date(tx.timestamp._seconds * 1000 + (tx.timestamp._nanoseconds || 0) / 1000000)
-            : new Date();
-            
-        const formattedDate = date.toLocaleString(undefined, {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-
-        const amount = tx.type === 'credit' ? `+$${tx.amount}` : `-$${tx.amount}`;
-        const amountClass = tx.type === 'credit' ? 'credit' : 'debit';
-        
-        li.innerHTML = `
-            <span class="transaction-amount ${amountClass}">${amount}</span>
-            <span class="transaction-details">
-                <span class="transaction-type">${tx.type === 'credit' ? 'from' : 'to'} ${tx.counterpart}</span>
-                <span class="transaction-date">${formattedDate}</span>
-            </span>
-        `;
-        list.appendChild(li);
-    });
+function initButtons() {
+  const nav = (btn, to) => btn && btn.addEventListener('click', () => (location.href = to));
+  nav($('#motools-btn'), 'tools');
+  nav($('#transfer-mobucks-btn'), 'transfer');
+  nav($('#profile-btn'), 'profile');
+  nav($('#leaderboard-btn'), 'leaderboard');
+  $('#logout-btn')?.addEventListener('click', async () => {
+    await logoutUser();
+    location.href = 'login';
+  });
 }

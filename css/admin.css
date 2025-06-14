@@ -1,6 +1,20 @@
 /* Admin panel styles for announcements */
 
+/* Fix for navigation alignment - override responsive main width for admin panel */
+@media (min-width: 769px) {
+  #admin-content.main-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+}
+
 /* Announcement admin panel styles */
+.page-heading {
+  margin-top: 2.4rem;
+}
+
 .announcements-admin-list {
   list-style: none;
   padding: 0;
@@ -48,11 +62,25 @@
 .announcement-admin-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.5rem 1rem;
   margin: 0.5rem 0;
   width: 100%;
   padding-top: 0.5rem;
   border-top: 1px solid var(--color-border);
+}
+
+/* First row contains date, author, editor */
+.announcement-admin-date,
+.announcement-admin-creator,
+.announcement-admin-edited {
+  order: 1;
+}
+
+/* Second row contains only ID */
+.announcement-admin-id {
+  order: 2;
+  width: 100%;
+  flex-basis: 100%;
 }
 
 .announcement-admin-date {
@@ -84,10 +112,49 @@
   height: 16px;
 }
 
+.announcement-admin-id {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.announcement-admin-id svg {
+  width: 16px;
+  height: 16px;
+}
+
+.announcement-admin-edited {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  font-style: italic;
+  margin-right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.announcement-admin-edited svg {
+  width: 16px;
+  height: 16px;
+}
+
 .announcement-admin-actions {
   display: flex;
   gap: 8px;
   margin-left: auto;
+}
+
+.admin-card-title {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-top: 1.8rem;
+  margin-bottom: 0.8rem;
+}
+
+#patchnotes-header {
+  margin-top: 2rem;
 }
 
 /* Admin Announcement Buttons */
@@ -180,6 +247,10 @@
 #current-announcements-list .error-message {
   color: var(--color-danger);
   font-weight: 500;
+}
+
+.class-submit-button {
+  margin-bottom: 3rem;
 }
 
 /* Responsive adjustments */

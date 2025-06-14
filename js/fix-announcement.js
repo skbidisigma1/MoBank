@@ -65,7 +65,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await originalDeleteFn.apply(this, arguments);
             
             if (isEditingThisAnnouncement) {
-              console.log('Resetting edit form after deletion of the announcement being edited');
               
               if (typeof window.resetAnnouncementForm === 'function') {
                 setTimeout(() => window.resetAnnouncementForm(), 50);
@@ -80,7 +79,6 @@ document.addEventListener('DOMContentLoaded', function() {
         };
       }
       
-      console.log('Announcement deletion safety patch applied successfully');
     } catch (error) {
       console.error('Failed to apply announcement deletion safety patch:', error);
     }

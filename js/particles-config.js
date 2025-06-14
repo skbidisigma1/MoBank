@@ -180,7 +180,6 @@
                 if (particlesContainer) {
                     particlesContainer.style.display = 'none';
                 }
-                console.log('Particles disabled on mobile devices');
                 return;
             }
             

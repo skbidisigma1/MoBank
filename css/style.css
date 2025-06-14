@@ -218,8 +218,10 @@ nav a:hover {
 main {
   flex: 1;
   width: 100%;
+  min-width: 60%;
   min-height: calc(100vh - 120px); /* Account for header/footer */
-  background-color: var(--color-bg);
+  /*background-color: var(--color-bg);*/
+  background: transparent;
 }
 
 /* Container system for consistent max-widths */
@@ -615,6 +617,10 @@ select:after {
   z-index: 1400;
 }
 
+.loader.hidden {
+  display: none !important;
+}
+
 .loader::after {
   content: "";
   width: 40px;
@@ -633,6 +639,11 @@ select:after {
 .admin-title {
   margin-bottom: 20px;
 }
+
+.announcements-section-subheader {
+  margin-bottom: 0.8rem;
+}
+
 .tab-container {
   margin-top: 20px;
   padding-bottom: 20px;
@@ -1396,6 +1407,23 @@ select:after {
   font-size: 1rem;
 }
 
+/* Fix link overflow in announcements */
+.announcement-card a,
+.announcement-card div.announcement-body-content a {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* Also apply to main announcement area */
+#main-announcement a {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
 .announcement-meta {
   display: flex;
   font-family: var(--font-main);
@@ -1639,21 +1667,6 @@ select:after {
   .login-button-container .gsi-material-button {
     width: 90%;
   }
-}
-
-.wave-decoration {
-  position: relative;
-  height: 50px;
-  background: linear-gradient(45deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-  opacity: 0.1;
-  border-radius: 100% 100% 0 0;
-  margin-bottom: -20px;
-}
-
-.wave-decoration.bottom {
-  transform: rotate(180deg);
-  margin-top: -20px;
-  margin-bottom: 0;
 }
 
 .trust-badges {
@@ -2148,10 +2161,6 @@ select:after {
     font-size: 1rem;
   }
   
-  .form-group {
-    padding: 1rem;
-  }
-  
   .form-group label {
     font-size: 1rem;
   }
@@ -2432,10 +2441,21 @@ select:after {
   color: #e74c3c;
 }
 
-[data-theme="dark"] .announcements-tab.active,
-[data-theme="dark"] .announcements-tab:focus {
-  background: #18263a;
-  color: #5ea2ff;
+.announcements-tab:not(.active):not(:focus) {
+  background: transparent;
+  border: 2px solid var(--color-secondary);
+  color: var(--color-text);
+}
+
+.announcements-tab.active,
+.announcements-tab:focus {
+  background: var(--color-secondary-dark);
+  color: var(--color-white);
+}
+
+#tab-patchnotes {
+  margin-bottom: 2rem;
+  margin-top: 1rem;
 }
 
 /* ===== RESPONSIVE UTILITIES ===== */
@@ -2479,6 +2499,7 @@ select:after {
 
 /* ===== CONTENT WIDTHS ===== */
 .content-narrow {
+ 
   max-width: 600px;
   margin: 0 auto;
 }

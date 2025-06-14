@@ -17,12 +17,13 @@
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" href="/images/favicon_192.png" type="image/png" sizes="192x192">
   <link rel="apple-touch-icon" href="/images/favicon_192.png">
-
+  <link rel="preload" href="/js/cache.js" as="script">
   <link rel="preload" href="/js/theme.js" as="script">
   <link rel="preload" href="/css/style.css" as="style">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
+  <script src="/js/cache.js"></script>
   <script src="/js/theme.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
@@ -33,7 +34,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js" crossorigin="anonymous"></script>
-
   <script src="js/auth.js" defer></script>
   <script src="js/headerFooter.js" defer></script>
   <script src="js/typing-effect.js" defer></script>
@@ -45,7 +45,7 @@
   <div id="particles-js" aria-hidden="true"></div>
   <div id="header-placeholder" role="banner"></div>
 
-  <main id="main-content" class="main-container">
+  <main id="main-content" class="main-container" tabindex="-1">
     <section class="hero-section">
       <h1 class="hero-heading" aria-label="Manage MoBucks with different features">
         Manage MoBucks with <span id="typing-text" aria-live="polite">Ease</span><span class="typing-cursor" aria-hidden="true">|</span>
@@ -117,7 +117,7 @@
 
   <div id="footer-placeholder" role="contentinfo"></div>
 
-  <div id="announcements-modal" class="modal hidden" role="dialog" aria-labelledby="modal-heading" aria-hidden="true">
+  <div id="announcements-modal" class="modal hidden" role="dialog" aria-labelledby="modal-heading">
     <div id="announcements-modal-content" class="modal-content">
       <h2 id="modal-heading">All Announcements</h2>
       <div class="announcements-tabs" role="tablist">

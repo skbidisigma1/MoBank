@@ -22,11 +22,23 @@
         } catch (e) {
             return null;
         }
-    }
-
-    async function getStoredTheme() {
+    }    async function getStoredTheme() {
         if (themeCache) return themeCache;
 
+        // Check new CACHE utility first (if available)
+        if (typeof CACHE !== 'undefined' && CACHE.read && CACHE.USER_KEY) {
+            const cachedUserData = CACHE.read(CACHE.USER_KEY);
+            if (cachedUserData?.theme) {
+                const theme = cachedUserData.theme;
+                if (isValidTheme(theme)) {
+                    await updateIndexedDBTheme(theme);
+                    themeCache = theme;
+                    return theme;
+                }
+            }
+        }
+
+        // Fallback to old localStorage format for backward compatibility
         const userDataStr = localStorage.getItem('userData');
         const userData = safeParse(userDataStr);
         
@@ -135,14 +147,20 @@
             console.error('Failed to update theme in IndexedDB:', e);
             throw e;
         }
-    }
-
-    async function updateTheme(newTheme) {
+    }    async function updateTheme(newTheme) {
         if (!isValidTheme(newTheme)) return;
 
         try {
             document.documentElement.setAttribute('data-theme', newTheme);
             
+            // Update new CACHE utility if available
+            if (CACHE && CACHE.read && CACHE.write && CACHE.USER_KEY) {
+                const existingData = CACHE.read(CACHE.USER_KEY) || {};
+                existingData.theme = newTheme;
+                CACHE.write(CACHE.USER_KEY, existingData, CACHE.USER_MAX_AGE);
+            }
+            
+            // Also update old localStorage format for backward compatibility
             const userData = safeParse(localStorage.getItem('userData')) || { data: {} };
             userData.data.theme = newTheme;
             localStorage.setItem('userData', JSON.stringify(userData));
@@ -167,11 +185,11 @@
             const current = document.documentElement.getAttribute('data-theme');
             const newTheme = current === THEME.DARK ? THEME.LIGHT : THEME.DARK;
             await updateTheme(newTheme);
-        });
-
-        mediaQuery.addListener(async (e) => {
-            const userData = safeParse(localStorage.getItem('userData'));
-            if (!userData?.data?.theme) {
+        });        mediaQuery.addListener(async (e) => {
+            // Check new CACHE first, then fallback to old localStorage
+            const cachedUserData = CACHE && CACHE.read ? CACHE.read(CACHE.USER_KEY) : null;
+            const userData = cachedUserData || safeParse(localStorage.getItem('userData'));
+            if (!userData?.theme && !userData?.data?.theme) {
                 const newTheme = e.matches ? THEME.DARK : THEME.LIGHT;
                 await updateTheme(newTheme);
             }
