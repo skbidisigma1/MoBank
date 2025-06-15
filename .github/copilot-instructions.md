@@ -7,6 +7,8 @@
 * **Hosting:** Vercel
 * **Auth:** Auth0 (RBAC; teachers carry `admin` claim)
 * **DB:** Firebase Firestore
+* **Public Domain:** [mo-classroom.us](https://mo-classroom.us)
+* **Auth0 Domain:** [dev-nqdfwemz14t8nf7w.us.auth0.com](https://dev-nqdfwemz14t8nf7w.us.auth0.com)
 
 ## 2&nbsp;·&nbsp;Canonical Folder Layout
 
@@ -34,7 +36,7 @@
 6. **Security matters**
    * Validate every input (client & server). Never trust user input.
    * Never expose secrets; use Vercel/Firestore env vars.
-   * Enforce Auth0 scopes (`admin`, `student`, `teacher`) on both ends.
+   * Enforce Auth0 scopes (only `admin` for now) on both ends.
 7. **If it isn’t broken, leave it** – refactor only for clear wins (perf, clarity, security).
 
 ## 4&nbsp;·&nbsp;Agent-Mode Workflow
