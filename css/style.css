@@ -2506,7 +2506,7 @@ select:after {
 
 .content-medium {
   max-width: 800px;
-  margin: 0 auto;
+  margin:  0 auto;
 }
 
 /* ===== FLEX UTILITIES ===== */
@@ -2530,3 +2530,35 @@ select:after {
 .gap-2 { gap: 1rem; }
 .gap-3 { gap: 1.5rem; }
 .gap-4 { gap: 2rem; }
+
+/* Placeholder sizing to prevent CLS */
+#header-placeholder {
+  min-height: 60px; /* header height (60px) + padding (40px) */
+  background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+#footer-placeholder {
+  min-height: 60px; /* approximate footer height */
+  background-color: var(--color-footer-bg);
+  margin-top: 40px;
+}
+
+/* Remove redundant styles once content loads */
+#header-placeholder:not(:empty) {
+  min-height: unset;
+  background: unset;
+  box-shadow: unset;
+  position: unset;
+  top: unset;
+  z-index: unset;
+}
+
+#footer-placeholder:not(:empty) {
+  min-height: unset;
+  background-color: unset;
+  margin-top: unset;
+}
