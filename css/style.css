@@ -81,10 +81,6 @@
 }
 
 /* Dark theme hero element backgrounds */
-[data-theme="dark"] .hero-heading {
-  background: var(--color-bg);
-}
-
 [data-theme="dark"] .hero-description {
   background: var(--color-bg);
 }
@@ -1267,6 +1263,7 @@ select:after {
   background: var(--color-bg);
   border-radius: 12px;
   z-index: -1;
+  opacity: 1; /* Ensure fully opaque */
 }
 
 /* Apply gradient text effect to the hero heading - but only to the dynamic parts */
@@ -1368,22 +1365,22 @@ select:after {
 .hero-description {
   font-size: clamp(1.1rem, 2vw, 1.25rem);
   max-width: 800px;
-  margin: 0 auto 1.5rem;
+  margin: -2rem auto 0.8rem; /* Larger negative top margin to close gap with heading */
   color: var(--color-text);
   opacity: 0.9;
   line-height: 1.6;
   background: var(--color-bg);
   border-radius: 10px;
-  padding: 1.25rem 1.75rem;
+  padding: 2.5rem 1.75rem 1.75rem; /* More top padding to compensate for larger negative margin */
 }
 
 .hero-cta {
   font-size: 1.1rem;
   color: var(--color-muted);
-  margin-bottom: 2rem;
+  margin: -0.8rem auto 2rem; /* Larger negative top margin to close gap with description */
   background: var(--color-bg);
   border-radius: 8px;
-  padding: 1rem 1.5rem;
+  padding: 2rem 1.5rem 1.25rem; /* More top padding to compensate for larger negative margin */
   display: inline-block;
   max-width: 600px;
 }
