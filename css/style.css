@@ -81,6 +81,10 @@
 }
 
 /* Dark theme hero element backgrounds */
+[data-theme="dark"] .hero-heading {
+  background: var(--color-bg);
+}
+
 [data-theme="dark"] .hero-description {
   background: var(--color-bg);
 }
@@ -1242,15 +1246,52 @@ select:after {
 .hero-heading {
   min-height: 1.8em;
   font-family: var(--font-tech);
-  font-size: 2.5rem;
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
   font-weight: 700;
-  margin-bottom: 1.5rem;
+  line-height: 1.2;
+  margin-bottom: 2rem;
+  letter-spacing: 0.5px;
+  position: relative;
+  padding: 1.5rem 2rem;
+  display: inline-block;
+  color: var(--color-text);
+}
+
+.hero-heading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-bg);
+  border-radius: 12px;
+  z-index: -1;
+}
+
+/* Apply gradient text effect to the hero heading - but only to the dynamic parts */
+.hero-heading {
+  /* Remove the gradient from the entire heading and apply it selectively */
+  color: var(--color-text);
+  text-shadow: rgba(0, 0, 0, 0.05) 0px 1px 5px;
+}
+
+/* Apply gradient only to specific elements if needed */
+.hero-heading .gradient-text {
   background: linear-gradient(120deg, var(--heading-gradient-from), var(--heading-gradient-to));
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 1px 5px rgba(0,0,0,0.05);
-  letter-spacing: 0.5px;
+}
+
+/* Override for typing elements to show actual text with solid colors */
+.hero-heading #typing-text,
+.hero-heading .typing-cursor {
+  background: none !important;
+  background-clip: initial !important;
+  -webkit-background-clip: initial !important;
+  -webkit-text-fill-color: var(--typing-text-color) !important;
+  color: var(--typing-text-color) !important;
 }
 
 #typing-text {
@@ -1259,8 +1300,8 @@ select:after {
   background: none;
   background-clip: initial;
   -webkit-background-clip: initial;
-  -webkit-text-fill-color: var(--typing-text-color);
-  color: var(--typing-text-color);
+  -webkit-text-fill-color: var(--typing-text-color) !important;
+  color: var(--typing-text-color) !important;
 }
 
 .typing-cursor {
@@ -1269,8 +1310,8 @@ select:after {
   animation: blink 0.7s infinite;
   margin-left: 2px;
   font-weight: 700;
-  -webkit-text-fill-color: var(--typing-cursor-color);
-  color: var(--typing-cursor-color);
+  -webkit-text-fill-color: var(--typing-cursor-color) !important;
+  color: var(--typing-cursor-color) !important;
 }
 
 @keyframes blink {
@@ -1322,13 +1363,6 @@ select:after {
   text-align: center;
   padding: 5rem 0;
   margin-bottom: 2rem;
-}
-
-.hero-heading {
-  font-size: clamp(2.5rem, 5vw, 3.5rem);
-  line-height: 1.2;
-  margin-bottom: 2rem;
-  color: var(--color-text);
 }
 
 .hero-description {
