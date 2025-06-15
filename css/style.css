@@ -1594,6 +1594,45 @@ select:after {
   color: var(--color-secondary);
 }
 
+/* Add background to MoTools button text for contrast */
+#motools-btn {
+  position: relative;
+  background-color: transparent; /* Ensure transparent background is preserved */
+}
+
+#motools-btn::before {
+  content: 'Continue to MoTools (Beta)';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--color-bg);
+  border-radius: 4px;
+  z-index: -1;
+  padding: 0.2rem 0.5rem; /* Just enough padding around the text */
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  white-space: nowrap;
+  pointer-events: none; /* Ensure it doesn't interfere with button clicks */
+  opacity: 1;
+  transition: opacity 0.1s ease 0.2s; /* Delay the appearance to match button transition */
+}
+
+/* Remove background on hover/active states - instant */
+#motools-btn:hover::before,
+#motools-btn:active::before {
+  opacity: 0;
+  transition: none; /* Instant removal on hover */
+}
+
+/* Ensure hover effect works for MoTools button */
+#motools-btn:hover {
+  background-color: var(--color-secondary);
+  color: var(--color-white);
+  transform: translateY(-2px);
+}
+
 .secondary-button:hover {
   background-color: var(--color-secondary);
   color: var(--color-white);
