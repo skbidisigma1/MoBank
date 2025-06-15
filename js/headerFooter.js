@@ -7,24 +7,24 @@
     fetchFragment(footerPath()).then(insert('#footer-placeholder'))
   ]);
   await window.auth0Promise;
-
   const isLoggedIn = await isAuthenticated();
 
   const user = isLoggedIn ? await getUser() : null;
-  setupNavLinks($header, isLoggedIn);
+  setupNavLinks($header, isLoggedIn, user);
   setupProfilePic($header, user);
   await initNotifications($header, isLoggedIn);
   // kick off a fresh user-data fetch for the whole app
   window.userDataPromise = isLoggedIn ? fetchAndCacheUserData() : Promise.resolve(null);
-  
-  // Update navigation links after user data is loaded
+    // Update navigation links after user data is loaded
   if (isLoggedIn && window.userDataPromise) {
     window.userDataPromise.then(userData => {
       if (userData) {
-        updateAdminLinks($header, userData);
+        // Admin links are already set up correctly in setupNavLinks using Auth0 user data
+        // The API userData doesn't contain admin role information, so we don't need to update admin links here
+        console.log('User data loaded successfully');
       }
     }).catch(e => {
-      console.error('HeaderFooter: Failed to update navigation with user data:', e);
+      console.error('HeaderFooter: Failed to load user data:', e);
     });
   }
 })().catch(console.error);
@@ -88,15 +88,15 @@ async function fetchAndCacheUserData() {
 }
 
 /* ---------- header nav / auth ---------- */
-function setupNavLinks($header, loggedIn) {
+function setupNavLinks($header, loggedIn, user = null) {
   const show = (sel, visible) => $header.querySelectorAll(sel).forEach((n) => (n.style.display = visible ? '' : 'none'));
 
-  // admin - check both the roles array and the isAdmin boolean claim
-  const user = loggedIn ? JSON.parse(sessionStorage.getItem('user') || '{}') : {};
-  const roles = user['https://mo-classroom.us/roles'] || [];
-  const isAdminFromRoles = roles.includes('admin');
-  const isAdminFromClaim = user['https://mo-classroom.us/isAdmin'] === true;
-  const isAdmin = isAdminFromRoles || isAdminFromClaim;
+  // admin - check the roles array from Auth0 user data
+  console.log('SetupNavLinks - User object:', user);
+  const roles = user?.['https://mo-classroom.us/roles'] || [];
+  console.log('SetupNavLinks - Roles from user:', roles);
+  const isAdmin = roles.includes('admin');
+  console.log('SetupNavLinks - isAdmin:', isAdmin);
   
   show('#admin-link, #admin-link-mobile', isAdmin);
 
@@ -108,8 +108,7 @@ function setupNavLinks($header, loggedIn) {
   $header.querySelectorAll('#auth-link, #auth-link-mobile').forEach((lnk) => {
     if (loggedIn) {
       lnk.textContent = 'Logout';
-      lnk.href = '#';
-      lnk.addEventListener('click', (e) => {
+      lnk.href = '#';      lnk.addEventListener('click', (e) => {
         e.preventDefault();
         sessionStorage.clear();
         logoutUser();
@@ -260,9 +259,8 @@ if (!document.querySelector('link[rel="manifest"]')) {
 }
 
 function updateAdminLinks($header, userData) {
-  const show = (sel, visible) => $header.querySelectorAll(sel).forEach((n) => (n.style.display = visible ? '' : 'none'));
-  
-  // Use the isAdmin flag from the API user data instead of Auth0 roles
-  const isAdmin = userData && userData.isAdmin === true;
-  show('#admin-link, #admin-link-mobile', isAdmin);
+  // This function is no longer needed since admin links are properly set up 
+  // in setupNavLinks using Auth0 user data which contains the admin roles.
+  // The API userData doesn't contain admin role information.
+  console.log('updateAdminLinks called - admin links already set up correctly');
 }

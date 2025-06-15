@@ -18,11 +18,18 @@ const auth0Promise = (async () => {
 
   const currentPage = window.location.pathname.split('/').pop();
   const isProtected = protectedPages.includes(currentPage);
-
   if (isProtected) {
     const token = await getToken();
     if (token) {
-      await initializeUser(token);
+      // Check if user has been initialized in this session
+      const sessionKey = 'user_initialized_session';
+      const currentSession = sessionStorage.getItem(sessionKey);
+      
+      if (!currentSession) {
+        await initializeUser(token);
+        // Mark as initialized for this session
+        sessionStorage.setItem(sessionKey, 'true');
+      }
     } else {
       window.location.href = 'login';
     }
