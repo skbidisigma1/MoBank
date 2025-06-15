@@ -16,17 +16,6 @@
   // kick off a fresh user-data fetch for the whole app
   window.userDataPromise = isLoggedIn ? fetchAndCacheUserData() : Promise.resolve(null);
     // Update navigation links after user data is loaded
-  if (isLoggedIn && window.userDataPromise) {
-    window.userDataPromise.then(userData => {
-      if (userData) {
-        // Admin links are already set up correctly in setupNavLinks using Auth0 user data
-        // The API userData doesn't contain admin role information, so we don't need to update admin links here
-        console.log('User data loaded successfully');
-      }
-    }).catch(e => {
-      console.error('HeaderFooter: Failed to load user data:', e);
-    });
-  }
 })().catch(console.error);
 
 /* ---------- helpers ---------- */
@@ -91,12 +80,8 @@ async function fetchAndCacheUserData() {
 function setupNavLinks($header, loggedIn, user = null) {
   const show = (sel, visible) => $header.querySelectorAll(sel).forEach((n) => (n.style.display = visible ? '' : 'none'));
 
-  // admin - check the roles array from Auth0 user data
-  console.log('SetupNavLinks - User object:', user);
   const roles = user?.['https://mo-classroom.us/roles'] || [];
-  console.log('SetupNavLinks - Roles from user:', roles);
   const isAdmin = roles.includes('admin');
-  console.log('SetupNavLinks - isAdmin:', isAdmin);
   
   show('#admin-link, #admin-link-mobile', isAdmin);
 
@@ -256,11 +241,4 @@ if (!document.querySelector('link[rel="manifest"]')) {
   l.rel = 'manifest';
   l.href = '/manifest.json';
   document.head.appendChild(l);
-}
-
-function updateAdminLinks($header, userData) {
-  // This function is no longer needed since admin links are properly set up 
-  // in setupNavLinks using Auth0 user data which contains the admin roles.
-  // The API userData doesn't contain admin role information.
-  console.log('updateAdminLinks called - admin links already set up correctly');
 }
