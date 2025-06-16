@@ -386,6 +386,7 @@ footer a {
   text-decoration: none;
   font-size: 0.9rem;
   transition: color 0.2s ease;
+  line-height: 1;
 }
 .footer-nav a:hover {
   color: var(--color-white);
@@ -393,11 +394,52 @@ footer a {
 .separator {
   color: var(--color-muted);
   font-size: 0.8rem;
+  line-height: 1;
 }
 .github-icon {
   width: 16px;
   height: 16px;
   vertical-align: middle;
+}
+
+.footer-config-btn {
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: 0;
+  border-radius: 4px;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  vertical-align: middle;
+  margin: 0;
+}
+
+.footer-config-btn:hover {
+  color: var(--color-white);
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 0.125rem;
+  margin: -0.125rem;
+}
+
+.footer-config-btn:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.config-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  display: block;
+}
+
+.footer-config-btn:hover .config-icon {
+  transform: rotate(45deg);
 }
 
 @media (max-width: 768px) {

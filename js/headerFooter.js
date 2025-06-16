@@ -8,10 +8,10 @@
   ]);
   await window.auth0Promise;
   const isLoggedIn = await isAuthenticated();
-
   const user = isLoggedIn ? await getUser() : null;
   setupNavLinks($header, isLoggedIn, user);
   setupProfilePic($header, user);
+  setupParticleConfigButton($footer);
   await initNotifications($header, isLoggedIn);
   // kick off a fresh user-data fetch for the whole app
   window.userDataPromise = isLoggedIn ? fetchAndCacheUserData() : Promise.resolve(null);
@@ -112,6 +112,26 @@ function setupProfilePic($header, user) {
 
   img.src = user?.picture || '/images/default_profile.svg';
   img.addEventListener('click', () => (location.href = user ? 'dashboard' : 'login'));
+}
+
+/* ---------- particle config button ---------- */
+function setupParticleConfigButton($footer) {
+  const configBtn = $footer.querySelector('#particle-config-btn');
+  if (!configBtn) return;
+
+  configBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    handleParticleConfigClick();
+  });
+}
+
+function handleParticleConfigClick() {
+  // For now, just log that the button was clicked
+  // This is where we'll eventually open the modal
+  console.log('Particle configuration button clicked');
+  
+  // TODO: Open particle configuration modal
+  // We'll implement this in the next step with IndexedDB storage
 }
 
 /* ---------- notifications ---------- */
