@@ -11,7 +11,7 @@
     { "source": "/transfer", "destination": "/pages/transfer.html" },
     { "source": "/tools/metronome", "destination": "/tools/metronome.html" },
     { "source": "/credits", "destination": "/pages/credits.html" },
-    { "source": "/cute", "destination": "/cute.html" }
+    { "source": "/cute", "destination": "/pages/cute.html" }
   ],
 
   "headers": [
