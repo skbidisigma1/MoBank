@@ -126,12 +126,96 @@ function setupParticleConfigButton($footer) {
 }
 
 function handleParticleConfigClick() {
-  // For now, just log that the button was clicked
-  // This is where we'll eventually open the modal
   console.log('Particle configuration button clicked');
+  openParticleConfigModal();
+}
+
+function openParticleConfigModal() {
+  // Create modal if it doesn't exist
+  let modal = document.getElementById('particle-config-modal');
+  if (!modal) {
+    createParticleConfigModal();
+    modal = document.getElementById('particle-config-modal');
+  }
   
-  // TODO: Open particle configuration modal
-  // We'll implement this in the next step with IndexedDB storage
+  // Show modal
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  
+  // Focus trap for accessibility
+  const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  if (firstFocusable) firstFocusable.focus();
+}
+
+function createParticleConfigModal() {
+  const modalHTML = `
+    <div id="particle-config-modal" class="particle-modal-overlay">
+      <div class="particle-modal">
+        <div class="particle-modal-header">
+          <h2 class="particle-modal-title">Particle Configuration</h2>
+          <button id="particle-modal-close" class="modal-close-btn" aria-label="Close modal">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+              <path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="particle-modal-body">
+          <div class="config-section">
+            <h3>Coming Soon</h3>
+            <p>Particle configuration options will be available here.</p>
+            <p>This will include settings for:</p>
+            <ul>
+              <li>Particle colors and themes</li>
+              <li>Animation speed and effects</li>
+              <li>Particle count and density</li>
+              <li>Performance optimizations</li>
+            </ul>
+          </div>
+        </div>
+        <div class="particle-modal-footer">
+          <button id="particle-modal-cancel" class="modal-btn modal-btn-secondary">Close</button>
+          <button id="particle-modal-save" class="modal-btn modal-btn-primary">Save Settings</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+  setupParticleModalEvents();
+}
+
+function setupParticleModalEvents() {
+  const modal = document.getElementById('particle-config-modal');
+  const closeBtn = document.getElementById('particle-modal-close');
+  const cancelBtn = document.getElementById('particle-modal-cancel');
+  const saveBtn = document.getElementById('particle-modal-save');
+  
+  const closeModal = () => {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  };
+  
+  // Close events
+  closeBtn?.addEventListener('click', closeModal);
+  cancelBtn?.addEventListener('click', closeModal);
+  
+  // Click outside to close
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+  
+  // Escape key to close
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('active')) {
+      closeModal();
+    }
+  });
+  
+  // Save button (placeholder for now)
+  saveBtn?.addEventListener('click', () => {
+    console.log('Save particle settings');
+    closeModal();
+  });
 }
 
 /* ---------- notifications ---------- */
