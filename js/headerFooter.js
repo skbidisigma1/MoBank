@@ -8,13 +8,15 @@
   ]);
   await window.auth0Promise;
   const isLoggedIn = await isAuthenticated();
-  const user = isLoggedIn ? await getUser() : null;
-  setupNavLinks($header, isLoggedIn, user);
+  const user = isLoggedIn ? await getUser() : null;  setupNavLinks($header, isLoggedIn, user);
   setupProfilePic($header, user);
   setupParticleConfigButton($footer);
   await initNotifications($header, isLoggedIn);
   // kick off a fresh user-data fetch for the whole app
   window.userDataPromise = isLoggedIn ? fetchAndCacheUserData() : Promise.resolve(null);
+  
+  // Initialize particle settings
+  initializeParticleSettings();
     // Update navigation links after user data is loaded
 })().catch(console.error);
 
@@ -125,17 +127,23 @@ function setupParticleConfigButton($footer) {
   });
 }
 
-function handleParticleConfigClick() {
+async function handleParticleConfigClick() {
   console.log('Particle configuration button clicked');
-  openParticleConfigModal();
+  await openParticleConfigModal();
 }
 
-function openParticleConfigModal() {
+async function openParticleConfigModal() {
   // Create modal if it doesn't exist
   let modal = document.getElementById('particle-config-modal');
   if (!modal) {
-    createParticleConfigModal();
+    await createParticleConfigModal();
     modal = document.getElementById('particle-config-modal');
+  }
+  
+  // Ensure modal exists before trying to manipulate it
+  if (!modal) {
+    console.error('Failed to create particle config modal');
+    return;
   }
   
   // Show modal
@@ -147,48 +155,24 @@ function openParticleConfigModal() {
   if (firstFocusable) firstFocusable.focus();
 }
 
-function createParticleConfigModal() {
-  const modalHTML = `
-    <div id="particle-config-modal" class="particle-modal-overlay">
-      <div class="particle-modal">
-        <div class="particle-modal-header">
-          <h2 class="particle-modal-title">Particle Configuration</h2>
-          <button id="particle-modal-close" class="modal-close-btn" aria-label="Close modal">
-            <svg viewBox="0 0 24 24" width="24" height="24">
-              <path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"/>
-            </svg>
-          </button>
-        </div>
-        <div class="particle-modal-body">
-          <div class="config-section">
-            <h3>Coming Soon</h3>
-            <p>Particle configuration options will be available here.</p>
-            <p>This will include settings for:</p>
-            <ul>
-              <li>Particle colors and themes</li>
-              <li>Animation speed and effects</li>
-              <li>Particle count and density</li>
-              <li>Performance optimizations</li>
-            </ul>
-          </div>
-        </div>
-        <div class="particle-modal-footer">
-          <button id="particle-modal-cancel" class="modal-btn modal-btn-secondary">Close</button>
-          <button id="particle-modal-save" class="modal-btn modal-btn-primary">Save Settings</button>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  document.body.insertAdjacentHTML('beforeend', modalHTML);
-  setupParticleModalEvents();
+async function createParticleConfigModal() {
+  try {
+    const modalPath = location.pathname.includes('/pages/') ? '../particleConfig.html' : 'particleConfig.html';
+    const response = await fetch(modalPath);
+    const modalHTML = await response.text();
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    setupParticleModalEvents();
+  } catch (error) {
+    console.error('Failed to load particle config modal:', error);
+  }
 }
 
 function setupParticleModalEvents() {
   const modal = document.getElementById('particle-config-modal');
   const closeBtn = document.getElementById('particle-modal-close');
-  const cancelBtn = document.getElementById('particle-modal-cancel');
-  const saveBtn = document.getElementById('particle-modal-save');
+  const closeFooterBtn = document.getElementById('particle-modal-close-footer');
+  const resetBtn = document.getElementById('reset-defaults');
   
   const closeModal = () => {
     modal.classList.remove('active');
@@ -197,7 +181,7 @@ function setupParticleModalEvents() {
   
   // Close events
   closeBtn?.addEventListener('click', closeModal);
-  cancelBtn?.addEventListener('click', closeModal);
+  closeFooterBtn?.addEventListener('click', closeModal);
   
   // Click outside to close
   modal?.addEventListener('click', (e) => {
@@ -211,11 +195,345 @@ function setupParticleModalEvents() {
     }
   });
   
-  // Save button (placeholder for now)
-  saveBtn?.addEventListener('click', () => {
-    console.log('Save particle settings');
-    closeModal();
+  // Reset button
+  resetBtn?.addEventListener('click', () => {
+    resetToDefaults();
   });
+  
+  // Setup all config controls
+  setupConfigControls();
+  
+  // Load saved settings
+  loadParticleSettings();
+}
+
+function setupConfigControls() {
+  // Checkboxes
+  const checkboxes = ['particles-enabled', 'mouse-interaction', 'connect-lines'];
+  checkboxes.forEach(id => {
+    const checkbox = document.getElementById(id);
+    if (checkbox) {
+      checkbox.addEventListener('change', () => {
+        saveParticleSettings();
+        applyParticleSettings();
+      });
+    }
+  });
+  
+  // Sliders with value display
+  const sliders = [
+    { id: 'particle-count', suffix: '' },
+    { id: 'animation-speed', suffix: 'x' },
+    { id: 'particle-size', suffix: 'px' },
+    { id: 'particle-opacity', suffix: '%', multiplier: 100 },
+    { id: 'interaction-distance', suffix: 'px' }
+  ];
+  
+  sliders.forEach(({ id, suffix, multiplier = 1 }) => {
+    const slider = document.getElementById(id);
+    const valueDisplay = document.getElementById(`${id}-value`);
+    
+    if (slider && valueDisplay) {
+      const updateValue = () => {
+        const value = parseFloat(slider.value) * multiplier;
+        valueDisplay.textContent = `${value}${suffix}`;
+      };
+      
+      slider.addEventListener('input', updateValue);
+      slider.addEventListener('change', () => {
+        saveParticleSettings();
+        applyParticleSettings();
+      });
+      
+      updateValue(); // Initialize display
+    }
+  });
+  
+  // Color inputs
+  const colorInputs = ['particle-color', 'line-color'];
+  colorInputs.forEach(id => {
+    const colorInput = document.getElementById(id);
+    if (colorInput) {
+      colorInput.addEventListener('change', () => {
+        saveParticleSettings();
+        applyParticleSettings();
+      });
+    }
+  });
+  
+  // Preset buttons
+  const presetButtons = document.querySelectorAll('.preset-btn');
+  presetButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const preset = btn.dataset.preset;
+      applyPreset(preset);
+    });
+  });
+}
+
+// IndexedDB functions
+async function initParticleDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('MoBankParticles', 1);
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('settings')) {
+        db.createObjectStore('settings');
+      }
+    };
+  });
+}
+
+async function saveParticleSettings() {
+  try {
+    const settings = getCurrentSettings();
+    const db = await initParticleDB();
+    const transaction = db.transaction(['settings'], 'readwrite');
+    const store = transaction.objectStore('settings');
+    
+    await new Promise((resolve, reject) => {
+      const request = store.put(settings, 'particleConfig');
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    
+    console.log('Particle settings saved to IndexedDB');
+  } catch (error) {
+    console.error('Failed to save particle settings:', error);
+  }
+}
+
+function applyParticleSettings() {
+  const settings = getCurrentSettings();
+  
+  // Apply to particle system
+  if (window.particleControls && window.particleControls.updateConfig) {
+    window.particleControls.updateConfig(settings);
+  } else {
+    // Store settings for when particle system loads
+    window.pendingParticleSettings = settings;
+  }
+  
+  console.log('Applied particle settings:', settings);
+}
+
+async function loadParticleSettings() {
+  try {
+    const db = await initParticleDB();
+    const transaction = db.transaction(['settings'], 'readonly');
+    const store = transaction.objectStore('settings');
+    
+    const settings = await new Promise((resolve, reject) => {
+      const request = store.get('particleConfig');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    
+    if (settings) {
+      applySettingsToControls(settings);
+      // Don't apply settings immediately on load - wait for user interaction
+      // Just populate the form with saved values
+    } else {
+      // Load defaults into form
+      const defaults = getDefaultSettings();
+      applySettingsToControls(defaults);
+    }
+  } catch (error) {
+    console.error('Failed to load particle settings:', error);
+    const defaults = getDefaultSettings();
+    applySettingsToControls(defaults);
+  }
+}
+
+function getDefaultSettings() {
+  return {
+    enabled: true,
+    count: 50,
+    speed: 1.0,
+    particleColor: '#0066cc',
+    lineColor: '#0066cc',
+    size: 3,
+    opacity: 0.8,
+    mouseInteraction: true,
+    connectLines: true,
+    interactionDistance: 150
+  };
+}
+
+function getCurrentSettings() {
+  return {
+    enabled: document.getElementById('particles-enabled')?.checked ?? true,
+    count: parseInt(document.getElementById('particle-count')?.value ?? 50),
+    speed: parseFloat(document.getElementById('animation-speed')?.value ?? 1.0),
+    particleColor: document.getElementById('particle-color')?.value ?? '#0066cc',
+    lineColor: document.getElementById('line-color')?.value ?? '#0066cc',
+    size: parseFloat(document.getElementById('particle-size')?.value ?? 3),
+    opacity: parseFloat(document.getElementById('particle-opacity')?.value ?? 0.8),
+    mouseInteraction: document.getElementById('mouse-interaction')?.checked ?? true,
+    connectLines: document.getElementById('connect-lines')?.checked ?? true,
+    interactionDistance: parseInt(document.getElementById('interaction-distance')?.value ?? 150)
+  };
+}
+
+function applySettingsToControls(settings) {
+  Object.entries(settings).forEach(([key, value]) => {
+    const element = document.getElementById(getControlId(key));
+    if (element) {
+      if (element.type === 'checkbox') {
+        element.checked = value;
+      } else {
+        element.value = value;
+      }
+    }
+  });
+  
+  // Update slider value displays after a short delay to ensure elements are ready
+  setTimeout(() => {
+    updateAllSliderDisplays();
+  }, 100);
+}
+
+function updateAllSliderDisplays() {
+  const sliders = [
+    { id: 'particle-count', suffix: '' },
+    { id: 'animation-speed', suffix: 'x' },
+    { id: 'particle-size', suffix: 'px' },
+    { id: 'particle-opacity', suffix: '%', multiplier: 100 },
+    { id: 'interaction-distance', suffix: 'px' }
+  ];
+  
+  sliders.forEach(({ id, suffix, multiplier = 1 }) => {
+    const slider = document.getElementById(id);
+    const valueDisplay = document.getElementById(`${id}-value`);
+    
+    if (slider && valueDisplay) {
+      const value = parseFloat(slider.value) * multiplier;
+      valueDisplay.textContent = `${value}${suffix}`;
+    }
+  });
+}
+
+function getControlId(settingKey) {
+  const mapping = {
+    enabled: 'particles-enabled',
+    count: 'particle-count',
+    speed: 'animation-speed',
+    particleColor: 'particle-color',
+    lineColor: 'line-color',
+    size: 'particle-size',
+    opacity: 'particle-opacity',
+    mouseInteraction: 'mouse-interaction',
+    connectLines: 'connect-lines',
+    interactionDistance: 'interaction-distance'
+  };
+  return mapping[settingKey] || settingKey;
+}
+
+function applyPreset(presetName) {
+  const presets = {
+    minimal: {
+      enabled: true,
+      count: 20,
+      speed: 0.5,
+      particleColor: '#cccccc',
+      lineColor: '#cccccc',
+      size: 2,
+      opacity: 0.4,
+      mouseInteraction: false,
+      connectLines: false,
+      interactionDistance: 100
+    },
+    default: {
+      enabled: true,
+      count: 50,
+      speed: 1.0,
+      particleColor: '#0066cc',
+      lineColor: '#0066cc',
+      size: 3,
+      opacity: 0.8,
+      mouseInteraction: true,
+      connectLines: true,
+      interactionDistance: 150
+    },
+    energetic: {
+      enabled: true,
+      count: 80,
+      speed: 2.0,
+      particleColor: '#00b894',
+      lineColor: '#00b894',
+      size: 4,
+      opacity: 0.9,
+      mouseInteraction: true,
+      connectLines: true,
+      interactionDistance: 200
+    },
+    cosmic: {
+      enabled: true,
+      count: 100,
+      speed: 0.8,
+      particleColor: '#6c5ce7',
+      lineColor: '#a29bfe',
+      size: 2.5,
+      opacity: 0.7,
+      mouseInteraction: true,
+      connectLines: true,
+      interactionDistance: 180
+    }
+  };
+  
+  const preset = presets[presetName];
+  if (preset) {
+    applySettingsToControls(preset);
+    saveParticleSettings();
+    applyParticleSettings();
+  }
+}
+
+function resetToDefaults() {
+  applyPreset('default');
+}
+
+async function initializeParticleSettings() {
+  try {
+    // Load saved settings and apply them to the particle system
+    const db = await initParticleDB();
+    const transaction = db.transaction(['settings'], 'readonly');
+    const store = transaction.objectStore('settings');
+    
+    const savedSettings = await new Promise((resolve, reject) => {
+      const request = store.get('particleConfig');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    
+    const settings = savedSettings || getDefaultSettings();
+    
+    // Apply settings to particle system if it's ready
+    if (window.particleControls && window.particleControls.updateConfig) {
+      window.particleControls.updateConfig(settings);
+    } else {
+      // Store for when particle system is ready
+      window.pendingParticleSettings = settings;
+      
+      // Wait for particle system to be ready
+      const checkParticleSystem = setInterval(() => {
+        if (window.particleControls && window.particleControls.updateConfig && window.pendingParticleSettings) {
+          window.particleControls.updateConfig(window.pendingParticleSettings);
+          window.pendingParticleSettings = null;
+          clearInterval(checkParticleSystem);
+        }
+      }, 500);
+      
+      // Clear interval after 10 seconds to prevent memory leaks
+      setTimeout(() => clearInterval(checkParticleSystem), 10000);
+    }
+  } catch (error) {
+    console.error('Failed to initialize particle settings:', error);
+  }
 }
 
 /* ---------- notifications ---------- */

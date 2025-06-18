@@ -814,7 +814,6 @@ select:after {
   }
 }
 
-/* Dark mode adjustments */
 [data-theme="dark"] .toast {
   background-color: rgba(35, 35, 35, 0.95);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -824,7 +823,6 @@ select:after {
   color: #d1d1d1;
 }
 
-/* Mobile adjustments */
 @media (max-width: 768px) {
   .toast {
     width: calc(100% - 32px);
@@ -1305,17 +1303,14 @@ select:after {
   background: var(--color-bg);
   border-radius: 12px;
   z-index: -1;
-  opacity: 1; /* Ensure fully opaque */
+  opacity: 1;
 }
 
-/* Apply gradient text effect to the hero heading - but only to the dynamic parts */
 .hero-heading {
-  /* Remove the gradient from the entire heading and apply it selectively */
   color: var(--color-text);
   text-shadow: rgba(0, 0, 0, 0.05) 0px 1px 5px;
 }
 
-/* Apply gradient only to specific elements if needed */
 .hero-heading .gradient-text {
   background: linear-gradient(120deg, var(--heading-gradient-from), var(--heading-gradient-to));
   background-clip: text;
@@ -1323,7 +1318,6 @@ select:after {
   -webkit-text-fill-color: transparent;
 }
 
-/* Override for typing elements to show actual text with solid colors */
 .hero-heading #typing-text,
 .hero-heading .typing-cursor {
   background: none !important;
@@ -1391,7 +1385,6 @@ select:after {
     border: 0;
 }
 
-/* Main container - now just extends our base container */
 .main-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -1407,22 +1400,22 @@ select:after {
 .hero-description {
   font-size: clamp(1.1rem, 2vw, 1.25rem);
   max-width: 800px;
-  margin: -2rem auto 0.8rem; /* Larger negative top margin to close gap with heading */
+  margin: -2rem auto 0.8rem;
   color: var(--color-text);
   opacity: 0.9;
   line-height: 1.6;
   background: var(--color-bg);
   border-radius: 10px;
-  padding: 2.5rem 1.75rem 1.75rem; /* More top padding to compensate for larger negative margin */
+  padding: 2.5rem 1.75rem 1.75rem;
 }
 
 .hero-cta {
   font-size: 1.1rem;
   color: var(--color-muted);
-  margin: -0.8rem auto 2rem; /* Larger negative top margin to close gap with description */
+  margin: -0.8rem auto 2rem;
   background: var(--color-bg);
   border-radius: 8px;
-  padding: 2rem 1.5rem 1.25rem; /* More top padding to compensate for larger negative margin */
+  padding: 2rem 1.5rem 1.25rem;
   display: inline-block;
   max-width: 600px;
 }
@@ -1633,10 +1626,8 @@ select:after {
   color: var(--color-secondary);
 }
 
-/* Add background to MoTools button text for contrast */
 #motools-btn {
   position: relative;
-  background-color: transparent; /* Ensure transparent background is preserved */
 }
 
 #motools-btn::before {
@@ -1648,24 +1639,22 @@ select:after {
   background: var(--color-bg);
   border-radius: 4px;
   z-index: -1;
-  padding: 0.2rem 0.5rem; /* Just enough padding around the text */
+  padding: 0.2rem 0.5rem;
   font-size: inherit;
   font-family: inherit;
   font-weight: inherit;
   white-space: nowrap;
-  pointer-events: none; /* Ensure it doesn't interfere with button clicks */
+  pointer-events: none;
   opacity: 1;
-  transition: opacity 0.1s ease 0.2s; /* Delay the appearance to match button transition */
+  transition: opacity 0.1s ease 0.2s;
 }
 
-/* Remove background on hover/active states - instant */
 #motools-btn:hover::before,
 #motools-btn:active::before {
   opacity: 0;
-  transition: none; /* Instant removal on hover */
+  transition: none;
 }
 
-/* Ensure hover effect works for MoTools button */
 #motools-btn:hover {
   background-color: var(--color-secondary);
   color: var(--color-white);
@@ -2780,28 +2769,165 @@ select:after {
   overflow-y: auto;
 }
 
+.config-section {
+  margin-bottom: 2rem;
+}
+
+.config-section:last-child {
+  margin-bottom: 0;
+}
+
 .config-section h3 {
   font-family: var(--font-heading);
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--color-text);
-  margin: 0 0 1rem 0;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--color-primary);
 }
 
-.config-section p {
+.config-row {
+  margin-bottom: 1.5rem;
+}
+
+.config-row:last-child {
+  margin-bottom: 0;
+}
+
+.config-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 500;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.config-label span {
+  flex: 1;
+  margin-right: 1rem;
+}
+
+.config-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.config-color {
+  width: 60px;
+  height: 40px;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  background: none;
+}
+
+.config-color:hover {
+  border-color: var(--color-primary);
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 200px;
+}
+
+.config-slider {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-border);
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.config-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.config-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.config-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  border: none;
+  transition: transform 0.1s ease;
+}
+
+.config-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+}
+
+.slider-value {
+  font-weight: 600;
+  color: var(--color-primary);
+  min-width: 50px;
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+.preset-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.preset-btn {
+  padding: 0.6rem 1.2rem;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-white);
+  color: var(--color-text);
+  font-family: var(--font-main);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.preset-btn:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-white);
+  transform: translateY(-1px);
+}
+
+.preset-btn:active {
+  transform: translateY(0);
+}
+
+.auto-save-indicator {
   color: var(--color-muted);
-  margin: 0 0 1rem 0;
-  line-height: 1.6;
+  font-size: 0.85rem;
+  font-style: italic;
 }
 
-.config-section ul {
-  color: var(--color-muted);
-  margin: 0 0 1rem 1.5rem;
-  line-height: 1.6;
+/* Dark theme adjustments */
+[data-theme="dark"] .preset-btn {
+  background: var(--color-light-bg);
+  border-color: var(--color-border);
 }
 
-.config-section li {
-  margin-bottom: 0.5rem;
+[data-theme="dark"] .preset-btn:hover {
+  background: var(--color-primary);
+  color: var(--color-white);
 }
 
 .particle-modal-footer {

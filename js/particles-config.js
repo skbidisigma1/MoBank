@@ -280,9 +280,145 @@
 
     window.addEventListener('load', function() {
         checkAndSetupParticles();
-    });
-
-    window.addEventListener('unload', function() {
+    });    window.addEventListener('unload', function() {
         destroyParticles();
     });
+
+    // Global API for particle configuration
+    window.particleControls = {
+        updateConfig: function(settings) {
+            if (!settings) return;
+            
+            // Update internal CONFIG with user settings
+            const theme = getCurrentTheme();
+            CONFIG[theme] = {
+                ...CONFIG[theme],
+                particleColor: settings.particleColor || CONFIG[theme].particleColor,
+                lineColor: settings.lineColor || CONFIG[theme].lineColor,
+                getParticleCount: () => settings.enabled ? settings.count || 50 : 0
+            };
+            
+            // Generate new config with user settings
+            const customConfig = getCustomParticlesConfig(settings, theme);
+            
+            // Apply immediately
+            if (settings.enabled && window.innerWidth >= BREAKPOINTS.MOBILE) {
+                const particlesContainer = document.getElementById('particles-js');
+                if (particlesContainer) {
+                    particlesContainer.style.display = 'block';
+                    destroyParticles();
+                    particlesJS('particles-js', customConfig);
+                }
+            } else {
+                const particlesContainer = document.getElementById('particles-js');
+                if (particlesContainer) {
+                    particlesContainer.style.display = 'none';
+                    destroyParticles();
+                }
+            }
+        },
+        
+        getCurrentConfig: function() {
+            return CONFIG;
+        },
+        
+        reinitialize: function() {
+            initParticles();
+        }
+    };
+
+    // Custom config generator that uses user settings
+    function getCustomParticlesConfig(settings, theme = 'light') {
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const baseConfig = {
+            particles: {
+                number: {
+                    value: settings.enabled ? settings.count || 50 : 0,
+                    density: {
+                        enable: true,
+                        value_area: 800
+                    }
+                },
+                color: {
+                    value: settings.particleColor || '#0066cc'
+                },
+                shape: {
+                    type: "circle",
+                    stroke: {
+                        width: 0,
+                        color: "#000000"
+                    }
+                },
+                opacity: {
+                    value: settings.opacity || 0.8,
+                    random: true,
+                    anim: {
+                        enable: true,
+                        speed: (settings.speed || 1.0) * 0.5,
+                        opacity_min: (settings.opacity || 0.8) * 0.5,
+                        sync: false
+                    }
+                },
+                size: {
+                    value: settings.size || 3,
+                    random: true,
+                    anim: {
+                        enable: false,
+                        speed: 40,
+                        size_min: 0.1,
+                        sync: false
+                    }
+                },
+                line_linked: {
+                    enable: settings.connectLines !== false,
+                    distance: settings.interactionDistance || 150,
+                    color: settings.lineColor || settings.particleColor || '#0066cc',
+                    opacity: 0.4,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: settings.speed || 1.0,
+                    direction: "none",
+                    random: false,
+                    straight: false,
+                    out_mode: "bounce",
+                    bounce: false,
+                    attract: {
+                        enable: false,
+                        rotateX: 600,
+                        rotateY: 1200
+                    }
+                }
+            },
+            interactivity: {
+                detect_on: "window",
+                events: {
+                    onhover: {
+                        enable: settings.mouseInteraction !== false,
+                        mode: "grab"
+                    },
+                    onclick: {
+                        enable: settings.mouseInteraction !== false,
+                        mode: "push"
+                    },
+                    resize: true
+                },
+                modes: {
+                    grab: {
+                        distance: settings.interactionDistance || 150,
+                        line_linked: {
+                            opacity: 0.5
+                        }
+                    },
+                    push: {
+                        particles_nb: 1
+                    }
+                }
+            },
+            retina_detect: true
+        };
+
+        return reducedMotion ? getReducedMotionConfig(baseConfig) : baseConfig;
+    }
 })();

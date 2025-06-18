@@ -1,0 +1,119 @@
+<div id="particle-config-modal" class="particle-modal-overlay">
+  <div class="particle-modal">
+    <div class="particle-modal-header">
+      <h2 class="particle-modal-title">Particle Configuration</h2>
+      <button id="particle-modal-close" class="modal-close-btn" aria-label="Close modal">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"/>
+        </svg>
+      </button>
+    </div>
+    <div class="particle-modal-body">
+      
+      <div class="config-section">
+        <h3>Particles</h3>
+        <div class="config-row">
+          <label class="config-label">
+            <span>Enable Particles</span>
+            <input type="checkbox" id="particles-enabled" class="config-checkbox">
+          </label>
+        </div>
+        <div class="config-row">
+          <label class="config-label">
+            <span>Particle Count</span>
+            <div class="slider-container">
+              <input type="range" id="particle-count" class="config-slider" min="0" max="100" step="5">
+              <span class="slider-value" id="particle-count-value">50</span>
+            </div>
+          </label>
+        </div>
+        <div class="config-row">
+          <label class="config-label">
+            <span>Animation Speed</span>
+            <div class="slider-container">
+              <input type="range" id="animation-speed" class="config-slider" min="0.1" max="3" step="0.1">
+              <span class="slider-value" id="animation-speed-value">1.0x</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h3>Appearance</h3>
+        <div class="config-row">
+          <label class="config-label">
+            <span>Particle Color</span>
+            <input type="color" id="particle-color" class="config-color">
+          </label>
+        </div>
+        <div class="config-row">
+          <label class="config-label">
+            <span>Line Color</span>
+            <input type="color" id="line-color" class="config-color">
+          </label>
+        </div>
+        <div class="config-row">
+          <label class="config-label">
+            <span>Particle Size</span>
+            <div class="slider-container">
+              <input type="range" id="particle-size" class="config-slider" min="1" max="10" step="0.5">
+              <span class="slider-value" id="particle-size-value">3px</span>
+            </div>
+          </label>
+        </div>
+        <div class="config-row">
+          <label class="config-label">
+            <span>Opacity</span>
+            <div class="slider-container">
+              <input type="range" id="particle-opacity" class="config-slider" min="0.1" max="1" step="0.1">
+              <span class="slider-value" id="particle-opacity-value">80%</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h3>Interaction</h3>
+        <div class="config-row">
+          <label class="config-label">
+            <span>Mouse Interaction</span>
+            <input type="checkbox" id="mouse-interaction" class="config-checkbox">
+          </label>
+        </div>
+        <div class="config-row">
+          <label class="config-label">
+            <span>Connect Lines</span>
+            <input type="checkbox" id="connect-lines" class="config-checkbox">
+          </label>
+        </div>
+        <div class="config-row">
+          <label class="config-label">
+            <span>Interaction Distance</span>
+            <div class="slider-container">
+              <input type="range" id="interaction-distance" class="config-slider" min="50" max="300" step="10">
+              <span class="slider-value" id="interaction-distance-value">150px</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="config-section">
+        <h3>Presets</h3>
+        <div class="config-row preset-buttons">
+          <button class="preset-btn" data-preset="minimal">Minimal</button>
+          <button class="preset-btn" data-preset="default">Default</button>
+          <button class="preset-btn" data-preset="energetic">Energetic</button>
+          <button class="preset-btn" data-preset="cosmic">Cosmic</button>
+        </div>
+        <div class="config-row">
+          <button id="reset-defaults" class="modal-btn modal-btn-secondary">Reset to Defaults</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="particle-modal-footer">
+      <span class="auto-save-indicator">Settings automatically saved</span>
+      <button id="particle-modal-close-footer" class="modal-btn modal-btn-primary">Close</button>
+    </div>
+  </div>
+</div>
