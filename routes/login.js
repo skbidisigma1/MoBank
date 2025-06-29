@@ -9,7 +9,6 @@ const profiler = {
   end: (label) => {
     const diff = process.hrtime(profiler.startTime[label]);
     const ms = (diff[0] * 1e9 + diff[1]) / 1e6;
-    // Logging removed for efficiency
     return ms;
   }
 };
@@ -64,7 +63,6 @@ module.exports = async (req, res) => {
     }
     
     const totalTime = profiler.end('login-total');
-    // Logging removed for efficiency
     
     return res.status(200).json({ message: 'User initialized successfully' })
   } catch (error) {
