@@ -2786,27 +2786,6 @@ select:after {
   position: relative;
 }
 
-#particle-preview-canvas {
-  width: 100%;
-  height: 200px;
-  border-radius: 4px;
-  background: #000;
-}
-
-.preview-stats {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  color: var(--color-white);
-  background: rgba(0, 0, 0, 0.7);
-  padding: 0.5rem;
-  border-radius: 4px;
-}
-
 /* Form Elements */
 .config-select,
 .config-input {

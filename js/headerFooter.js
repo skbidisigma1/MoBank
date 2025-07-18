@@ -177,6 +177,21 @@ function setupParticleModalEvents() {
   const closeModal = () => {
     modal.classList.remove('active');
     document.body.style.overflow = '';
+    
+    // Clean up all timeouts
+    clearTimeout(window.particleUpdateTimeout);
+    
+    // Apply any pending particle updates when modal closes
+    const settings = getCurrentSettings();
+    if (window.particleControls && window.particleControls.updateConfig) {
+      setTimeout(() => {
+        try {
+          window.particleControls.updateConfig(settings);
+        } catch (error) {
+          console.warn('Error applying final settings:', error);
+        }
+      }, 100);
+    }
   };
   
   // Close events
@@ -208,23 +223,29 @@ function setupParticleModalEvents() {
 }
 
 function setupConfigControls() {
-  // Basic checkboxes
-  const checkboxes = [
-    'particles-enabled', 'size-random', 'size-anim', 'size-anim-sync',
-    'opacity-random', 'opacity-anim', 'opacity-anim-sync', 'move-enable',
-    'move-random', 'move-straight', 'move-bounce', 'move-attract',
-    'line-linked-enable', 'line-linked-shadow', 'hover-enable', 'click-enable',
-    'resize-enable', 'retina-detect'
-  ];
-  
-  checkboxes.forEach(id => {
-    const checkbox = document.getElementById(id);
-    if (checkbox) {
-      checkbox.addEventListener('change', () => {
-        handleConfigChange();
-      });
-    }
-  });
+  // Add error boundary to prevent crashes
+  try {
+    // Basic checkboxes
+    const checkboxes = [
+      'particles-enabled', 'size-random', 'size-anim', 'size-anim-sync',
+      'opacity-random', 'opacity-anim', 'opacity-anim-sync', 'move-enable',
+      'move-random', 'move-straight', 'move-bounce', 'move-attract',
+      'line-linked-enable', 'line-linked-shadow', 'hover-enable', 'click-enable',
+      'resize-enable', 'retina-detect'
+    ];
+    
+    checkboxes.forEach(id => {
+      const checkbox = document.getElementById(id);
+      if (checkbox) {
+        checkbox.addEventListener('change', () => {
+          try {
+            handleConfigChange();
+          } catch (error) {
+            console.warn(`Error handling change for ${id}:`, error);
+          }
+        });
+      }
+    });
   
   // Sliders with value display and precision control
   const sliders = [
@@ -337,6 +358,10 @@ function setupConfigControls() {
   
   // Setup dynamic visibility
   updateVisibilityBasedOnSelections();
+  
+  } catch (error) {
+    console.error('Error setting up config controls:', error);
+  }
 }
 
 function setupEditableValue(valueElement, slider, suffix, multiplier = 1, precision = 1) {
@@ -506,29 +531,6 @@ function handleConfigChange() {
   const settings = getCurrentSettings();
   saveParticleSettings(settings);
   applyParticleSettings(settings);
-  
-  // Update preview
-  if (window.particleControls && window.particleControls.updatePreview) {
-    window.particleControls.updatePreview(settings);
-  }
-  
-  // Update performance stats
-  updatePerformanceStats(settings);
-}
-
-function updatePerformanceStats(settings) {
-  const fpsElement = document.getElementById('preview-fps');
-  const countElement = document.getElementById('preview-count');
-  
-  if (countElement) {
-    countElement.textContent = `Particles: ${settings.count || 0}`;
-  }
-  
-  // Estimate FPS impact (simplified)
-  if (fpsElement) {
-    const estimatedFPS = Math.max(30, 60 - Math.floor((settings.count || 0) / 10));
-    fpsElement.textContent = `Est. FPS: ${estimatedFPS}`;
-  }
 }
 
 function getCurrentSettings() {
@@ -917,7 +919,7 @@ async function deleteCustomPreset(name) {
 // IndexedDB functions
 async function initParticleDB() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('MoBankParticles', 1);
+    const request = indexedDB.open('MoBankParticles', 3);
     
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve(request.result);
@@ -926,6 +928,9 @@ async function initParticleDB() {
       const db = event.target.result;
       if (!db.objectStoreNames.contains('settings')) {
         db.createObjectStore('settings');
+      }
+      if (!db.objectStoreNames.contains('presets')) {
+        db.createObjectStore('presets');
       }
     };
   });
@@ -951,9 +956,20 @@ async function saveParticleSettings() {
 }
 
 function applyParticleSettings(settings) {
+  // Check if particle config modal is open
+  const isParticleModalOpen = document.querySelector('#particle-config-modal:not(.hidden)');
+  
   // Apply to particle system
   if (window.particleControls && window.particleControls.updateConfig) {
-    window.particleControls.updateConfig(settings);
+    if (isParticleModalOpen) {
+      // Defer particle updates when modal is open to prevent visual interference
+      clearTimeout(window.particleUpdateTimeout);
+      window.particleUpdateTimeout = setTimeout(() => {
+        window.particleControls.updateConfig(settings);
+      }, 500);
+    } else {
+      window.particleControls.updateConfig(settings);
+    }
   } else {
     // Store settings for when particle system loads
     window.pendingParticleSettings = settings;

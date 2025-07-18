@@ -72,11 +72,7 @@
         },
         detectRetina: true,
         background: {
-            color: "transparent",
-            image: "",
-            position: "center center",
-            repeat: "no-repeat",
-            size: "cover"
+            color: "transparent"
         }
     };
 
@@ -200,7 +196,7 @@
                 modes: { bubble: { distance: 250, size: 0, duration: 2, opacity: 0 }, repulse: { distance: 400, duration: 0.4 } }
             },
             detectRetina: true,
-            background: { color: "#232741" }
+            background: { color: "transparent" }
         },
         "nyan-cat": {
             particles: {
@@ -218,7 +214,7 @@
                 modes: { remove: { quantity: 10 } }
             },
             detectRetina: true,
-            background: { color: "#0d47a1" }
+            background: { color: "transparent" }
         }
     };
 
@@ -373,15 +369,8 @@
         // Advanced settings
         config.detectRetina = settings.retinaDetect !== false;
         
-        if (settings.backgroundColor) {
-            config.background.color = settings.backgroundColor;
-        }
-        if (settings.backgroundImage) {
-            config.background.image = settings.backgroundImage;
-            config.background.position = settings.backgroundPosition || "center center";
-            config.background.repeat = settings.backgroundRepeat || "no-repeat";
-            config.background.size = settings.backgroundSize || "cover";
-        }
+        // Always use transparent background to inherit page background
+        config.background.color = "transparent";
         
         // Apply reduced motion if needed
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -415,6 +404,12 @@
             
             // Load saved settings or use defaults
             const settings = await loadParticleSettings();
+            
+            if (!settings.enabled) {
+                particlesContainer.style.display = 'none';
+                return;
+            }
+            
             const config = createParticlesConfig(settings);
             
             // Use tsParticles.load instead of particlesJS
@@ -427,53 +422,6 @@
             
         } catch (error) {
             console.error('Error initializing tsParticles:', error);
-        }
-    }
-
-    async function initPreviewParticles(settings) {
-        const previewContainer = document.getElementById('particles-preview');
-        if (!previewContainer || typeof tsParticles === 'undefined') return;
-
-        try {
-            // Clear any existing particles instances in the preview
-            destroyPreviewParticles();
-            
-            // Clear container content
-            previewContainer.innerHTML = '';
-            
-            // Create configuration for preview with limited particles for performance
-            const config = createParticlesConfig({
-                ...settings,
-                count: Math.min(settings.count || 50, 30), // Limit for better performance
-                lineLinkedDistance: Math.min(settings.lineLinkedDistance || 150, 120)
-            });
-            
-            // Initialize particles directly in the preview container
-            window.previewParticlesInstance = await tsParticles.load({
-                id: 'particles-preview',
-                options: config
-            });
-            
-        } catch (error) {
-            console.error('Error initializing preview particles:', error);
-        }
-    }
-    
-    function destroyPreviewParticles() {
-        // Destroy any existing preview instance
-        if (window.previewParticlesInstance) {
-            try {
-                window.previewParticlesInstance.destroy();
-                window.previewParticlesInstance = null;
-            } catch (error) {
-                console.warn('Error destroying preview particles:', error);
-            }
-        }
-        
-        // Clear container
-        const previewContainer = document.getElementById('particles-preview');
-        if (previewContainer) {
-            previewContainer.innerHTML = '';
         }
     }
 
@@ -673,7 +621,7 @@
             sizeAnimSpeed: 40,
             sizeAnimMin: 0.1,
             sizeAnimSync: false,
-            opacity: 0.5,
+            opacity: 0.8, // Increased opacity for better visibility
             opacityRandom: false,
             opacityAnim: false,
             opacityAnimSpeed: 1,
@@ -692,7 +640,7 @@
             lineLinkedEnable: true,
             lineLinkedDistance: 150,
             lineLinkedColor: "#0066cc",
-            lineLinkedOpacity: 0.4,
+            lineLinkedOpacity: 0.6, // Increased line opacity for better visibility
             lineLinkedWidth: 1,
             lineLinkedShadow: false,
             lineShadowColor: "#000000",
@@ -711,12 +659,7 @@
             repulseDistance: 100,
             repulseDuration: 0.4,
             pushParticlesNb: 4,
-            retinaDetect: true,
-            backgroundColor: "",
-            backgroundImage: "",
-            backgroundPosition: "center center",
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "cover"
+            retinaDetect: true
         };
     }
 
@@ -728,34 +671,40 @@
         updateConfig: async function(settings) {
             if (!settings) return;
             
+            // Check if any modal is currently open to avoid interference
+            const isModalOpen = document.querySelector('.modal:not(.hidden)') || 
+                               document.querySelector('[role="dialog"]:not(.hidden)');
+            
             const config = createParticlesConfig(settings);
+            const particlesContainer = document.getElementById('particles-js');
+            
+            if (!particlesContainer) {
+                console.warn('particles-js container not found');
+                return;
+            }
             
             if (settings.enabled && window.innerWidth >= BREAKPOINTS.MOBILE) {
-                const particlesContainer = document.getElementById('particles-js');
-                if (particlesContainer) {
-                    particlesContainer.style.display = 'block';
-                    destroyParticles('main');
+                particlesContainer.style.display = 'block';
+                destroyParticles('main');
+                
+                // Small delay if modal is open to prevent interference
+                if (isModalOpen) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+                try {
                     mainContainer = await tsParticles.load({
                         id: 'particles-js',
                         options: config
                     });
                     setupClickHandler();
+                } catch (error) {
+                    console.error('Failed to load particles:', error);
                 }
             } else {
-                const particlesContainer = document.getElementById('particles-js');
-                if (particlesContainer) {
-                    particlesContainer.style.display = 'none';
-                    destroyParticles('main');
-                }
+                particlesContainer.style.display = 'none';
+                destroyParticles('main');
             }
-        },
-        
-        updatePreview: function(settings) {
-            // Debounce preview updates for better performance
-            clearTimeout(this._previewTimeout);
-            this._previewTimeout = setTimeout(() => {
-                initPreviewParticles(settings);
-            }, 150);
         },
         
         getCurrentConfig: function() {
@@ -774,10 +723,19 @@
         loadSettings: loadParticleSettings
     };
 
-    // Auto-initialize on settings update
-    loadParticleSettings().then(async settings => {
-        if (window.particleControls) {
-            await window.particleControls.updateConfig(settings);
+    // Secondary initialization to ensure particles load with correct settings
+    setTimeout(() => {
+        if (typeof tsParticles !== 'undefined' && window.particleControls) {
+            loadParticleSettings().then(async settings => {
+                console.log('Secondary initialization with settings:', settings);
+                try {
+                    await window.particleControls.updateConfig(settings);
+                } catch (error) {
+                    console.warn('Failed to apply particle settings on secondary init:', error);
+                }
+            }).catch(error => {
+                console.warn('Failed to load particle settings on secondary init:', error);
+            });
         }
-    });
+    }, 1500); // Wait for everything to settle
 })();

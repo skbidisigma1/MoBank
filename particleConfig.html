@@ -17,17 +17,6 @@
     </div>
     <div class="particle-modal-body">
       
-      <!-- Live Preview Section -->
-      <div class="config-section">
-        <h3>Live Preview</h3>
-        <div class="preview-container">
-          <div id="particles-preview" style="width: 400px; height: 200px; position: relative; border: 1px solid rgba(97, 218, 251, 0.3); border-radius: 4px; background: rgba(0, 0, 0, 0.1);"></div>
-          <div class="preview-stats">
-            <span id="preview-count">Particles: 0</span>
-          </div>
-        </div>
-      </div>
-
       <!-- Basic Settings -->
       <div class="config-section">
         <h3>Basic Settings</h3>
@@ -635,6 +624,7 @@
           <button id="reset-defaults" class="modal-btn modal-btn-secondary">Reset to Defaults</button>
           <button id="import-config-btn" class="modal-btn modal-btn-secondary">Import Config</button>
           <button id="export-config-btn" class="modal-btn modal-btn-secondary">Export Config</button>
+          <input type="file" id="config-file-input" accept=".json" style="display: none;">
         </div>
       </div>
 
