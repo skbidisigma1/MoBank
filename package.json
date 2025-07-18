@@ -20,6 +20,8 @@
     "jwks-rsa": "^3.1.0",
     "lusca": "^1.7.0",
     "node-fetch": "^2.6.7",
-    "serverless-http": "^3.2.0"
+    "serverless-http": "^3.2.0",
+    "@tsparticles/engine": "^3.0.0",
+    "tsparticles": "^3.0.0"
   }
 }

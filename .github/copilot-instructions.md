@@ -24,7 +24,7 @@
 | `/tools`   | **MoTools** – ancillary teacher/student utilities |
 | `/tools/js`, `/tools/css`, … | Same structure as root |
 
- **Stay inside this structure – don’t create new top-level folders.**
+ **Stay inside this structure – don’t create new top-level folders unless absolutely necessary.**
 
 ## 3&nbsp;·&nbsp;Golden Rules
 
@@ -46,7 +46,7 @@
 | _Analyze_ | Read existing code & docs before generating anything. |
 | _Plan_    | Outline changes before coding. |
 | _Implement_ | Follow sections **2** & **3** above. |
-| _Self-test_ | Audit code and ensure functionality. |
+| _Self-test_ | Audit code and ensure functionality. Don't start a testing server; the user will do that. |
 | _Commit_ | Succinct messages: `feat:`, `fix:`, `perf:`, etc. |
 | _Review_ | Flag any security or performance regressions for human oversight. |
 

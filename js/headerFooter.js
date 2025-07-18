@@ -208,55 +208,117 @@ function setupParticleModalEvents() {
 }
 
 function setupConfigControls() {
-  // Checkboxes
-  const checkboxes = ['particles-enabled', 'mouse-interaction', 'connect-lines'];
+  // Basic checkboxes
+  const checkboxes = [
+    'particles-enabled', 'size-random', 'size-anim', 'size-anim-sync',
+    'opacity-random', 'opacity-anim', 'opacity-anim-sync', 'move-enable',
+    'move-random', 'move-straight', 'move-bounce', 'move-attract',
+    'line-linked-enable', 'line-linked-shadow', 'hover-enable', 'click-enable',
+    'resize-enable', 'retina-detect'
+  ];
+  
   checkboxes.forEach(id => {
     const checkbox = document.getElementById(id);
     if (checkbox) {
       checkbox.addEventListener('change', () => {
-        saveParticleSettings();
-        applyParticleSettings();
+        handleConfigChange();
       });
     }
   });
   
-  // Sliders with value display
+  // Sliders with value display and precision control
   const sliders = [
-    { id: 'particle-count', suffix: '' },
-    { id: 'animation-speed', suffix: 'x' },
-    { id: 'particle-size', suffix: 'px' },
-    { id: 'particle-opacity', suffix: '%', multiplier: 100 },
-    { id: 'interaction-distance', suffix: 'px' }
+    { id: 'particle-count', suffix: '', precision: 0 },
+    { id: 'particle-density', suffix: '', precision: 0 },
+    { id: 'polygon-sides', suffix: '', precision: 0 },
+    { id: 'star-sides', suffix: '', precision: 0 },
+    { id: 'stroke-width', suffix: 'px', precision: 1 },
+    { id: 'particle-size', suffix: 'px', precision: 1 },
+    { id: 'size-variation', suffix: '%', multiplier: 100, precision: 0 },
+    { id: 'size-anim-speed', suffix: '', precision: 0 },
+    { id: 'size-anim-min', suffix: 'px', precision: 1 },
+    { id: 'particle-opacity', suffix: '%', multiplier: 100, precision: 0 },
+    { id: 'opacity-variation', suffix: '%', multiplier: 100, precision: 0 },
+    { id: 'opacity-anim-speed', suffix: '', precision: 1 },
+    { id: 'opacity-anim-min', suffix: '%', multiplier: 100, precision: 0 },
+    { id: 'move-speed', suffix: '', precision: 1 },
+    { id: 'attract-rotate-x', suffix: '', precision: 0 },
+    { id: 'attract-rotate-y', suffix: '', precision: 0 },
+    { id: 'line-linked-distance', suffix: 'px', precision: 0 },
+    { id: 'line-linked-opacity', suffix: '%', multiplier: 100, precision: 0 },
+    { id: 'line-linked-width', suffix: 'px', precision: 1 },
+    { id: 'line-shadow-blur', suffix: 'px', precision: 0 },
+    { id: 'grab-distance', suffix: 'px', precision: 0 },
+    { id: 'grab-line-opacity', suffix: '%', multiplier: 100, precision: 0 },
+    { id: 'bubble-distance', suffix: 'px', precision: 0 },
+    { id: 'bubble-size', suffix: 'px', precision: 0 },
+    { id: 'bubble-duration', suffix: 's', precision: 1 },
+    { id: 'repulse-distance', suffix: 'px', precision: 0 },
+    { id: 'repulse-duration', suffix: 's', precision: 1 },
+    { id: 'push-particles-nb', suffix: '', precision: 0 }
   ];
   
-  sliders.forEach(({ id, suffix, multiplier = 1 }) => {
+  sliders.forEach(({ id, suffix, multiplier = 1, precision = 1 }) => {
     const slider = document.getElementById(id);
     const valueDisplay = document.getElementById(`${id}-value`);
     
     if (slider && valueDisplay) {
       const updateValue = () => {
         const value = parseFloat(slider.value) * multiplier;
-        valueDisplay.textContent = `${value}${suffix}`;
+        const displayValue = precision === 0 ? Math.round(value) : value.toFixed(precision);
+        valueDisplay.textContent = `${displayValue}${suffix}`;
       };
       
       slider.addEventListener('input', updateValue);
       slider.addEventListener('change', () => {
-        saveParticleSettings();
-        applyParticleSettings();
+        handleConfigChange();
       });
+      
+      // Make value display editable
+      setupEditableValue(valueDisplay, slider, suffix, multiplier, precision);
       
       updateValue(); // Initialize display
     }
   });
   
   // Color inputs
-  const colorInputs = ['particle-color', 'line-color'];
+  const colorInputs = [
+    'particle-color', 'stroke-color', 'line-linked-color', 'line-shadow-color',
+    'background-color'
+  ];
   colorInputs.forEach(id => {
     const colorInput = document.getElementById(id);
     if (colorInput) {
       colorInput.addEventListener('change', () => {
-        saveParticleSettings();
-        applyParticleSettings();
+        handleConfigChange();
+      });
+    }
+  });
+  
+  // Select dropdowns
+  const selects = [
+    'particle-shape', 'color-mode', 'move-direction', 'move-out-mode',
+    'detect-on', 'hover-mode', 'click-mode', 'background-repeat'
+  ];
+  selects.forEach(id => {
+    const select = document.getElementById(id);
+    if (select) {
+      select.addEventListener('change', () => {
+        handleConfigChange();
+        updateVisibilityBasedOnSelections();
+      });
+    }
+  });
+  
+  // Text inputs
+  const textInputs = [
+    'image-source', 'background-image', 'background-position', 'background-size'
+  ];
+  textInputs.forEach(id => {
+    const input = document.getElementById(id);
+    if (input) {
+      input.addEventListener('input', () => {
+        handleConfigChange();
       });
     }
   });
@@ -269,6 +331,587 @@ function setupConfigControls() {
       applyPreset(preset);
     });
   });
+  
+  // Special buttons
+  setupSpecialButtons();
+  
+  // Setup dynamic visibility
+  updateVisibilityBasedOnSelections();
+}
+
+function setupEditableValue(valueElement, slider, suffix, multiplier = 1, precision = 1) {
+  if (!valueElement.classList.contains('editable-value')) return;
+  
+  valueElement.addEventListener('click', () => {
+    const currentValue = parseFloat(slider.value) * multiplier;
+    const displayValue = precision === 0 ? Math.round(currentValue) : currentValue.toFixed(precision);
+    
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.value = displayValue;
+    input.className = 'editable-value editing';
+    input.style.width = valueElement.offsetWidth + 'px';
+    input.step = precision === 0 ? '1' : (1 / Math.pow(10, precision)).toString();
+    
+    const min = parseFloat(slider.min) * multiplier;
+    const max = parseFloat(slider.max) * multiplier;
+    input.min = precision === 0 ? Math.round(min) : min.toFixed(precision);
+    input.max = precision === 0 ? Math.round(max) : max.toFixed(precision);
+    
+    valueElement.parentNode.replaceChild(input, valueElement);
+    input.focus();
+    input.select();
+    
+    const finishEdit = () => {
+      let newValue = parseFloat(input.value);
+      if (isNaN(newValue)) {
+        newValue = parseFloat(slider.value) * multiplier;
+      }
+      
+      // Clamp to valid range
+      newValue = Math.max(min, Math.min(max, newValue));
+      
+      // Update slider value
+      slider.value = newValue / multiplier;
+      
+      // Update display
+      const finalDisplay = precision === 0 ? Math.round(newValue) : newValue.toFixed(precision);
+      valueElement.textContent = `${finalDisplay}${suffix}`;
+      
+      input.parentNode.replaceChild(valueElement, input);
+      handleConfigChange();
+    };
+    
+    input.addEventListener('blur', finishEdit);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        finishEdit();
+      } else if (e.key === 'Escape') {
+        input.parentNode.replaceChild(valueElement, input);
+      }
+    });
+  });
+}
+
+function setupSpecialButtons() {
+  // Add color button
+  const addColorBtn = document.getElementById('add-color-btn');
+  if (addColorBtn) {
+    addColorBtn.addEventListener('click', addNewColor);
+  }
+  
+  // Save preset button
+  const savePresetBtn = document.getElementById('preset-save-btn');
+  if (savePresetBtn) {
+    savePresetBtn.addEventListener('click', showPresetSaveModal);
+  }
+  
+  // Import/Export buttons
+  const importBtn = document.getElementById('import-config-btn');
+  const exportBtn = document.getElementById('export-config-btn');
+  
+  if (importBtn) {
+    importBtn.addEventListener('click', importConfiguration);
+  }
+  
+  if (exportBtn) {
+    exportBtn.addEventListener('click', exportConfiguration);
+  }
+  
+  // File input for import
+  const fileInput = document.getElementById('config-file-input');
+  if (fileInput) {
+    fileInput.addEventListener('change', handleConfigImport);
+  }
+  
+  // Preset save modal buttons
+  const saveConfirm = document.getElementById('preset-save-confirm');
+  const saveCancel = document.getElementById('preset-save-cancel');
+  
+  if (saveConfirm) {
+    saveConfirm.addEventListener('click', saveCustomPreset);
+  }
+  
+  if (saveCancel) {
+    saveCancel.addEventListener('click', hidePresetSaveModal);
+  }
+}
+
+function updateVisibilityBasedOnSelections() {
+  // Shape-specific controls
+  const shape = document.getElementById('particle-shape')?.value;
+  const polygonRow = document.getElementById('polygon-sides-row');
+  const starRow = document.getElementById('star-sides-row');
+  const imageRow = document.getElementById('image-source-row');
+  
+  if (polygonRow) polygonRow.style.display = shape === 'polygon' ? 'block' : 'none';
+  if (starRow) starRow.style.display = shape === 'star' ? 'block' : 'none';
+  if (imageRow) imageRow.style.display = shape === 'image' ? 'block' : 'none';
+  
+  // Color mode controls
+  const colorMode = document.getElementById('color-mode')?.value;
+  const singleColorRow = document.getElementById('single-color-row');
+  const multipleColorsSection = document.getElementById('multiple-colors-section');
+  
+  if (singleColorRow) singleColorRow.style.display = colorMode === 'single' ? 'block' : 'none';
+  if (multipleColorsSection) multipleColorsSection.style.display = colorMode === 'multiple' ? 'block' : 'none';
+  
+  // Size controls
+  const sizeRandom = document.getElementById('size-random')?.checked;
+  const sizeRandomControls = document.getElementById('size-random-controls');
+  if (sizeRandomControls) sizeRandomControls.style.display = sizeRandom ? 'block' : 'none';
+  
+  const sizeAnim = document.getElementById('size-anim')?.checked;
+  const sizeAnimControls = document.getElementById('size-anim-controls');
+  if (sizeAnimControls) sizeAnimControls.style.display = sizeAnim ? 'block' : 'none';
+  
+  // Opacity controls
+  const opacityRandom = document.getElementById('opacity-random')?.checked;
+  const opacityRandomControls = document.getElementById('opacity-random-controls');
+  if (opacityRandomControls) opacityRandomControls.style.display = opacityRandom ? 'block' : 'none';
+  
+  const opacityAnim = document.getElementById('opacity-anim')?.checked;
+  const opacityAnimControls = document.getElementById('opacity-anim-controls');
+  if (opacityAnimControls) opacityAnimControls.style.display = opacityAnim ? 'block' : 'none';
+  
+  // Movement controls
+  const moveEnable = document.getElementById('move-enable')?.checked;
+  const movementControls = document.getElementById('movement-controls');
+  if (movementControls) movementControls.style.display = moveEnable ? 'block' : 'none';
+  
+  const moveAttract = document.getElementById('move-attract')?.checked;
+  const attractControls = document.getElementById('attract-controls');
+  if (attractControls) attractControls.style.display = moveAttract ? 'block' : 'none';
+  
+  // Line controls
+  const lineEnable = document.getElementById('line-linked-enable')?.checked;
+  const lineControls = document.getElementById('line-controls');
+  if (lineControls) lineControls.style.display = lineEnable ? 'block' : 'none';
+  
+  const lineShadow = document.getElementById('line-linked-shadow')?.checked;
+  const lineShadowControls = document.getElementById('line-shadow-controls');
+  if (lineShadowControls) lineShadowControls.style.display = lineShadow ? 'block' : 'none';
+  
+  // Interaction controls
+  const hoverEnable = document.getElementById('hover-enable')?.checked;
+  const hoverControls = document.getElementById('hover-controls');
+  if (hoverControls) hoverControls.style.display = hoverEnable ? 'block' : 'none';
+  
+  const clickEnable = document.getElementById('click-enable')?.checked;
+  const clickControls = document.getElementById('click-controls');
+  if (clickControls) clickControls.style.display = clickEnable ? 'block' : 'none';
+}
+
+function handleConfigChange() {
+  const settings = getCurrentSettings();
+  saveParticleSettings(settings);
+  applyParticleSettings(settings);
+  
+  // Update preview
+  if (window.particleControls && window.particleControls.updatePreview) {
+    window.particleControls.updatePreview(settings);
+  }
+  
+  // Update performance stats
+  updatePerformanceStats(settings);
+}
+
+function updatePerformanceStats(settings) {
+  const fpsElement = document.getElementById('preview-fps');
+  const countElement = document.getElementById('preview-count');
+  
+  if (countElement) {
+    countElement.textContent = `Particles: ${settings.count || 0}`;
+  }
+  
+  // Estimate FPS impact (simplified)
+  if (fpsElement) {
+    const estimatedFPS = Math.max(30, 60 - Math.floor((settings.count || 0) / 10));
+    fpsElement.textContent = `Est. FPS: ${estimatedFPS}`;
+  }
+}
+
+function getCurrentSettings() {
+  return {
+    enabled: document.getElementById('particles-enabled')?.checked ?? true,
+    count: parseInt(document.getElementById('particle-count')?.value ?? 50),
+    density: parseInt(document.getElementById('particle-density')?.value ?? 800),
+    shape: document.getElementById('particle-shape')?.value ?? 'circle',
+    polygonSides: parseInt(document.getElementById('polygon-sides')?.value ?? 5),
+    starSides: parseInt(document.getElementById('star-sides')?.value ?? 5),
+    imageSource: document.getElementById('image-source')?.value ?? '',
+    strokeWidth: parseFloat(document.getElementById('stroke-width')?.value ?? 0),
+    strokeColor: document.getElementById('stroke-color')?.value ?? '#000000',
+    colorMode: document.getElementById('color-mode')?.value ?? 'single',
+    particleColor: document.getElementById('particle-color')?.value ?? '#0066cc',
+    colors: getMultipleColors(),
+    size: parseFloat(document.getElementById('particle-size')?.value ?? 3),
+    sizeRandom: document.getElementById('size-random')?.checked ?? false,
+    sizeAnim: document.getElementById('size-anim')?.checked ?? false,
+    sizeAnimSpeed: parseFloat(document.getElementById('size-anim-speed')?.value ?? 40),
+    sizeAnimMin: parseFloat(document.getElementById('size-anim-min')?.value ?? 0.1),
+    sizeAnimSync: document.getElementById('size-anim-sync')?.checked ?? false,
+    opacity: parseFloat(document.getElementById('particle-opacity')?.value ?? 0.5),
+    opacityRandom: document.getElementById('opacity-random')?.checked ?? false,
+    opacityAnim: document.getElementById('opacity-anim')?.checked ?? false,
+    opacityAnimSpeed: parseFloat(document.getElementById('opacity-anim-speed')?.value ?? 1),
+    opacityAnimMin: parseFloat(document.getElementById('opacity-anim-min')?.value ?? 0.1),
+    opacityAnimSync: document.getElementById('opacity-anim-sync')?.checked ?? false,
+    moveEnable: document.getElementById('move-enable')?.checked ?? true,
+    moveSpeed: parseFloat(document.getElementById('move-speed')?.value ?? 1),
+    moveDirection: document.getElementById('move-direction')?.value ?? 'none',
+    moveRandom: document.getElementById('move-random')?.checked ?? false,
+    moveStraight: document.getElementById('move-straight')?.checked ?? false,
+    moveOutMode: document.getElementById('move-out-mode')?.value ?? 'bounce',
+    moveBounce: document.getElementById('move-bounce')?.checked ?? false,
+    moveAttract: document.getElementById('move-attract')?.checked ?? false,
+    attractRotateX: parseFloat(document.getElementById('attract-rotate-x')?.value ?? 600),
+    attractRotateY: parseFloat(document.getElementById('attract-rotate-y')?.value ?? 1200),
+    lineLinkedEnable: document.getElementById('line-linked-enable')?.checked ?? true,
+    lineLinkedDistance: parseFloat(document.getElementById('line-linked-distance')?.value ?? 150),
+    lineLinkedColor: document.getElementById('line-linked-color')?.value ?? '#0066cc',
+    lineLinkedOpacity: parseFloat(document.getElementById('line-linked-opacity')?.value ?? 0.4),
+    lineLinkedWidth: parseFloat(document.getElementById('line-linked-width')?.value ?? 1),
+    lineLinkedShadow: document.getElementById('line-linked-shadow')?.checked ?? false,
+    lineShadowColor: document.getElementById('line-shadow-color')?.value ?? '#000000',
+    lineShadowBlur: parseFloat(document.getElementById('line-shadow-blur')?.value ?? 5),
+    detectOn: document.getElementById('detect-on')?.value ?? 'canvas',
+    hoverEnable: document.getElementById('hover-enable')?.checked ?? true,
+    hoverMode: document.getElementById('hover-mode')?.value ?? 'grab',
+    clickEnable: document.getElementById('click-enable')?.checked ?? true,
+    clickMode: document.getElementById('click-mode')?.value ?? 'push',
+    resizeEnable: document.getElementById('resize-enable')?.checked ?? true,
+    grabDistance: parseFloat(document.getElementById('grab-distance')?.value ?? 120),
+    grabLineOpacity: parseFloat(document.getElementById('grab-line-opacity')?.value ?? 0.5),
+    bubbleDistance: parseFloat(document.getElementById('bubble-distance')?.value ?? 100),
+    bubbleSize: parseFloat(document.getElementById('bubble-size')?.value ?? 10),
+    bubbleDuration: parseFloat(document.getElementById('bubble-duration')?.value ?? 0.4),
+    repulseDistance: parseFloat(document.getElementById('repulse-distance')?.value ?? 100),
+    repulseDuration: parseFloat(document.getElementById('repulse-duration')?.value ?? 0.4),
+    pushParticlesNb: parseInt(document.getElementById('push-particles-nb')?.value ?? 4),
+    retinaDetect: document.getElementById('retina-detect')?.checked ?? true,
+    backgroundColor: document.getElementById('background-color')?.value ?? '',
+    backgroundImage: document.getElementById('background-image')?.value ?? '',
+    backgroundPosition: document.getElementById('background-position')?.value ?? 'center center',
+    backgroundRepeat: document.getElementById('background-repeat')?.value ?? 'no-repeat',
+    backgroundSize: document.getElementById('background-size')?.value ?? 'cover'
+  };
+}
+
+function getMultipleColors() {
+  const colorInputs = document.querySelectorAll('#color-list input[type="color"]');
+  return Array.from(colorInputs).map(input => input.value);
+}
+
+function addNewColor() {
+  const colorList = document.getElementById('color-list');
+  if (!colorList) return;
+  
+  const colorItem = document.createElement('div');
+  colorItem.className = 'color-item';
+  colorItem.innerHTML = `
+    <input type="color" value="#0066cc" class="config-color">
+    <button type="button" class="color-remove-btn">Remove</button>
+  `;
+  
+  const removeBtn = colorItem.querySelector('.color-remove-btn');
+  removeBtn.addEventListener('click', () => {
+    colorItem.remove();
+    handleConfigChange();
+  });
+  
+  const colorInput = colorItem.querySelector('input[type="color"]');
+  colorInput.addEventListener('change', handleConfigChange);
+  
+  colorList.appendChild(colorItem);
+  handleConfigChange();
+}
+
+function applySettingsToControls(settings) {
+  Object.entries(settings).forEach(([key, value]) => {
+    const element = document.getElementById(getControlId(key));
+    if (element) {
+      if (element.type === 'checkbox') {
+        element.checked = value;
+      } else {
+        element.value = value;
+      }
+    }
+  });
+  
+  // Handle multiple colors
+  if (settings.colorMode === 'multiple' && settings.colors) {
+    setupMultipleColors(settings.colors);
+  }
+  
+  // Update visibility and slider displays
+  setTimeout(() => {
+    updateVisibilityBasedOnSelections();
+    updateAllSliderDisplays();
+  }, 100);
+}
+
+function setupMultipleColors(colors) {
+  const colorList = document.getElementById('color-list');
+  if (!colorList) return;
+  
+  colorList.innerHTML = '';
+  
+  colors.forEach(color => {
+    const colorItem = document.createElement('div');
+    colorItem.className = 'color-item';
+    colorItem.innerHTML = `
+      <input type="color" value="${color}" class="config-color">
+      <button type="button" class="color-remove-btn">Remove</button>
+    `;
+    
+    const removeBtn = colorItem.querySelector('.color-remove-btn');
+    removeBtn.addEventListener('click', () => {
+      colorItem.remove();
+      handleConfigChange();
+    });
+    
+    const colorInput = colorItem.querySelector('input[type="color"]');
+    colorInput.addEventListener('change', handleConfigChange);
+    
+    colorList.appendChild(colorItem);
+  });
+}
+
+function applyPreset(presetName) {
+  if (window.particleControls && window.particleControls.getPresets) {
+    const presets = window.particleControls.getPresets();
+    const preset = presets[presetName];
+    
+    if (preset) {
+      const settings = convertPresetToSettings(preset);
+      applySettingsToControls(settings);
+      handleConfigChange();
+    }
+  }
+}
+
+function convertPresetToSettings(preset) {
+  // Convert particles.js config to our settings format
+  const p = preset.particles;
+  const i = preset.interactivity;
+  
+  return {
+    enabled: true,
+    count: p.number?.value || 50,
+    density: p.number?.density?.value_area || 800,
+    shape: p.shape?.type || 'circle',
+    polygonSides: p.shape?.polygon?.nb_sides || 5,
+    starSides: p.shape?.polygon?.nb_sides || 5,
+    strokeWidth: p.shape?.stroke?.width || 0,
+    strokeColor: p.shape?.stroke?.color || '#000000',
+    colorMode: Array.isArray(p.color?.value) ? 'multiple' : 'single',
+    particleColor: Array.isArray(p.color?.value) ? p.color.value[0] : p.color?.value || '#0066cc',
+    colors: Array.isArray(p.color?.value) ? p.color.value : ['#0066cc'],
+    size: p.size?.value || 3,
+    sizeRandom: p.size?.random || false,
+    sizeAnim: p.size?.anim?.enable || false,
+    sizeAnimSpeed: p.size?.anim?.speed || 40,
+    sizeAnimMin: p.size?.anim?.size_min || 0.1,
+    sizeAnimSync: p.size?.anim?.sync || false,
+    opacity: p.opacity?.value || 0.5,
+    opacityRandom: p.opacity?.random || false,
+    opacityAnim: p.opacity?.anim?.enable || false,
+    opacityAnimSpeed: p.opacity?.anim?.speed || 1,
+    opacityAnimMin: p.opacity?.anim?.opacity_min || 0.1,
+    opacityAnimSync: p.opacity?.anim?.sync || false,
+    moveEnable: p.move?.enable !== false,
+    moveSpeed: p.move?.speed || 1,
+    moveDirection: p.move?.direction || 'none',
+    moveRandom: p.move?.random || false,
+    moveStraight: p.move?.straight || false,
+    moveOutMode: p.move?.out_mode || 'bounce',
+    moveBounce: p.move?.bounce || false,
+    moveAttract: p.move?.attract?.enable || false,
+    attractRotateX: p.move?.attract?.rotateX || 600,
+    attractRotateY: p.move?.attract?.rotateY || 1200,
+    lineLinkedEnable: p.line_linked?.enable !== false,
+    lineLinkedDistance: p.line_linked?.distance || 150,
+    lineLinkedColor: p.line_linked?.color || '#0066cc',
+    lineLinkedOpacity: p.line_linked?.opacity || 0.4,
+    lineLinkedWidth: p.line_linked?.width || 1,
+    detectOn: i.detect_on || 'canvas',
+    hoverEnable: i.events?.onhover?.enable !== false,
+    hoverMode: i.events?.onhover?.mode || 'grab',
+    clickEnable: i.events?.onclick?.enable !== false,
+    clickMode: i.events?.onclick?.mode || 'push',
+    resizeEnable: i.events?.resize !== false,
+    grabDistance: i.modes?.grab?.distance || 120,
+    grabLineOpacity: i.modes?.grab?.line_linked?.opacity || 0.5,
+    bubbleDistance: i.modes?.bubble?.distance || 100,
+    bubbleSize: i.modes?.bubble?.size || 10,
+    bubbleDuration: i.modes?.bubble?.duration || 0.4,
+    repulseDistance: i.modes?.repulse?.distance || 100,
+    repulseDuration: i.modes?.repulse?.duration || 0.4,
+    pushParticlesNb: i.modes?.push?.particles_nb || 4,
+    retinaDetect: preset.retina_detect !== false,
+    backgroundColor: preset.background?.color || '',
+    backgroundImage: preset.background?.image || ''
+  };
+}
+
+// Import/Export functions
+function exportConfiguration() {
+  const settings = getCurrentSettings();
+  const dataStr = JSON.stringify(settings, null, 2);
+  const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+  
+  const exportFileDefaultName = `particle-config-${new Date().toISOString().split('T')[0]}.json`;
+  
+  const linkElement = document.createElement('a');
+  linkElement.setAttribute('href', dataUri);
+  linkElement.setAttribute('download', exportFileDefaultName);
+  linkElement.click();
+}
+
+function importConfiguration() {
+  const fileInput = document.getElementById('config-file-input');
+  if (fileInput) {
+    fileInput.click();
+  }
+}
+
+function handleConfigImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const settings = JSON.parse(e.target.result);
+      applySettingsToControls(settings);
+      handleConfigChange();
+    } catch (error) {
+      alert('Invalid configuration file. Please check the file format.');
+      console.error('Import error:', error);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// Custom preset management
+function showPresetSaveModal() {
+  const modal = document.getElementById('preset-save-modal');
+  const input = document.getElementById('preset-name-input');
+  if (modal && input) {
+    modal.style.display = 'flex';
+    input.value = '';
+    input.focus();
+  }
+}
+
+function hidePresetSaveModal() {
+  const modal = document.getElementById('preset-save-modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+async function saveCustomPreset() {
+  const nameInput = document.getElementById('preset-name-input');
+  const name = nameInput?.value?.trim();
+  
+  if (!name) {
+    alert('Please enter a preset name.');
+    return;
+  }
+  
+  const settings = getCurrentSettings();
+  
+  try {
+    const db = await initParticleDB();
+    const transaction = db.transaction(['presets'], 'readwrite');
+    const store = transaction.objectStore('presets');
+    
+    await new Promise((resolve, reject) => {
+      const request = store.put(settings, name);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    
+    hidePresetSaveModal();
+    loadCustomPresets();
+  } catch (error) {
+    console.error('Failed to save custom preset:', error);
+    alert('Failed to save preset. Please try again.');
+  }
+}
+
+async function loadCustomPresets() {
+  try {
+    const db = await initParticleDB();
+    const transaction = db.transaction(['presets'], 'readonly');
+    const store = transaction.objectStore('presets');
+    
+    const presets = await new Promise((resolve, reject) => {
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    
+    const keys = await new Promise((resolve, reject) => {
+      const request = store.getAllKeys();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    
+    displayCustomPresets(keys, presets);
+  } catch (error) {
+    console.error('Failed to load custom presets:', error);
+  }
+}
+
+function displayCustomPresets(names, presets) {
+  const container = document.getElementById('custom-presets');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  names.forEach((name, index) => {
+    const presetItem = document.createElement('div');
+    presetItem.className = 'custom-preset-item';
+    
+    presetItem.innerHTML = `
+      <button class="custom-preset-btn" data-preset="${name}">${name}</button>
+      <button class="custom-preset-delete" data-preset="${name}">×</button>
+    `;
+    
+    const btn = presetItem.querySelector('.custom-preset-btn');
+    btn.addEventListener('click', () => {
+      applySettingsToControls(presets[index]);
+      handleConfigChange();
+    });
+    
+    const deleteBtn = presetItem.querySelector('.custom-preset-delete');
+    deleteBtn.addEventListener('click', () => deleteCustomPreset(name));
+    
+    container.appendChild(presetItem);
+  });
+}
+
+async function deleteCustomPreset(name) {
+  if (!confirm(`Delete preset "${name}"?`)) return;
+  
+  try {
+    const db = await initParticleDB();
+    const transaction = db.transaction(['presets'], 'readwrite');
+    const store = transaction.objectStore('presets');
+    
+    await new Promise((resolve, reject) => {
+      const request = store.delete(name);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    
+    loadCustomPresets();
+  } catch (error) {
+    console.error('Failed to delete custom preset:', error);
+  }
 }
 
 // IndexedDB functions
@@ -307,9 +950,7 @@ async function saveParticleSettings() {
   }
 }
 
-function applyParticleSettings() {
-  const settings = getCurrentSettings();
-  
+function applyParticleSettings(settings) {
   // Apply to particle system
   if (window.particleControls && window.particleControls.updateConfig) {
     window.particleControls.updateConfig(settings);
@@ -317,31 +958,38 @@ function applyParticleSettings() {
     // Store settings for when particle system loads
     window.pendingParticleSettings = settings;
   }
+}
+
+async function saveParticleSettings(settings) {
+  if (!settings) {
+    settings = getCurrentSettings();
+  }
   
-  console.log('Applied particle settings:', settings);
+  try {
+    if (window.particleControls && window.particleControls.saveSettings) {
+      await window.particleControls.saveSettings(settings);
+    }
+  } catch (error) {
+    console.error('Failed to save particle settings:', error);
+  }
 }
 
 async function loadParticleSettings() {
   try {
-    const db = await initParticleDB();
-    const transaction = db.transaction(['settings'], 'readonly');
-    const store = transaction.objectStore('settings');
-    
-    const settings = await new Promise((resolve, reject) => {
-      const request = store.get('particleConfig');
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-    
-    if (settings) {
-      applySettingsToControls(settings);
-      // Don't apply settings immediately on load - wait for user interaction
-      // Just populate the form with saved values
-    } else {
-      // Load defaults into form
-      const defaults = getDefaultSettings();
-      applySettingsToControls(defaults);
+    if (window.particleControls && window.particleControls.loadSettings) {
+      const settings = await window.particleControls.loadSettings();
+      if (settings) {
+        applySettingsToControls(settings);
+        // Load custom presets
+        loadCustomPresets();
+        return;
+      }
     }
+    
+    // Fallback to defaults
+    const defaults = getDefaultSettings();
+    applySettingsToControls(defaults);
+    loadCustomPresets();
   } catch (error) {
     console.error('Failed to load particle settings:', error);
     const defaults = getDefaultSettings();
@@ -353,184 +1001,191 @@ function getDefaultSettings() {
   return {
     enabled: true,
     count: 50,
-    speed: 1.0,
-    particleColor: '#0066cc',
-    lineColor: '#0066cc',
+    density: 800,
+    shape: "circle",
+    polygonSides: 5,
+    starSides: 5,
+    imageSource: "",
+    strokeWidth: 0,
+    strokeColor: "#000000",
+    colorMode: "single",
+    particleColor: "#0066cc",
+    colors: ["#0066cc"],
     size: 3,
-    opacity: 0.8,
-    mouseInteraction: true,
-    connectLines: true,
-    interactionDistance: 150
+    sizeRandom: false,
+    sizeAnim: false,
+    sizeAnimSpeed: 40,
+    sizeAnimMin: 0.1,
+    sizeAnimSync: false,
+    opacity: 0.5,
+    opacityRandom: false,
+    opacityAnim: false,
+    opacityAnimSpeed: 1,
+    opacityAnimMin: 0.1,
+    opacityAnimSync: false,
+    moveEnable: true,
+    moveSpeed: 1,
+    moveDirection: "none",
+    moveRandom: false,
+    moveStraight: false,
+    moveOutMode: "bounce",
+    moveBounce: false,
+    moveAttract: false,
+    attractRotateX: 600,
+    attractRotateY: 1200,
+    lineLinkedEnable: true,
+    lineLinkedDistance: 150,
+    lineLinkedColor: "#0066cc",
+    lineLinkedOpacity: 0.4,
+    lineLinkedWidth: 1,
+    lineLinkedShadow: false,
+    lineShadowColor: "#000000",
+    lineShadowBlur: 5,
+    detectOn: "canvas",
+    hoverEnable: true,
+    hoverMode: "grab",
+    clickEnable: true,
+    clickMode: "push",
+    resizeEnable: true,
+    grabDistance: 120,
+    grabLineOpacity: 0.5,
+    bubbleDistance: 100,
+    bubbleSize: 10,
+    bubbleDuration: 0.4,
+    repulseDistance: 100,
+    repulseDuration: 0.4,
+    pushParticlesNb: 4,
+    retinaDetect: true,
+    backgroundColor: "",
+    backgroundImage: "",
+    backgroundPosition: "center center",
+    backgroundRepeat: "no-repeat",
+    backgroundSize: "cover"
   };
-}
-
-function getCurrentSettings() {
-  return {
-    enabled: document.getElementById('particles-enabled')?.checked ?? true,
-    count: parseInt(document.getElementById('particle-count')?.value ?? 50),
-    speed: parseFloat(document.getElementById('animation-speed')?.value ?? 1.0),
-    particleColor: document.getElementById('particle-color')?.value ?? '#0066cc',
-    lineColor: document.getElementById('line-color')?.value ?? '#0066cc',
-    size: parseFloat(document.getElementById('particle-size')?.value ?? 3),
-    opacity: parseFloat(document.getElementById('particle-opacity')?.value ?? 0.8),
-    mouseInteraction: document.getElementById('mouse-interaction')?.checked ?? true,
-    connectLines: document.getElementById('connect-lines')?.checked ?? true,
-    interactionDistance: parseInt(document.getElementById('interaction-distance')?.value ?? 150)
-  };
-}
-
-function applySettingsToControls(settings) {
-  Object.entries(settings).forEach(([key, value]) => {
-    const element = document.getElementById(getControlId(key));
-    if (element) {
-      if (element.type === 'checkbox') {
-        element.checked = value;
-      } else {
-        element.value = value;
-      }
-    }
-  });
-  
-  // Update slider value displays after a short delay to ensure elements are ready
-  setTimeout(() => {
-    updateAllSliderDisplays();
-  }, 100);
-}
-
-function updateAllSliderDisplays() {
-  const sliders = [
-    { id: 'particle-count', suffix: '' },
-    { id: 'animation-speed', suffix: 'x' },
-    { id: 'particle-size', suffix: 'px' },
-    { id: 'particle-opacity', suffix: '%', multiplier: 100 },
-    { id: 'interaction-distance', suffix: 'px' }
-  ];
-  
-  sliders.forEach(({ id, suffix, multiplier = 1 }) => {
-    const slider = document.getElementById(id);
-    const valueDisplay = document.getElementById(`${id}-value`);
-    
-    if (slider && valueDisplay) {
-      const value = parseFloat(slider.value) * multiplier;
-      valueDisplay.textContent = `${value}${suffix}`;
-    }
-  });
 }
 
 function getControlId(settingKey) {
   const mapping = {
     enabled: 'particles-enabled',
     count: 'particle-count',
-    speed: 'animation-speed',
+    density: 'particle-density',
+    shape: 'particle-shape',
+    polygonSides: 'polygon-sides',
+    starSides: 'star-sides',
+    imageSource: 'image-source',
+    strokeWidth: 'stroke-width',
+    strokeColor: 'stroke-color',
+    colorMode: 'color-mode',
     particleColor: 'particle-color',
-    lineColor: 'line-color',
     size: 'particle-size',
+    sizeRandom: 'size-random',
+    sizeVariation: 'size-variation',
+    sizeAnim: 'size-anim',
+    sizeAnimSpeed: 'size-anim-speed',
+    sizeAnimMin: 'size-anim-min',
+    sizeAnimSync: 'size-anim-sync',
     opacity: 'particle-opacity',
-    mouseInteraction: 'mouse-interaction',
-    connectLines: 'connect-lines',
-    interactionDistance: 'interaction-distance'
+    opacityRandom: 'opacity-random',
+    opacityVariation: 'opacity-variation',
+    opacityAnim: 'opacity-anim',
+    opacityAnimSpeed: 'opacity-anim-speed',
+    opacityAnimMin: 'opacity-anim-min',
+    opacityAnimSync: 'opacity-anim-sync',
+    moveEnable: 'move-enable',
+    moveSpeed: 'move-speed',
+    moveDirection: 'move-direction',
+    moveRandom: 'move-random',
+    moveStraight: 'move-straight',
+    moveOutMode: 'move-out-mode',
+    moveBounce: 'move-bounce',
+    moveAttract: 'move-attract',
+    attractRotateX: 'attract-rotate-x',
+    attractRotateY: 'attract-rotate-y',
+    lineLinkedEnable: 'line-linked-enable',
+    lineLinkedDistance: 'line-linked-distance',
+    lineLinkedColor: 'line-linked-color',
+    lineLinkedOpacity: 'line-linked-opacity',
+    lineLinkedWidth: 'line-linked-width',
+    lineLinkedShadow: 'line-linked-shadow',
+    lineShadowColor: 'line-shadow-color',
+    lineShadowBlur: 'line-shadow-blur',
+    detectOn: 'detect-on',
+    hoverEnable: 'hover-enable',
+    hoverMode: 'hover-mode',
+    clickEnable: 'click-enable',
+    clickMode: 'click-mode',
+    resizeEnable: 'resize-enable',
+    grabDistance: 'grab-distance',
+    grabLineOpacity: 'grab-line-opacity',
+    bubbleDistance: 'bubble-distance',
+    bubbleSize: 'bubble-size',
+    bubbleDuration: 'bubble-duration',
+    repulseDistance: 'repulse-distance',
+    repulseDuration: 'repulse-duration',
+    pushParticlesNb: 'push-particles-nb',
+    retinaDetect: 'retina-detect',
+    backgroundColor: 'background-color',
+    backgroundImage: 'background-image',
+    backgroundPosition: 'background-position',
+    backgroundRepeat: 'background-repeat',
+    backgroundSize: 'background-size'
   };
   return mapping[settingKey] || settingKey;
 }
 
-function applyPreset(presetName) {
-  const presets = {
-    minimal: {
-      enabled: true,
-      count: 20,
-      speed: 0.5,
-      particleColor: '#cccccc',
-      lineColor: '#cccccc',
-      size: 2,
-      opacity: 0.4,
-      mouseInteraction: false,
-      connectLines: false,
-      interactionDistance: 100
-    },
-    default: {
-      enabled: true,
-      count: 50,
-      speed: 1.0,
-      particleColor: '#0066cc',
-      lineColor: '#0066cc',
-      size: 3,
-      opacity: 0.8,
-      mouseInteraction: true,
-      connectLines: true,
-      interactionDistance: 150
-    },
-    energetic: {
-      enabled: true,
-      count: 80,
-      speed: 2.0,
-      particleColor: '#00b894',
-      lineColor: '#00b894',
-      size: 4,
-      opacity: 0.9,
-      mouseInteraction: true,
-      connectLines: true,
-      interactionDistance: 200
-    },
-    cosmic: {
-      enabled: true,
-      count: 100,
-      speed: 0.8,
-      particleColor: '#6c5ce7',
-      lineColor: '#a29bfe',
-      size: 2.5,
-      opacity: 0.7,
-      mouseInteraction: true,
-      connectLines: true,
-      interactionDistance: 180
-    }
-  };
-  
-  const preset = presets[presetName];
-  if (preset) {
-    applySettingsToControls(preset);
-    saveParticleSettings();
-    applyParticleSettings();
-  }
+function resetToDefaults() {
+  const defaults = getDefaultSettings();
+  applySettingsToControls(defaults);
+  handleConfigChange();
 }
 
-function resetToDefaults() {
-  applyPreset('default');
+function updateAllSliderDisplays() {
+  const sliders = [
+    { id: 'particle-count', suffix: '', precision: 0 },
+    { id: 'particle-density', suffix: '', precision: 0 },
+    { id: 'polygon-sides', suffix: '', precision: 0 },
+    { id: 'star-sides', suffix: '', precision: 0 },
+    { id: 'stroke-width', suffix: 'px', precision: 1 },
+    { id: 'particle-size', suffix: 'px', precision: 1 },
+    { id: 'size-variation', suffix: '%', multiplier: 100, precision: 0 },
+    { id: 'size-anim-speed', suffix: '', precision: 0 },
+    { id: 'size-anim-min', suffix: 'px', precision: 1 },
+    { id: 'particle-opacity', suffix: '%', multiplier: 100, precision: 0 },
+    { id: 'opacity-variation', suffix: '%', multiplier: 100, precision: 0 },
+    { id: 'opacity-anim-speed', suffix: '', precision: 1 },
+    { id: 'opacity-anim-min', suffix: '%', multiplier: 100, precision: 0 },
+    { id: 'move-speed', suffix: '', precision: 1 },
+    { id: 'attract-rotate-x', suffix: '', precision: 0 },
+    { id: 'attract-rotate-y', suffix: '', precision: 0 },
+    { id: 'line-linked-distance', suffix: 'px', precision: 0 },
+    { id: 'line-linked-opacity', suffix: '%', multiplier: 100, precision: 0 },
+    { id: 'line-linked-width', suffix: 'px', precision: 1 },
+    { id: 'line-shadow-blur', suffix: 'px', precision: 0 },
+    { id: 'grab-distance', suffix: 'px', precision: 0 },
+    { id: 'grab-line-opacity', suffix: '%', multiplier: 100, precision: 0 },
+    { id: 'bubble-distance', suffix: 'px', precision: 0 },
+    { id: 'bubble-size', suffix: 'px', precision: 0 },
+    { id: 'bubble-duration', suffix: 's', precision: 1 },
+    { id: 'repulse-distance', suffix: 'px', precision: 0 },
+    { id: 'repulse-duration', suffix: 's', precision: 1 },
+    { id: 'push-particles-nb', suffix: '', precision: 0 }
+  ];
+  
+  sliders.forEach(({ id, suffix, multiplier = 1, precision = 1 }) => {
+    const slider = document.getElementById(id);
+    const valueDisplay = document.getElementById(`${id}-value`);
+    
+    if (slider && valueDisplay) {
+      const value = parseFloat(slider.value) * multiplier;
+      const displayValue = precision === 0 ? Math.round(value) : value.toFixed(precision);
+      valueDisplay.textContent = `${displayValue}${suffix}`;
+    }
+  });
 }
 
 async function initializeParticleSettings() {
   try {
-    // Load saved settings and apply them to the particle system
-    const db = await initParticleDB();
-    const transaction = db.transaction(['settings'], 'readonly');
-    const store = transaction.objectStore('settings');
-    
-    const savedSettings = await new Promise((resolve, reject) => {
-      const request = store.get('particleConfig');
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-    
-    const settings = savedSettings || getDefaultSettings();
-    
-    // Apply settings to particle system if it's ready
-    if (window.particleControls && window.particleControls.updateConfig) {
-      window.particleControls.updateConfig(settings);
-    } else {
-      // Store for when particle system is ready
-      window.pendingParticleSettings = settings;
-      
-      // Wait for particle system to be ready
-      const checkParticleSystem = setInterval(() => {
-        if (window.particleControls && window.particleControls.updateConfig && window.pendingParticleSettings) {
-          window.particleControls.updateConfig(window.pendingParticleSettings);
-          window.pendingParticleSettings = null;
-          clearInterval(checkParticleSystem);
-        }
-      }, 500);
-      
-      // Clear interval after 10 seconds to prevent memory leaks
-      setTimeout(() => clearInterval(checkParticleSystem), 10000);
-    }
+    await loadParticleSettings();
   } catch (error) {
     console.error('Failed to initialize particle settings:', error);
   }

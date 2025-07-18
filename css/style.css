@@ -2709,9 +2709,9 @@ select:after {
   background: var(--color-modal-bg);
   border-radius: 12px;
   box-shadow: 0 20px 40px var(--color-modal-shadow);
-  width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
+  width: 95%;
+  max-width: 1000px;
+  max-height: 95vh;
   display: flex;
   flex-direction: column;
   transform: scale(0.9) translateY(20px);
@@ -2730,6 +2730,12 @@ select:after {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .particle-modal-title {
@@ -2767,6 +2773,234 @@ select:after {
   padding: 2rem;
   flex: 1;
   overflow-y: auto;
+  max-height: calc(95vh - 200px);
+}
+
+/* Live Preview */
+.preview-container {
+  background: var(--color-white);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+#particle-preview-canvas {
+  width: 100%;
+  height: 200px;
+  border-radius: 4px;
+  background: #000;
+}
+
+.preview-stats {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-white);
+  background: rgba(0, 0, 0, 0.7);
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+/* Form Elements */
+.config-select,
+.config-input {
+  padding: 0.5rem;
+  border: 2px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-white);
+  color: var(--color-text);
+  font-family: var(--font-main);
+  font-size: 0.9rem;
+  min-width: 120px;
+}
+
+.config-select:focus,
+.config-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.config-input::placeholder {
+  color: var(--color-muted);
+}
+
+/* Configuration Groups */
+.config-group {
+  margin-left: 1rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--color-border);
+}
+
+.config-subsection {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--color-light-bg);
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+}
+
+.config-subsection h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Color Management */
+.color-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.color-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--color-light-bg);
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+}
+
+.color-item input[type="color"] {
+  width: 40px;
+  height: 30px;
+}
+
+.color-remove-btn {
+  background: var(--color-danger);
+  color: var(--color-white);
+  border: none;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.color-remove-btn:hover {
+  background: var(--color-danger-dark);
+}
+
+/* Custom Presets */
+.custom-presets {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.custom-preset-item {
+  position: relative;
+  display: inline-block;
+}
+
+.custom-preset-btn {
+  padding: 0.6rem 1.2rem;
+  border: 2px solid var(--color-primary);
+  border-radius: 8px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-family: var(--font-main);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  padding-right: 2rem;
+}
+
+.custom-preset-btn:hover {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.custom-preset-delete {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-danger);
+  color: var(--color-white);
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-preset-delete:hover {
+  background: var(--color-danger-dark);
+}
+
+/* Modal Overlays */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: var(--color-modal-bg);
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  min-width: 300px;
+}
+
+.modal-content h3 {
+  margin: 0 0 1rem 0;
+  color: var(--color-text);
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--color-border);
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  font-family: var(--font-main);
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .config-select,
+[data-theme="dark"] .config-input {
+  background: var(--color-light-bg);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .preview-container {
+  background: var(--color-light-bg);
+}
+
+[data-theme="dark"] .color-item {
+  background: var(--color-bg);
+}
+
+[data-theme="dark"] .config-subsection {
+  background: var(--color-bg);
 }
 
 .config-section {
@@ -2881,6 +3115,34 @@ select:after {
   min-width: 50px;
   text-align: right;
   font-size: 0.9rem;
+}
+
+.editable-value {
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+  min-width: 40px;
+  display: inline-block;
+  text-align: center;
+}
+
+.editable-value:hover {
+  background-color: var(--color-hover-bg);
+  border: 1px solid rgba(97, 218, 251, 0.3);
+  margin: -1px;
+}
+
+.editable-value.editing {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 2px solid var(--color-primary);
+  color: #fff;
+  outline: none;
+  padding: 1px 3px;
+  margin: -2px;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: center;
 }
 
 .preset-buttons {

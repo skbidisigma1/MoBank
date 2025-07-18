@@ -1,5 +1,6 @@
 (function() {
-    let pJSInstance = null;
+    let mainContainer = null;
+    let previewContainer = null;
     let retryCount = 0;
     const MAX_RETRIES = 5;
     const RETRY_DELAY = 500;
@@ -10,27 +11,224 @@
         FULL_HD: 1920,
         WIDE_2K: 2560
     };
-    
-    const CONFIG = {
-        light: {
-            particleColor: '#0066cc',
-            lineColor: '#0066cc',
-            getParticleCount: () => getResponsiveParticleCount()
+
+    // Default configuration template - Updated for tsParticles v3
+    const DEFAULT_CONFIG = {
+        particles: {
+            number: {
+                value: 50,
+                density: { enable: true, area: 800 }
+            },
+            color: { value: "#0066cc" },
+            shape: {
+                type: "circle",
+                stroke: { width: 0, color: "#000000" },
+                polygon: { sides: 5 },
+                image: { src: "", width: 100, height: 100 }
+            },
+            opacity: {
+                value: 0.5,
+                random: false,
+                animation: { enable: false, speed: 1, minimumValue: 0.1, sync: false }
+            },
+            size: {
+                value: 3,
+                random: false,
+                animation: { enable: false, speed: 40, minimumValue: 0.1, sync: false }
+            },
+            links: {
+                enable: true,
+                distance: 150,
+                color: "#0066cc",
+                opacity: 0.4,
+                width: 1,
+                shadow: { enable: false, color: "#000000", blur: 5 }
+            },
+            move: {
+                enable: true,
+                speed: 1,
+                direction: "none",
+                random: false,
+                straight: false,
+                outModes: { default: "bounce" },
+                bounce: false,
+                attract: { enable: false, rotateX: 600, rotateY: 1200 }
+            }
         },
-        dark: {
-            particleColor: '#005fa3',
-            lineColor: '#005fa3',
-            getParticleCount: () => getResponsiveParticleCount()
+        interactivity: {
+            detectsOn: "canvas",
+            events: {
+                onHover: { enable: true, mode: "grab" },
+                onClick: { enable: true, mode: "push" },
+                resize: true
+            },
+            modes: {
+                grab: { distance: 120, links: { opacity: 0.5 } },
+                bubble: { distance: 100, size: 10, duration: 0.4, opacity: 8, speed: 3 },
+                repulse: { distance: 100, duration: 0.4 },
+                push: { quantity: 4 },
+                remove: { quantity: 2 }
+            }
+        },
+        detectRetina: true,
+        background: {
+            color: "transparent",
+            image: "",
+            position: "center center",
+            repeat: "no-repeat",
+            size: "cover"
         }
     };
 
-    function getResponsiveParticleCount() {
+    // Comprehensive preset configurations - Updated for tsParticles v3
+    const PRESETS = {
+        minimal: {
+            particles: {
+                number: { value: 20, density: { enable: true, area: 800 } },
+                color: { value: "#cccccc" },
+                shape: { type: "circle" },
+                opacity: { value: 0.4, random: false, animation: { enable: false } },
+                size: { value: 2, random: false, animation: { enable: false } },
+                links: { enable: false },
+                move: { enable: true, speed: 0.5, direction: "none", random: false, straight: false, outModes: { default: "out" }, bounce: false }
+            },
+            interactivity: {
+                detectsOn: "canvas",
+                events: { onHover: { enable: false }, onClick: { enable: false }, resize: true },
+                modes: {}
+            },
+            detectRetina: true
+        },
+        default: {
+            particles: {
+                number: { value: 50, density: { enable: true, area: 800 } },
+                color: { value: "#0066cc" },
+                shape: { type: "circle" },
+                opacity: { value: 0.8, random: false, animation: { enable: false } },
+                size: { value: 3, random: false, animation: { enable: false } },
+                links: { enable: true, distance: 150, color: "#0066cc", opacity: 0.4, width: 1 },
+                move: { enable: true, speed: 1, direction: "none", random: false, straight: false, outModes: { default: "bounce" }, bounce: false }
+            },
+            interactivity: {
+                detectsOn: "canvas",
+                events: { onHover: { enable: true, mode: "grab" }, onClick: { enable: true, mode: "push" }, resize: true },
+                modes: { grab: { distance: 150, links: { opacity: 0.5 } }, push: { quantity: 4 } }
+            },
+            detectRetina: true
+        },
+        energetic: {
+            particles: {
+                number: { value: 80, density: { enable: true, area: 800 } },
+                color: { value: "#00b894" },
+                shape: { type: "circle" },
+                opacity: { value: 0.9, random: true, animation: { enable: true, speed: 2, minimumValue: 0.1, sync: false } },
+                size: { value: 4, random: true, animation: { enable: true, speed: 40, minimumValue: 0.1, sync: false } },
+                links: { enable: true, distance: 200, color: "#00b894", opacity: 0.6, width: 1 },
+                move: { enable: true, speed: 2, direction: "none", random: false, straight: false, outModes: { default: "bounce" }, bounce: false }
+            },
+            interactivity: {
+                detectsOn: "canvas",
+                events: { onHover: { enable: true, mode: "repulse" }, onClick: { enable: true, mode: "push" }, resize: true },
+                modes: { repulse: { distance: 100, duration: 0.4 }, push: { quantity: 6 } }
+            },
+            detectRetina: true
+        },
+        cosmic: {
+            particles: {
+                number: { value: 100, density: { enable: true, area: 800 } },
+                color: { value: "#6c5ce7" },
+                shape: { type: "circle" },
+                opacity: { value: 0.7, random: true, animation: { enable: true, speed: 1, minimumValue: 0.1, sync: false } },
+                size: { value: 2.5, random: true, animation: { enable: false } },
+                links: { enable: true, distance: 180, color: "#a29bfe", opacity: 0.4, width: 1 },
+                move: { enable: true, speed: 0.8, direction: "none", random: false, straight: false, outModes: { default: "bounce" }, bounce: false }
+            },
+            interactivity: {
+                detectsOn: "canvas",
+                events: { onHover: { enable: true, mode: "bubble" }, onClick: { enable: true, mode: "push" }, resize: true },
+                modes: { bubble: { distance: 150, size: 8, duration: 0.4 }, push: { quantity: 3 } }
+            },
+            detectRetina: true
+        },
+        snow: {
+            particles: {
+                number: { value: 150, density: { enable: true, area: 800 } },
+                color: { value: "#ffffff" },
+                shape: { type: "circle" },
+                opacity: { value: 0.8, random: true, animation: { enable: false } },
+                size: { value: 3, random: true, animation: { enable: false } },
+                links: { enable: false },
+                move: { enable: true, speed: 2, direction: "bottom", random: false, straight: false, outModes: { default: "out" }, bounce: false }
+            },
+            interactivity: {
+                detectsOn: "canvas",
+                events: { onHover: { enable: false }, onClick: { enable: false }, resize: true },
+                modes: {}
+            },
+            detectRetina: true
+        },
+        bubbles: {
+            particles: {
+                number: { value: 60, density: { enable: true, area: 800 } },
+                color: { value: ["#ff6b6b", "#4ecdc4", "#45b7d1", "#f9ca24", "#f0932b"] },
+                shape: { type: "circle" },
+                opacity: { value: 0.6, random: true, animation: { enable: true, speed: 1, minimumValue: 0.1, sync: false } },
+                size: { value: 8, random: true, animation: { enable: true, speed: 20, minimumValue: 0.1, sync: false } },
+                links: { enable: false },
+                move: { enable: true, speed: 1.5, direction: "top", random: false, straight: false, outModes: { default: "out" }, bounce: false }
+            },
+            interactivity: {
+                detectsOn: "canvas",
+                events: { onHover: { enable: true, mode: "bubble" }, onClick: { enable: true, mode: "repulse" }, resize: true },
+                modes: { bubble: { distance: 100, size: 15, duration: 0.4 }, repulse: { distance: 150, duration: 0.4 } }
+            },
+            detectRetina: true
+        },
+        nasa: {
+            particles: {
+                number: { value: 160, density: { enable: true, area: 800 } },
+                color: { value: "#ffffff" },
+                shape: { type: "circle" },
+                opacity: { value: 0.8, random: true, animation: { enable: true, speed: 1, minimumValue: 0.1, sync: false } },
+                size: { value: 1, random: true, animation: { enable: false } },
+                links: { enable: false },
+                move: { enable: true, speed: 0.2, direction: "none", random: true, straight: false, outModes: { default: "out" }, bounce: false }
+            },
+            interactivity: {
+                detectsOn: "canvas",
+                events: { onHover: { enable: true, mode: "bubble" }, onClick: { enable: true, mode: "repulse" }, resize: true },
+                modes: { bubble: { distance: 250, size: 0, duration: 2, opacity: 0 }, repulse: { distance: 400, duration: 0.4 } }
+            },
+            detectRetina: true,
+            background: { color: "#232741" }
+        },
+        "nyan-cat": {
+            particles: {
+                number: { value: 100, density: { enable: false } },
+                color: { value: ["#ff0080", "#00ff80", "#0080ff", "#ff8000", "#8000ff"] },
+                shape: { type: "star", polygon: { sides: 6 } },
+                opacity: { value: 1, random: false, animation: { enable: false } },
+                size: { value: 4, random: true, animation: { enable: false } },
+                links: { enable: false },
+                move: { enable: true, speed: 6, direction: "left", random: false, straight: true, outModes: { default: "out" }, bounce: false }
+            },
+            interactivity: {
+                detectsOn: "canvas",
+                events: { onHover: { enable: false }, onClick: { enable: true, mode: "remove" }, resize: true },
+                modes: { remove: { quantity: 10 } }
+            },
+            detectRetina: true,
+            background: { color: "#0d47a1" }
+        }
+    };
+
+    function getResponsiveParticleCount(baseCount = 50) {
         const width = window.innerWidth;
         if (width < BREAKPOINTS.MOBILE) return 0;
-        if (width >= BREAKPOINTS.WIDE_2K) return 75;
-        if (width >= BREAKPOINTS.FULL_HD) return 65;
-        if (width >= BREAKPOINTS.TABLET) return 55;
-        return 45;
+        if (width >= BREAKPOINTS.WIDE_2K) return Math.floor(baseCount * 1.5);
+        if (width >= BREAKPOINTS.FULL_HD) return Math.floor(baseCount * 1.3);
+        if (width >= BREAKPOINTS.TABLET) return Math.floor(baseCount * 1.1);
+        return Math.floor(baseCount * 0.9);
     }
 
     function getReducedMotionConfig(baseConfig) {
@@ -40,12 +238,20 @@
                 ...baseConfig.particles,
                 move: {
                     ...baseConfig.particles.move,
-                    speed: 0.5,
+                    speed: baseConfig.particles.move.speed * 0.3,
                     bounce: false
                 },
                 number: {
                     ...baseConfig.particles.number,
                     value: Math.floor(baseConfig.particles.number.value / 2)
+                },
+                opacity: {
+                    ...baseConfig.particles.opacity,
+                    animation: { ...baseConfig.particles.opacity.animation, enable: false }
+                },
+                size: {
+                    ...baseConfig.particles.size,
+                    animation: { ...baseConfig.particles.size.animation, enable: false }
                 }
             }
         };
@@ -55,127 +261,149 @@
         return document.documentElement.getAttribute('data-theme') || 'light';
     }
 
-    function getParticlesConfig(theme = 'light', reducedMotion = false) {
-        const colors = CONFIG[theme] || CONFIG.light;
-        const baseConfig = {
-            particles: {
-                number: {
-                    value: colors.getParticleCount(),
-                    density: {
-                        enable: true,
-                        value_area: 800
-                    }
-                },
-                color: {
-                    value: colors.particleColor
-                },
-                shape: {
-                    type: "circle",
-                    stroke: {
-                        width: 0,
-                        color: "#000000"
-                    }
-                },
-                opacity: {
-                    value: 0.3,
-                    random: true,
-                    anim: {
-                        enable: true,
-                        speed: 0.5,
-                        opacity_min: 0.25,
-                        sync: false
-                    }
-                },
-                size: {
-                    value: 3,
-                    random: true,
-                    anim: {
-                        enable: false,
-                        speed: 40,
-                        size_min: 0.1,
-                        sync: false
-                    }
-                },
-                line_linked: {
-                    enable: true,
-                    distance: 150,
-                    color: colors.lineColor,
-                    opacity: 0.4,
-                    width: 1
-                },
-                move: {
-                    enable: true,
-                    speed: 1,
-                    direction: "none",
-                    random: false,
-                    straight: false,
-                    out_mode: "bounce",
-                    bounce: false,
-                    attract: {
-                        enable: false,
-                        rotateX: 600,
-                        rotateY: 1200
-                    }
-                }
-            },
-            interactivity: {
-                detect_on: "window",
-                events: {
-                    onhover: {
-                        enable: true,
-                        mode: "grab"
-                    },
-                    onclick: {
-                        enable: true,
-                        mode: "push"
-                    },
-                    resize: true
-                },
-                modes: {
-                    grab: {
-                        distance: 120,
-                        line_linked: {
-                            opacity: 0.5
-                        }
-                    },
-                    push: {
-                        particles_nb: 1
-                    }
-                }
-            },
-            retina_detect: true
-        };
-
-        return reducedMotion ? getReducedMotionConfig(baseConfig) : baseConfig;
-    }
-
-    function destroyParticles() {
-        if (typeof pJSDom !== 'undefined' && pJSDom.length > 0) {
-            pJSDom[0].pJS.fn.vendors.destroypJS();
-            pJSDom = [];
+    function destroyParticles(instance = 'main') {
+        try {
+            if (instance === 'main' && mainContainer) {
+                tsParticles.domItem(0)?.destroy();
+                mainContainer = null;
+            } else if (instance === 'preview' && previewContainer) {
+                previewContainer.destroy();
+                previewContainer = null;
+            }
+        } catch (error) {
+            console.warn('Error destroying particles:', error);
         }
     }
 
-    function initParticles() {
+    function createParticlesConfig(settings) {
+        const config = JSON.parse(JSON.stringify(DEFAULT_CONFIG)); // Deep clone
+        
+        // Basic settings
+        config.particles.number.value = settings.enabled ? (settings.count || 50) : 0;
+        config.particles.number.density.area = settings.density || 800;
+        
+        // Shape configuration
+        config.particles.shape.type = settings.shape || "circle";
+        if (settings.shape === "polygon") {
+            config.particles.shape.polygon.sides = settings.polygonSides || 5;
+        } else if (settings.shape === "star") {
+            config.particles.shape.polygon.sides = settings.starSides || 5;
+        } else if (settings.shape === "image") {
+            config.particles.shape.image.src = settings.imageSource || "";
+        }
+        config.particles.shape.stroke.width = settings.strokeWidth || 0;
+        config.particles.shape.stroke.color = settings.strokeColor || "#000000";
+        
+        // Color configuration
+        if (settings.colorMode === "single") {
+            config.particles.color.value = settings.particleColor || "#0066cc";
+        } else if (settings.colorMode === "multiple") {
+            config.particles.color.value = settings.colors || ["#0066cc"];
+        } else if (settings.colorMode === "random") {
+            config.particles.color.value = "random";
+        }
+        
+        // Size and opacity
+        config.particles.size.value = settings.size || 3;
+        config.particles.size.random = settings.sizeRandom || false;
+        config.particles.size.animation.enable = settings.sizeAnim || false;
+        if (settings.sizeAnim) {
+            config.particles.size.animation.speed = settings.sizeAnimSpeed || 40;
+            config.particles.size.animation.minimumValue = settings.sizeAnimMin || 0.1;
+            config.particles.size.animation.sync = settings.sizeAnimSync || false;
+        }
+        
+        config.particles.opacity.value = Math.max(0.01, settings.opacity || 0.5);
+        config.particles.opacity.random = settings.opacityRandom || false;
+        config.particles.opacity.animation.enable = settings.opacityAnim || false;
+        if (settings.opacityAnim) {
+            config.particles.opacity.animation.speed = settings.opacityAnimSpeed || 1;
+            config.particles.opacity.animation.minimumValue = Math.max(0.01, settings.opacityAnimMin || 0.1);
+            config.particles.opacity.animation.sync = settings.opacityAnimSync || false;
+        }
+        
+        // Movement
+        config.particles.move.enable = settings.moveEnable !== false;
+        config.particles.move.speed = settings.moveSpeed || 1;
+        config.particles.move.direction = settings.moveDirection || "none";
+        config.particles.move.random = settings.moveRandom || false;
+        config.particles.move.straight = settings.moveStraight || false;
+        config.particles.move.outModes.default = settings.moveOutMode || "bounce";
+        config.particles.move.bounce = settings.moveBounce || false;
+        config.particles.move.attract.enable = settings.moveAttract || false;
+        if (settings.moveAttract) {
+            config.particles.move.attract.rotateX = settings.attractRotateX || 600;
+            config.particles.move.attract.rotateY = settings.attractRotateY || 1200;
+        }
+        
+        // Links (formerly line_linked)
+        config.particles.links.enable = settings.lineLinkedEnable !== false;
+        config.particles.links.distance = settings.lineLinkedDistance || 150;
+        config.particles.links.color = settings.lineLinkedColor || settings.particleColor || "#0066cc";
+        config.particles.links.opacity = settings.lineLinkedOpacity || 0.4;
+        config.particles.links.width = settings.lineLinkedWidth || 1;
+        config.particles.links.shadow = {
+            enable: settings.lineLinkedShadow || false,
+            color: settings.lineShadowColor || "#000000",
+            blur: settings.lineShadowBlur || 5
+        };
+        
+        // Interactivity
+        config.interactivity.detectsOn = settings.detectOn || "canvas";
+        config.interactivity.events.onHover.enable = settings.hoverEnable !== false;
+        config.interactivity.events.onHover.mode = settings.hoverMode || "grab";
+        config.interactivity.events.onClick.enable = settings.clickEnable !== false;
+        config.interactivity.events.onClick.mode = settings.clickMode || "push";
+        config.interactivity.events.resize = settings.resizeEnable !== false;
+        
+        // Interaction modes
+        config.interactivity.modes.grab.distance = settings.grabDistance || 120;
+        config.interactivity.modes.grab.links.opacity = settings.grabLineOpacity || 0.5;
+        
+        config.interactivity.modes.bubble.distance = settings.bubbleDistance || 100;
+        config.interactivity.modes.bubble.size = settings.bubbleSize || 10;
+        config.interactivity.modes.bubble.duration = settings.bubbleDuration || 0.4;
+        
+        config.interactivity.modes.repulse.distance = settings.repulseDistance || 100;
+        config.interactivity.modes.repulse.duration = settings.repulseDuration || 0.4;
+        
+        config.interactivity.modes.push.quantity = settings.pushParticlesNb || 4;
+        config.interactivity.modes.remove.quantity = settings.pushParticlesNb || 2;
+        
+        // Advanced settings
+        config.detectRetina = settings.retinaDetect !== false;
+        
+        if (settings.backgroundColor) {
+            config.background.color = settings.backgroundColor;
+        }
+        if (settings.backgroundImage) {
+            config.background.image = settings.backgroundImage;
+            config.background.position = settings.backgroundPosition || "center center";
+            config.background.repeat = settings.backgroundRepeat || "no-repeat";
+            config.background.size = settings.backgroundSize || "cover";
+        }
+        
+        // Apply reduced motion if needed
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        return reducedMotion ? getReducedMotionConfig(config) : config;
+    }
+
+    async function initParticles() {
         if (retryCount >= MAX_RETRIES) {
-            console.warn(`Particles.js initialization failed after ${MAX_RETRIES} attempts. Giving up.`);
+            console.warn(`tsParticles initialization failed after ${MAX_RETRIES} attempts. Giving up.`);
             return;
         }
 
         retryCount++;
         const particlesContainer = document.getElementById('particles-js');
         
-        if (!particlesContainer || typeof particlesJS === 'undefined') {
+        if (!particlesContainer || typeof tsParticles === 'undefined') {
             console.warn(`Dependencies not ready, will retry in ${RETRY_DELAY}ms (attempt ${retryCount}/${MAX_RETRIES})`);
             setTimeout(initParticles, RETRY_DELAY);
             return;
         }
 
         try {
-            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            const currentTheme = getCurrentTheme();
-            const config = getParticlesConfig(currentTheme, prefersReducedMotion);
-            
             if (window.innerWidth < BREAKPOINTS.MOBILE) {
                 if (particlesContainer) {
                     particlesContainer.style.display = 'none';
@@ -183,242 +411,373 @@
                 return;
             }
             
-            destroyParticles();
-            particlesJS('particles-js', config);
+            destroyParticles('main');
+            
+            // Load saved settings or use defaults
+            const settings = await loadParticleSettings();
+            const config = createParticlesConfig(settings);
+            
+            // Use tsParticles.load instead of particlesJS
+            mainContainer = await tsParticles.load({
+                id: 'particles-js',
+                options: config
+            });
+            
+            setupClickHandler();
             
         } catch (error) {
-            console.error('Error initializing particles.js:', error);
+            console.error('Error initializing tsParticles:', error);
         }
-    }    function setupClickHandler() {
-        if (typeof pJSDom !== 'undefined' && pJSDom.length > 0 && pJSDom[0].pJS) {
+    }
+
+    async function initPreviewParticles(settings) {
+        const previewContainer = document.getElementById('particles-preview');
+        if (!previewContainer || typeof tsParticles === 'undefined') return;
+
+        try {
+            // Clear any existing particles instances in the preview
+            destroyPreviewParticles();
+            
+            // Clear container content
+            previewContainer.innerHTML = '';
+            
+            // Create configuration for preview with limited particles for performance
+            const config = createParticlesConfig({
+                ...settings,
+                count: Math.min(settings.count || 50, 30), // Limit for better performance
+                lineLinkedDistance: Math.min(settings.lineLinkedDistance || 150, 120)
+            });
+            
+            // Initialize particles directly in the preview container
+            window.previewParticlesInstance = await tsParticles.load({
+                id: 'particles-preview',
+                options: config
+            });
+            
+        } catch (error) {
+            console.error('Error initializing preview particles:', error);
+        }
+    }
+    
+    function destroyPreviewParticles() {
+        // Destroy any existing preview instance
+        if (window.previewParticlesInstance) {
+            try {
+                window.previewParticlesInstance.destroy();
+                window.previewParticlesInstance = null;
+            } catch (error) {
+                console.warn('Error destroying preview particles:', error);
+            }
+        }
+        
+        // Clear container
+        const previewContainer = document.getElementById('particles-preview');
+        if (previewContainer) {
+            previewContainer.innerHTML = '';
+        }
+    }
+
+    function setupClickHandler() {
+        if (mainContainer) {
             const handler = function(e) {
-                if (!document.hidden) {
-                    const pos = {
-                        x: e.clientX,
-                        y: e.clientY
-                    };
+                if (!document.hidden && mainContainer) {
+                    const pos = { x: e.clientX, y: e.clientY };
                     
                     try {
-                        // Make sure pJSDom is still available when the click happens
-                        if (typeof pJSDom !== 'undefined' && pJSDom.length > 0 && pJSDom[0].pJS) {
-                            const pJS = pJSDom[0].pJS;
-                            Object.assign(pJS.interactivity.mouse, {
-                                click_pos: pos,
-                                click_time: new Date().getTime()
-                            });
-                            pJS.fn.modes.pushParticles(4, pos);
+                        // tsParticles click interaction is handled automatically
+                        // by the interactivity configuration, but we can still
+                        // manually trigger effects if needed
+                        
+                        // Get the interactivity mode from the config
+                        const mode = mainContainer.actualOptions?.interactivity?.events?.onClick?.mode;
+                        
+                        if (mode === 'push') {
+                            // Add particles at click position
+                            const quantity = mainContainer.actualOptions?.interactivity?.modes?.push?.quantity || 4;
+                            for (let i = 0; i < quantity; i++) {
+                                mainContainer.particles.addParticle({
+                                    x: pos.x,
+                                    y: pos.y
+                                });
+                            }
+                        } else if (mode === 'remove') {
+                            // Remove particles
+                            const quantity = mainContainer.actualOptions?.interactivity?.modes?.remove?.quantity || 2;
+                            mainContainer.particles.removeQuantity(quantity);
                         }
                     } catch (err) {
-                        console.warn('Could not add particles on click', err);
+                        console.warn('Could not handle click interaction', err);
                     }
                 }
             };
 
             document.body.removeEventListener('click', handler);
             document.body.addEventListener('click', handler);
-            return true;
         }
-        return false;
     }
 
-    initParticles();
-    
-    function checkAndSetupParticles() {
-        setupClickHandler();
-    }
-    
-    window.addEventListener('themechange', (e) => {
-        const config = getParticlesConfig(e.detail.theme, window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-        destroyParticles();
-        particlesJS('particles-js', config);
+    // Theme change handler
+    window.addEventListener('themechange', async (e) => {
+        const settings = await loadParticleSettings();
+        const config = createParticlesConfig(settings);
+        destroyParticles('main');
+        if (settings.enabled && window.innerWidth >= BREAKPOINTS.MOBILE) {
+            mainContainer = await tsParticles.load({
+                id: 'particles-js',
+                options: config
+            });
+            setupClickHandler();
+        }
     });
 
+    // Reduced motion change handler
     const motionMediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    motionMediaQuery.addEventListener('change', (e) => {
-        const config = getParticlesConfig(getCurrentTheme(), e.matches);
-        destroyParticles();
-        particlesJS('particles-js', config);
+    motionMediaQuery.addEventListener('change', async (e) => {
+        const settings = await loadParticleSettings();
+        const config = createParticlesConfig(settings);
+        destroyParticles('main');
+        if (settings.enabled && window.innerWidth >= BREAKPOINTS.MOBILE) {
+            mainContainer = await tsParticles.load({
+                id: 'particles-js',
+                options: config
+            });
+            setupClickHandler();
+        }
     });
 
+    // Visibility change handler
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            if (typeof pJSDom !== 'undefined' && pJSDom.length > 0) {
-                pJSDom[0].pJS.particles.move.enable = false;
-            }
-        } else {
-            if (typeof pJSDom !== 'undefined' && pJSDom.length > 0) {
-                pJSDom[0].pJS.particles.move.enable = true;
+        if (mainContainer && mainContainer.particles) {
+            // tsParticles automatically handles visibility changes,
+            // but we can manually pause/resume if needed
+            if (document.hidden) {
+                mainContainer.pause();
+            } else {
+                mainContainer.play();
             }
         }
     });
 
+    // Resize handler
     let resizeTimeout;
     window.addEventListener('resize', () => {
         if (resizeTimeout) clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
+        resizeTimeout = setTimeout(async () => {
             const particlesContainer = document.getElementById('particles-js');
             if (particlesContainer) {
                 if (window.innerWidth < BREAKPOINTS.MOBILE) {
                     particlesContainer.style.display = 'none';
-                    destroyParticles();
+                    destroyParticles('main');
                     return;
                 } else {
                     particlesContainer.style.display = 'block';
                 }
             }
             
-            if (typeof pJSDom !== 'undefined' && pJSDom.length > 0) {
-                const config = getParticlesConfig(
-                    getCurrentTheme(), 
-                    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-                );
-                destroyParticles();
-                particlesJS('particles-js', config);
+            const settings = await loadParticleSettings();
+            if (settings.enabled) {
+                const config = createParticlesConfig(settings);
+                destroyParticles('main');
+                mainContainer = await tsParticles.load({
+                    id: 'particles-js',
+                    options: config
+                });
+                setupClickHandler();
             }
         }, 250);
     });
 
+    // Window load handler
     window.addEventListener('load', function() {
-        checkAndSetupParticles();
-    });    window.addEventListener('unload', function() {
-        destroyParticles();
+        setTimeout(setupClickHandler, 100); // Small delay to ensure particles are loaded
     });
+
+    // Window unload handler
+    window.addEventListener('unload', function() {
+        destroyParticles('main');
+        destroyParticles('preview');
+    });
+
+    // Database functions
+    async function initParticleDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('MoBankParticles', 3);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+            
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains('settings')) {
+                    db.createObjectStore('settings');
+                }
+                if (!db.objectStoreNames.contains('presets')) {
+                    db.createObjectStore('presets');
+                }
+            };
+        });
+    }
+
+    async function saveParticleSettings(settings) {
+        try {
+            const db = await initParticleDB();
+            const transaction = db.transaction(['settings'], 'readwrite');
+            const store = transaction.objectStore('settings');
+            
+            await new Promise((resolve, reject) => {
+                const request = store.put(settings, 'particleConfig');
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        } catch (error) {
+            console.error('Failed to save particle settings:', error);
+        }
+    }
+
+    async function loadParticleSettings() {
+        try {
+            const db = await initParticleDB();
+            const transaction = db.transaction(['settings'], 'readonly');
+            const store = transaction.objectStore('settings');
+            
+            const settings = await new Promise((resolve, reject) => {
+                const request = store.get('particleConfig');
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+            
+            return settings || getDefaultSettings();
+        } catch (error) {
+            console.error('Failed to load particle settings:', error);
+            return getDefaultSettings();
+        }
+    }
+
+    function getDefaultSettings() {
+        return {
+            enabled: true,
+            count: 50,
+            density: 800,
+            shape: "circle",
+            polygonSides: 5,
+            starSides: 5,
+            imageSource: "",
+            strokeWidth: 0,
+            strokeColor: "#000000",
+            colorMode: "single",
+            particleColor: "#0066cc",
+            colors: ["#0066cc"],
+            size: 3,
+            sizeRandom: false,
+            sizeAnim: false,
+            sizeAnimSpeed: 40,
+            sizeAnimMin: 0.1,
+            sizeAnimSync: false,
+            opacity: 0.5,
+            opacityRandom: false,
+            opacityAnim: false,
+            opacityAnimSpeed: 1,
+            opacityAnimMin: 0.1,
+            opacityAnimSync: false,
+            moveEnable: true,
+            moveSpeed: 1,
+            moveDirection: "none",
+            moveRandom: false,
+            moveStraight: false,
+            moveOutMode: "bounce",
+            moveBounce: false,
+            moveAttract: false,
+            attractRotateX: 600,
+            attractRotateY: 1200,
+            lineLinkedEnable: true,
+            lineLinkedDistance: 150,
+            lineLinkedColor: "#0066cc",
+            lineLinkedOpacity: 0.4,
+            lineLinkedWidth: 1,
+            lineLinkedShadow: false,
+            lineShadowColor: "#000000",
+            lineShadowBlur: 5,
+            detectOn: "canvas",
+            hoverEnable: true,
+            hoverMode: "grab",
+            clickEnable: true,
+            clickMode: "push",
+            resizeEnable: true,
+            grabDistance: 120,
+            grabLineOpacity: 0.5,
+            bubbleDistance: 100,
+            bubbleSize: 10,
+            bubbleDuration: 0.4,
+            repulseDistance: 100,
+            repulseDuration: 0.4,
+            pushParticlesNb: 4,
+            retinaDetect: true,
+            backgroundColor: "",
+            backgroundImage: "",
+            backgroundPosition: "center center",
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "cover"
+        };
+    }
+
+    // Initialize particles
+    initParticles();
 
     // Global API for particle configuration
     window.particleControls = {
-        updateConfig: function(settings) {
+        updateConfig: async function(settings) {
             if (!settings) return;
             
-            // Update internal CONFIG with user settings
-            const theme = getCurrentTheme();
-            CONFIG[theme] = {
-                ...CONFIG[theme],
-                particleColor: settings.particleColor || CONFIG[theme].particleColor,
-                lineColor: settings.lineColor || CONFIG[theme].lineColor,
-                getParticleCount: () => settings.enabled ? settings.count || 50 : 0
-            };
+            const config = createParticlesConfig(settings);
             
-            // Generate new config with user settings
-            const customConfig = getCustomParticlesConfig(settings, theme);
-            
-            // Apply immediately
             if (settings.enabled && window.innerWidth >= BREAKPOINTS.MOBILE) {
                 const particlesContainer = document.getElementById('particles-js');
                 if (particlesContainer) {
                     particlesContainer.style.display = 'block';
-                    destroyParticles();
-                    particlesJS('particles-js', customConfig);
+                    destroyParticles('main');
+                    mainContainer = await tsParticles.load({
+                        id: 'particles-js',
+                        options: config
+                    });
+                    setupClickHandler();
                 }
             } else {
                 const particlesContainer = document.getElementById('particles-js');
                 if (particlesContainer) {
                     particlesContainer.style.display = 'none';
-                    destroyParticles();
+                    destroyParticles('main');
                 }
             }
         },
         
+        updatePreview: function(settings) {
+            // Debounce preview updates for better performance
+            clearTimeout(this._previewTimeout);
+            this._previewTimeout = setTimeout(() => {
+                initPreviewParticles(settings);
+            }, 150);
+        },
+        
         getCurrentConfig: function() {
-            return CONFIG;
+            return loadParticleSettings();
         },
         
         reinitialize: function() {
             initParticles();
-        }
+        },
+        
+        getPresets: function() {
+            return PRESETS;
+        },
+        
+        saveSettings: saveParticleSettings,
+        loadSettings: loadParticleSettings
     };
 
-    // Custom config generator that uses user settings
-    function getCustomParticlesConfig(settings, theme = 'light') {
-        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const baseConfig = {
-            particles: {
-                number: {
-                    value: settings.enabled ? settings.count || 50 : 0,
-                    density: {
-                        enable: true,
-                        value_area: 800
-                    }
-                },
-                color: {
-                    value: settings.particleColor || '#0066cc'
-                },
-                shape: {
-                    type: "circle",
-                    stroke: {
-                        width: 0,
-                        color: "#000000"
-                    }
-                },
-                opacity: {
-                    value: settings.opacity || 0.8,
-                    random: true,
-                    anim: {
-                        enable: true,
-                        speed: (settings.speed || 1.0) * 0.5,
-                        opacity_min: (settings.opacity || 0.8) * 0.5,
-                        sync: false
-                    }
-                },
-                size: {
-                    value: settings.size || 3,
-                    random: true,
-                    anim: {
-                        enable: false,
-                        speed: 40,
-                        size_min: 0.1,
-                        sync: false
-                    }
-                },
-                line_linked: {
-                    enable: settings.connectLines !== false,
-                    distance: settings.interactionDistance || 150,
-                    color: settings.lineColor || settings.particleColor || '#0066cc',
-                    opacity: 0.4,
-                    width: 1
-                },
-                move: {
-                    enable: true,
-                    speed: settings.speed || 1.0,
-                    direction: "none",
-                    random: false,
-                    straight: false,
-                    out_mode: "bounce",
-                    bounce: false,
-                    attract: {
-                        enable: false,
-                        rotateX: 600,
-                        rotateY: 1200
-                    }
-                }
-            },
-            interactivity: {
-                detect_on: "window",
-                events: {
-                    onhover: {
-                        enable: settings.mouseInteraction !== false,
-                        mode: "grab"
-                    },
-                    onclick: {
-                        enable: settings.mouseInteraction !== false,
-                        mode: "push"
-                    },
-                    resize: true
-                },
-                modes: {
-                    grab: {
-                        distance: settings.interactionDistance || 150,
-                        line_linked: {
-                            opacity: 0.5
-                        }
-                    },
-                    push: {
-                        particles_nb: 1
-                    }
-                }
-            },
-            retina_detect: true
-        };
-
-        return reducedMotion ? getReducedMotionConfig(baseConfig) : baseConfig;
-    }
+    // Auto-initialize on settings update
+    loadParticleSettings().then(async settings => {
+        if (window.particleControls) {
+            await window.particleControls.updateConfig(settings);
+        }
+    });
 })();
