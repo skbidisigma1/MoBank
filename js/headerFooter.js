@@ -16,7 +16,7 @@
   window.userDataPromise = isLoggedIn ? fetchAndCacheUserData() : Promise.resolve(null);
   
   // Initialize particle settings
-  initializeParticleSettings();
+  await initializeParticleSettings();
     // Update navigation links after user data is loaded
 })().catch(console.error);
 
@@ -227,10 +227,8 @@ function setupConfigControls() {
   try {
     // Basic checkboxes
     const checkboxes = [
-      'particles-enabled', 'size-random', 'size-anim', 'size-anim-sync',
-      'opacity-random', 'opacity-anim', 'opacity-anim-sync', 'move-enable',
-      'move-random', 'move-straight', 'move-bounce', 'move-attract',
-      'line-linked-enable', 'line-linked-shadow', 'hover-enable', 'click-enable',
+      'particles-enabled', 'size-random', 'opacity-random', 'move-enable',
+      'move-attract', 'line-linked-enable', 'line-linked-shadow', 
       'resize-enable', 'retina-detect'
     ];
     
@@ -250,18 +248,12 @@ function setupConfigControls() {
   // Sliders with value display and precision control
   const sliders = [
     { id: 'particle-count', suffix: '', precision: 0 },
-    { id: 'particle-density', suffix: '', precision: 0 },
     { id: 'polygon-sides', suffix: '', precision: 0 },
     { id: 'star-sides', suffix: '', precision: 0 },
-    { id: 'stroke-width', suffix: 'px', precision: 1 },
     { id: 'particle-size', suffix: 'px', precision: 1 },
     { id: 'size-variation', suffix: '%', multiplier: 100, precision: 0 },
-    { id: 'size-anim-speed', suffix: '', precision: 0 },
-    { id: 'size-anim-min', suffix: 'px', precision: 1 },
     { id: 'particle-opacity', suffix: '%', multiplier: 100, precision: 0 },
     { id: 'opacity-variation', suffix: '%', multiplier: 100, precision: 0 },
-    { id: 'opacity-anim-speed', suffix: '', precision: 1 },
-    { id: 'opacity-anim-min', suffix: '%', multiplier: 100, precision: 0 },
     { id: 'move-speed', suffix: '', precision: 1 },
     { id: 'attract-rotate-x', suffix: '', precision: 0 },
     { id: 'attract-rotate-y', suffix: '', precision: 0 },
@@ -269,13 +261,6 @@ function setupConfigControls() {
     { id: 'line-linked-opacity', suffix: '%', multiplier: 100, precision: 0 },
     { id: 'line-linked-width', suffix: 'px', precision: 1 },
     { id: 'line-shadow-blur', suffix: 'px', precision: 0 },
-    { id: 'grab-distance', suffix: 'px', precision: 0 },
-    { id: 'grab-line-opacity', suffix: '%', multiplier: 100, precision: 0 },
-    { id: 'bubble-distance', suffix: 'px', precision: 0 },
-    { id: 'bubble-size', suffix: 'px', precision: 0 },
-    { id: 'bubble-duration', suffix: 's', precision: 1 },
-    { id: 'repulse-distance', suffix: 'px', precision: 0 },
-    { id: 'repulse-duration', suffix: 's', precision: 1 },
     { id: 'push-particles-nb', suffix: '', precision: 0 }
   ];
   
@@ -304,8 +289,7 @@ function setupConfigControls() {
   
   // Color inputs
   const colorInputs = [
-    'particle-color', 'stroke-color', 'line-linked-color', 'line-shadow-color',
-    'background-color'
+    'particle-color', 'line-linked-color', 'line-shadow-color'
   ];
   colorInputs.forEach(id => {
     const colorInput = document.getElementById(id);
@@ -318,8 +302,8 @@ function setupConfigControls() {
   
   // Select dropdowns
   const selects = [
-    'particle-shape', 'color-mode', 'move-direction', 'move-out-mode',
-    'detect-on', 'hover-mode', 'click-mode', 'background-repeat'
+    'particle-shape', 'color-mode', 'move-type', 'move-direction', 'move-out-mode',
+    'detect-on', 'click-mode'
   ];
   selects.forEach(id => {
     const select = document.getElementById(id);
@@ -333,7 +317,7 @@ function setupConfigControls() {
   
   // Text inputs
   const textInputs = [
-    'image-source', 'background-image', 'background-position', 'background-size'
+    'image-source'
   ];
   textInputs.forEach(id => {
     const input = document.getElementById(id);
@@ -387,7 +371,11 @@ function setupEditableValue(valueElement, slider, suffix, multiplier = 1, precis
     input.focus();
     input.select();
     
+    let isFinished = false;
     const finishEdit = () => {
+      if (isFinished) return; // Prevent multiple calls
+      isFinished = true;
+      
       let newValue = parseFloat(input.value);
       if (isNaN(newValue)) {
         newValue = parseFloat(slider.value) * multiplier;
@@ -403,16 +391,45 @@ function setupEditableValue(valueElement, slider, suffix, multiplier = 1, precis
       const finalDisplay = precision === 0 ? Math.round(newValue) : newValue.toFixed(precision);
       valueElement.textContent = `${finalDisplay}${suffix}`;
       
-      input.parentNode.replaceChild(valueElement, input);
+      // Safely replace the node
+      try {
+        if (input.parentNode && input.parentNode.contains(input)) {
+          input.parentNode.replaceChild(valueElement, input);
+        }
+      } catch (error) {
+        // If replacement fails, just ensure the value element is in the DOM
+        if (!valueElement.parentNode) {
+          input.parentNode?.appendChild(valueElement);
+        }
+      }
+      
       handleConfigChange();
+    };
+    
+    const cancelEdit = () => {
+      if (isFinished) return;
+      isFinished = true;
+      
+      try {
+        if (input.parentNode && input.parentNode.contains(input)) {
+          input.parentNode.replaceChild(valueElement, input);
+        }
+      } catch (error) {
+        // If replacement fails, just ensure the value element is in the DOM
+        if (!valueElement.parentNode) {
+          input.parentNode?.appendChild(valueElement);
+        }
+      }
     };
     
     input.addEventListener('blur', finishEdit);
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
+        e.preventDefault(); // Prevent form submission
         finishEdit();
       } else if (e.key === 'Escape') {
-        input.parentNode.replaceChild(valueElement, input);
+        e.preventDefault();
+        cancelEdit();
       }
     });
   });
@@ -486,23 +503,20 @@ function updateVisibilityBasedOnSelections() {
   const sizeRandomControls = document.getElementById('size-random-controls');
   if (sizeRandomControls) sizeRandomControls.style.display = sizeRandom ? 'block' : 'none';
   
-  const sizeAnim = document.getElementById('size-anim')?.checked;
-  const sizeAnimControls = document.getElementById('size-anim-controls');
-  if (sizeAnimControls) sizeAnimControls.style.display = sizeAnim ? 'block' : 'none';
-  
   // Opacity controls
   const opacityRandom = document.getElementById('opacity-random')?.checked;
   const opacityRandomControls = document.getElementById('opacity-random-controls');
   if (opacityRandomControls) opacityRandomControls.style.display = opacityRandom ? 'block' : 'none';
   
-  const opacityAnim = document.getElementById('opacity-anim')?.checked;
-  const opacityAnimControls = document.getElementById('opacity-anim-controls');
-  if (opacityAnimControls) opacityAnimControls.style.display = opacityAnim ? 'block' : 'none';
-  
   // Movement controls
   const moveEnable = document.getElementById('move-enable')?.checked;
   const movementControls = document.getElementById('movement-controls');
   if (movementControls) movementControls.style.display = moveEnable ? 'block' : 'none';
+  
+  // Movement type specific controls
+  const moveType = document.getElementById('move-type')?.value;
+  const directionRow = document.getElementById('direction-row');
+  if (directionRow) directionRow.style.display = (moveType === 'straight') ? 'block' : 'none';
   
   const moveAttract = document.getElementById('move-attract')?.checked;
   const attractControls = document.getElementById('attract-controls');
@@ -516,15 +530,6 @@ function updateVisibilityBasedOnSelections() {
   const lineShadow = document.getElementById('line-linked-shadow')?.checked;
   const lineShadowControls = document.getElementById('line-shadow-controls');
   if (lineShadowControls) lineShadowControls.style.display = lineShadow ? 'block' : 'none';
-  
-  // Interaction controls
-  const hoverEnable = document.getElementById('hover-enable')?.checked;
-  const hoverControls = document.getElementById('hover-controls');
-  if (hoverControls) hoverControls.style.display = hoverEnable ? 'block' : 'none';
-  
-  const clickEnable = document.getElementById('click-enable')?.checked;
-  const clickControls = document.getElementById('click-controls');
-  if (clickControls) clickControls.style.display = clickEnable ? 'block' : 'none';
 }
 
 function handleConfigChange() {
@@ -537,35 +542,22 @@ function getCurrentSettings() {
   return {
     enabled: document.getElementById('particles-enabled')?.checked ?? true,
     count: parseInt(document.getElementById('particle-count')?.value ?? 50),
-    density: parseInt(document.getElementById('particle-density')?.value ?? 800),
     shape: document.getElementById('particle-shape')?.value ?? 'circle',
     polygonSides: parseInt(document.getElementById('polygon-sides')?.value ?? 5),
     starSides: parseInt(document.getElementById('star-sides')?.value ?? 5),
     imageSource: document.getElementById('image-source')?.value ?? '',
-    strokeWidth: parseFloat(document.getElementById('stroke-width')?.value ?? 0),
-    strokeColor: document.getElementById('stroke-color')?.value ?? '#000000',
     colorMode: document.getElementById('color-mode')?.value ?? 'single',
     particleColor: document.getElementById('particle-color')?.value ?? '#0066cc',
     colors: getMultipleColors(),
     size: parseFloat(document.getElementById('particle-size')?.value ?? 3),
     sizeRandom: document.getElementById('size-random')?.checked ?? false,
-    sizeAnim: document.getElementById('size-anim')?.checked ?? false,
-    sizeAnimSpeed: parseFloat(document.getElementById('size-anim-speed')?.value ?? 40),
-    sizeAnimMin: parseFloat(document.getElementById('size-anim-min')?.value ?? 0.1),
-    sizeAnimSync: document.getElementById('size-anim-sync')?.checked ?? false,
     opacity: parseFloat(document.getElementById('particle-opacity')?.value ?? 0.5),
     opacityRandom: document.getElementById('opacity-random')?.checked ?? false,
-    opacityAnim: document.getElementById('opacity-anim')?.checked ?? false,
-    opacityAnimSpeed: parseFloat(document.getElementById('opacity-anim-speed')?.value ?? 1),
-    opacityAnimMin: parseFloat(document.getElementById('opacity-anim-min')?.value ?? 0.1),
-    opacityAnimSync: document.getElementById('opacity-anim-sync')?.checked ?? false,
     moveEnable: document.getElementById('move-enable')?.checked ?? true,
     moveSpeed: parseFloat(document.getElementById('move-speed')?.value ?? 1),
+    moveType: document.getElementById('move-type')?.value ?? 'default',
     moveDirection: document.getElementById('move-direction')?.value ?? 'none',
-    moveRandom: document.getElementById('move-random')?.checked ?? false,
-    moveStraight: document.getElementById('move-straight')?.checked ?? false,
-    moveOutMode: document.getElementById('move-out-mode')?.value ?? 'bounce',
-    moveBounce: document.getElementById('move-bounce')?.checked ?? false,
+    moveOutMode: document.getElementById('move-out-mode')?.value ?? 'out',
     moveAttract: document.getElementById('move-attract')?.checked ?? false,
     attractRotateX: parseFloat(document.getElementById('attract-rotate-x')?.value ?? 600),
     attractRotateY: parseFloat(document.getElementById('attract-rotate-y')?.value ?? 1200),
@@ -578,25 +570,10 @@ function getCurrentSettings() {
     lineShadowColor: document.getElementById('line-shadow-color')?.value ?? '#000000',
     lineShadowBlur: parseFloat(document.getElementById('line-shadow-blur')?.value ?? 5),
     detectOn: document.getElementById('detect-on')?.value ?? 'canvas',
-    hoverEnable: document.getElementById('hover-enable')?.checked ?? true,
-    hoverMode: document.getElementById('hover-mode')?.value ?? 'grab',
-    clickEnable: document.getElementById('click-enable')?.checked ?? true,
     clickMode: document.getElementById('click-mode')?.value ?? 'push',
     resizeEnable: document.getElementById('resize-enable')?.checked ?? true,
-    grabDistance: parseFloat(document.getElementById('grab-distance')?.value ?? 120),
-    grabLineOpacity: parseFloat(document.getElementById('grab-line-opacity')?.value ?? 0.5),
-    bubbleDistance: parseFloat(document.getElementById('bubble-distance')?.value ?? 100),
-    bubbleSize: parseFloat(document.getElementById('bubble-size')?.value ?? 10),
-    bubbleDuration: parseFloat(document.getElementById('bubble-duration')?.value ?? 0.4),
-    repulseDistance: parseFloat(document.getElementById('repulse-distance')?.value ?? 100),
-    repulseDuration: parseFloat(document.getElementById('repulse-duration')?.value ?? 0.4),
     pushParticlesNb: parseInt(document.getElementById('push-particles-nb')?.value ?? 4),
-    retinaDetect: document.getElementById('retina-detect')?.checked ?? true,
-    backgroundColor: document.getElementById('background-color')?.value ?? '',
-    backgroundImage: document.getElementById('background-image')?.value ?? '',
-    backgroundPosition: document.getElementById('background-position')?.value ?? 'center center',
-    backgroundRepeat: document.getElementById('background-repeat')?.value ?? 'no-repeat',
-    backgroundSize: document.getElementById('background-size')?.value ?? 'cover'
+    retinaDetect: document.getElementById('retina-detect')?.checked ?? true
   };
 }
 
@@ -627,6 +604,191 @@ function addNewColor() {
   
   colorList.appendChild(colorItem);
   handleConfigChange();
+}
+
+// Database functions for particle settings
+async function initParticleDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('MoBankParticles', 3);
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('settings')) {
+        db.createObjectStore('settings');
+      }
+      if (!db.objectStoreNames.contains('presets')) {
+        db.createObjectStore('presets');
+      }
+    };
+  });
+}
+
+async function saveParticleSettings(settings) {
+  try {
+    const db = await initParticleDB();
+    const transaction = db.transaction(['settings'], 'readwrite');
+    const store = transaction.objectStore('settings');
+    
+    await new Promise((resolve, reject) => {
+      const request = store.put(settings, 'particleConfig');
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('Failed to save particle settings:', error);
+  }
+}
+
+async function loadParticleSettings() {
+  try {
+    const db = await initParticleDB();
+    const transaction = db.transaction(['settings'], 'readonly');
+    const store = transaction.objectStore('settings');
+    
+    const settings = await new Promise((resolve, reject) => {
+      const request = store.get('particleConfig');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    
+    return settings || getDefaultParticleSettings();
+  } catch (error) {
+    console.error('Failed to load particle settings:', error);
+    return getDefaultParticleSettings();
+  }
+}
+
+function getDefaultParticleSettings() {
+  return {
+    enabled: true,
+    count: 50,
+    shape: "circle",
+    polygonSides: 5,
+    starSides: 5,
+    imageSource: "",
+    colorMode: "single",
+    particleColor: "#0066cc",
+    colors: ["#0066cc"],
+    size: 3,
+    sizeRandom: false,
+    opacity: 0.8,
+    opacityRandom: false,
+    moveEnable: true,
+    moveSpeed: 1,
+    moveType: "default",
+    moveDirection: "none",
+    moveOutMode: "out",
+    moveAttract: false,
+    attractRotateX: 600,
+    attractRotateY: 1200,
+    lineLinkedEnable: true,
+    lineLinkedDistance: 150,
+    lineLinkedColor: "#0066cc",
+    lineLinkedOpacity: 0.6,
+    lineLinkedWidth: 1,
+    lineLinkedShadow: false,
+    lineShadowColor: "#000000",
+    lineShadowBlur: 5,
+    detectOn: "canvas",
+    clickMode: "push",
+    resizeEnable: true,
+    pushParticlesNb: 4,
+    retinaDetect: true
+  };
+}
+
+function applyParticleSettings(settings) {
+  // Apply settings to particle system
+  if (window.particleControls && window.particleControls.updateConfig) {
+    // Debounce to avoid too frequent updates
+    clearTimeout(window.particleUpdateTimeout);
+    window.particleUpdateTimeout = setTimeout(() => {
+      try {
+        window.particleControls.updateConfig(settings);
+      } catch (error) {
+        console.warn('Error applying particle settings:', error);
+      }
+    }, 100);
+  }
+}
+
+function updateAllSliderDisplays() {
+  // Update all slider value displays
+  const sliders = document.querySelectorAll('.config-slider');
+  sliders.forEach(slider => {
+    const valueDisplay = document.getElementById(`${slider.id}-value`);
+    if (valueDisplay) {
+      // Trigger display update
+      slider.dispatchEvent(new Event('input'));
+    }
+  });
+}
+
+function resetToDefaults() {
+  const defaults = getDefaultParticleSettings();
+  applySettingsToControls(defaults);
+  handleConfigChange();
+}
+
+async function initializeParticleSettings() {
+  try {
+    // Initialize particle database
+    await initParticleDB();
+    
+    // Load saved settings or defaults
+    const settings = await loadParticleSettings();
+    
+    // Set up particle controls when modal opens
+    setupParticleControls();
+    
+    // Apply settings if particles are available
+    applyParticleSettings(settings);
+  } catch (error) {
+    console.error('Failed to initialize particle settings:', error);
+  }
+}
+
+function getControlId(key) {
+  // Map settings keys to control element IDs
+  const mapping = {
+    enabled: 'particles-enabled',
+    count: 'particle-count',
+    shape: 'particle-shape',
+    polygonSides: 'polygon-sides',
+    starSides: 'star-sides',
+    imageSource: 'image-source',
+    colorMode: 'color-mode',
+    particleColor: 'particle-color',
+    size: 'particle-size',
+    sizeRandom: 'size-random',
+    opacity: 'particle-opacity',
+    opacityRandom: 'opacity-random',
+    moveEnable: 'move-enable',
+    moveSpeed: 'move-speed',
+    moveType: 'move-type',
+    moveDirection: 'move-direction',
+    moveOutMode: 'move-out-mode',
+    moveAttract: 'move-attract',
+    attractRotateX: 'attract-rotate-x',
+    attractRotateY: 'attract-rotate-y',
+    lineLinkedEnable: 'line-linked-enable',
+    lineLinkedDistance: 'line-linked-distance',
+    lineLinkedColor: 'line-linked-color',
+    lineLinkedOpacity: 'line-linked-opacity',
+    lineLinkedWidth: 'line-linked-width',
+    lineLinkedShadow: 'line-linked-shadow',
+    lineShadowColor: 'line-shadow-color',
+    lineShadowBlur: 'line-shadow-blur',
+    detectOn: 'detect-on',
+    clickMode: 'click-mode',
+    resizeEnable: 'resize-enable',
+    pushParticlesNb: 'push-particles-nb',
+    retinaDetect: 'retina-detect'
+  };
+  return mapping[key] || key;
 }
 
 function applySettingsToControls(settings) {
@@ -694,66 +856,44 @@ function applyPreset(presetName) {
 }
 
 function convertPresetToSettings(preset) {
-  // Convert particles.js config to our settings format
+  // Convert tsParticles config to our settings format
   const p = preset.particles;
   const i = preset.interactivity;
   
   return {
     enabled: true,
     count: p.number?.value || 50,
-    density: p.number?.density?.value_area || 800,
     shape: p.shape?.type || 'circle',
-    polygonSides: p.shape?.polygon?.nb_sides || 5,
-    starSides: p.shape?.polygon?.nb_sides || 5,
-    strokeWidth: p.shape?.stroke?.width || 0,
-    strokeColor: p.shape?.stroke?.color || '#000000',
+    polygonSides: p.shape?.options?.polygon?.sides || p.shape?.polygon?.sides || 5,
+    starSides: p.shape?.options?.star?.sides || p.shape?.polygon?.sides || 5,
     colorMode: Array.isArray(p.color?.value) ? 'multiple' : 'single',
     particleColor: Array.isArray(p.color?.value) ? p.color.value[0] : p.color?.value || '#0066cc',
     colors: Array.isArray(p.color?.value) ? p.color.value : ['#0066cc'],
     size: p.size?.value || 3,
     sizeRandom: p.size?.random || false,
-    sizeAnim: p.size?.anim?.enable || false,
-    sizeAnimSpeed: p.size?.anim?.speed || 40,
-    sizeAnimMin: p.size?.anim?.size_min || 0.1,
-    sizeAnimSync: p.size?.anim?.sync || false,
     opacity: p.opacity?.value || 0.5,
     opacityRandom: p.opacity?.random || false,
-    opacityAnim: p.opacity?.anim?.enable || false,
-    opacityAnimSpeed: p.opacity?.anim?.speed || 1,
-    opacityAnimMin: p.opacity?.anim?.opacity_min || 0.1,
-    opacityAnimSync: p.opacity?.anim?.sync || false,
     moveEnable: p.move?.enable !== false,
     moveSpeed: p.move?.speed || 1,
+    moveType: p.move?.straight ? 'straight' : (p.move?.random ? 'random' : 'default'),
     moveDirection: p.move?.direction || 'none',
-    moveRandom: p.move?.random || false,
-    moveStraight: p.move?.straight || false,
-    moveOutMode: p.move?.out_mode || 'bounce',
-    moveBounce: p.move?.bounce || false,
+    moveOutMode: p.move?.outModes?.default || 'out',
     moveAttract: p.move?.attract?.enable || false,
     attractRotateX: p.move?.attract?.rotateX || 600,
     attractRotateY: p.move?.attract?.rotateY || 1200,
-    lineLinkedEnable: p.line_linked?.enable !== false,
-    lineLinkedDistance: p.line_linked?.distance || 150,
-    lineLinkedColor: p.line_linked?.color || '#0066cc',
-    lineLinkedOpacity: p.line_linked?.opacity || 0.4,
-    lineLinkedWidth: p.line_linked?.width || 1,
-    detectOn: i.detect_on || 'canvas',
-    hoverEnable: i.events?.onhover?.enable !== false,
-    hoverMode: i.events?.onhover?.mode || 'grab',
-    clickEnable: i.events?.onclick?.enable !== false,
-    clickMode: i.events?.onclick?.mode || 'push',
+    lineLinkedEnable: p.links?.enable !== false,
+    lineLinkedDistance: p.links?.distance || 150,
+    lineLinkedColor: p.links?.color || '#0066cc',
+    lineLinkedOpacity: p.links?.opacity || 0.4,
+    lineLinkedWidth: p.links?.width || 1,
+    lineShadowColor: p.links?.shadow?.color || '#000000',
+    lineShadowBlur: p.links?.shadow?.blur || 5,
+    lineLinkedShadow: p.links?.shadow?.enable || false,
+    detectOn: i.detectsOn || 'canvas',
+    clickMode: i.events?.onClick?.enable === false ? 'none' : (i.events?.onClick?.mode || 'push'),
     resizeEnable: i.events?.resize !== false,
-    grabDistance: i.modes?.grab?.distance || 120,
-    grabLineOpacity: i.modes?.grab?.line_linked?.opacity || 0.5,
-    bubbleDistance: i.modes?.bubble?.distance || 100,
-    bubbleSize: i.modes?.bubble?.size || 10,
-    bubbleDuration: i.modes?.bubble?.duration || 0.4,
-    repulseDistance: i.modes?.repulse?.distance || 100,
-    repulseDuration: i.modes?.repulse?.duration || 0.4,
-    pushParticlesNb: i.modes?.push?.particles_nb || 4,
-    retinaDetect: preset.retina_detect !== false,
-    backgroundColor: preset.background?.color || '',
-    backgroundImage: preset.background?.image || ''
+    pushParticlesNb: i.modes?.push?.quantity || i.modes?.remove?.quantity || 4,
+    retinaDetect: preset.retina_detect !== false && preset.detectRetina !== false
   };
 }
 

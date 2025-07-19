@@ -16,25 +16,24 @@
     const DEFAULT_CONFIG = {
         particles: {
             number: {
-                value: 50,
-                density: { enable: true, area: 800 }
+                value: 50
             },
             color: { value: "#0066cc" },
             shape: {
                 type: "circle",
-                stroke: { width: 0, color: "#000000" },
-                polygon: { sides: 5 },
-                image: { src: "", width: 100, height: 100 }
+                options: {
+                    polygon: { sides: 5 },
+                    star: { sides: 5 },
+                    image: { src: "", width: 100, height: 100 }
+                }
             },
             opacity: {
                 value: 0.5,
-                random: false,
-                animation: { enable: false, speed: 1, minimumValue: 0.1, sync: false }
+                random: false
             },
             size: {
                 value: 3,
-                random: false,
-                animation: { enable: false, speed: 40, minimumValue: 0.1, sync: false }
+                random: false
             },
             links: {
                 enable: true,
@@ -50,23 +49,18 @@
                 direction: "none",
                 random: false,
                 straight: false,
-                outModes: { default: "bounce" },
-                bounce: false,
+                outModes: { default: "out" },
                 attract: { enable: false, rotateX: 600, rotateY: 1200 }
             }
         },
         interactivity: {
             detectsOn: "canvas",
             events: {
-                onHover: { enable: true, mode: "grab" },
                 onClick: { enable: true, mode: "push" },
                 resize: true
             },
             modes: {
-                grab: { distance: 120, links: { opacity: 0.5 } },
-                bubble: { distance: 100, size: 10, duration: 0.4, opacity: 8, speed: 3 },
-                repulse: { distance: 100, duration: 0.4 },
-                push: { quantity: 4 },
+                push: { quantity: 1 },
                 remove: { quantity: 2 }
             }
         },
@@ -80,137 +74,140 @@
     const PRESETS = {
         minimal: {
             particles: {
-                number: { value: 20, density: { enable: true, area: 800 } },
+                number: { value: 20 },
                 color: { value: "#cccccc" },
                 shape: { type: "circle" },
-                opacity: { value: 0.4, random: false, animation: { enable: false } },
-                size: { value: 2, random: false, animation: { enable: false } },
+                opacity: { value: 0.4, random: false },
+                size: { value: 2, random: false },
                 links: { enable: false },
-                move: { enable: true, speed: 0.5, direction: "none", random: false, straight: false, outModes: { default: "out" }, bounce: false }
+                move: { enable: true, speed: 0.5, direction: "none", random: false, straight: false, outModes: { default: "out" } }
             },
             interactivity: {
                 detectsOn: "canvas",
-                events: { onHover: { enable: false }, onClick: { enable: false }, resize: true },
+                events: { onClick: { enable: false }, resize: true },
                 modes: {}
             },
             detectRetina: true
         },
         default: {
             particles: {
-                number: { value: 50, density: { enable: true, area: 800 } },
+                number: { value: 50 },
                 color: { value: "#0066cc" },
                 shape: { type: "circle" },
-                opacity: { value: 0.8, random: false, animation: { enable: false } },
-                size: { value: 3, random: false, animation: { enable: false } },
+                opacity: { value: 0.8, random: false },
+                size: { value: 3, random: false },
                 links: { enable: true, distance: 150, color: "#0066cc", opacity: 0.4, width: 1 },
-                move: { enable: true, speed: 1, direction: "none", random: false, straight: false, outModes: { default: "bounce" }, bounce: false }
+                move: { enable: true, speed: 1, direction: "none", random: false, straight: false, outModes: { default: "out" } }
             },
             interactivity: {
                 detectsOn: "canvas",
-                events: { onHover: { enable: true, mode: "grab" }, onClick: { enable: true, mode: "push" }, resize: true },
-                modes: { grab: { distance: 150, links: { opacity: 0.5 } }, push: { quantity: 4 } }
+                events: { onClick: { enable: true, mode: "push" }, resize: true },
+                modes: { push: { quantity: 1 } }
             },
             detectRetina: true
         },
         energetic: {
             particles: {
-                number: { value: 80, density: { enable: true, area: 800 } },
+                number: { value: 80 },
                 color: { value: "#00b894" },
                 shape: { type: "circle" },
-                opacity: { value: 0.9, random: true, animation: { enable: true, speed: 2, minimumValue: 0.1, sync: false } },
-                size: { value: 4, random: true, animation: { enable: true, speed: 40, minimumValue: 0.1, sync: false } },
+                opacity: { value: 0.9, random: true },
+                size: { value: 4, random: true },
                 links: { enable: true, distance: 200, color: "#00b894", opacity: 0.6, width: 1 },
-                move: { enable: true, speed: 2, direction: "none", random: false, straight: false, outModes: { default: "bounce" }, bounce: false }
+                move: { enable: true, speed: 2, direction: "none", random: false, straight: false, outModes: { default: "out" } }
             },
             interactivity: {
                 detectsOn: "canvas",
-                events: { onHover: { enable: true, mode: "repulse" }, onClick: { enable: true, mode: "push" }, resize: true },
-                modes: { repulse: { distance: 100, duration: 0.4 }, push: { quantity: 6 } }
+                events: { onClick: { enable: true, mode: "push" }, resize: true },
+                modes: { push: { quantity: 1 } }
             },
             detectRetina: true
         },
         cosmic: {
             particles: {
-                number: { value: 100, density: { enable: true, area: 800 } },
+                number: { value: 100 },
                 color: { value: "#6c5ce7" },
                 shape: { type: "circle" },
-                opacity: { value: 0.7, random: true, animation: { enable: true, speed: 1, minimumValue: 0.1, sync: false } },
-                size: { value: 2.5, random: true, animation: { enable: false } },
+                opacity: { value: 0.7, random: true },
+                size: { value: 2.5, random: true },
                 links: { enable: true, distance: 180, color: "#a29bfe", opacity: 0.4, width: 1 },
-                move: { enable: true, speed: 0.8, direction: "none", random: false, straight: false, outModes: { default: "bounce" }, bounce: false }
+                move: { enable: true, speed: 0.8, direction: "none", random: false, straight: false, outModes: { default: "out" } }
             },
             interactivity: {
                 detectsOn: "canvas",
-                events: { onHover: { enable: true, mode: "bubble" }, onClick: { enable: true, mode: "push" }, resize: true },
-                modes: { bubble: { distance: 150, size: 8, duration: 0.4 }, push: { quantity: 3 } }
+                events: { onClick: { enable: true, mode: "push" }, resize: true },
+                modes: { push: { quantity: 1 } }
             },
             detectRetina: true
         },
         snow: {
             particles: {
-                number: { value: 150, density: { enable: true, area: 800 } },
+                number: { value: 150 },
                 color: { value: "#ffffff" },
                 shape: { type: "circle" },
-                opacity: { value: 0.8, random: true, animation: { enable: false } },
-                size: { value: 3, random: true, animation: { enable: false } },
+                opacity: { value: 0.8, random: true },
+                size: { value: 3, random: true },
                 links: { enable: false },
-                move: { enable: true, speed: 2, direction: "bottom", random: false, straight: false, outModes: { default: "out" }, bounce: false }
+                move: { enable: true, speed: 2, direction: "bottom", random: false, straight: false, outModes: { default: "out" } }
             },
             interactivity: {
                 detectsOn: "canvas",
-                events: { onHover: { enable: false }, onClick: { enable: false }, resize: true },
+                events: { onClick: { enable: false }, resize: true },
                 modes: {}
             },
             detectRetina: true
         },
         bubbles: {
             particles: {
-                number: { value: 60, density: { enable: true, area: 800 } },
+                number: { value: 60 },
                 color: { value: ["#ff6b6b", "#4ecdc4", "#45b7d1", "#f9ca24", "#f0932b"] },
                 shape: { type: "circle" },
-                opacity: { value: 0.6, random: true, animation: { enable: true, speed: 1, minimumValue: 0.1, sync: false } },
-                size: { value: 8, random: true, animation: { enable: true, speed: 20, minimumValue: 0.1, sync: false } },
+                opacity: { value: 0.6, random: true },
+                size: { value: 8, random: true },
                 links: { enable: false },
-                move: { enable: true, speed: 1.5, direction: "top", random: false, straight: false, outModes: { default: "out" }, bounce: false }
+                move: { enable: true, speed: 1.5, direction: "top", random: false, straight: false, outModes: { default: "out" } }
             },
             interactivity: {
                 detectsOn: "canvas",
-                events: { onHover: { enable: true, mode: "bubble" }, onClick: { enable: true, mode: "repulse" }, resize: true },
-                modes: { bubble: { distance: 100, size: 15, duration: 0.4 }, repulse: { distance: 150, duration: 0.4 } }
+                events: { onClick: { enable: true, mode: "remove" }, resize: true },
+                modes: { remove: { quantity: 2 } }
             },
             detectRetina: true
         },
         nasa: {
             particles: {
-                number: { value: 160, density: { enable: true, area: 800 } },
+                number: { value: 160 },
                 color: { value: "#ffffff" },
                 shape: { type: "circle" },
-                opacity: { value: 0.8, random: true, animation: { enable: true, speed: 1, minimumValue: 0.1, sync: false } },
-                size: { value: 1, random: true, animation: { enable: false } },
+                opacity: { value: 0.8, random: true },
+                size: { value: 1, random: true },
                 links: { enable: false },
-                move: { enable: true, speed: 0.2, direction: "none", random: true, straight: false, outModes: { default: "out" }, bounce: false }
+                move: { enable: true, speed: 0.2, direction: "none", random: true, straight: false, outModes: { default: "out" } }
             },
             interactivity: {
                 detectsOn: "canvas",
-                events: { onHover: { enable: true, mode: "bubble" }, onClick: { enable: true, mode: "repulse" }, resize: true },
-                modes: { bubble: { distance: 250, size: 0, duration: 2, opacity: 0 }, repulse: { distance: 400, duration: 0.4 } }
+                events: { onClick: { enable: true, mode: "remove" }, resize: true },
+                modes: { remove: { quantity: 5 } }
             },
             detectRetina: true,
             background: { color: "transparent" }
         },
         "nyan-cat": {
             particles: {
-                number: { value: 100, density: { enable: false } },
+                number: { value: 100 },
                 color: { value: ["#ff0080", "#00ff80", "#0080ff", "#ff8000", "#8000ff"] },
-                shape: { type: "star", polygon: { sides: 6 } },
-                opacity: { value: 1, random: false, animation: { enable: false } },
-                size: { value: 4, random: true, animation: { enable: false } },
+                shape: { 
+                    type: "star",
+                    options: { star: { sides: 6 } }
+                },
+                opacity: { value: 1, random: false },
+                size: { value: 4, random: true },
                 links: { enable: false },
-                move: { enable: true, speed: 6, direction: "left", random: false, straight: true, outModes: { default: "out" }, bounce: false }
+                move: { enable: true, speed: 6, direction: "left", random: false, straight: true, outModes: { default: "out" } }
             },
             interactivity: {
                 detectsOn: "canvas",
-                events: { onHover: { enable: false }, onClick: { enable: true, mode: "remove" }, resize: true },
+                events: { onClick: { enable: true, mode: "remove" }, resize: true },
                 modes: { remove: { quantity: 10 } }
             },
             detectRetina: true,
@@ -274,21 +271,24 @@
     function createParticlesConfig(settings) {
         const config = JSON.parse(JSON.stringify(DEFAULT_CONFIG)); // Deep clone
         
-        // Basic settings
+        // Basic settings - remove density
         config.particles.number.value = settings.enabled ? (settings.count || 50) : 0;
-        config.particles.number.density.area = settings.density || 800;
         
-        // Shape configuration
+        // Shape configuration - fix polygon/star sides
         config.particles.shape.type = settings.shape || "circle";
         if (settings.shape === "polygon") {
-            config.particles.shape.polygon.sides = settings.polygonSides || 5;
+            config.particles.shape.options = {
+                polygon: { sides: settings.polygonSides || 5 }
+            };
         } else if (settings.shape === "star") {
-            config.particles.shape.polygon.sides = settings.starSides || 5;
+            config.particles.shape.options = {
+                star: { sides: settings.starSides || 5 }
+            };
         } else if (settings.shape === "image") {
-            config.particles.shape.image.src = settings.imageSource || "";
+            config.particles.shape.options = {
+                image: { src: settings.imageSource || "", width: 100, height: 100 }
+            };
         }
-        config.particles.shape.stroke.width = settings.strokeWidth || 0;
-        config.particles.shape.stroke.color = settings.strokeColor || "#000000";
         
         // Color configuration
         if (settings.colorMode === "single") {
@@ -299,33 +299,38 @@
             config.particles.color.value = "random";
         }
         
-        // Size and opacity
+        // Size and opacity - remove animations
         config.particles.size.value = settings.size || 3;
         config.particles.size.random = settings.sizeRandom || false;
-        config.particles.size.animation.enable = settings.sizeAnim || false;
-        if (settings.sizeAnim) {
-            config.particles.size.animation.speed = settings.sizeAnimSpeed || 40;
-            config.particles.size.animation.minimumValue = settings.sizeAnimMin || 0.1;
-            config.particles.size.animation.sync = settings.sizeAnimSync || false;
-        }
         
         config.particles.opacity.value = Math.max(0.01, settings.opacity || 0.5);
         config.particles.opacity.random = settings.opacityRandom || false;
-        config.particles.opacity.animation.enable = settings.opacityAnim || false;
-        if (settings.opacityAnim) {
-            config.particles.opacity.animation.speed = settings.opacityAnimSpeed || 1;
-            config.particles.opacity.animation.minimumValue = Math.max(0.01, settings.opacityAnimMin || 0.1);
-            config.particles.opacity.animation.sync = settings.opacityAnimSync || false;
-        }
         
-        // Movement
+        // Movement - handle new movement type system
         config.particles.move.enable = settings.moveEnable !== false;
         config.particles.move.speed = settings.moveSpeed || 1;
-        config.particles.move.direction = settings.moveDirection || "none";
-        config.particles.move.random = settings.moveRandom || false;
-        config.particles.move.straight = settings.moveStraight || false;
-        config.particles.move.outModes.default = settings.moveOutMode || "bounce";
-        config.particles.move.bounce = settings.moveBounce || false;
+        
+        // Handle movement type
+        const moveType = settings.moveType || "default";
+        switch (moveType) {
+            case "random":
+                config.particles.move.direction = "none";
+                config.particles.move.random = true;
+                config.particles.move.straight = false;
+                break;
+            case "straight":
+                config.particles.move.direction = settings.moveDirection || "none";
+                config.particles.move.random = false;
+                config.particles.move.straight = true;
+                break;
+            default: // "default"
+                config.particles.move.direction = settings.moveDirection || "none";
+                config.particles.move.random = false;
+                config.particles.move.straight = false;
+                break;
+        }
+        
+        config.particles.move.outModes.default = settings.moveOutMode || "out";
         config.particles.move.attract.enable = settings.moveAttract || false;
         if (settings.moveAttract) {
             config.particles.move.attract.rotateX = settings.attractRotateX || 600;
@@ -344,26 +349,22 @@
             blur: settings.lineShadowBlur || 5
         };
         
-        // Interactivity
+        // Interactivity - simplified
         config.interactivity.detectsOn = settings.detectOn || "canvas";
-        config.interactivity.events.onHover.enable = settings.hoverEnable !== false;
-        config.interactivity.events.onHover.mode = settings.hoverMode || "grab";
-        config.interactivity.events.onClick.enable = settings.clickEnable !== false;
-        config.interactivity.events.onClick.mode = settings.clickMode || "push";
+        
+        // Only handle click events, no hover
+        const clickMode = settings.clickMode || "push";
+        if (clickMode === "none") {
+            config.interactivity.events.onClick.enable = false;
+        } else {
+            config.interactivity.events.onClick.enable = true;
+            config.interactivity.events.onClick.mode = clickMode;
+        }
+        
         config.interactivity.events.resize = settings.resizeEnable !== false;
         
-        // Interaction modes
-        config.interactivity.modes.grab.distance = settings.grabDistance || 120;
-        config.interactivity.modes.grab.links.opacity = settings.grabLineOpacity || 0.5;
-        
-        config.interactivity.modes.bubble.distance = settings.bubbleDistance || 100;
-        config.interactivity.modes.bubble.size = settings.bubbleSize || 10;
-        config.interactivity.modes.bubble.duration = settings.bubbleDuration || 0.4;
-        
-        config.interactivity.modes.repulse.distance = settings.repulseDistance || 100;
-        config.interactivity.modes.repulse.duration = settings.repulseDuration || 0.4;
-        
-        config.interactivity.modes.push.quantity = settings.pushParticlesNb || 4;
+        // Interaction modes - only push and remove
+        config.interactivity.modes.push.quantity = clickMode === "push" ? 1 : (settings.pushParticlesNb || 4);
         config.interactivity.modes.remove.quantity = settings.pushParticlesNb || 2;
         
         // Advanced settings
@@ -432,22 +433,15 @@
                     const pos = { x: e.clientX, y: e.clientY };
                     
                     try {
-                        // tsParticles click interaction is handled automatically
-                        // by the interactivity configuration, but we can still
-                        // manually trigger effects if needed
-                        
                         // Get the interactivity mode from the config
                         const mode = mainContainer.actualOptions?.interactivity?.events?.onClick?.mode;
                         
                         if (mode === 'push') {
-                            // Add particles at click position
-                            const quantity = mainContainer.actualOptions?.interactivity?.modes?.push?.quantity || 4;
-                            for (let i = 0; i < quantity; i++) {
-                                mainContainer.particles.addParticle({
-                                    x: pos.x,
-                                    y: pos.y
-                                });
-                            }
+                            // Add 1 particle at click position (default for push mode)
+                            mainContainer.particles.addParticle({
+                                x: pos.x,
+                                y: pos.y
+                            });
                         } else if (mode === 'remove') {
                             // Remove particles
                             const quantity = mainContainer.actualOptions?.interactivity?.modes?.remove?.quantity || 2;
@@ -605,35 +599,22 @@
         return {
             enabled: true,
             count: 50,
-            density: 800,
             shape: "circle",
             polygonSides: 5,
             starSides: 5,
             imageSource: "",
-            strokeWidth: 0,
-            strokeColor: "#000000",
             colorMode: "single",
             particleColor: "#0066cc",
             colors: ["#0066cc"],
             size: 3,
             sizeRandom: false,
-            sizeAnim: false,
-            sizeAnimSpeed: 40,
-            sizeAnimMin: 0.1,
-            sizeAnimSync: false,
             opacity: 0.8, // Increased opacity for better visibility
             opacityRandom: false,
-            opacityAnim: false,
-            opacityAnimSpeed: 1,
-            opacityAnimMin: 0.1,
-            opacityAnimSync: false,
             moveEnable: true,
             moveSpeed: 1,
+            moveType: "default",
             moveDirection: "none",
-            moveRandom: false,
-            moveStraight: false,
-            moveOutMode: "bounce",
-            moveBounce: false,
+            moveOutMode: "out",
             moveAttract: false,
             attractRotateX: 600,
             attractRotateY: 1200,
@@ -646,18 +627,8 @@
             lineShadowColor: "#000000",
             lineShadowBlur: 5,
             detectOn: "canvas",
-            hoverEnable: true,
-            hoverMode: "grab",
-            clickEnable: true,
             clickMode: "push",
             resizeEnable: true,
-            grabDistance: 120,
-            grabLineOpacity: 0.5,
-            bubbleDistance: 100,
-            bubbleSize: 10,
-            bubbleDuration: 0.4,
-            repulseDistance: 100,
-            repulseDuration: 0.4,
             pushParticlesNb: 4,
             retinaDetect: true
         };

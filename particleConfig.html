@@ -35,15 +35,6 @@
             </div>
           </label>
         </div>
-        <div class="config-row">
-          <label class="config-label">
-            <span>Density</span>
-            <div class="slider-container">
-              <input type="range" id="particle-density" class="config-slider" min="100" max="2000" step="50">
-              <span class="slider-value" id="particle-density-value">800</span>
-            </div>
-          </label>
-        </div>
       </div>
 
       <!-- Shape Configuration -->
@@ -84,21 +75,6 @@
           <label class="config-label">
             <span>Image URL</span>
             <input type="text" id="image-source" class="config-input" placeholder="Enter image URL">
-          </label>
-        </div>
-        <div class="config-row">
-          <label class="config-label">
-            <span>Stroke Width</span>
-            <div class="slider-container">
-              <input type="range" id="stroke-width" class="config-slider" min="0" max="10" step="0.5">
-              <span class="slider-value" id="stroke-width-value">0px</span>
-            </div>
-          </label>
-        </div>
-        <div class="config-row">
-          <label class="config-label">
-            <span>Stroke Color</span>
-            <input type="color" id="stroke-color" class="config-color">
           </label>
         </div>
       </div>
@@ -164,38 +140,6 @@
         </div>
         <div class="config-row">
           <label class="config-label">
-            <span>Size Animation</span>
-            <input type="checkbox" id="size-anim" class="config-checkbox">
-          </label>
-        </div>
-        <div class="config-group" id="size-anim-controls" style="display: none;">
-          <div class="config-row">
-            <label class="config-label">
-              <span>Size Animation Speed</span>
-              <div class="slider-container">
-                <input type="range" id="size-anim-speed" class="config-slider" min="1" max="100" step="1">
-                <span class="slider-value editable-value" id="size-anim-speed-value">40</span>
-              </div>
-            </label>
-          </div>
-          <div class="config-row">
-            <label class="config-label">
-              <span>Min Size</span>
-              <div class="slider-container">
-                <input type="range" id="size-anim-min" class="config-slider" min="0.1" max="10" step="0.1">
-                <span class="slider-value editable-value" id="size-anim-min-value">0.1px</span>
-              </div>
-            </label>
-          </div>
-          <div class="config-row">
-            <label class="config-label">
-              <span>Sync Animation</span>
-              <input type="checkbox" id="size-anim-sync" class="config-checkbox">
-            </label>
-          </div>
-        </div>
-        <div class="config-row">
-          <label class="config-label">
             <span>Opacity</span>
             <div class="slider-container">
               <input type="range" id="particle-opacity" class="config-slider" min="0" max="1" step="0.01">
@@ -217,38 +161,6 @@
                 <input type="range" id="opacity-variation" class="config-slider" min="0" max="1" step="0.01">
                 <span class="slider-value editable-value" id="opacity-variation-value">50%</span>
               </div>
-            </label>
-          </div>
-        </div>
-        <div class="config-row">
-          <label class="config-label">
-            <span>Opacity Animation</span>
-            <input type="checkbox" id="opacity-anim" class="config-checkbox">
-          </label>
-        </div>
-        <div class="config-group" id="opacity-anim-controls" style="display: none;">
-          <div class="config-row">
-            <label class="config-label">
-              <span>Opacity Animation Speed</span>
-              <div class="slider-container">
-                <input type="range" id="opacity-anim-speed" class="config-slider" min="0.1" max="10" step="0.1">
-                <span class="slider-value editable-value" id="opacity-anim-speed-value">1</span>
-              </div>
-            </label>
-          </div>
-          <div class="config-row">
-            <label class="config-label">
-              <span>Min Opacity</span>
-              <div class="slider-container">
-                <input type="range" id="opacity-anim-min" class="config-slider" min="0" max="1" step="0.01">
-                <span class="slider-value editable-value" id="opacity-anim-min-value">10%</span>
-              </div>
-            </label>
-          </div>
-          <div class="config-row">
-            <label class="config-label">
-              <span>Sync Animation</span>
-              <input type="checkbox" id="opacity-anim-sync" class="config-checkbox">
             </label>
           </div>
         </div>
@@ -275,6 +187,16 @@
           </div>
           <div class="config-row">
             <label class="config-label">
+              <span>Movement Type</span>
+              <select id="move-type" class="config-select">
+                <option value="default">Default (Brownian)</option>
+                <option value="random">Random Direction</option>
+                <option value="straight">Straight Direction</option>
+              </select>
+            </label>
+          </div>
+          <div class="config-row" id="direction-row">
+            <label class="config-label">
               <span>Direction</span>
               <select id="move-direction" class="config-select">
                 <option value="none">None (Random)</option>
@@ -291,29 +213,11 @@
           </div>
           <div class="config-row">
             <label class="config-label">
-              <span>Random Movement</span>
-              <input type="checkbox" id="move-random" class="config-checkbox">
-            </label>
-          </div>
-          <div class="config-row">
-            <label class="config-label">
-              <span>Straight Movement</span>
-              <input type="checkbox" id="move-straight" class="config-checkbox">
-            </label>
-          </div>
-          <div class="config-row">
-            <label class="config-label">
               <span>Out Mode</span>
               <select id="move-out-mode" class="config-select">
                 <option value="out">Out</option>
-                <option value="bounce">Bounce</option>
+                <option value="destroy">Destroy</option>
               </select>
-            </label>
-          </div>
-          <div class="config-row">
-            <label class="config-label">
-              <span>Bounce</span>
-              <input type="checkbox" id="move-bounce" class="config-checkbox">
             </label>
           </div>
           <div class="config-row">
@@ -428,40 +332,13 @@
         </div>
         <div class="config-row">
           <label class="config-label">
-            <span>Hover Effect</span>
-            <input type="checkbox" id="hover-enable" class="config-checkbox">
-          </label>
-        </div>
-        <div class="config-group" id="hover-controls">
-          <div class="config-row">
-            <label class="config-label">
-              <span>Hover Mode</span>
-              <select id="hover-mode" class="config-select">
-                <option value="grab">Grab</option>
-                <option value="bubble">Bubble</option>
-                <option value="repulse">Repulse</option>
-              </select>
-            </label>
-          </div>
-        </div>
-        <div class="config-row">
-          <label class="config-label">
             <span>Click Effect</span>
-            <input type="checkbox" id="click-enable" class="config-checkbox">
+            <select id="click-mode" class="config-select">
+              <option value="none">None</option>
+              <option value="push">Push (1 particle)</option>
+              <option value="remove">Remove</option>
+            </select>
           </label>
-        </div>
-        <div class="config-group" id="click-controls">
-          <div class="config-row">
-            <label class="config-label">
-              <span>Click Mode</span>
-              <select id="click-mode" class="config-select">
-                <option value="push">Push</option>
-                <option value="remove">Remove</option>
-                <option value="bubble">Bubble</option>
-                <option value="repulse">Repulse</option>
-              </select>
-            </label>
-          </div>
         </div>
         <div class="config-row">
           <label class="config-label">
@@ -471,92 +348,17 @@
         </div>
       </div>
 
-      <!-- Interaction Modes -->
+      <!-- Push/Remove Settings -->
       <div class="config-section">
-        <h3>Interaction Mode Settings</h3>
-        <div class="config-subsection">
-          <h4>Grab Mode</h4>
-          <div class="config-row">
-            <label class="config-label">
-              <span>Grab Distance</span>
-              <div class="slider-container">
-                <input type="range" id="grab-distance" class="config-slider" min="0" max="300" step="10">
-                <span class="slider-value" id="grab-distance-value">120px</span>
-              </div>
-            </label>
-          </div>
-          <div class="config-row">
-            <label class="config-label">
-              <span>Grab Line Opacity</span>
-              <div class="slider-container">
-                <input type="range" id="grab-line-opacity" class="config-slider" min="0" max="1" step="0.01">
-                <span class="slider-value" id="grab-line-opacity-value">50%</span>
-              </div>
-            </label>
-          </div>
-        </div>
-        <div class="config-subsection">
-          <h4>Bubble Mode</h4>
-          <div class="config-row">
-            <label class="config-label">
-              <span>Bubble Distance</span>
-              <div class="slider-container">
-                <input type="range" id="bubble-distance" class="config-slider" min="0" max="300" step="10">
-                <span class="slider-value" id="bubble-distance-value">100px</span>
-              </div>
-            </label>
-          </div>
-          <div class="config-row">
-            <label class="config-label">
-              <span>Bubble Size</span>
-              <div class="slider-container">
-                <input type="range" id="bubble-size" class="config-slider" min="1" max="50" step="1">
-                <span class="slider-value" id="bubble-size-value">10px</span>
-              </div>
-            </label>
-          </div>
-          <div class="config-row">
-            <label class="config-label">
-              <span>Bubble Duration</span>
-              <div class="slider-container">
-                <input type="range" id="bubble-duration" class="config-slider" min="0.1" max="5" step="0.1">
-                <span class="slider-value" id="bubble-duration-value">0.4s</span>
-              </div>
-            </label>
-          </div>
-        </div>
-        <div class="config-subsection">
-          <h4>Repulse Mode</h4>
-          <div class="config-row">
-            <label class="config-label">
-              <span>Repulse Distance</span>
-              <div class="slider-container">
-                <input type="range" id="repulse-distance" class="config-slider" min="0" max="300" step="10">
-                <span class="slider-value" id="repulse-distance-value">100px</span>
-              </div>
-            </label>
-          </div>
-          <div class="config-row">
-            <label class="config-label">
-              <span>Repulse Duration</span>
-              <div class="slider-container">
-                <input type="range" id="repulse-duration" class="config-slider" min="0.1" max="5" step="0.1">
-                <span class="slider-value" id="repulse-duration-value">0.4s</span>
-              </div>
-            </label>
-          </div>
-        </div>
-        <div class="config-subsection">
-          <h4>Push/Remove Mode</h4>
-          <div class="config-row">
-            <label class="config-label">
-              <span>Particles Number</span>
-              <div class="slider-container">
-                <input type="range" id="push-particles-nb" class="config-slider" min="1" max="20" step="1">
-                <span class="slider-value" id="push-particles-nb-value">4</span>
-              </div>
-            </label>
-          </div>
+        <h3>Click Effect Settings</h3>
+        <div class="config-row">
+          <label class="config-label">
+            <span>Particles Number</span>
+            <div class="slider-container">
+              <input type="range" id="push-particles-nb" class="config-slider" min="1" max="20" step="1">
+              <span class="slider-value" id="push-particles-nb-value">4</span>
+            </div>
+          </label>
         </div>
       </div>
 
@@ -567,41 +369,6 @@
           <label class="config-label">
             <span>Retina Detection</span>
             <input type="checkbox" id="retina-detect" class="config-checkbox">
-          </label>
-        </div>
-        <div class="config-row">
-          <label class="config-label">
-            <span>Background Color</span>
-            <input type="color" id="background-color" class="config-color">
-          </label>
-        </div>
-        <div class="config-row">
-          <label class="config-label">
-            <span>Background Image</span>
-            <input type="text" id="background-image" class="config-input" placeholder="Enter image URL">
-          </label>
-        </div>
-        <div class="config-row">
-          <label class="config-label">
-            <span>Background Position</span>
-            <input type="text" id="background-position" class="config-input" placeholder="e.g., center center">
-          </label>
-        </div>
-        <div class="config-row">
-          <label class="config-label">
-            <span>Background Repeat</span>
-            <select id="background-repeat" class="config-select">
-              <option value="no-repeat">No Repeat</option>
-              <option value="repeat">Repeat</option>
-              <option value="repeat-x">Repeat X</option>
-              <option value="repeat-y">Repeat Y</option>
-            </select>
-          </label>
-        </div>
-        <div class="config-row">
-          <label class="config-label">
-            <span>Background Size</span>
-            <input type="text" id="background-size" class="config-input" placeholder="e.g., cover, contain, 100%">
           </label>
         </div>
       </div>

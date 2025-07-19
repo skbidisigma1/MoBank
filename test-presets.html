@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tsParticles Presets Test</title>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; }
+        #particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .controls { position: fixed; top: 20px; left: 20px; z-index: 100; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        button { margin: 5px; padding: 8px 16px; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #f0f0f0; }
+        button.active { background: #007bff; color: white; }
+        h1 { text-align: center; margin-top: 60px; }
+    </style>
+</head>
+<body>
+    <div id="particles"></div>
+    <div class="controls">
+        <h3>tsParticles Presets Test</h3>
+        <button onclick="testPreset('fire')">🔥 Fire</button>
+        <button onclick="testPreset('snow')">❄️ Snow</button>
+        <button onclick="testPreset('stars')">⭐ Stars</button>
+        <button onclick="testPreset('confetti')">🎉 Confetti</button>
+        <button onclick="testPreset('bigCircles')">⭕ Big Circles</button>
+        <br><br>
+        <button onclick="clearParticles()">Clear</button>
+    </div>
+    
+    <h1>tsParticles Official Presets Test</h1>
+
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@3.0.0/tsparticles.bundle.min.js"></script>
+    
+    <script>
+        let currentContainer = null;
+        
+        async function loadPreset(presetName) {
+            const presetUrls = {
+                fire: 'https://cdn.jsdelivr.net/npm/@tsparticles/preset-fire@3/tsparticles.preset.fire.bundle.min.js',
+                snow: 'https://cdn.jsdelivr.net/npm/@tsparticles/preset-snow@3/tsparticles.preset.snow.bundle.min.js',
+                stars: 'https://cdn.jsdelivr.net/npm/@tsparticles/preset-stars@3/tsparticles.preset.stars.bundle.min.js',
+                confetti: 'https://cdn.jsdelivr.net/npm/@tsparticles/preset-confetti@3/tsparticles.preset.confetti.bundle.min.js',
+                bigCircles: 'https://cdn.jsdelivr.net/npm/@tsparticles/preset-big-circles@3/tsparticles.preset.bigCircles.bundle.min.js'
+            };
+            
+            if (!presetUrls[presetName]) {
+                console.error('Preset not found:', presetName);
+                return false;
+            }
+            
+            return new Promise((resolve) => {
+                // Check if already loaded
+                if (document.querySelector(`script[src*="${presetName}"]`)) {
+                    resolve(true);
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = presetUrls[presetName];
+                script.onload = () => {
+                    console.log(`Loaded preset: ${presetName}`);
+                    resolve(true);
+                };
+                script.onerror = () => {
+                    console.error(`Failed to load preset: ${presetName}`);
+                    resolve(false);
+                };
+                document.head.appendChild(script);
+            });
+        }
+        
+        async function testPreset(presetName) {
+            console.log(`Testing preset: ${presetName}`);
+            
+            // Clear previous
+            if (currentContainer) {
+                await currentContainer.destroy();
+                currentContainer = null;
+            }
+            
+            // Load preset if needed
+            const loaded = await loadPreset(presetName);
+            if (!loaded) {
+                alert(`Failed to load preset: ${presetName}`);
+                return;
+            }
+            
+            // Wait a bit for preset to initialize and call the load function
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // Call the appropriate load function
+            const loadFunctions = {
+                fire: 'loadFirePreset',
+                snow: 'loadSnowPreset', 
+                stars: 'loadStarsPreset',
+                confetti: 'loadConfettiPreset',
+                bigCircles: 'loadBigCirclesPreset'
+            };
+            
+            if (loadFunctions[presetName] && window[loadFunctions[presetName]]) {
+                try {
+                    await window[loadFunctions[presetName]](tsParticles);
+                    console.log(`Registered ${presetName} preset`);
+                } catch (error) {
+                    console.error(`Failed to register ${presetName} preset:`, error);
+                }
+            }
+            
+            try {
+                currentContainer = await tsParticles.load({
+                    id: 'particles',
+                    options: {
+                        preset: presetName,
+                        background: { color: 'transparent' }
+                    }
+                });
+                
+                // Update button states
+                document.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                
+                console.log(`Successfully loaded preset: ${presetName}`);
+                console.log('Available presets after load:', Object.keys(tsParticles.presets || {}));
+            } catch (error) {
+                console.error(`Failed to apply preset ${presetName}:`, error);
+                alert(`Error applying preset: ${presetName}`);
+            }
+        }
+        
+        async function clearParticles() {
+            if (currentContainer) {
+                await currentContainer.destroy();
+                currentContainer = null;
+            }
+            document.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+        }
+        
+        // Debug info
+        setTimeout(() => {
+            console.log('tsParticles available:', typeof tsParticles !== 'undefined');
+            if (typeof tsParticles !== 'undefined') {
+                console.log('tsParticles version:', tsParticles.version || 'unknown');
+                console.log('Available presets:', Object.keys(tsParticles.presets || {}));
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
