@@ -469,6 +469,75 @@ function setupSpecialButtons() {
   if (fileInput) {
     fileInput.addEventListener('change', handleConfigImport);
   }
+  
+  // Preset save modal buttons
+  const saveConfirm = document.getElementById('preset-save-confirm');
+  const saveCancel = document.getElementById('preset-save-cancel');
+  
+  if (saveConfirm) {
+    saveConfirm.addEventListener('click', saveCustomPreset);
+  }
+  
+  if (saveCancel) {
+    saveCancel.addEventListener('click', hidePresetSaveModal);
+  }
+}
+
+function updateVisibilityBasedOnSelections() {
+  // Shape-specific controls
+  const shape = document.getElementById('particle-shape')?.value;
+  const polygonRow = document.getElementById('polygon-sides-row');
+  const starRow = document.getElementById('star-sides-row');
+  const imageRow = document.getElementById('image-source-row');
+  
+  if (polygonRow) polygonRow.style.display = shape === 'polygon' ? 'block' : 'none';
+  if (starRow) starRow.style.display = shape === 'star' ? 'block' : 'none';
+  if (imageRow) imageRow.style.display = shape === 'image' ? 'block' : 'none';
+  
+  // Color mode controls
+  const colorMode = document.getElementById('color-mode')?.value;
+  const singleColorRow = document.getElementById('single-color-row');
+  const multipleColorsSection = document.getElementById('multiple-colors-section');
+  
+  if (singleColorRow) singleColorRow.style.display = colorMode === 'single' ? 'block' : 'none';
+  if (multipleColorsSection) multipleColorsSection.style.display = colorMode === 'multiple' ? 'block' : 'none';
+  
+  // Size controls
+  const sizeRandom = document.getElementById('size-random')?.checked;
+  const sizeRandomControls = document.getElementById('size-random-controls');
+  if (sizeRandomControls) sizeRandomControls.style.display = sizeRandom ? 'block' : 'none';
+  
+  // Opacity controls
+  const opacityRandom = document.getElementById('opacity-random')?.checked;
+  const opacityRandomControls = document.getElementById('opacity-random-controls');
+  if (opacityRandomControls) opacityRandomControls.style.display = opacityRandom ? 'block' : 'none';
+  
+  // Movement controls
+  const moveEnable = document.getElementById('move-enable')?.checked;
+  const movementControls = document.getElementById('movement-controls');
+  if (movementControls) movementControls.style.display = moveEnable ? 'block' : 'none';
+  
+  // Movement type specific controls
+  const moveType = document.getElementById('move-type')?.value;
+  const directionRow = document.getElementById('direction-row');
+  if (directionRow) directionRow.style.display = (moveType === 'straight') ? 'block' : 'none';
+  
+  const moveAttract = document.getElementById('move-attract')?.checked;
+  const attractControls = document.getElementById('attract-controls');
+  if (attractControls) attractControls.style.display = moveAttract ? 'block' : 'none';
+  
+  // Line controls
+  const lineEnable = document.getElementById('line-linked-enable')?.checked;
+  const lineControls = document.getElementById('line-controls');
+  if (lineControls) lineControls.style.display = lineEnable ? 'block' : 'none';
+  
+  const lineShadow = document.getElementById('line-linked-shadow')?.checked;
+  const lineShadowControls = document.getElementById('line-shadow-controls');
+  if (lineShadowControls) lineShadowControls.style.display = lineShadow ? 'block' : 'none';
+  
+  const lineTriangles = document.getElementById('line-triangles')?.checked;
+  const triangleControls = document.getElementById('triangle-controls');
+  if (triangleControls) triangleControls.style.display = lineTriangles ? 'block' : 'none';
 }
 
 function handleConfigChange() {
@@ -608,7 +677,7 @@ async function loadParticleSettings() {
 }
 
 // Custom preset management functions
-async function saveCustomPresetInternal(name, settings) {
+async function saveCustomPreset(name, settings) {
   try {
     const db = await initParticleDB();
     const transaction = db.transaction(['presets'], 'readwrite');
@@ -651,6 +720,26 @@ async function loadCustomPresets() {
   } catch (error) {
     console.error('Failed to load custom presets:', error);
     return [];
+  }
+}
+
+async function deleteCustomPreset(name) {
+  try {
+    const db = await initParticleDB();
+    const transaction = db.transaction(['presets'], 'readwrite');
+    const store = transaction.objectStore('presets');
+    
+    await new Promise((resolve, reject) => {
+      const request = store.delete(name);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    
+    await loadCustomPresets();
+    return true;
+  } catch (error) {
+    console.error('Failed to delete custom preset:', error);
+    return false;
   }
 }
 
@@ -729,34 +818,33 @@ async function loadCustomPreset(name) {
 }
 
 function deleteCustomPresetConfirm(name) {
-  showConfirmModal(
-    'Delete Preset', 
-    `Are you sure you want to delete the preset "${name}"? This cannot be undone.`,
-    () => {
-      deleteCustomPreset(name).then(success => {
-        if (success) {
-          showToast(`Deleted preset: ${name}`, 'success');
-        } else {
-          showToast('Failed to delete preset', 'error');
-        }
-      });
-    }
-  );
+  if (confirm(`Are you sure you want to delete the preset "${name}"? This cannot be undone.`)) {
+    deleteCustomPreset(name).then(success => {
+      if (success) {
+        showToast(`Deleted preset: ${name}`, 'success');
+      } else {
+        showToast('Failed to delete preset', 'error');
+      }
+    });
+  }
 }
 
 function showSavePresetDialog() {
-  console.log('Save preset button clicked - opening input modal');
-  showInputModal('Save Custom Preset', 'Enter a name for this preset:', '', (name) => {
-    // name is already trimmed and validated by showInputModal
-    console.log('Preset name received:', name);
-    const settings = getCurrentSettings();
-    saveCustomPresetInternal(name, settings).then(success => {
-      if (success) {
-        showToast(`Saved preset: ${name}`, 'success');
-      } else {
-        showToast('Failed to save preset', 'error');
-      }
-    });
+  const name = prompt('Enter a name for this preset:');
+  if (!name) return;
+  
+  if (name.trim().length === 0) {
+    showToast('Preset name cannot be empty', 'error');
+    return;
+  }
+  
+  const settings = getCurrentSettings();
+  saveCustomPreset(name.trim(), settings).then(success => {
+    if (success) {
+      showToast(`Saved preset: ${name}`, 'success');
+    } else {
+      showToast('Failed to save preset', 'error');
+    }
   });
 }
 
@@ -1012,142 +1100,6 @@ function convertPresetToSettings(preset) {
   };
 }
 
-// Custom modal functions
-function showInputModal(title, message, defaultValue = '', onConfirm) {
-  // Remove existing modal if present
-  const existingModal = document.getElementById('custom-input-modal');
-  if (existingModal) existingModal.remove();
-  
-  const modal = document.createElement('div');
-  modal.id = 'custom-input-modal';
-  modal.className = 'custom-modal';
-  modal.innerHTML = `
-    <div class="custom-modal-content">
-      <div class="custom-modal-header">
-        <h3>${title}</h3>
-      </div>
-      <div class="custom-modal-body">
-        <p>${message}</p>
-        <input type="text" id="modal-input" value="${defaultValue}" class="modal-input" maxlength="50">
-      </div>
-      <div class="custom-modal-footer">
-        <button type="button" class="modal-btn modal-btn-secondary" id="modal-cancel">Cancel</button>
-        <button type="button" class="modal-btn modal-btn-primary" id="modal-confirm">Save</button>
-      </div>
-    </div>
-  `;
-  
-  document.body.appendChild(modal);
-  
-  const input = modal.querySelector('#modal-input');
-  const confirmBtn = modal.querySelector('#modal-confirm');
-  const cancelBtn = modal.querySelector('#modal-cancel');
-  
-  // Show modal
-  setTimeout(() => modal.classList.add('active'), 10);
-  
-  // Focus and select input
-  setTimeout(() => {
-    input.focus();
-    input.select();
-  }, 100);
-  
-  const cleanup = () => {
-    modal.classList.remove('active');
-    setTimeout(() => modal.remove(), 300);
-  };
-  
-  confirmBtn.addEventListener('click', () => {
-    const value = input.value.trim();
-    if (value.length === 0) {
-      input.focus();
-      input.classList.add('error');
-      setTimeout(() => input.classList.remove('error'), 2000);
-      return;
-    }
-    cleanup();
-    if (onConfirm) onConfirm(value);
-  });
-  
-  cancelBtn.addEventListener('click', cleanup);
-  
-  // Enter key to confirm, Escape to cancel
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      confirmBtn.click();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      cleanup();
-    }
-  });
-  
-  // Click outside to cancel
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) cleanup();
-  });
-}
-
-function showConfirmModal(title, message, onConfirm) {
-  // Remove existing modal if present
-  const existingModal = document.getElementById('custom-confirm-modal');
-  if (existingModal) existingModal.remove();
-  
-  const modal = document.createElement('div');
-  modal.id = 'custom-confirm-modal';
-  modal.className = 'custom-modal';
-  modal.innerHTML = `
-    <div class="custom-modal-content">
-      <div class="custom-modal-header">
-        <h3>${title}</h3>
-      </div>
-      <div class="custom-modal-body">
-        <p>${message}</p>
-      </div>
-      <div class="custom-modal-footer">
-        <button type="button" class="modal-btn modal-btn-secondary" id="modal-cancel">Cancel</button>
-        <button type="button" class="modal-btn modal-btn-danger" id="modal-confirm">Delete</button>
-      </div>
-    </div>
-  `;
-  
-  document.body.appendChild(modal);
-  
-  const confirmBtn = modal.querySelector('#modal-confirm');
-  const cancelBtn = modal.querySelector('#modal-cancel');
-  
-  // Show modal
-  setTimeout(() => modal.classList.add('active'), 10);
-  
-  // Focus on cancel button by default for safety
-  setTimeout(() => cancelBtn.focus(), 100);
-  
-  const cleanup = () => {
-    modal.classList.remove('active');
-    setTimeout(() => modal.remove(), 300);
-  };
-  
-  confirmBtn.addEventListener('click', () => {
-    cleanup();
-    if (onConfirm) onConfirm();
-  });
-  
-  cancelBtn.addEventListener('click', cleanup);
-  
-  // Escape key to cancel
-  document.addEventListener('keydown', function escapeHandler(e) {
-    if (e.key === 'Escape') {
-      cleanup();
-      document.removeEventListener('keydown', escapeHandler);
-    }
-  });
-  
-  // Click outside to cancel
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) cleanup();
-  });
-}
-
 // Import/Export functions
 function exportConfiguration() {
   const settings = getCurrentSettings();
@@ -1188,6 +1140,52 @@ function handleConfigImport(event) {
 }
 
 // Custom preset management
+function showPresetSaveModal() {
+  const modal = document.getElementById('preset-save-modal');
+  const input = document.getElementById('preset-name-input');
+  if (modal && input) {
+    modal.style.display = 'flex';
+    input.value = '';
+    input.focus();
+  }
+}
+
+function hidePresetSaveModal() {
+  const modal = document.getElementById('preset-save-modal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+async function saveCustomPreset() {
+  const nameInput = document.getElementById('preset-name-input');
+  const name = nameInput?.value?.trim();
+  
+  if (!name) {
+    alert('Please enter a preset name.');
+    return;
+  }
+  
+  const settings = getCurrentSettings();
+  
+  try {
+    const db = await initParticleDB();
+    const transaction = db.transaction(['presets'], 'readwrite');
+    const store = transaction.objectStore('presets');
+    
+    await new Promise((resolve, reject) => {
+      const request = store.put(settings, name);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    
+    hidePresetSaveModal();
+    loadCustomPresets();
+  } catch (error) {
+    console.error('Failed to save custom preset:', error);
+    alert('Failed to save preset. Please try again.');
+  }
+}
 
 async function loadCustomPresets() {
   try {
@@ -1230,14 +1228,8 @@ function displayCustomPresets(names, presets) {
     
     const btn = presetItem.querySelector('.custom-preset-btn');
     btn.addEventListener('click', () => {
-      console.log('Loading preset:', name, 'with data:', presets[index]);
-      // Extract settings from the preset object structure
-      const presetData = presets[index];
-      const settings = presetData?.settings || presetData; // Handle both old and new formats
-      console.log('Applying settings:', settings);
-      applySettingsToControls(settings);
+      applySettingsToControls(presets[index]);
       handleConfigChange();
-      showToast(`Loaded preset: ${name}`, 'success');
     });
     
     const deleteBtn = presetItem.querySelector('.custom-preset-delete');
@@ -1248,29 +1240,23 @@ function displayCustomPresets(names, presets) {
 }
 
 async function deleteCustomPreset(name) {
-  showConfirmModal(
-    'Delete Preset', 
-    `Are you sure you want to delete the preset "${name}"? This action cannot be undone.`,
-    async () => {
-      try {
-        const db = await initParticleDB();
-        const transaction = db.transaction(['presets'], 'readwrite');
-        const store = transaction.objectStore('presets');
-        
-        await new Promise((resolve, reject) => {
-          const request = store.delete(name);
-          request.onsuccess = () => resolve();
-          request.onerror = () => reject(request.error);
-        });
-        
-        showToast(`Deleted preset: ${name}`, 'success');
-        loadCustomPresets();
-      } catch (error) {
-        console.error('Failed to delete custom preset:', error);
-        showToast('Failed to delete preset', 'error');
-      }
-    }
-  );
+  if (!confirm(`Delete preset "${name}"?`)) return;
+  
+  try {
+    const db = await initParticleDB();
+    const transaction = db.transaction(['presets'], 'readwrite');
+    const store = transaction.objectStore('presets');
+    
+    await new Promise((resolve, reject) => {
+      const request = store.delete(name);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+    
+    loadCustomPresets();
+  } catch (error) {
+    console.error('Failed to delete custom preset:', error);
+  }
 }
 
 // IndexedDB functions
@@ -1684,73 +1670,6 @@ const relTime = (ms) => {
          day < 7 ? `${day}d ago` :
          new Date(ms).toLocaleDateString();
 };
-
-// Reintroduced visibility management functions
-function updateVisibilityBasedOnSelections() {
-  // Shape-specific controls
-  const shape = document.getElementById('particle-shape')?.value;
-  const polygonRow = document.getElementById('polygon-sides-row');
-  const starRow = document.getElementById('star-sides-row');
-  const imageRow = document.getElementById('image-source-row');
-  
-  if (polygonRow) polygonRow.style.display = shape === 'polygon' ? 'block' : 'none';
-  if (starRow) starRow.style.display = shape === 'star' ? 'block' : 'none';
-  if (imageRow) imageRow.style.display = shape === 'image' ? 'block' : 'none';
-
-  // Color mode controls
-  const colorMode = document.getElementById('color-mode')?.value;
-  const singleColorRow = document.getElementById('single-color-row');
-  const multipleColorsSection = document.getElementById('multiple-colors-section');
-  
-  if (singleColorRow) singleColorRow.style.display = colorMode === 'single' ? 'block' : 'none';
-  if (multipleColorsSection) multipleColorsSection.style.display = colorMode === 'multiple' ? 'block' : 'none';
-
-  // Size controls
-  const sizeRandom = document.getElementById('size-random')?.checked;
-  const sizeRandomControls = document.getElementById('size-random-controls');
-  if (sizeRandomControls) sizeRandomControls.style.display = sizeRandom ? 'block' : 'none';
-
-  // Opacity controls
-  const opacityRandom = document.getElementById('opacity-random')?.checked;
-  const opacityRandomControls = document.getElementById('opacity-random-controls');
-  if (opacityRandomControls) opacityRandomControls.style.display = opacityRandom ? 'block' : 'none';
-
-  // Movement controls
-  const moveEnable = document.getElementById('move-enable')?.checked;
-  const movementControls = document.getElementById('movement-controls');
-  if (movementControls) movementControls.style.display = moveEnable ? 'block' : 'none';
-
-  // Movement type specific controls
-  const moveType = document.getElementById('move-type')?.value;
-  const directionRow = document.getElementById('direction-row');
-  if (directionRow) directionRow.style.display = moveType === 'straight' ? 'block' : 'none';
-
-  // Attract controls
-  const moveAttract = document.getElementById('move-attract')?.checked;
-  const attractControls = document.getElementById('attract-controls');
-  if (attractControls) attractControls.style.display = moveAttract ? 'block' : 'none';
-
-  // Line controls
-  const lineEnable = document.getElementById('line-linked-enable')?.checked;
-  const lineControls = document.getElementById('line-controls');
-  if (lineControls) lineControls.style.display = lineEnable ? 'block' : 'none';
-
-  const lineShadow = document.getElementById('line-linked-shadow')?.checked;
-  const lineShadowControls = document.getElementById('line-shadow-controls');
-  if (lineShadowControls) lineShadowControls.style.display = lineShadow ? 'block' : 'none';
-
-  const lineTriangles = document.getElementById('line-triangles')?.checked;
-  const triangleControls = document.getElementById('triangle-controls');
-  if (triangleControls) triangleControls.style.display = lineTriangles ? 'block' : 'none';
-}
-
-function updateAllSliderDisplays() {
-  const sliders = document.querySelectorAll('.config-slider');
-  sliders.forEach(slider => {
-    const evt = new Event('input');
-    slider.dispatchEvent(evt);
-  });
-}
 
 /* PWA manifest injection */
 if (!document.querySelector('link[rel="manifest"]')) {

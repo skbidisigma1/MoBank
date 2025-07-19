@@ -299,12 +299,37 @@
             config.particles.color.value = "random";
         }
         
-        // Size and opacity - remove animations
-        config.particles.size.value = settings.size || 3;
-        config.particles.size.random = settings.sizeRandom || false;
+        // Size configuration - use modern range-based approach
+        const baseSize = settings.size || 3;
+        const sizeVariation = settings.sizeVariation || 0;
         
-        config.particles.opacity.value = Math.max(0.01, settings.opacity || 0.5);
-        config.particles.opacity.random = settings.opacityRandom || false;
+        if (settings.sizeRandom && sizeVariation > 0) {
+            // Use range object for size variation
+            const minSize = Math.max(0.1, baseSize * (1 - sizeVariation));
+            const maxSize = baseSize * (1 + sizeVariation);
+            config.particles.size.value = {
+                min: minSize,
+                max: maxSize
+            };
+        } else {
+            config.particles.size.value = baseSize;
+        }
+        
+        // Opacity configuration - use modern range-based approach  
+        const baseOpacity = Math.max(0.01, settings.opacity || 0.5);
+        const opacityVariation = settings.opacityVariation || 0;
+        
+        if (settings.opacityRandom && opacityVariation > 0) {
+            // Use range object for opacity variation
+            const minOpacity = Math.max(0.01, baseOpacity * (1 - opacityVariation));
+            const maxOpacity = Math.min(1, baseOpacity * (1 + opacityVariation));
+            config.particles.opacity.value = {
+                min: minOpacity,
+                max: maxOpacity
+            };
+        } else {
+            config.particles.opacity.value = baseOpacity;
+        }
         
         // Movement - handle new movement type system
         config.particles.move.enable = settings.moveEnable !== false;
@@ -343,40 +368,38 @@
         config.particles.links.color = settings.lineLinkedColor || settings.particleColor || "#0066cc";
         config.particles.links.opacity = settings.lineLinkedOpacity || 0.4;
         config.particles.links.width = settings.lineLinkedWidth || 1;
+        config.particles.links.warp = settings.lineWarp || false;
+        config.particles.links.triangles = {
+            enable: settings.lineTriangles || false,
+            color: settings.triangleColor || settings.lineLinkedColor || "#0066cc",
+            opacity: settings.triangleOpacity || 0.5
+        };
         config.particles.links.shadow = {
             enable: settings.lineLinkedShadow || false,
             color: settings.lineShadowColor || "#000000",
             blur: settings.lineShadowBlur || 5
         };
         
-        // Interactivity - simplified
-        config.interactivity.detectsOn = settings.detectOn || "canvas";
-        
-        // Only handle click events, no hover
-        const clickMode = settings.clickMode || "push";
-        if (clickMode === "none") {
-            config.interactivity.events.onClick.enable = false;
-        } else {
-            config.interactivity.events.onClick.enable = true;
-            config.interactivity.events.onClick.mode = clickMode;
-        }
+    // Interactivity - simplified, disable built-in click
+    config.interactivity.detectsOn = settings.detectOn || "canvas";
+    config.interactivity.events.onClick.enable = false;
+    config.interactivity.events.onClick.mode = [];
+    delete config.interactivity.modes.push;
+    delete config.interactivity.modes.remove;
         
         config.interactivity.events.resize = settings.resizeEnable !== false;
-        
-        // Interaction modes - only push and remove
-        config.interactivity.modes.push.quantity = clickMode === "push" ? 1 : (settings.pushParticlesNb || 4);
-        config.interactivity.modes.remove.quantity = settings.pushParticlesNb || 2;
         
         // Advanced settings
         config.detectRetina = settings.retinaDetect !== false;
         
-        // Always use transparent background to inherit page background
         config.background.color = "transparent";
         
         // Apply reduced motion if needed
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         return reducedMotion ? getReducedMotionConfig(config) : config;
     }
+
+    let updateConfigRunning = false;
 
     async function initParticles() {
         if (retryCount >= MAX_RETRIES) {
@@ -405,6 +428,8 @@
             
             // Load saved settings or use defaults
             const settings = await loadParticleSettings();
+            // Store current settings for manual click handler
+            window.currentParticleSettings = settings;
             
             if (!settings.enabled) {
                 particlesContainer.style.display = 'none';
@@ -428,23 +453,26 @@
 
     function setupClickHandler() {
         if (mainContainer) {
-            const handler = function(e) {
-                if (!document.hidden && mainContainer) {
+            // Remove previous handler if exists
+            if (window._particleClickHandler) {
+                document.body.removeEventListener('click', window._particleClickHandler);
+            }
+
+            // Create a single persistent handler
+            window._particleClickHandler = function(e) {
+                if (!document.hidden && mainContainer && window.currentParticleSettings?.enabled) {
                     const pos = { x: e.clientX, y: e.clientY };
-                    
+
                     try {
-                        // Get the interactivity mode from the config
-                        const mode = mainContainer.actualOptions?.interactivity?.events?.onClick?.mode;
-                        
-                        if (mode === 'push') {
-                            // Add 1 particle at click position (default for push mode)
-                            mainContainer.particles.addParticle({
-                                x: pos.x,
-                                y: pos.y
-                            });
-                        } else if (mode === 'remove') {
-                            // Remove particles
-                            const quantity = mainContainer.actualOptions?.interactivity?.modes?.remove?.quantity || 2;
+                        // Determine click effect from settings
+                        const clickMode = window.currentParticleSettings.clickMode;
+                        if (clickMode === 'push') {
+                            const quantity = window.currentParticleSettings.pushParticlesNb || 1;
+                            for (let i = 0; i < quantity; i++) {
+                                mainContainer.particles.addParticle({ x: pos.x, y: pos.y });
+                            }
+                        } else if (clickMode === 'remove') {
+                            const quantity = window.currentParticleSettings.pushParticlesNb || 2;
                             mainContainer.particles.removeQuantity(quantity);
                         }
                     } catch (err) {
@@ -453,8 +481,7 @@
                 }
             };
 
-            document.body.removeEventListener('click', handler);
-            document.body.addEventListener('click', handler);
+            document.body.addEventListener('click', window._particleClickHandler);
         }
     }
 
@@ -608,8 +635,10 @@
             colors: ["#0066cc"],
             size: 3,
             sizeRandom: false,
+            sizeVariation: 0.5,
             opacity: 0.8, // Increased opacity for better visibility
             opacityRandom: false,
+            opacityVariation: 0.3,
             moveEnable: true,
             moveSpeed: 1,
             moveType: "default",
@@ -624,6 +653,10 @@
             lineLinkedOpacity: 0.6, // Increased line opacity for better visibility
             lineLinkedWidth: 1,
             lineLinkedShadow: false,
+            lineWarp: false,
+            lineTriangles: false,
+            triangleColor: "#0066cc",
+            triangleOpacity: 0.5,
             lineShadowColor: "#000000",
             lineShadowBlur: 5,
             detectOn: "canvas",
@@ -642,28 +675,36 @@
         updateConfig: async function(settings) {
             if (!settings) return;
             
-            // Check if any modal is currently open to avoid interference
-            const isModalOpen = document.querySelector('.modal:not(.hidden)') || 
-                               document.querySelector('[role="dialog"]:not(.hidden)');
-            
-            const config = createParticlesConfig(settings);
-            const particlesContainer = document.getElementById('particles-js');
-            
-            if (!particlesContainer) {
-                console.warn('particles-js container not found');
+            // Prevent multiple concurrent updates
+            if (updateConfigRunning) {
+                console.log('UpdateConfig already running, skipping');
                 return;
             }
+            updateConfigRunning = true;
             
-            if (settings.enabled && window.innerWidth >= BREAKPOINTS.MOBILE) {
-                particlesContainer.style.display = 'block';
-                destroyParticles('main');
+            try {
+                // Check if any modal is currently open to avoid interference
+                const isModalOpen = document.querySelector('.modal:not(.hidden)') || 
+                                   document.querySelector('[role="dialog"]:not(.hidden)');
                 
-                // Small delay if modal is open to prevent interference
-                if (isModalOpen) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                const config = createParticlesConfig(settings);
+                const particlesContainer = document.getElementById('particles-js');
+                
+                if (!particlesContainer) {
+                    console.warn('particles-js container not found');
+                    return;
                 }
                 
-                try {
+                if (settings.enabled && window.innerWidth >= BREAKPOINTS.MOBILE) {
+                    particlesContainer.style.display = 'block';
+                    destroyParticles('main');
+                    
+                    // Small delay if modal is open to prevent interference
+                    if (isModalOpen) {
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                    
+                    try {
                     mainContainer = await tsParticles.load({
                         id: 'particles-js',
                         options: config
@@ -675,6 +716,9 @@
             } else {
                 particlesContainer.style.display = 'none';
                 destroyParticles('main');
+            }
+            } finally {
+                updateConfigRunning = false;
             }
         },
         
@@ -694,19 +738,6 @@
         loadSettings: loadParticleSettings
     };
 
-    // Secondary initialization to ensure particles load with correct settings
-    setTimeout(() => {
-        if (typeof tsParticles !== 'undefined' && window.particleControls) {
-            loadParticleSettings().then(async settings => {
-                console.log('Secondary initialization with settings:', settings);
-                try {
-                    await window.particleControls.updateConfig(settings);
-                } catch (error) {
-                    console.warn('Failed to apply particle settings on secondary init:', error);
-                }
-            }).catch(error => {
-                console.warn('Failed to load particle settings on secondary init:', error);
-            });
-        }
-    }, 1500); // Wait for everything to settle
+    // Initialize particles when page loads
+    initParticles();
 })();

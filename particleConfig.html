@@ -31,7 +31,7 @@
             <span>Particle Count</span>
             <div class="slider-container">
               <input type="range" id="particle-count" class="config-slider" min="0" max="500" step="5">
-              <span class="slider-value" id="particle-count-value">50</span>
+              <span class="slider-value editable-value" id="particle-count-value">50</span>
             </div>
           </label>
         </div>
@@ -216,6 +216,7 @@
               <span>Out Mode</span>
               <select id="move-out-mode" class="config-select">
                 <option value="out">Out</option>
+                <option value="bounce">Bounce</option>
                 <option value="destroy">Destroy</option>
               </select>
             </label>
@@ -298,6 +299,18 @@
               <input type="checkbox" id="line-linked-shadow" class="config-checkbox">
             </label>
           </div>
+          <div class="config-row">
+            <label class="config-label">
+              <span>Triangles</span>
+              <input type="checkbox" id="line-triangles" class="config-checkbox">
+            </label>
+          </div>
+          <div class="config-row">
+            <label class="config-label">
+              <span>Line Warp</span>
+              <input type="checkbox" id="line-warp" class="config-checkbox">
+            </label>
+          </div>
           <div class="config-group" id="line-shadow-controls" style="display: none;">
             <div class="config-row">
               <label class="config-label">
@@ -311,6 +324,23 @@
                 <div class="slider-container">
                   <input type="range" id="line-shadow-blur" class="config-slider" min="0" max="20" step="1">
                   <span class="slider-value" id="line-shadow-blur-value">5px</span>
+                </div>
+              </label>
+            </div>
+          </div>
+          <div class="config-group" id="triangle-controls" style="display: none;">
+            <div class="config-row">
+              <label class="config-label">
+                <span>Triangle Color</span>
+                <input type="color" id="triangle-color" class="config-color">
+              </label>
+            </div>
+            <div class="config-row">
+              <label class="config-label">
+                <span>Triangle Opacity</span>
+                <div class="slider-container">
+                  <input type="range" id="triangle-opacity" class="config-slider" min="0" max="1" step="0.01">
+                  <span class="slider-value editable-value" id="triangle-opacity-value">50%</span>
                 </div>
               </label>
             </div>
@@ -335,7 +365,7 @@
             <span>Click Effect</span>
             <select id="click-mode" class="config-select">
               <option value="none">None</option>
-              <option value="push">Push (1 particle)</option>
+              <option value="push">Spawn</option>
               <option value="remove">Remove</option>
             </select>
           </label>
@@ -375,7 +405,7 @@
 
       <!-- Presets -->
       <div class="config-section">
-        <h3>Presets</h3>
+        <h3>Built-in Presets</h3>
         <div class="config-row preset-buttons">
           <button class="preset-btn" data-preset="minimal">Minimal</button>
           <button class="preset-btn" data-preset="default">Default</button>
@@ -386,7 +416,11 @@
           <button class="preset-btn" data-preset="nasa">NASA</button>
           <button class="preset-btn" data-preset="nyan-cat">Nyan Cat</button>
         </div>
-        <div id="custom-presets" class="custom-presets"></div>
+        
+        <h3>Custom Presets</h3>
+        <div id="custom-presets" class="custom-presets">
+          <p class="no-custom-presets" style="display: none; color: #666; font-style: italic;">No custom presets saved yet.</p>
+        </div>
         <div class="config-row">
           <button id="reset-defaults" class="modal-btn modal-btn-secondary">Reset to Defaults</button>
           <button id="import-config-btn" class="modal-btn modal-btn-secondary">Import Config</button>
@@ -403,14 +437,3 @@
   </div>
 </div>
 
-<!-- Custom preset save modal -->
-<div id="preset-save-modal" class="modal-overlay" style="display: none;">
-  <div class="modal-content">
-    <h3>Save Custom Preset</h3>
-    <input type="text" id="preset-name-input" placeholder="Enter preset name" maxlength="30">
-    <div class="modal-buttons">
-      <button id="preset-save-confirm" class="modal-btn modal-btn-primary">Save</button>
-      <button id="preset-save-cancel" class="modal-btn modal-btn-secondary">Cancel</button>
-    </div>
-  </div>
-</div>
