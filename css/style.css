@@ -40,6 +40,7 @@
   --color-success-dark: #146c43;
   --color-motools: #6e6e6e;
   --color-motools-dark: #5b5b5b;
+  --overlay-bg-rgb: 244, 246, 248; /* RGB values for var(--color-bg) */
 }
 [data-theme="dark"] {
   --color-primary: #005fa3;
@@ -78,16 +79,10 @@
   --color-danger-dark: #e60000;
   --color-success: #00b371;
   --color-success-dark: #008f5b;
+  --overlay-bg-rgb: 18, 18, 18; /* RGB values for var(--color-bg) */
 }
 
-/* Dark theme hero element backgrounds */
-[data-theme="dark"] .hero-description {
-  background: var(--color-bg);
-}
-
-[data-theme="dark"] .hero-cta {
-  background: var(--color-bg);
-}
+/* Dark theme hero element backgrounds - removed since main overlay handles this now */
 
 #particles-js {
   position: fixed;
@@ -111,6 +106,7 @@ body {
   flex-direction: column;
   min-height: 100vh;
   overflow-x: hidden;
+  position: relative;
 }
 header {
   background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
@@ -1288,22 +1284,8 @@ select:after {
   margin-bottom: 2rem;
   letter-spacing: 0.5px;
   position: relative;
-  padding: 1.5rem 2rem;
   display: inline-block;
   color: var(--color-text);
-}
-
-.hero-heading::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--color-bg);
-  border-radius: 12px;
-  z-index: -1;
-  opacity: 1;
 }
 
 .hero-heading {
@@ -1389,6 +1371,30 @@ select:after {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1.5rem;
+  position: relative;
+}
+
+/* background to reduce particle obtrusiveness on page content */
+main {
+  position: relative;
+}
+
+main::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(var(--overlay-bg-rgb), 0.95);
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 12px;
+}
+
+main > * {
+  position: relative;
+  z-index: 2;
 }
 
 .hero-section {
@@ -1404,18 +1410,12 @@ select:after {
   color: var(--color-text);
   opacity: 0.9;
   line-height: 1.6;
-  background: var(--color-bg);
-  border-radius: 10px;
-  padding: 2.5rem 1.75rem 1.75rem;
 }
 
 .hero-cta {
   font-size: 1.1rem;
   color: var(--color-muted);
   margin: -0.8rem auto 2rem;
-  background: var(--color-bg);
-  border-radius: 8px;
-  padding: 2rem 1.5rem 1.25rem;
   display: inline-block;
   max-width: 600px;
 }
@@ -1636,10 +1636,8 @@ select:after {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: var(--color-bg);
   border-radius: 4px;
   z-index: -1;
-  padding: 0.2rem 0.5rem;
   font-size: inherit;
   font-family: inherit;
   font-weight: inherit;

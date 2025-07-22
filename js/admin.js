@@ -1,3 +1,5 @@
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+
 async function loadAdminContent() {
   await window.auth0Promise;
   const user = await getUser();
@@ -106,9 +108,10 @@ async function loadAdminContent() {
 
   const tabButtons = document.querySelectorAll('.tab-button');
   const tabPanels = document.querySelectorAll('.tab-panel');
-  const manageAnnouncementsBtn = document.getElementById('manage-announcements-btn'); // Added
-  const announcementsPanel = document.getElementById('announcements-panel'); // Added  const announcementForm = document.getElementById('announcement-form'); // Added
-  const currentAnnouncementsList = document.getElementById('current-announcements-list'); // Added
+  const manageAnnouncementsBtn = document.getElementById('manage-announcements-btn');
+  const announcementsPanel = document.getElementById('announcements-panel');
+  const announcementForm = document.getElementById('announcement-form');
+  const currentAnnouncementsList = document.getElementById('current-announcements-list');
   const namesCache = {};
 
   const modalOverlay = document.createElement('div');
