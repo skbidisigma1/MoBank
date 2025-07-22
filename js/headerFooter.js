@@ -241,6 +241,7 @@ function setupConfigControls() {
         checkbox.addEventListener('change', () => {
           try {
             handleConfigChange();
+            updateVisibilityBasedOnSelections(); // Update visibility for conditional controls
           } catch (error) {
             console.warn(`Error handling change for ${id}:`, error);
           }
@@ -471,11 +472,218 @@ function setupSpecialButtons() {
   }
 }
 
+// Sanitize and auto-correct settings where possible
+function sanitizeSettings(settings) {
+  const sanitized = { ...settings };
+  
+  // Auto-correct negative values
+  if (sanitized.count < 0) sanitized.count = 0;
+  if (sanitized.size <= 0) sanitized.size = 1;
+  if (sanitized.moveSpeed < 0) sanitized.moveSpeed = 0;
+  if (sanitized.lineLinkedDistance < 0) sanitized.lineLinkedDistance = 0;
+  if (sanitized.lineLinkedWidth <= 0) sanitized.lineLinkedWidth = 1;
+  
+  // Clamp values to valid ranges
+  sanitized.opacity = Math.max(0, Math.min(1, sanitized.opacity));
+  sanitized.lineLinkedOpacity = Math.max(0, Math.min(1, sanitized.lineLinkedOpacity));
+  sanitized.sizeVariation = Math.max(0, Math.min(1, sanitized.sizeVariation));
+  sanitized.opacityVariation = Math.max(0, Math.min(1, sanitized.opacityVariation));
+  
+  // Clamp polygon/star sides
+  if (sanitized.shape === 'polygon') {
+    sanitized.polygonSides = Math.max(3, Math.min(20, sanitized.polygonSides));
+  }
+  if (sanitized.shape === 'star') {
+    sanitized.starSides = Math.max(3, Math.min(20, sanitized.starSides));
+  }
+  
+  // Clamp attract rotation values
+  sanitized.attractRotateX = Math.max(0, Math.min(5000, sanitized.attractRotateX));
+  sanitized.attractRotateY = Math.max(0, Math.min(5000, sanitized.attractRotateY));
+  
+  // Clamp click effect count
+  if (sanitized.clickMode !== 'none') {
+    sanitized.pushParticlesNb = Math.max(1, Math.min(50, sanitized.pushParticlesNb));
+  }
+  
+  return sanitized;
+}
+
 function handleConfigChange() {
-  const settings = getCurrentSettings();
+  let settings = getCurrentSettings();
+  
+  // First sanitize the settings
+  settings = sanitizeSettings(settings);
+  
+  // Then validate the sanitized settings
+  const validation = validateParticleSettings(settings);
+  
+  // Handle errors (should be rare after sanitization)
+  if (!validation.isValid) {
+    showToast('Configuration Error', validation.errors[0], 'error');
+    return;
+  }
+  
+  // Handle warnings (performance-related, non-blocking)
+  if (validation.warnings.length > 0) {
+    // Only show warnings occasionally to avoid spam
+    if (Math.random() < 0.3) { // 30% chance to show warning
+      showToast('Performance Note', validation.warnings[0], 'warning');
+    }
+  }
+  
+  // Settings are valid, apply them
   window.currentParticleSettings = settings;
   saveParticleSettings(settings);
   applyParticleSettings(settings);
+}
+
+// Comprehensive validation for particle settings
+function validateParticleSettings(settings) {
+  const errors = [];
+  const warnings = [];
+
+  // Validate particle count
+  if (settings.count < 0) {
+    errors.push("Particle count cannot be negative");
+  } else if (settings.count > 1000) {
+    warnings.push("Very high particle count (>1000) may cause performance issues");
+  } else if (settings.count > 500) {
+    warnings.push("High particle count (>500) may affect performance on slower devices");
+  }
+
+  // Validate size
+  if (settings.size <= 0) {
+    errors.push("Particle size must be greater than 0");
+  } else if (settings.size > 100) {
+    warnings.push("Very large particle size (>100px) may look overwhelming");
+  }
+
+  // Validate opacity
+  if (settings.opacity < 0 || settings.opacity > 1) {
+    errors.push("Particle opacity must be between 0 and 1");
+  } else if (settings.opacity < 0.1) {
+    warnings.push("Very low opacity (<0.1) may make particles nearly invisible");
+  }
+
+  // Validate variations
+  if (settings.sizeVariation < 0 || settings.sizeVariation > 1) {
+    errors.push("Size variation must be between 0% and 100%");
+  }
+  if (settings.opacityVariation < 0 || settings.opacityVariation > 1) {
+    errors.push("Opacity variation must be between 0% and 100%");
+  }
+
+  // Validate movement speed
+  if (settings.moveSpeed < 0) {
+    errors.push("Movement speed cannot be negative");
+  } else if (settings.moveSpeed > 20) {
+    warnings.push("Very high movement speed (>20) may cause motion sickness");
+  }
+
+  // Validate polygon/star sides
+  if (settings.shape === 'polygon' && (settings.polygonSides < 3 || settings.polygonSides > 20)) {
+    errors.push("Polygon sides must be between 3 and 20");
+  }
+  if (settings.shape === 'star' && (settings.starSides < 3 || settings.starSides > 20)) {
+    errors.push("Star points must be between 3 and 20");
+  }
+
+  // Validate image URL for image shapes
+  if (settings.shape === 'image') {
+    if (!settings.imageSource || settings.imageSource.trim() === '') {
+      errors.push("Image URL is required when using image shape");
+    } else if (!isValidImageUrl(settings.imageSource)) {
+      warnings.push("Image URL should end with .png, .jpg, .jpeg, .gif, .svg, or .webp");
+    }
+  }
+
+  // Validate line settings
+  if (settings.lineLinkedEnable) {
+    if (settings.lineLinkedDistance < 0) {
+      errors.push("Line distance cannot be negative");
+    } else if (settings.lineLinkedDistance > 1000) {
+      warnings.push("Very high line distance (>1000px) may connect all particles");
+    }
+    
+    if (settings.lineLinkedOpacity < 0 || settings.lineLinkedOpacity > 1) {
+      errors.push("Line opacity must be between 0 and 1");
+    }
+    
+    if (settings.lineLinkedWidth <= 0) {
+      errors.push("Line width must be greater than 0");
+    } else if (settings.lineLinkedWidth > 20) {
+      warnings.push("Very thick lines (>20px) may dominate the visual");
+    }
+  }
+
+  // Validate click effect settings
+  if (settings.clickMode !== 'none') {
+    if (settings.pushParticlesNb < 1 || settings.pushParticlesNb > 50) {
+      errors.push("Click effect particle count must be between 1 and 50");
+    } else if (settings.pushParticlesNb > 20) {
+      warnings.push("High click effect count (>20) may cause performance spikes");
+    }
+  }
+
+  // Validate attract settings
+  if (settings.moveAttract) {
+    if (settings.attractRotateX < 0 || settings.attractRotateX > 5000) {
+      errors.push("Attract Rotate X must be between 0 and 5000");
+    }
+    if (settings.attractRotateY < 0 || settings.attractRotateY > 5000) {
+      errors.push("Attract Rotate Y must be between 0 and 5000");
+    }
+  }
+
+  // Performance-based warnings
+  const performanceScore = calculatePerformanceScore(settings);
+  if (performanceScore > 80) {
+    warnings.push("Current settings may cause performance issues on slower devices");
+  }
+
+  return { errors, warnings, isValid: errors.length === 0 };
+}
+
+// Helper function to validate image URLs
+function isValidImageUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    const validExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'];
+    return validExtensions.some(ext => urlObj.pathname.toLowerCase().endsWith(ext));
+  } catch {
+    return false;
+  }
+}
+
+// Calculate a performance impact score
+function calculatePerformanceScore(settings) {
+  let score = 0;
+  
+  // Particle count impact
+  score += Math.min(settings.count / 10, 30);
+  
+  // Size impact
+  score += Math.min(settings.size / 2, 15);
+  
+  // Movement impact
+  if (settings.moveEnable) {
+    score += Math.min(settings.moveSpeed * 2, 10);
+  }
+  
+  // Line connections impact
+  if (settings.lineLinkedEnable) {
+    score += 15;
+    score += Math.min(settings.lineLinkedDistance / 50, 10);
+  }
+  
+  // Interactive features impact
+  if (settings.clickMode !== 'none') score += 5;
+  if (settings.moveAttract) score += 10;
+  if (settings.lineTriangles) score += 10;
+  if (settings.lineLinkedShadow) score += 5;
+  
+  return Math.min(score, 100);
 }
 
 function getCurrentSettings() {
@@ -611,13 +819,23 @@ async function loadParticleSettings() {
 // Custom preset management functions
 async function saveCustomPresetInternal(name, settings) {
   try {
+    // Validate settings before saving
+    const validation = validateParticleSettings(settings);
+    if (!validation.isValid) {
+      showToast('Save Failed', `Cannot save preset: ${validation.errors[0]}`, 'error');
+      return false;
+    }
+    
+    // Sanitize settings
+    const sanitizedSettings = sanitizeSettings(settings);
+    
     const db = await initParticleDB();
     const transaction = db.transaction(['presets'], 'readwrite');
     const store = transaction.objectStore('presets');
     
     const preset = {
       name,
-      settings,
+      settings: sanitizedSettings,
       createdAt: new Date().toISOString()
     };
     
@@ -647,8 +865,45 @@ async function loadCustomPresets() {
       request.onerror = () => reject(request.error);
     });
     
-    displayCustomPresets(presets);
-    return presets;
+    // Validate and filter presets
+    const validPresets = [];
+    const invalidPresets = [];
+    
+    presets.forEach(preset => {
+      try {
+        const settings = convertPresetToSettings(preset);
+        const validation = validateParticleSettings(settings);
+        
+        if (validation.isValid) {
+          validPresets.push(preset);
+        } else {
+          console.warn(`Invalid preset "${preset.name}":`, validation.errors);
+          invalidPresets.push(preset);
+        }
+      } catch (error) {
+        console.warn(`Corrupted preset "${preset.name}":`, error);
+        invalidPresets.push(preset);
+      }
+    });
+    
+    // Remove invalid presets from storage
+    if (invalidPresets.length > 0) {
+      try {
+        const deleteTransaction = db.transaction(['presets'], 'readwrite');
+        const deleteStore = deleteTransaction.objectStore('presets');
+        
+        for (const preset of invalidPresets) {
+          deleteStore.delete(preset.name);
+        }
+        
+        showToast('Presets Cleaned', `${invalidPresets.length} invalid preset(s) were removed`, 'warning');
+      } catch (error) {
+        console.error('Failed to clean invalid presets:', error);
+      }
+    }
+    
+    displayCustomPresets(validPresets);
+    return validPresets;
   } catch (error) {
     console.error('Failed to load custom presets:', error);
     return [];
@@ -761,12 +1016,12 @@ function showSavePresetDialog() {
   });
 }
 
-function showToast(message, type = 'info') {
+function showToast(title, message, type = 'info') {
   // Use existing toast system if available, otherwise simple alert
   if (window.showToast) {
-    window.showToast(message, type);
+    window.showToast(title, message, type);
   } else {
-    console.log(`${type.toUpperCase()}: ${message}`);
+    console.log(`${type.toUpperCase()}: ${title} - ${message}`);
     // You could also create a simple toast notification here
   }
 }
@@ -929,6 +1184,18 @@ function applySettingsToControls(settings) {
   setTimeout(() => {
     updateVisibilityBasedOnSelections();
     updateAllSliderDisplays();
+    
+    // Manually trigger triangle controls visibility if triangles are enabled
+    if (settings.lineTriangles) {
+      const triangleControls = document.getElementById('triangle-controls');
+      if (triangleControls) triangleControls.style.display = 'block';
+    }
+    
+    // Manually trigger direction controls visibility if move type is straight
+    if (settings.moveType === 'straight') {
+      const directionRow = document.getElementById('direction-row');
+      if (directionRow) directionRow.style.display = 'block';
+    }
   }, 100);
 }
 
@@ -965,10 +1232,30 @@ function applyPreset(presetName) {
     const preset = presets[presetName];
     
     if (preset) {
-      const settings = convertPresetToSettings(preset);
-      applySettingsToControls(settings);
-      handleConfigChange();
+      try {
+        const settings = convertPresetToSettings(preset);
+        
+        // Validate the preset settings
+        const validation = validateParticleSettings(settings);
+        if (!validation.isValid) {
+          showToast('Preset Error', `Invalid preset "${presetName}": ${validation.errors[0]}`, 'error');
+          return;
+        }
+        
+        // Apply the validated preset
+        applySettingsToControls(settings);
+        handleConfigChange();
+        
+        showToast('Preset Applied', `"${presetName}" preset loaded successfully`, 'success');
+      } catch (error) {
+        showToast('Preset Error', `Failed to load preset "${presetName}"`, 'error');
+        console.error('Preset loading error:', error);
+      }
+    } else {
+      showToast('Preset Not Found', `Preset "${presetName}" does not exist`, 'error');
     }
+  } else {
+    showToast('System Error', 'Particle system not ready', 'error');
   }
 }
 
@@ -977,15 +1264,34 @@ function convertPresetToSettings(preset) {
   const p = preset.particles;
   const i = preset.interactivity;
   
+  // Handle color mode detection
+  let colorMode = 'single';
+  let particleColor = '#0066cc';
+  let colors = ['#0066cc'];
+  
+  if (p.color?.value === 'random') {
+    colorMode = 'random';
+    particleColor = '#ff0000'; // Default base color for random mode
+    colors = ['#ff0000']; // Will be ignored in random mode
+  } else if (Array.isArray(p.color?.value)) {
+    colorMode = 'multiple';
+    particleColor = p.color.value[0];
+    colors = p.color.value;
+  } else {
+    colorMode = 'single';
+    particleColor = p.color?.value || '#0066cc';
+    colors = [particleColor];
+  }
+  
   return {
     enabled: true,
     count: p.number?.value || 50,
     shape: p.shape?.type || 'circle',
     polygonSides: p.shape?.options?.polygon?.sides || p.shape?.polygon?.sides || 5,
     starSides: p.shape?.options?.star?.sides || p.shape?.polygon?.sides || 5,
-    colorMode: Array.isArray(p.color?.value) ? 'multiple' : 'single',
-    particleColor: Array.isArray(p.color?.value) ? p.color.value[0] : p.color?.value || '#0066cc',
-    colors: Array.isArray(p.color?.value) ? p.color.value : ['#0066cc'],
+    colorMode: colorMode,
+    particleColor: particleColor,
+    colors: colors,
     size: p.size?.value || 3,
     sizeRandom: p.size?.random || false,
     opacity: p.opacity?.value || 0.5,
@@ -1003,6 +1309,9 @@ function convertPresetToSettings(preset) {
     lineLinkedColor: p.links?.color || '#0066cc',
     lineLinkedOpacity: p.links?.opacity || 0.4,
     lineLinkedWidth: p.links?.width || 1,
+    lineTriangles: p.links?.triangles?.enable || false,
+    triangleColor: p.links?.triangles?.color || '#0066cc',
+    triangleOpacity: p.links?.triangles?.opacity || 0.5,
     lineShadowColor: p.links?.shadow?.color || '#000000',
     lineShadowBlur: p.links?.shadow?.blur || 5,
     lineLinkedShadow: p.links?.shadow?.enable || false,
@@ -1179,10 +1488,27 @@ function handleConfigImport(event) {
   reader.onload = function(e) {
     try {
       const settings = JSON.parse(e.target.result);
-      applySettingsToControls(settings);
+      
+      // Validate imported settings
+      const validation = validateParticleSettings(settings);
+      if (!validation.isValid) {
+        showToast('Import Failed', `Invalid configuration: ${validation.errors[0]}`, 'error');
+        return;
+      }
+      
+      // Show warnings if any
+      if (validation.warnings.length > 0) {
+        showToast('Import Warning', validation.warnings[0], 'warning');
+      }
+      
+      // Sanitize and apply settings
+      const sanitizedSettings = sanitizeSettings(settings);
+      applySettingsToControls(sanitizedSettings);
       handleConfigChange();
+      
+      showToast('Configuration Imported', 'Settings loaded successfully', 'success');
     } catch (error) {
-      alert('Invalid configuration file. Please check the file format.');
+      showToast('Import Error', 'Invalid configuration file format', 'error');
       console.error('Import error:', error);
     }
   };
@@ -1435,78 +1761,7 @@ function getDefaultSettings() {
     backgroundImage: "",
     backgroundPosition: "center center",
     backgroundRepeat: "no-repeat",
-    backgroundSize: "cover"
   };
-}
-
-function getControlId(settingKey) {
-  const mapping = {
-    enabled: 'particles-enabled',
-    reducedMotion: 'reduced-motion',
-    count: 'particle-count',
-    density: 'particle-density',
-    shape: 'particle-shape',
-    polygonSides: 'polygon-sides',
-    starSides: 'star-sides',
-    imageSource: 'image-source',
-    strokeWidth: 'stroke-width',
-    strokeColor: 'stroke-color',
-    colorMode: 'color-mode',
-    particleColor: 'particle-color',
-    size: 'particle-size',
-    sizeRandom: 'size-random',
-    sizeVariation: 'size-variation',
-    sizeAnim: 'size-anim',
-    sizeAnimSpeed: 'size-anim-speed',
-    sizeAnimMin: 'size-anim-min',
-    sizeAnimSync: 'size-anim-sync',
-    opacity: 'particle-opacity',
-    opacityRandom: 'opacity-random',
-    opacityVariation: 'opacity-variation',
-    opacityAnim: 'opacity-anim',
-    opacityAnimSpeed: 'opacity-anim-speed',
-    opacityAnimMin: 'opacity-anim-min',
-    opacityAnimSync: 'opacity-anim-sync',
-    moveEnable: 'move-enable',
-    moveSpeed: 'move-speed',
-    moveDirection: 'move-direction',
-    moveRandom: 'move-random',
-    moveStraight: 'move-straight',
-    moveOutMode: 'move-out-mode',
-    moveBounce: 'move-bounce',
-    moveAttract: 'move-attract',
-    attractRotateX: 'attract-rotate-x',
-    attractRotateY: 'attract-rotate-y',
-    lineLinkedEnable: 'line-linked-enable',
-    lineLinkedDistance: 'line-linked-distance',
-    lineLinkedColor: 'line-linked-color',
-    lineLinkedOpacity: 'line-linked-opacity',
-    lineLinkedWidth: 'line-linked-width',
-    lineLinkedShadow: 'line-linked-shadow',
-    lineShadowColor: 'line-shadow-color',
-    lineShadowBlur: 'line-shadow-blur',
-    detectOn: 'detect-on',
-    hoverEnable: 'hover-enable',
-    hoverMode: 'hover-mode',
-    clickEnable: 'click-enable',
-    clickMode: 'click-mode',
-    resizeEnable: 'resize-enable',
-    grabDistance: 'grab-distance',
-    grabLineOpacity: 'grab-line-opacity',
-    bubbleDistance: 'bubble-distance',
-    bubbleSize: 'bubble-size',
-    bubbleDuration: 'bubble-duration',
-    repulseDistance: 'repulse-distance',
-    repulseDuration: 'repulse-duration',
-    pushParticlesNb: 'push-particles-nb',
-    retinaDetect: 'retina-detect',
-    backgroundColor: 'background-color',
-    backgroundImage: 'background-image',
-    backgroundPosition: 'background-position',
-    backgroundRepeat: 'background-repeat',
-    backgroundSize: 'background-size'
-  };
-  return mapping[settingKey] || settingKey;
 }
 
 function resetToDefaults() {

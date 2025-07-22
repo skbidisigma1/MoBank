@@ -12,7 +12,6 @@
         WIDE_2K: 2560
     };
 
-    // Default configuration template - Updated for tsParticles v3
     const DEFAULT_CONFIG = {
         particles: {
             number: {
@@ -70,16 +69,93 @@
         }
     };
 
-    // Comprehensive preset configurations - Updated for tsParticles v3
     const PRESETS = {
         minimal: {
             particles: {
-                number: { value: 20 },
-                color: { value: "#cccccc" },
+                number: { value: 50 },
+                color: { value: "#0066cc" },
                 shape: { type: "circle" },
-                opacity: { value: 0.4, random: false },
-                size: { value: 2, random: false },
+                opacity: { value: 0.6, random: false },
+                size: { value: 2.5, random: false },
                 links: { enable: false },
+                move: { enable: true, speed: 0.3, direction: "none", random: false, straight: false, outModes: { default: "out" } }
+            },
+            interactivity: {
+                detectsOn: "canvas",
+                events: { onClick: { enable: true, mode: "remove" }, resize: true },
+                modes: { remove: { quantity: 2 } }
+            },
+            detectRetina: true
+        },
+        snow: {
+            particles: {
+                number: { value: 300 },
+                color: { value: "#ffffff" },
+                shape: { type: "circle" },
+                opacity: { value: 0.8, random: true, animation: { enable: true, speed: 0.3, minimumValue: 0.7 } },
+                size: { value: 4, random: true, animation: { enable: true, speed: 0.6, minimumValue: 4, maximumValue: 7 } },
+                links: { enable: false },
+                move: { enable: true, speed: 0.4, direction: "bottom", random: false, straight: true, outModes: { default: "out" } }
+            },
+            interactivity: {
+                detectsOn: "canvas",
+                events: { onClick: { enable: false }, resize: true },
+                modes: {}
+            },
+            detectRetina: true
+        },
+        stars: {
+            particles: {
+                number: { value: 120 },
+                color: { value: "#ffffff" },
+                shape: { 
+                    type: "star",
+                    options: { star: { sides: 5 } }
+                },
+                opacity: { value: 0.9, random: true, animation: { enable: true, speed: 0.6, minimumValue: 0.3 } },
+                size: { value: 2, random: true, animation: { enable: true, speed: 0.3, minimumValue: 1, maximumValue: 3 } },
+                links: { enable: false },
+                move: { enable: true, speed: 0.05, direction: "none", random: false, straight: false, outModes: { default: "out" } }
+            },
+            interactivity: {
+                detectsOn: "canvas",
+                events: { onClick: { enable: true, mode: "push" }, resize: true },
+                modes: { push: { quantity: 1 } }
+            },
+            detectRetina: true
+        },
+        bubbles: {
+            particles: {
+                number: { value: 100 },
+                color: { value: ["#33aaff", "#66ccff"] },
+                shape: { type: "circle" },
+                opacity: { value: 0.3, random: true, animation: { enable: true, speed: 0.8, minimumValue: 0.1 } },
+                size: { value: 10, random: true, animation: { enable: true, speed: 1, minimumValue: 4, maximumValue: 12 } },
+                links: { enable: false },
+                move: { enable: true, speed: 0.8, direction: "top", random: false, straight: false, outModes: { default: "out" } }
+            },
+            interactivity: {
+                detectsOn: "canvas",
+                events: { onClick: { enable: true, mode: "push" }, resize: true },
+                modes: { push: { quantity: 2 } }
+            },
+            detectRetina: true
+        },
+        neon: {
+            particles: {
+                number: { value: 90 },
+                color: { value: ["#ff007f", "#00eaff"] },
+                shape: { type: "circle" },
+                opacity: { value: 0.8, random: false },
+                size: { value: 3, random: false },
+                links: { 
+                    enable: true, 
+                    distance: 200, 
+                    color: "#00eaff", 
+                    opacity: 0.6, 
+                    width: 2,
+                    triangles: { enable: true, color: "#ff007f", opacity: 0.05 }
+                },
                 move: { enable: true, speed: 0.5, direction: "none", random: false, straight: false, outModes: { default: "out" } }
             },
             interactivity: {
@@ -89,129 +165,22 @@
             },
             detectRetina: true
         },
-        default: {
-            particles: {
-                number: { value: 50 },
-                color: { value: "#0066cc" },
-                shape: { type: "circle" },
-                opacity: { value: 0.8, random: false },
-                size: { value: 3, random: false },
-                links: { enable: true, distance: 150, color: "#0066cc", opacity: 0.4, width: 1 },
-                move: { enable: true, speed: 1, direction: "none", random: false, straight: false, outModes: { default: "out" } }
-            },
-            interactivity: {
-                detectsOn: "canvas",
-                events: { onClick: { enable: true, mode: "push" }, resize: true },
-                modes: { push: { quantity: 1 } }
-            },
-            detectRetina: true
-        },
-        energetic: {
+        rainbow: {
             particles: {
                 number: { value: 80 },
-                color: { value: "#00b894" },
+                color: { value: "random" },
                 shape: { type: "circle" },
-                opacity: { value: 0.9, random: true },
-                size: { value: 4, random: true },
-                links: { enable: true, distance: 200, color: "#00b894", opacity: 0.6, width: 1 },
-                move: { enable: true, speed: 2, direction: "none", random: false, straight: false, outModes: { default: "out" } }
+                opacity: { value: 0.8, random: true, animation: { enable: true, speed: 1.5, minimumValue: 0.4 } },
+                size: { value: 6, random: true, animation: { enable: true, speed: 2, minimumValue: 3, maximumValue: 9 } },
+                links: { enable: false },
+                move: { enable: true, speed: 1, direction: "none", random: true, straight: false, outModes: { default: "bounce" } }
             },
             interactivity: {
                 detectsOn: "canvas",
                 events: { onClick: { enable: true, mode: "push" }, resize: true },
-                modes: { push: { quantity: 1 } }
+                modes: { push: { quantity: 3 } }
             },
             detectRetina: true
-        },
-        cosmic: {
-            particles: {
-                number: { value: 100 },
-                color: { value: "#6c5ce7" },
-                shape: { type: "circle" },
-                opacity: { value: 0.7, random: true },
-                size: { value: 2.5, random: true },
-                links: { enable: true, distance: 180, color: "#a29bfe", opacity: 0.4, width: 1 },
-                move: { enable: true, speed: 0.8, direction: "none", random: false, straight: false, outModes: { default: "out" } }
-            },
-            interactivity: {
-                detectsOn: "canvas",
-                events: { onClick: { enable: true, mode: "push" }, resize: true },
-                modes: { push: { quantity: 1 } }
-            },
-            detectRetina: true
-        },
-        snow: {
-            particles: {
-                number: { value: 150 },
-                color: { value: "#ffffff" },
-                shape: { type: "circle" },
-                opacity: { value: 0.8, random: true },
-                size: { value: 3, random: true },
-                links: { enable: false },
-                move: { enable: true, speed: 2, direction: "bottom", random: false, straight: false, outModes: { default: "out" } }
-            },
-            interactivity: {
-                detectsOn: "canvas",
-                events: { onClick: { enable: false }, resize: true },
-                modes: {}
-            },
-            detectRetina: true
-        },
-        bubbles: {
-            particles: {
-                number: { value: 60 },
-                color: { value: ["#ff6b6b", "#4ecdc4", "#45b7d1", "#f9ca24", "#f0932b"] },
-                shape: { type: "circle" },
-                opacity: { value: 0.6, random: true },
-                size: { value: 8, random: true },
-                links: { enable: false },
-                move: { enable: true, speed: 1.5, direction: "top", random: false, straight: false, outModes: { default: "out" } }
-            },
-            interactivity: {
-                detectsOn: "canvas",
-                events: { onClick: { enable: true, mode: "remove" }, resize: true },
-                modes: { remove: { quantity: 2 } }
-            },
-            detectRetina: true
-        },
-        nasa: {
-            particles: {
-                number: { value: 160 },
-                color: { value: "#ffffff" },
-                shape: { type: "circle" },
-                opacity: { value: 0.8, random: true },
-                size: { value: 1, random: true },
-                links: { enable: false },
-                move: { enable: true, speed: 0.2, direction: "none", random: true, straight: false, outModes: { default: "out" } }
-            },
-            interactivity: {
-                detectsOn: "canvas",
-                events: { onClick: { enable: true, mode: "remove" }, resize: true },
-                modes: { remove: { quantity: 5 } }
-            },
-            detectRetina: true,
-            background: { color: "transparent" }
-        },
-        "nyan-cat": {
-            particles: {
-                number: { value: 100 },
-                color: { value: ["#ff0080", "#00ff80", "#0080ff", "#ff8000", "#8000ff"] },
-                shape: { 
-                    type: "star",
-                    options: { star: { sides: 6 } }
-                },
-                opacity: { value: 1, random: false },
-                size: { value: 4, random: true },
-                links: { enable: false },
-                move: { enable: true, speed: 6, direction: "left", random: false, straight: true, outModes: { default: "out" } }
-            },
-            interactivity: {
-                detectsOn: "canvas",
-                events: { onClick: { enable: true, mode: "remove" }, resize: true },
-                modes: { remove: { quantity: 10 } }
-            },
-            detectRetina: true,
-            background: { color: "transparent" }
         }
     };
 
@@ -384,8 +353,9 @@
             color: settings.triangleColor || settings.lineLinkedColor || "#0066cc",
             opacity: settings.triangleOpacity || 0.5
         };
+        // Line shadows disabled due to severe performance impact
         config.particles.links.shadow = {
-            enable: settings.lineLinkedShadow || false,
+            enable: false, // Force disabled for performance
             color: settings.lineShadowColor || "#000000",
             blur: settings.lineShadowBlur || 5
         };

@@ -295,12 +295,6 @@
           </div>
           <div class="config-row">
             <label class="config-label">
-              <span class="config-tooltip" data-tooltip="Add shadow effect to connecting lines for depth">Line Shadow</span>
-              <input type="checkbox" id="line-linked-shadow" class="config-checkbox">
-            </label>
-          </div>
-          <div class="config-row">
-            <label class="config-label">
               <span class="config-tooltip" data-tooltip="Fill triangular areas created by connecting lines between 3 particles">Triangles</span>
               <input type="checkbox" id="line-triangles" class="config-checkbox">
             </label>
@@ -310,23 +304,6 @@
               <span class="config-tooltip" data-tooltip="Apply subtle warping effect to connecting lines">Line Warp</span>
               <input type="checkbox" id="line-warp" class="config-checkbox">
             </label>
-          </div>
-          <div class="config-group" id="line-shadow-controls" style="display: none;">
-            <div class="config-row">
-              <label class="config-label">
-                <span class="config-tooltip" data-tooltip="Color of the shadow effect applied to connecting lines">Shadow Color</span>
-                <input type="color" id="line-shadow-color" class="config-color">
-              </label>
-            </div>
-            <div class="config-row">
-              <label class="config-label">
-                <span class="config-tooltip" data-tooltip="Amount of blur applied to line shadows">Shadow Blur</span>
-                <div class="slider-container">
-                  <input type="range" id="line-shadow-blur" class="config-slider" min="0" max="20" step="1">
-                  <span class="slider-value" id="line-shadow-blur-value">5px</span>
-                </div>
-              </label>
-            </div>
           </div>
           <div class="config-group" id="triangle-controls" style="display: none;">
             <div class="config-row">
@@ -404,13 +381,11 @@
         <h3>Built-in Presets</h3>
         <div class="config-row preset-buttons">
           <button class="preset-btn" data-preset="minimal">Minimal</button>
-          <button class="preset-btn" data-preset="default">Default</button>
-          <button class="preset-btn" data-preset="energetic">Energetic</button>
-          <button class="preset-btn" data-preset="cosmic">Cosmic</button>
           <button class="preset-btn" data-preset="snow">Snow</button>
+          <button class="preset-btn" data-preset="stars">Stars</button>
           <button class="preset-btn" data-preset="bubbles">Bubbles</button>
-          <button class="preset-btn" data-preset="nasa">NASA</button>
-          <button class="preset-btn" data-preset="nyan-cat">Nyan Cat</button>
+          <button class="preset-btn" data-preset="neon">Neon</button>
+          <button class="preset-btn" data-preset="rainbow">Rainbow</button>
         </div>
         
         <h3>Custom Presets</h3>
