@@ -230,7 +230,7 @@ function setupConfigControls() {
   try {
     // Basic checkboxes
     const checkboxes = [
-      'particles-enabled', 'size-random', 'opacity-random', 'move-enable',
+      'particles-enabled', 'reduced-motion', 'size-random', 'opacity-random', 'move-enable',
       'move-attract', 'line-linked-enable', 'line-linked-shadow', 'line-warp', 
       'line-triangles', 'resize-enable', 'retina-detect'
     ];
@@ -481,6 +481,7 @@ function handleConfigChange() {
 function getCurrentSettings() {
   return {
     enabled: document.getElementById('particles-enabled')?.checked ?? true,
+    reducedMotion: document.getElementById('reduced-motion')?.checked ?? false,
     count: parseInt(document.getElementById('particle-count')?.value ?? 50),
     shape: document.getElementById('particle-shape')?.value ?? 'circle',
     polygonSides: parseInt(document.getElementById('polygon-sides')?.value ?? 5),
@@ -864,6 +865,7 @@ function getControlId(key) {
   // Map settings keys to control element IDs
   const mapping = {
     enabled: 'particles-enabled',
+    reducedMotion: 'reduced-motion',
     count: 'particle-count',
     shape: 'particle-shape',
     polygonSides: 'polygon-sides',
@@ -1440,6 +1442,7 @@ function getDefaultSettings() {
 function getControlId(settingKey) {
   const mapping = {
     enabled: 'particles-enabled',
+    reducedMotion: 'reduced-motion',
     count: 'particle-count',
     density: 'particle-density',
     shape: 'particle-shape',

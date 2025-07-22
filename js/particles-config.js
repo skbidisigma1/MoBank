@@ -274,6 +274,11 @@
         // Basic settings - remove density
         config.particles.number.value = settings.enabled ? (settings.count || 50) : 0;
         
+        // Apply minimal particles settings if reduced motion is enabled
+        if (settings.reducedMotion) {
+            config.particles.number.value = Math.floor(config.particles.number.value / 2);
+        }
+        
         // Shape configuration - fix polygon/star sides
         config.particles.shape.type = settings.shape || "circle";
         if (settings.shape === "polygon") {
@@ -362,6 +367,11 @@
             config.particles.move.attract.rotateY = settings.attractRotateY || 1200;
         }
         
+        // Override movement for minimal particles
+        if (settings.reducedMotion) {
+            config.particles.move.enable = false;
+        }
+        
         // Links (formerly line_linked)
         config.particles.links.enable = settings.lineLinkedEnable !== false;
         config.particles.links.distance = settings.lineLinkedDistance || 150;
@@ -394,9 +404,7 @@
         
         config.background.color = "transparent";
         
-        // Apply reduced motion if needed
-        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        return reducedMotion ? getReducedMotionConfig(config) : config;
+        return config;
     }
 
     let updateConfigRunning = false;
@@ -499,18 +507,29 @@
         }
     });
 
-    // Reduced motion change handler
+    // Reduced motion change handler - updates user preference when device preference changes
     const motionMediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     motionMediaQuery.addEventListener('change', async (e) => {
         const settings = await loadParticleSettings();
-        const config = createParticlesConfig(settings);
-        destroyParticles('main');
-        if (settings.enabled && window.innerWidth >= BREAKPOINTS.MOBILE) {
-            mainContainer = await tsParticles.load({
-                id: 'particles-js',
-                options: config
-            });
-            setupClickHandler();
+        // Only auto-update if user hasn't manually overridden the preference
+        if (settings.reducedMotionAutoSet !== false) {
+            settings.reducedMotion = e.matches;
+            await saveParticleSettings(settings);
+            
+            const particlesContainer = document.getElementById('particles-js');
+            if (settings.enabled && window.innerWidth >= BREAKPOINTS.MOBILE) {
+                particlesContainer.style.display = 'block';
+                destroyParticles('main');
+                const config = createParticlesConfig(settings);
+                mainContainer = await tsParticles.load({
+                    id: 'particles-js',
+                    options: config
+                });
+                setupClickHandler();
+            } else {
+                particlesContainer.style.display = 'none';
+                destroyParticles('main');
+            }
         }
     });
 
@@ -623,8 +642,12 @@
     }
 
     function getDefaultSettings() {
+        // Check if user prefers reduced motion
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        
         return {
             enabled: true,
+            reducedMotion: prefersReducedMotion, // This will disable particles if device prefers reduced motion
             count: 50,
             shape: "circle",
             polygonSides: 5,
