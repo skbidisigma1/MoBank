@@ -551,6 +551,13 @@
     window.addEventListener('resize', () => {
         if (resizeTimeout) clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(async () => {
+            const settings = await loadParticleSettings();
+            
+            // Check if resize detection is enabled
+            if (!settings.resizeEnable) {
+                return;
+            }
+            
             const particlesContainer = document.getElementById('particles-js');
             if (particlesContainer) {
                 if (window.innerWidth < BREAKPOINTS.MOBILE) {
@@ -562,7 +569,6 @@
                 }
             }
             
-            const settings = await loadParticleSettings();
             if (settings.enabled) {
                 const config = createParticlesConfig(settings);
                 destroyParticles('main');

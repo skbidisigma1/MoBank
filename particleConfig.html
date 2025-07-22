@@ -21,19 +21,19 @@
         <h3>Basic Settings</h3>
         <div class="config-row">
           <label class="config-label">
-            <span>Enable Particles</span>
+            <span class="config-tooltip" data-tooltip="Turn particle effects on or off completely">Enable Particles</span>
             <input type="checkbox" id="particles-enabled" class="config-checkbox">
           </label>
         </div>
         <div class="config-row">
           <label class="config-label">
-            <span>Minimal Particles (Accessibility)</span>
+            <span class="config-tooltip" data-tooltip="Reduces particle count and removes movement for better accessibility">Minimal Particles (Accessibility)</span>
             <input type="checkbox" id="reduced-motion" class="config-checkbox">
           </label>
         </div>
         <div class="config-row">
           <label class="config-label">
-            <span>Particle Count</span>
+            <span class="config-tooltip" data-tooltip="Total number of particles to display on screen">Particle Count</span>
             <div class="slider-container">
               <input type="range" id="particle-count" class="config-slider" min="0" max="500" step="5">
               <span class="slider-value editable-value" id="particle-count-value">50</span>
@@ -46,7 +46,7 @@
         <h3>Shape & Appearance</h3>
         <div class="config-row">
           <label class="config-label">
-            <span>Shape Type</span>
+            <span class="config-tooltip" data-tooltip="Shape of each particle">Shape Type</span>
             <select id="particle-shape" class="config-select">
               <option value="circle">Circle</option>
               <option value="edge">Edge</option>
@@ -59,7 +59,7 @@
         </div>
         <div class="config-row" id="polygon-sides-row" style="display: none;">
           <label class="config-label">
-            <span>Polygon Sides</span>
+            <span class="config-tooltip" data-tooltip="Number of sides for polygon-shaped particles">Polygon Sides</span>
             <div class="slider-container">
               <input type="range" id="polygon-sides" class="config-slider" min="3" max="12" step="1">
               <span class="slider-value" id="polygon-sides-value">5</span>
@@ -68,7 +68,7 @@
         </div>
         <div class="config-row" id="star-sides-row" style="display: none;">
           <label class="config-label">
-            <span>Star Points</span>
+            <span class="config-tooltip" data-tooltip="Number of points for star-shaped particles">Star Points</span>
             <div class="slider-container">
               <input type="range" id="star-sides" class="config-slider" min="3" max="12" step="1">
               <span class="slider-value" id="star-sides-value">5</span>
@@ -77,7 +77,7 @@
         </div>
         <div class="config-row" id="image-source-row" style="display: none;">
           <label class="config-label">
-            <span>Image URL</span>
+            <span class="config-tooltip" data-tooltip="URL to an image file to use as particle shape">Image URL</span>
             <input type="text" id="image-source" class="config-input" placeholder="Enter image URL">
           </label>
         </div>
@@ -87,7 +87,7 @@
         <h3>Color Settings</h3>
         <div class="config-row">
           <label class="config-label">
-            <span>Color Mode</span>
+            <span class="config-tooltip" data-tooltip="Choose between single color, multiple colors, or random colors for particles">Color Mode</span>
             <select id="color-mode" class="config-select">
               <option value="single">Single Color</option>
               <option value="multiple">Multiple Colors</option>
@@ -97,14 +97,14 @@
         </div>
         <div class="config-row" id="single-color-row">
           <label class="config-label">
-            <span>Particle Color</span>
+            <span class="config-tooltip" data-tooltip="Color to use for particles">Particle Color</span>
             <input type="color" id="particle-color" class="config-color">
           </label>
         </div>
         <div class="config-section" id="multiple-colors-section" style="display: none;">
           <div class="config-row">
             <label class="config-label">
-              <span>Colors</span>
+              <span class="config-tooltip" data-tooltip="List of colors that particles can randomly use">Colors</span>
               <button id="add-color-btn" class="modal-btn modal-btn-secondary">Add Color</button>
             </label>
           </div>
@@ -116,7 +116,7 @@
         <h3>Size & Opacity</h3>
         <div class="config-row">
           <label class="config-label">
-            <span>Size</span>
+            <span class="config-tooltip" data-tooltip="Base size of particles in pixels">Size</span>
             <div class="slider-container">
               <input type="range" id="particle-size" class="config-slider" min="0.5" max="50" step="0.1">
               <span class="slider-value editable-value" id="particle-size-value">3px</span>
@@ -125,14 +125,14 @@
         </div>
         <div class="config-row">
           <label class="config-label">
-            <span>Random Size</span>
+            <span class="config-tooltip" data-tooltip="Enable random size variation for particles">Random Size</span>
             <input type="checkbox" id="size-random" class="config-checkbox">
           </label>
         </div>
         <div class="config-group" id="size-random-controls" style="display: none;">
           <div class="config-row">
             <label class="config-label">
-              <span>Size Variation</span>
+              <span class="config-tooltip" data-tooltip="How much size can vary from the base size">Size Variation</span>
               <div class="slider-container">
                 <input type="range" id="size-variation" class="config-slider" min="0" max="1" step="0.01">
                 <span class="slider-value editable-value" id="size-variation-value">50%</span>
@@ -142,7 +142,7 @@
         </div>
         <div class="config-row">
           <label class="config-label">
-            <span>Opacity</span>
+            <span class="config-tooltip" data-tooltip="Transparency level of particles (0% = near invisible, 100% = fully opaque)">Opacity</span>
             <div class="slider-container">
               <input type="range" id="particle-opacity" class="config-slider" min="0" max="1" step="0.01">
               <span class="slider-value editable-value" id="particle-opacity-value">50%</span>
@@ -151,14 +151,14 @@
         </div>
         <div class="config-row">
           <label class="config-label">
-            <span>Random Opacity</span>
+            <span class="config-tooltip" data-tooltip="Enable random opacity variation for particles">Random Opacity</span>
             <input type="checkbox" id="opacity-random" class="config-checkbox">
           </label>
         </div>
         <div class="config-group" id="opacity-random-controls" style="display: none;">
           <div class="config-row">
             <label class="config-label">
-              <span>Opacity Variation</span>
+              <span class="config-tooltip" data-tooltip="How much opacity can vary from the base opacity">Opacity Variation</span>
               <div class="slider-container">
                 <input type="range" id="opacity-variation" class="config-slider" min="0" max="1" step="0.01">
                 <span class="slider-value editable-value" id="opacity-variation-value">50%</span>
@@ -172,14 +172,14 @@
         <h3>Movement</h3>
         <div class="config-row">
           <label class="config-label">
-            <span>Enable Movement</span>
+            <span class="config-tooltip" data-tooltip="Allow particles to move around the screen">Enable Movement</span>
             <input type="checkbox" id="move-enable" class="config-checkbox">
           </label>
         </div>
         <div class="config-group" id="movement-controls">
           <div class="config-row">
             <label class="config-label">
-              <span>Speed</span>
+              <span class="config-tooltip" data-tooltip="How fast particles move">Speed</span>
               <div class="slider-container">
                 <input type="range" id="move-speed" class="config-slider" min="0" max="10" step="0.1">
                 <span class="slider-value" id="move-speed-value">1</span>
@@ -188,7 +188,7 @@
           </div>
           <div class="config-row">
             <label class="config-label">
-              <span>Movement Type</span>
+              <span class="config-tooltip" data-tooltip="Pattern of particle movement">Movement Type</span>
               <select id="move-type" class="config-select">
                 <option value="default">Default (Brownian)</option>
                 <option value="random">Random Direction</option>
@@ -198,7 +198,7 @@
           </div>
           <div class="config-row" id="direction-row">
             <label class="config-label">
-              <span>Direction</span>
+              <span class="config-tooltip" data-tooltip="Direction particles move">Direction</span>
               <select id="move-direction" class="config-select">
                 <option value="none">None (Random)</option>
                 <option value="top">Top</option>
@@ -214,7 +214,7 @@
           </div>
           <div class="config-row">
             <label class="config-label">
-              <span>Out Mode</span>
+              <span class="config-tooltip" data-tooltip="What happens when particles reach screen edges: Out (disappear), Bounce (reverse direction), or Destroy (remove permanently)">Out Mode</span>
               <select id="move-out-mode" class="config-select">
                 <option value="out">Out</option>
                 <option value="bounce">Bounce</option>
@@ -224,14 +224,14 @@
           </div>
           <div class="config-row">
             <label class="config-label">
-              <span>Attract Particles</span>
+              <span class="config-tooltip" data-tooltip="Particles attract other particles toward them">Attract Particles</span>
               <input type="checkbox" id="move-attract" class="config-checkbox">
             </label>
           </div>
           <div class="config-group" id="attract-controls" style="display: none;">
             <div class="config-row">
               <label class="config-label">
-                <span>Rotate X</span>
+                <span class="config-tooltip" data-tooltip="Rotation force on X-axis for particle attraction">Rotate X</span>
                 <div class="slider-container">
                   <input type="range" id="attract-rotate-x" class="config-slider" min="0" max="3000" step="50">
                   <span class="slider-value" id="attract-rotate-x-value">600</span>
@@ -240,7 +240,7 @@
             </div>
             <div class="config-row">
               <label class="config-label">
-                <span>Rotate Y</span>
+                <span class="config-tooltip" data-tooltip="Rotation force on Y-axis for particle attraction">Rotate Y</span>
                 <div class="slider-container">
                   <input type="range" id="attract-rotate-y" class="config-slider" min="0" max="3000" step="50">
                   <span class="slider-value" id="attract-rotate-y-value">1200</span>
@@ -255,14 +255,14 @@
         <h3>Line Connections</h3>
         <div class="config-row">
           <label class="config-label">
-            <span>Enable Lines</span>
+            <span class="config-tooltip" data-tooltip="Draw connecting lines between nearby particles">Enable Lines</span>
             <input type="checkbox" id="line-linked-enable" class="config-checkbox">
           </label>
         </div>
         <div class="config-group" id="line-controls">
           <div class="config-row">
             <label class="config-label">
-              <span>Line Distance</span>
+              <span class="config-tooltip" data-tooltip="Maximum distance between particles to draw a connecting line">Line Distance</span>
               <div class="slider-container">
                 <input type="range" id="line-linked-distance" class="config-slider" min="0" max="500" step="10">
                 <span class="slider-value" id="line-linked-distance-value">150px</span>
@@ -271,13 +271,13 @@
           </div>
           <div class="config-row">
             <label class="config-label">
-              <span>Line Color</span>
+              <span class="config-tooltip" data-tooltip="Color of the connecting lines between particles">Line Color</span>
               <input type="color" id="line-linked-color" class="config-color">
             </label>
           </div>
           <div class="config-row">
             <label class="config-label">
-              <span>Line Opacity</span>
+              <span class="config-tooltip" data-tooltip="Transparency of the connecting lines">Line Opacity</span>
               <div class="slider-container">
                 <input type="range" id="line-linked-opacity" class="config-slider" min="0" max="1" step="0.01">
                 <span class="slider-value" id="line-linked-opacity-value">40%</span>
@@ -286,7 +286,7 @@
           </div>
           <div class="config-row">
             <label class="config-label">
-              <span>Line Width</span>
+              <span class="config-tooltip" data-tooltip="Thickness of the connecting lines in pixels">Line Width</span>
               <div class="slider-container">
                 <input type="range" id="line-linked-width" class="config-slider" min="0.1" max="10" step="0.1">
                 <span class="slider-value" id="line-linked-width-value">1px</span>
@@ -295,32 +295,32 @@
           </div>
           <div class="config-row">
             <label class="config-label">
-              <span>Line Shadow</span>
+              <span class="config-tooltip" data-tooltip="Add shadow effect to connecting lines for depth">Line Shadow</span>
               <input type="checkbox" id="line-linked-shadow" class="config-checkbox">
             </label>
           </div>
           <div class="config-row">
             <label class="config-label">
-              <span>Triangles</span>
+              <span class="config-tooltip" data-tooltip="Fill triangular areas created by connecting lines between 3 particles">Triangles</span>
               <input type="checkbox" id="line-triangles" class="config-checkbox">
             </label>
           </div>
           <div class="config-row">
             <label class="config-label">
-              <span>Line Warp</span>
+              <span class="config-tooltip" data-tooltip="Apply subtle warping effect to connecting lines">Line Warp</span>
               <input type="checkbox" id="line-warp" class="config-checkbox">
             </label>
           </div>
           <div class="config-group" id="line-shadow-controls" style="display: none;">
             <div class="config-row">
               <label class="config-label">
-                <span>Shadow Color</span>
+                <span class="config-tooltip" data-tooltip="Color of the shadow effect applied to connecting lines">Shadow Color</span>
                 <input type="color" id="line-shadow-color" class="config-color">
               </label>
             </div>
             <div class="config-row">
               <label class="config-label">
-                <span>Shadow Blur</span>
+                <span class="config-tooltip" data-tooltip="Amount of blur applied to line shadows">Shadow Blur</span>
                 <div class="slider-container">
                   <input type="range" id="line-shadow-blur" class="config-slider" min="0" max="20" step="1">
                   <span class="slider-value" id="line-shadow-blur-value">5px</span>
@@ -331,13 +331,13 @@
           <div class="config-group" id="triangle-controls" style="display: none;">
             <div class="config-row">
               <label class="config-label">
-                <span>Triangle Color</span>
+                <span class="config-tooltip" data-tooltip="Fill color for triangular areas created by connecting lines">Triangle Color</span>
                 <input type="color" id="triangle-color" class="config-color">
               </label>
             </div>
             <div class="config-row">
               <label class="config-label">
-                <span>Triangle Opacity</span>
+                <span class="config-tooltip" data-tooltip="Transparency of the triangular fill areas">Triangle Opacity</span>
                 <div class="slider-container">
                   <input type="range" id="triangle-opacity" class="config-slider" min="0" max="1" step="0.01">
                   <span class="slider-value editable-value" id="triangle-opacity-value">50%</span>
@@ -352,7 +352,7 @@
         <h3>Interactivity</h3>
         <div class="config-row">
           <label class="config-label">
-            <span>Detect On</span>
+            <span class="config-tooltip" data-tooltip="Area where mouse/touch interactions are detected: Canvas (particle area only) or Window (entire page)">Detect On</span>
             <select id="detect-on" class="config-select">
               <option value="canvas">Canvas</option>
               <option value="window">Window</option>
@@ -361,7 +361,7 @@
         </div>
         <div class="config-row">
           <label class="config-label">
-            <span>Click Effect</span>
+            <span class="config-tooltip" data-tooltip="Action when clicking/tapping the page">Click Effect</span>
             <select id="click-mode" class="config-select">
               <option value="none">None</option>
               <option value="push">Spawn</option>
@@ -371,7 +371,7 @@
         </div>
         <div class="config-row">
           <label class="config-label">
-            <span>Resize Detection</span>
+            <span class="config-tooltip" data-tooltip="Automatically adjust particles when window size changes">Resize Detection</span>
             <input type="checkbox" id="resize-enable" class="config-checkbox">
           </label>
         </div>
@@ -381,9 +381,9 @@
         <h3>Click Effect Settings</h3>
         <div class="config-row">
           <label class="config-label">
-            <span>Particles Number</span>
+            <span class="config-tooltip" data-tooltip="Number of particles to spawn or remove when clicking">Particles Number</span>
             <div class="slider-container">
-              <input type="range" id="push-particles-nb" class="config-slider" min="1" max="20" step="1">
+              <input type="range" id="push-particles-nb" class="config-slider" min="1" max="10" step="1">
               <span class="slider-value" id="push-particles-nb-value">4</span>
             </div>
           </label>
@@ -394,7 +394,7 @@
         <h3>Advanced Settings</h3>
         <div class="config-row">
           <label class="config-label">
-            <span>Retina Detection</span>
+            <span class="config-tooltip" data-tooltip="Automatically adjust particle quality and density for high-resolution displays">Retina Detection</span>
             <input type="checkbox" id="retina-detect" class="config-checkbox">
           </label>
         </div>
