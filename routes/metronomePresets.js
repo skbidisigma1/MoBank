@@ -1,5 +1,5 @@
-const fetch = require('node-fetch');
 const { admin, db } = require('../firebase');
+const { getTokenFromHeader, verifyToken } = require('../auth-helper');
 
 async function getBody(req) {
   if (req.body && Object.keys(req.body).length) return req.body;
@@ -18,20 +18,16 @@ async function getBody(req) {
 }
 
 module.exports = async (req, res) => {
-  const auth = req.headers.authorization;
-  if (!auth?.startsWith('Bearer ')) return res.status(401).json({ message: 'Unauthorized' });
+  const token = getTokenFromHeader(req);
+  if (!token) return res.status(401).json({ message: 'Unauthorized' });
 
-  const idToken = auth.split(' ')[1];
-  let uid;
+  let decoded;
   try {
-    const r = await fetch(`https://${process.env.AUTH0_DOMAIN}/userinfo`, {
-      headers: { Authorization: `Bearer ${idToken}` },
-    });
-    if (!r.ok) return res.status(401).json({ message: 'Invalid token' });
-    uid = (await r.json()).sub;
-  } catch {
+    decoded = await verifyToken(token);
+  } catch (e) {
     return res.status(401).json({ message: 'Token verification failed' });
   }
+  const uid = decoded.sub;
 
   if (req.method === 'GET') {
     try {
