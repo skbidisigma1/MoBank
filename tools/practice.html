@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Practice Tracker | MoBank Tools</title>
+    <meta name="description" content="Track practice sessions, streaks, and weekly progress." />
+    <link rel="preload" href="/js/cache.js" as="script">
+    <link rel="preload" href="/js/theme.js" as="script">
+    <script src="/js/cache.js"></script>
+    <script src="/js/theme.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/tools/css/tools-home.css">
+    <link rel="stylesheet" href="/tools/css/practice.css">
+    <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js" crossorigin="anonymous"></script>
+    <script src="/js/auth.js" defer></script>
+    <script src="/js/toast.js" defer></script>
+    <script src="/tools/js/tools-header.js" defer></script>
+    <script src="/tools/js/practice.js" defer></script>
+</head>
+<body>
+    <div id="header-placeholder" role="banner"></div>
+    <main class="main-container practice-container">
+        <section class="practice-header">
+            <h1 class="tool-title">Practice Tracker</h1>
+            <p class="tool-description">Start a timed session or log one manually. Build streaks and track your weekly progress</p>
+        </section>
+
+        <section class="practice-layout">
+            <div class="card session-card" id="session-card">
+                    <div class="card-header">
+                        <h2 class="card-title" id="session-status-title">No Active Session</h2>
+                        <div class="session-status-badge idle" id="session-status-badge" aria-live="polite">Idle</div>
+                    </div>
+                    <div class="session-body">
+                        <div class="timer-display" id="timer-display" aria-label="Elapsed time">00:00</div>
+                        <form id="active-session-form" class="active-session-form" autocomplete="off">
+                            <div class="session-actions" id="session-actions">
+                                <button type="button" id="start-session-btn" class="primary-btn" aria-label="Start practice session">Start Session</button>
+                <button type="button" id="pause-session-btn" class="danger-btn hidden" aria-label="Pause practice session">Pause</button>
+                <button type="button" id="resume-session-btn" class="primary-btn hidden" aria-label="Resume practice session">Resume</button>
+                <button type="button" id="log-session-btn" class="success-btn hidden" aria-label="Log paused practice session">Log</button>
+                                <button type="button" id="cancel-session-btn" class="secondary-btn hidden" aria-label="Cancel practice session">Cancel</button>
+                            </div>
+                        </form>
+            <div class="session-hint" id="session-hint">Leaving the page leaves the timer running</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card summary-card" id="summary-card">
+                    <div class="card-header">
+                        <h2 class="card-title">This Week</h2>
+                        <button type="button" class="refresh-btn" id="refresh-summary-btn" aria-label="Refresh practice summary" title="Refresh stats">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-ccw-icon lucide-refresh-ccw" aria-hidden="true" focusable="false">
+                                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                                <path d="M3 3v5h5"/>
+                                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                                <path d="M16 16h5v5"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="summary-body">
+                        <div class="progress-row">
+                            <div class="progress-labels">
+                                <span id="week-minutes-label">0 min</span>
+                                <span id="week-goal-label">Goal: 0</span>
+                            </div>
+                            <div class="progress-bar-wrapper" aria-label="Weekly minutes progress">
+                                <div class="progress-bar" id="week-progress-bar"></div>
+                            </div>
+                        </div>
+                        <div class="stats-grid two-cols">
+                            <div class="stat-item">
+                                <span class="stat-label">Streak</span>
+                                <span class="stat-value" id="streak-value">0🔥</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Sessions</span>
+                                <span class="stat-value" id="week-sessions-value">0</span>
+                            </div>
+                        </div>
+                        <div class="goal-setter" id="goal-setter">
+                            <label for="goal-input" class="form-label small">Weekly Goal (min)</label>
+                            <div class="goal-row">
+                                <input id="goal-input" type="number" min="0" max="2000" placeholder="180" />
+                                <button type="button" id="save-goal-btn" class="secondary-btn small">Save</button>
+                            </div>
+                        </div>
+                        <div class="insights" id="practice-insights">
+                            <div class="insight-line" id="insight-top-piece" aria-live="polite"></div>
+                            <div class="insight-line" id="insight-avg-length" aria-live="polite"></div>
+                            <div class="insight-line" id="insight-gap" aria-live="polite"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="card manual-log-card" id="manual-log-card">
+                    <div class="card-header">
+                        <h2 class="card-title">Manual Log</h2>
+                        <button type="button" class="collapse-toggle" id="manual-toggle" aria-expanded="true" aria-controls="manual-log-form">Hide</button>
+                    </div>
+                    <form id="manual-log-form" class="manual-log-form" autocomplete="off">
+                        <div class="form-grid">
+                            <!-- piece/focus removed -->
+                            <div class="form-row">
+                                <label for="manual-date" class="form-label">Date</label>
+                                <input id="manual-date" type="date" max="" />
+                            </div>
+                            <div class="form-row">
+                                <label for="manual-minutes" class="form-label">Minutes</label>
+                                <input id="manual-minutes" type="number" min="1" max="240" placeholder="30" />
+                            </div>
+                            <div class="form-row span-2">
+                                    <label for="manual-notes" class="form-label">Notes / Focus</label>
+                                    <textarea id="manual-notes" rows="2" maxlength="500" placeholder="Describe what you practiced, sections, goals..." ></textarea>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" id="manual-submit-btn" class="primary-btn" aria-label="Log practice session manually">Log Session</button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+
+            <div class="card recent-card" id="recent-card">
+                    <div class="card-header">
+                        <h2 class="card-title">Recent Sessions</h2>
+                    </div>
+                    <ul class="recent-list" id="recent-sessions-list" aria-live="polite">
+                        <li class="empty" id="recent-empty">No sessions yet.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+    <div id="footer-placeholder"></div>
+
+    <div class="modal-overlay hidden" id="finalize-modal" role="dialog" aria-modal="true" aria-labelledby="finalize-title">
+        <div class="modal compact-modal" >
+            <div class="modal-header">
+                <h2 id="finalize-title">Log Session</h2>
+                <button type="button" class="close-btn" id="finalize-close" aria-label="Close finalize session dialog">×</button>
+            </div>
+            <form id="finalize-form" class="finalize-form" autocomplete="off">
+                <div class="modal-body">
+                    <div class="summary-line large"><span>Elapsed</span><span id="finalize-elapsed">00:00</span></div>
+                    <!-- piece/focus removed; notes only -->
+                    <div class="form-row">
+                        <label for="final-date" class="form-label">Date</label>
+                        <input id="final-date" type="date" max="" />
+                    </div>
+                    <div class="form-row">
+                        <label for="final-notes" class="form-label">Notes (optional)</label>
+                        <textarea id="final-notes" rows="4" maxlength="500" placeholder="Only visible to you"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="secondary-btn" id="finalize-cancel">Cancel</button>
+                    <button type="submit" class="primary-btn" id="finalize-submit">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
