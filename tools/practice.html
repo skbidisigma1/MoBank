@@ -15,6 +15,12 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/tools/css/tools-home.css">
     <link rel="stylesheet" href="/tools/css/practice.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.4/dist/cal-heatmap.css">
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2/dist/umd/popper.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.4/dist/cal-heatmap.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.4/dist/plugins/Tooltip.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.4/dist/plugins/Legend.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js" crossorigin="anonymous"></script>
     <script src="/js/auth.js" defer></script>
     <script src="/js/toast.js" defer></script>
@@ -29,7 +35,7 @@
             <p class="tool-description">Start a timed session or log one manually. Build streaks and track your weekly progress</p>
         </section>
 
-        <section class="practice-layout">
+    <section class="practice-layout">
             <div class="card session-card" id="session-card">
                     <div class="card-header">
                         <h2 class="card-title" id="session-status-title">No Active Session</h2>
@@ -43,6 +49,7 @@
                 <button type="button" id="pause-session-btn" class="danger-btn hidden" aria-label="Pause practice session">Pause</button>
                 <button type="button" id="resume-session-btn" class="primary-btn hidden" aria-label="Resume practice session">Resume</button>
                 <button type="button" id="log-session-btn" class="success-btn hidden" aria-label="Log paused practice session">Log</button>
+                <button type="button" class="success-btn" id="open-manual-log-btn" aria-label="Open manual log dialog" title="Manual log">Manual Log</button>
                                 <button type="button" id="cancel-session-btn" class="secondary-btn hidden" aria-label="Cancel practice session">Cancel</button>
                             </div>
                         </form>
@@ -53,7 +60,8 @@
 
             <div class="card summary-card" id="summary-card">
                     <div class="card-header">
-                        <h2 class="card-title">This Week</h2>
+                        <h2 class="card-title">Practice Stats</h2>
+                        <div style="display:flex; gap:.5rem; align-items:center;">
                         <button type="button" class="refresh-btn" id="refresh-summary-btn" aria-label="Refresh practice summary" title="Refresh stats">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-refresh-ccw-icon lucide-refresh-ccw" aria-hidden="true" focusable="false">
                                 <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
@@ -62,6 +70,7 @@
                                 <path d="M16 16h5v5"/>
                             </svg>
                         </button>
+                        </div>
                     </div>
                     <div class="summary-body">
                         <div class="progress-row">
@@ -94,37 +103,26 @@
                             <div class="insight-line" id="insight-top-piece" aria-live="polite"></div>
                             <div class="insight-line" id="insight-avg-length" aria-live="polite"></div>
                             <div class="insight-line" id="insight-gap" aria-live="polite"></div>
+                            <div class="insight-line" id="insight-reco" aria-live="polite"></div>
+                        </div>
+                        <div style="display:flex; align-items:center; justify-content:center; margin-top:.9rem;">
+                            <div id="calendar-heatmap" class="calendar-heatmap" style="flex:1; height: 180px;" aria-label="Practice calendar" role="img"></div>
+                        </div>
+                        <div class="calendar-legend-bar" style="display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-top:.55rem;">
+                            <div id="calendar-legend" class="calendar-legend" aria-hidden="true"></div>
+                            <div id="calendar-range-toggle-wrapper" class="calendar-range-toggle" aria-label="Calendar range toggle" hidden>
+                                <span class="cal-range-label cal-range-6" aria-hidden="true">6mo</span>
+                                <label class="toggle-switch" style="margin:0;">
+                                    <input type="checkbox" id="calendar-range-toggle" aria-describedby="calendar-range-desc" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="cal-range-label cal-range-12" aria-hidden="true">12mo</span>
+                            </div>
+                        </div>
+                        <p id="calendar-range-desc" class="visually-hidden">Toggle between showing last 6 months and last 12 months of practice activity</p>
+                        <div class="mini-metrics" id="practice-mini-metrics" aria-live="polite"></div>
                         </div>
                     </div>
-                </div>
-
-            </div>
-
-            <div class="card manual-log-card" id="manual-log-card">
-                    <div class="card-header">
-                        <h2 class="card-title">Manual Log</h2>
-                        <button type="button" class="collapse-toggle" id="manual-toggle" aria-expanded="true" aria-controls="manual-log-form">Hide</button>
-                    </div>
-                    <form id="manual-log-form" class="manual-log-form" autocomplete="off">
-                        <div class="form-grid">
-                            <!-- piece/focus removed -->
-                            <div class="form-row">
-                                <label for="manual-date" class="form-label">Date</label>
-                                <input id="manual-date" type="date" max="" />
-                            </div>
-                            <div class="form-row">
-                                <label for="manual-minutes" class="form-label">Minutes</label>
-                                <input id="manual-minutes" type="number" min="1" max="240" placeholder="30" />
-                            </div>
-                            <div class="form-row span-2">
-                                    <label for="manual-notes" class="form-label">Notes / Focus</label>
-                                    <textarea id="manual-notes" rows="2" maxlength="500" placeholder="Describe what you practiced, sections, goals..." ></textarea>
-                            </div>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" id="manual-submit-btn" class="primary-btn" aria-label="Log practice session manually">Log Session</button>
-                        </div>
-                    </form>
                 </div>
 
             </div>
@@ -138,9 +136,20 @@
                     </ul>
                 </div>
             </div>
-        </section>
-    </main>
-    <div id="footer-placeholder"></div>
+    </section>
+    <div class="modal alert-modal" >
+            <div class="modal-header">
+                <h2 id="alert-title">Notice</h2>
+                <button type="button" class="close-btn" id="alert-close" aria-label="Close alert">×</button>
+            </div>
+            <div class="modal-body">
+                <p id="alert-message" class="alert-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="primary-btn" id="alert-ok">OK</button>
+            </div>
+        </div>
+    </div>
 
     <div class="modal-overlay hidden" id="finalize-modal" role="dialog" aria-modal="true" aria-labelledby="finalize-title">
         <div class="modal compact-modal" >
@@ -151,19 +160,49 @@
             <form id="finalize-form" class="finalize-form" autocomplete="off">
                 <div class="modal-body">
                     <div class="summary-line large"><span>Elapsed</span><span id="finalize-elapsed">00:00</span></div>
-                    <!-- piece/focus removed; notes only -->
                     <div class="form-row">
                         <label for="final-date" class="form-label">Date</label>
                         <input id="final-date" type="date" max="" />
                     </div>
                     <div class="form-row">
                         <label for="final-notes" class="form-label">Notes (optional)</label>
-                        <textarea id="final-notes" rows="4" maxlength="500" placeholder="Only visible to you"></textarea>
+                        <textarea id="final-notes" rows="4" maxlength="200" placeholder="Only visible to you"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="secondary-btn" id="finalize-cancel">Cancel</button>
                     <button type="submit" class="primary-btn" id="finalize-submit">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Manual Log Modal -->
+    <div class="modal-overlay hidden" id="manual-modal" role="dialog" aria-modal="true" aria-labelledby="manual-modal-title">
+        <div class="modal compact-modal">
+            <div class="modal-header">
+                <h2 id="manual-modal-title">Manual Log</h2>
+                <button type="button" class="close-btn" id="manual-close" aria-label="Close manual log dialog">×</button>
+            </div>
+            <form id="manual-log-form" class="manual-log-form" autocomplete="off">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <label for="manual-date" class="form-label">Date</label>
+                        <input id="manual-date" type="date" max="" />
+                    </div>
+                    <div class="form-row">
+                        <label for="manual-minutes" class="form-label">Minutes</label>
+                        <input id="manual-minutes" type="number" min="1" max="240" placeholder="30" />
+                    </div>
+                    <div class="form-row">
+                        <label for="manual-notes" class="form-label">Notes / Focus</label>
+                        <textarea id="manual-notes" rows="3" maxlength="200" placeholder="Only visible to you"></textarea>
+                        <div id="manual-notes-counter" class="notes-counter" aria-live="polite"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="secondary-btn" id="manual-cancel">Cancel</button>
+                    <button type="submit" class="primary-btn" id="manual-submit-btn" aria-label="Log practice session manually">Log Session</button>
                 </div>
             </form>
         </div>
