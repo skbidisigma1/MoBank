@@ -12,13 +12,19 @@
 	const TIMER_KEY = 'practiceTimerStateV1';
 	const TIMER_MAX_IDLE_MINUTES = 12 * 60; // 12 hours cutoff
 
-	const PRACTICE_DATA_KEY = 'practiceData';
-	const PRACTICE_META_KEY = 'practiceDataMeta';
-	const CACHE_TTL_MS = 30 * 1000; // 30s
+	// New caching keys (meta-driven)
+	const PRACTICE_RAW_KEY = 'practiceDataRawV1'; // raw chunks + goal
+	const PRACTICE_META_KEY = 'practiceMetaV1'; // meta hash + last meta fetch
+	const PRACTICE_COMPUTED_KEY = 'practiceComputedV1'; // derived aggregates
+	const META_MAX_AGE_MS = 5 * 60 * 1000; // 5 minutes before probing meta again
+	const RAW_EXPIRY_MS = 12 * 60 * 60 * 1000; // 12h soft expiry for raw cache
+	const COMPUTED_VERSION = 'v1';
 	const RECENT_LIMIT = 10;
 
-	let cachedSummary = null;
-	let practiceData = null;
+	let cachedSummary = null; // summary for top stats
+	let practiceData = null; // raw { goal, chunks }
+	let computedCache = null; // full aggregate cache
+	let currentMetaHash = null;
 
 	document.addEventListener('DOMContentLoaded', init);
 
@@ -27,8 +33,7 @@
 		bindEvents();
 		await ensureAuth();
 		restoreTimerFromStorage();
-		await loadSummary();
-		loadTrends(); // fire and forget; not critical for initial view
+		await bootstrapPracticeData();
 	}
 
 	function cacheDOM() {
@@ -103,7 +108,7 @@
 		if (dom.manualClose) dom.manualClose.addEventListener('click', closeManualModal);
 		if (dom.manualCancel) dom.manualCancel.addEventListener('click', closeManualModal);
 		if (dom.manualModal) dom.manualModal.addEventListener('click', e => { if (e.target === dom.manualModal) closeManualModal(); });
-		dom.refreshSummaryBtn.addEventListener('click', loadSummary);
+		dom.refreshSummaryBtn.addEventListener('click', () => manualRefreshPracticeData());
 		dom.saveGoalBtn.addEventListener('click', saveGoal);
 		dom.finalizeClose.addEventListener('click', closeFinalizeModal);
 		dom.finalizeCancel.addEventListener('click', closeFinalizeModal);
@@ -113,7 +118,7 @@
 		if (dom.alertModal) dom.alertModal.addEventListener('click', e => { if (e.target === dom.alertModal) closeAlertModal(); });
 		document.addEventListener('keydown', globalKeyHandler, true);
 		initDates();
-		document.getElementById('refresh-summary-btn')?.addEventListener('click', ()=>{ loadTrends(true); });
+		// manual refresh already bound above; trends endpoint removed (computed client-side)
 	}
 
 	function announce(msg) { if (dom.liveRegion) dom.liveRegion.textContent = msg; }
@@ -343,7 +348,6 @@
 			closeFinalizeModal();
 			resetSessionState();
 			updateSessionUIState();
-			loadSummary();
 			prependRecentSession(payload);
 			announce('Session saved');
 		}).catch(err => {
@@ -415,7 +419,6 @@
 		const payload = { durationMinutes: minutes, notes, manual: true, date: dateStr };
 		saveManualSession(payload).then(() => {
 			showToast('Logged', `${minutes} minute${minutes===1?'':'s'} added.`);
-			loadSummary();
 			prependRecentSession(payload);
 			e.target.reset();
 			initDates();
@@ -471,41 +474,68 @@
 		return li;
 	}
 
-	// caching helpers
-	function writeMeta(val) { try { localStorage.setItem(PRACTICE_META_KEY, JSON.stringify(val)); } catch {} }
-	function readCacheWithAge(key) {
-		try {
-			const raw = localStorage.getItem(key); if (!raw) return null;
-			const parsed = JSON.parse(raw);
-			if (parsed && parsed._ts && parsed.data) {
-				if (Date.now() - parsed._ts > CACHE_TTL_MS) return null;
-				return parsed.data;
-			}
-			return parsed;
-		} catch { return null; }
-	}
-	function writeCacheWithAge(key,data) { try { localStorage.setItem(key, JSON.stringify({ data, _ts: Date.now() })); } catch {} }
-
-	async function loadSummary(forceRefresh=false) {
-		try {
-			if (!forceRefresh) {
-				const cached = readCacheWithAge(PRACTICE_DATA_KEY);
-				if (cached) {
-					practiceData = cached;
-					cachedSummary = computeSummary(practiceData);
-					updateSummaryUI(cachedSummary);
-					return;
-				}
-			}
-			practiceData = await fetchFullPracticeData();
-			writeCacheWithAge(PRACTICE_DATA_KEY, practiceData);
-			cachedSummary = computeSummary(practiceData);
-			updateSummaryUI(cachedSummary);
-			showToast('Refreshed', 'Reloaded summary');
-		} catch (e) {
-			console.error(e);
-			showToast('Error', 'Could not load summary.');
+	// -------------------- New Caching + Meta Bootstrap --------------------
+	function readJSON(key) { try { const raw = localStorage.getItem(key); if (!raw) return null; return JSON.parse(raw); } catch { return null; } }
+	function persistMeta(meta, hash) { try { localStorage.setItem(PRACTICE_META_KEY, JSON.stringify({ ...meta, hash, _ts: Date.now() })); } catch {} }
+	function persistRaw(raw) { try { localStorage.setItem(PRACTICE_RAW_KEY, JSON.stringify({ ...raw, _ts: Date.now() })); } catch {} }
+	function persistComputed(comp) { try { localStorage.setItem(PRACTICE_COMPUTED_KEY, JSON.stringify({ version:COMPUTED_VERSION, ...comp, _ts: Date.now() })); } catch {} }
+	function buildMetaHash(meta) { return [meta.goal||0, meta.lastIndex||0, meta.lastUpdated||'0'].join('|'); }
+	function loadFromLocalCaches() {
+		const raw = readJSON(PRACTICE_RAW_KEY);
+		if (raw && raw.chunks && raw._ts && Date.now()-raw._ts < RAW_EXPIRY_MS) practiceData = { goal: raw.goal, chunks: raw.chunks };
+		const comp = readJSON(PRACTICE_COMPUTED_KEY);
+		if (comp && comp.version===COMPUTED_VERSION) computedCache = comp;
+		const meta = readJSON(PRACTICE_META_KEY); if (meta) currentMetaHash = meta.hash;
+		if (computedCache) {
+			cachedSummary = computedCache.summary;
+			renderMiniMetrics(computedCache);
+			calendarSourceDays = computedCache.calendarDays; calendarDataLoaded = !!computedCache.calendarDays;
 		}
+	}
+	async function fetchPracticeMeta() {
+		const token = await auth0Client.getTokenSilently();
+		const res = await fetch('/api/getPracticeData?meta=1', { headers:{ 'Authorization':`Bearer ${token}` }});
+		if (!res.ok) throw new Error('meta fetch failed');
+		return await res.json(); // { goal, lastIndex, lastUpdated }
+	}
+	async function bootstrapPracticeData() {
+		loadFromLocalCaches();
+		if (cachedSummary) updateSummaryUI(cachedSummary);
+		if (calendarDataLoaded) maybeRenderCalendarHeatmapFromCached();
+		const meta = readJSON(PRACTICE_META_KEY);
+		const metaFresh = meta && (Date.now() - (meta._ts||0) < META_MAX_AGE_MS);
+		if (metaFresh && computedCache && meta.hash === computedCache.metaHash) return; // all good
+		try {
+			const newMeta = await fetchPracticeMeta();
+			const newHash = buildMetaHash(newMeta);
+			currentMetaHash = newHash;
+			persistMeta(newMeta, newHash);
+			if (computedCache && computedCache.metaHash === newHash && practiceData) return; // unchanged
+			practiceData = await fetchFullPracticeData();
+			persistRaw(practiceData);
+			computedCache = computeAllAggregates(practiceData, newHash);
+			persistComputed(computedCache);
+			cachedSummary = computedCache.summary; updateSummaryUI(cachedSummary); renderMiniMetrics(computedCache);
+			calendarSourceDays = computedCache.calendarDays; calendarDataLoaded = true; maybeRenderCalendarHeatmapFromCached(true);
+			showToast('Refreshed', 'Practice stats updated');
+		} catch (e) {
+			console.warn('Practice bootstrap/meta failure', e);
+			if (!cachedSummary) showToast('Offline', 'Using cached stats');
+		}
+	}
+	async function manualRefreshPracticeData() {
+		showToast('Refreshing', 'Checking updates…');
+		try {
+			const newMeta = await fetchPracticeMeta();
+			const newHash = buildMetaHash(newMeta);
+			persistMeta(newMeta, newHash);
+			if (computedCache && computedCache.metaHash === newHash && practiceData) { showToast('Up to date', 'No new sessions'); return; }
+			practiceData = await fetchFullPracticeData(); persistRaw(practiceData);
+			computedCache = computeAllAggregates(practiceData, newHash); persistComputed(computedCache);
+			cachedSummary = computedCache.summary; updateSummaryUI(cachedSummary); renderMiniMetrics(computedCache);
+			calendarSourceDays = computedCache.calendarDays; calendarDataLoaded = true; maybeRenderCalendarHeatmapFromCached(true);
+			showToast('Refreshed', 'Practice data updated');
+		} catch(e) { console.error(e); showToast('Error', 'Refresh failed'); }
 	}
 
 	function updateSummaryUI(data) {
@@ -545,35 +575,14 @@
 		}
 	}
 
-	// trends
-	let trendsCache = null; let lastTrendsFetch = 0; const TRENDS_TTL = 60 * 1000; // 1 min
-	async function loadTrends(force=false) {
-		try {
-			if (!force && trendsCache && Date.now() - lastTrendsFetch < TRENDS_TTL) { renderTrends(trendsCache); return; }
-			const token = await auth0Client.getTokenSilently();
-			const res = await fetch('/api/getPracticeTrends', { headers:{ 'Authorization':`Bearer ${token}` }});
-			if (!res.ok) throw new Error('trends fetch');
-			const data = await res.json();
-			trendsCache = data; lastTrendsFetch = Date.now();
-			renderTrends(data);
-		} catch (e) { console.warn('trends load failed', e); }
-	}
-
-	function renderTrends(data) {
-		if (!data || !Array.isArray(data.days)) return;
-		maybeRenderCalendarHeatmap();
-		const recoEl = document.getElementById('insight-reco');
-		if (recoEl && data.recommendation) recoEl.textContent = data.recommendation;
-		const mini = document.getElementById('practice-mini-metrics');
-		if (mini) {
-			const s = data.summary || {}; const st = data.streak || {}; 
-			mini.innerHTML = '';
-			mini.appendChild(makeMM('Last 7', (s.last7Minutes||0)+'m'));
-			mini.appendChild(makeMM('Last 14', (s.last14Minutes||0)+'m'));
-			mini.appendChild(makeMM('Avg Session', (s.avgSessionLength||0)+'m'));
-			mini.appendChild(makeMM('Sessions', s.sessionsCount||0));
-			mini.appendChild(makeMM('Streak', (st.current||0)+'d')); 
-		}
+	function renderMiniMetrics(agg) {
+		const mini = document.getElementById('practice-mini-metrics'); if (!mini || !agg) return;
+		mini.innerHTML = '';
+		mini.appendChild(makeMM('Last 7', (agg.last7Minutes||0)+'m'));
+		mini.appendChild(makeMM('Last 14', (agg.last14Minutes||0)+'m'));
+		mini.appendChild(makeMM('Avg Session', (agg.avgSessionLength||0)+'m'));
+		mini.appendChild(makeMM('Sessions', agg.sessionsCount||0));
+		mini.appendChild(makeMM('Streak', (agg.currentStreak||0)+'d'));
 	}
 
 	// calendar heatmap
@@ -622,39 +631,31 @@
 				const putReq = store.put({ key:'practiceCalendarRange', value: val, updated: Date.now() });
 				putReq.onsuccess = resolve; putReq.onerror = () => reject(putReq.error);
 			});
-		} catch(e) { /* silent */ }
+		} catch(e) { showToast('Error', e) }
 	}
 	function determineInitialCalendarMode(winWidth) {
 		return !(winWidth >= 1440);
 	}
-async function maybeRenderCalendarHeatmap() {
+async function maybeRenderCalendarHeatmap(force) {
 	const container = document.getElementById('calendar-heatmap');
 	if (!container) return;
 	if (calendarInitPending) return;
-	if (typeof window.CalHeatmap === 'undefined' || typeof window.Legend === 'undefined') { setTimeout(maybeRenderCalendarHeatmap, 200); return; }
-	if (!calendarDataLoaded) {
-		calendarInitPending = true;
-		try {
-			const token = await auth0Client.getTokenSilently();
-			const res = await fetch('/api/getPracticeTrends?days=400', { headers:{ 'Authorization':`Bearer ${token}` }});
-			if (!res.ok) throw new Error('calendar trends failed');
-			const data = await res.json();
-			if (!calendarPrefLoaded) {
-				const stored = await getCalendarPref();
-				if (stored === '6mo') calendarCompactMode = true; else if (stored === '12mo') calendarCompactMode = false; else calendarCompactMode = determineInitialCalendarMode(window.innerWidth);
-				calendarPrefLoaded = true;
-			}
-			calendarDataLoaded = true;
-			if (calendarCompactMode) container.classList.add('compact-mode'); else container.classList.remove('compact-mode');
-			buildCalendarChart(container, data.days || []);
-			setupCalendarRangeToggle(container, { reveal: true });
-		} catch(e) { console.warn('calendar heatmap load error', e); }
-		finally { calendarInitPending = false; }
+	if (typeof window.CalHeatmap === 'undefined' || typeof window.Legend === 'undefined') { setTimeout(()=>maybeRenderCalendarHeatmap(force), 200); return; }
+	if (!calendarDataLoaded || force) {
+		if (!calendarPrefLoaded) {
+			try { const stored = await getCalendarPref(); if (stored === '6mo') calendarCompactMode = true; else if (stored === '12mo') calendarCompactMode = false; else calendarCompactMode = determineInitialCalendarMode(window.innerWidth); calendarPrefLoaded = true; } catch {}
+		}
+		if (!calendarSourceDays) return; // wait until aggregates populated
+		if (calendarCompactMode) container.classList.add('compact-mode'); else container.classList.remove('compact-mode');
+		buildCalendarChart(container, calendarSourceDays);
+		setupCalendarRangeToggle(container, { reveal: true });
+		calendarDataLoaded = true;
 	} else if (calendarConfig && !calHeatmapInstance) {
 		setupCalendarRangeToggle(container, { reveal: true });
 		paintCalendar(container);
 	}
 }
+	function maybeRenderCalendarHeatmapFromCached(force){ maybeRenderCalendarHeatmap(force); }
 
 function buildCalendarChart(container, days) {
 	calendarSourceDays = days;
@@ -1041,15 +1042,15 @@ function repaintCalendarOnResize() {
 			const res = await fetch('/api/setPracticeGoal', { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type':'application/json' }, body: JSON.stringify({ goal: val }) });
 			if (!res.ok) throw new Error('bad goal save');
 			if (practiceData) practiceData.goal = val;
-			cachedSummary = computeSummary(practiceData);
-			updateSummaryUI(cachedSummary);
-			localStorage.removeItem(PRACTICE_DATA_KEY); // force fresh on next load
-			writeMeta({ hash: 'invalid' });
+			// recompute aggregates locally
+			const meta = readJSON(PRACTICE_META_KEY) || {};
+			const newHash = buildMetaHash({ goal: val, lastIndex: meta.lastIndex, lastUpdated: meta.lastUpdated });
+			persistMeta({ goal: val, lastIndex: meta.lastIndex, lastUpdated: meta.lastUpdated }, newHash);
+			computedCache = computeAllAggregates(practiceData, newHash); persistComputed(computedCache);
+			cachedSummary = computedCache.summary; updateSummaryUI(cachedSummary); renderMiniMetrics(computedCache);
+			calendarSourceDays = computedCache.calendarDays; calendarDataLoaded = true; maybeRenderCalendarHeatmapFromCached(true);
 			showToast('Goal Saved', `Weekly goal set to ${val} min.`);
-		} catch (e) {
-			console.error(e);
-			showToast('Error', 'Failed to save goal');
-		}
+		} catch (e) { console.error(e); showToast('Error', 'Failed to save goal'); }
 	}
 
 	async function fetchFullPracticeData() {
@@ -1059,6 +1060,24 @@ function repaintCalendarOnResize() {
 		const data = await res.json();
 		if (!data.chunks) data.chunks = [];
 		return data;
+	}
+
+	function computeAllAggregates(pd, metaHash) {
+		const sessions = flattenSessions(pd);
+		const dayMap = new Map(); let minutesAccumulator=0; let sessionsCount=0;
+		for (const s of sessions) { if (!s.date) continue; const m=s.durationMinutes||0; dayMap.set(s.date,(dayMap.get(s.date)||0)+m); minutesAccumulator+=m; sessionsCount++; }
+		const today = new Date(); const trendsDays=[]; const RANGE=56;
+		for (let i=RANGE-1;i>=0;i--){ const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()-i); const iso=d.toISOString().slice(0,10); trendsDays.push({ date:iso, minutes:dayMap.get(iso)||0 }); }
+		const sorted = Array.from(dayMap.keys()).sort(); let longest=0, run=0, prev=null;
+		for (const ds of sorted){ if (prev){ const delta=(new Date(ds)-new Date(prev))/86400000; if (delta===1) run++; else run=1; } else run=1; if (run>longest) longest=run; prev=ds; }
+		const todayISO = today.toISOString().slice(0,10); let currentStreak=0; let cursor = dayMap.get(todayISO)>0 ? new Date(today) : new Date(today.getFullYear(), today.getMonth(), today.getDate()-1);
+		while(true){ const iso=cursor.toISOString().slice(0,10); if (dayMap.get(iso)>0){ currentStreak++; cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate()-1);} else break; }
+		const summary = computeSummary(pd);
+		const last7Minutes = trendsDays.slice(-7).reduce((a,d)=>a+d.minutes,0);
+		const last14Minutes = trendsDays.slice(-14).reduce((a,d)=>a+d.minutes,0);
+		const avgSessionLength = sessionsCount ? Math.round(minutesAccumulator / sessionsCount) : 0;
+		const calDays=[]; for (let i=399;i>=0;i--){ const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()-i); const iso=d.toISOString().slice(0,10); calDays.push({ date: iso, minutes: dayMap.get(iso)||0 }); }
+		return { metaHash, summary, trendsDays, calendarDays: calDays, currentStreak, longestStreak:longest, last7Minutes, last14Minutes, avgSessionLength, sessionsCount, recentSessions: summary.recentSessions };
 	}
 	function flattenSessions(pd) {
 		if (!pd || !Array.isArray(pd.chunks)) return [];
@@ -1149,8 +1168,7 @@ function repaintCalendarOnResize() {
 			}
 			throw new Error('log failed');
 		}
-		writeMeta({ hash: 'invalid' });
-		localStorage.removeItem(PRACTICE_DATA_KEY);
+		applyLocalSessionMutation({ date: payload.date, minutes, notes: payload.notes, manual: true });
 	}
 	async function saveFinalizedSession(payload) {
 		const body = { sessionId: payload.sessionId, durationMinutes: payload.durationMinutes, notes: payload.notes, date: payload.date };
@@ -1164,8 +1182,21 @@ function repaintCalendarOnResize() {
 			const j = await res.json().catch(()=>({message:'Save failed'}));
 			throw new Error(j.message || 'Save failed');
 		}
-		writeMeta({ hash: 'invalid' });
-		localStorage.removeItem(PRACTICE_DATA_KEY);
+		applyLocalSessionMutation({ date: payload.date, minutes: payload.durationMinutes, notes: payload.notes, manual: false });
+	}
+	function applyLocalSessionMutation(newSession) {
+		try {
+			if (!practiceData || !Array.isArray(practiceData.chunks)) return;
+			if (!practiceData.chunks.length) practiceData.chunks.push({ index:0, sessions: [] });
+			const lastChunk = practiceData.chunks[practiceData.chunks.length -1];
+			lastChunk.sessions.push({ d: newSession.date, m: newSession.minutes, n: newSession.notes, man: !!newSession.manual, t: { _seconds: Math.floor(Date.now()/1000) } });
+			persistRaw(practiceData);
+			const meta = readJSON(PRACTICE_META_KEY) || {}; // do not change server lastUpdated; next meta probe will reconcile if rotated
+			computedCache = computeAllAggregates(practiceData, meta.hash || currentMetaHash);
+			persistComputed(computedCache);
+			cachedSummary = computedCache.summary; updateSummaryUI(cachedSummary); renderMiniMetrics(computedCache);
+			calendarSourceDays = computedCache.calendarDays; calendarDataLoaded = true; maybeRenderCalendarHeatmapFromCached();
+		} catch (e) { console.warn('applyLocalSessionMutation failed', e); }
 	}
 
 	// timer persistence

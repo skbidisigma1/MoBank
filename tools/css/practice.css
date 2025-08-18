@@ -1,5 +1,4 @@
 .practice-container {
-	/* Establish a mild spacing scale (kept small + incremental for future maintainability) */
 	--space-1: .25rem;
 	--space-2: .4rem;
 	--space-3: .55rem;
@@ -32,13 +31,9 @@
 	align-items: start;
 }
 
-/* map cards to grid areas */
 #session-card { grid-area: session; }
 #summary-card { grid-area: summary; }
-/* manual card removed */
 #recent-card { grid-area: recent; }
-
-/* responsive unchanged; single column baseline */
 
 .card {
 	background: var(--container-color);

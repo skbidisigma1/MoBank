@@ -95,7 +95,7 @@
                         <div class="goal-setter" id="goal-setter">
                             <label for="goal-input" class="form-label small">Weekly Goal (min)</label>
                             <div class="goal-row">
-                                <input id="goal-input" type="number" min="0" max="2000" placeholder="180" />
+                                <input id="goal-input" type="number" min="0" max="10080" placeholder="180" />
                                 <button type="button" id="save-goal-btn" class="secondary-btn small">Save</button>
                             </div>
                         </div>
@@ -103,7 +103,6 @@
                             <div class="insight-line" id="insight-top-piece" aria-live="polite"></div>
                             <div class="insight-line" id="insight-avg-length" aria-live="polite"></div>
                             <div class="insight-line" id="insight-gap" aria-live="polite"></div>
-                            <div class="insight-line" id="insight-reco" aria-live="polite"></div>
                         </div>
                         <div style="display:flex; align-items:center; justify-content:center; margin-top:.9rem;">
                             <div id="calendar-heatmap" class="calendar-heatmap" style="flex:1; height: 180px;" aria-label="Practice calendar" role="img"></div>
@@ -137,7 +136,7 @@
                 </div>
             </div>
     </section>
-    <div class="modal alert-modal" >
+    <div class="modal alert-modal hidden" id="alert-modal" hidden>
             <div class="modal-header">
                 <h2 id="alert-title">Notice</h2>
                 <button type="button" class="close-btn" id="alert-close" aria-label="Close alert">×</button>
