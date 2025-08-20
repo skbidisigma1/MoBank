@@ -586,12 +586,19 @@
 	}
 
 	// calendar heatmap
-	let calHeatmapInstance = null; let calendarDataLoaded = false; let calendarInitPending = false;
+	let calHeatmapInstance = null; let calendarDataLoaded = false;
 	let calendarSourceDays = null;
 	let calendarLayout = null;
 	let calendarConfig = null;
 	let calendarCompactMode = true;
 	let calendarPrefLoaded = false;
+	let calendarRenderAttempts = 0;
+
+	// Debug logging helpers (disabled by default; enable by setting window.__CAL_DEBUG = true or localStorage practiceCalDebug=1)
+	if (typeof window.__CAL_DEBUG === 'undefined') window.__CAL_DEBUG = false;
+	function __calDebugEnabled(){ try { return !!(window.__CAL_DEBUG || localStorage.getItem('practiceCalDebug')==='1'); } catch { return false; } }
+	function calLog(...args){ if (__calDebugEnabled()) try { console.log('[PracticeCal]', ...args); } catch {} }
+	function calWarn(...args){ if (__calDebugEnabled()) try { console.warn('[PracticeCal]', ...args); } catch {} }
 
 	// IndexedDB setup
 	const CAL_DB = { NAME: 'mobank-db', VERSION: 3, STORE: 'preferences' };
@@ -637,22 +644,29 @@
 		return !(winWidth >= 1440);
 	}
 async function maybeRenderCalendarHeatmap(force) {
+	calLog('maybeRenderCalendarHeatmap', { force, attempts: calendarRenderAttempts });
 	const container = document.getElementById('calendar-heatmap');
-	if (!container) return;
-	if (calendarInitPending) return;
+	if (!container) { return; }
 	if (typeof window.CalHeatmap === 'undefined' || typeof window.Legend === 'undefined') { setTimeout(()=>maybeRenderCalendarHeatmap(force), 200); return; }
-	if (!calendarDataLoaded || force) {
+	const needConfig = !calendarConfig && !!calendarSourceDays;
+	const needInstance = calendarConfig && !calHeatmapInstance;
+	if (force) { calendarConfig = null; calHeatmapInstance = null; }
+	if (force || !calendarDataLoaded || needConfig || needInstance) {
 		if (!calendarPrefLoaded) {
-			try { const stored = await getCalendarPref(); if (stored === '6mo') calendarCompactMode = true; else if (stored === '12mo') calendarCompactMode = false; else calendarCompactMode = determineInitialCalendarMode(window.innerWidth); calendarPrefLoaded = true; } catch {}
+			try { const stored = await getCalendarPref(); if (stored === '6mo') calendarCompactMode = true; else if (stored === '12mo') calendarCompactMode = false; else calendarCompactMode = determineInitialCalendarMode(window.innerWidth); calendarPrefLoaded = true; } catch(e){}
 		}
-		if (!calendarSourceDays) return; // wait until aggregates populated
+		if (!calendarSourceDays) {
+			if (calendarRenderAttempts < 25) { calendarRenderAttempts++; setTimeout(()=>maybeRenderCalendarHeatmap(force), 400); }
+			return;
+		}
 		if (calendarCompactMode) container.classList.add('compact-mode'); else container.classList.remove('compact-mode');
-		buildCalendarChart(container, calendarSourceDays);
+		if (!calendarConfig) {
+			buildCalendarChart(container, calendarSourceDays);
+		} else if (!calHeatmapInstance) {
+			paintCalendar(container);
+		}
 		setupCalendarRangeToggle(container, { reveal: true });
 		calendarDataLoaded = true;
-	} else if (calendarConfig && !calHeatmapInstance) {
-		setupCalendarRangeToggle(container, { reveal: true });
-		paintCalendar(container);
 	}
 }
 	function maybeRenderCalendarHeatmapFromCached(force){ maybeRenderCalendarHeatmap(force); }
@@ -724,11 +738,14 @@ function computeCalendarLayout(containerWidth, containerHeight, weeks, compact) 
 			}
 		}
 	}
-	return { cell, gutter, weeks, edgePad: EDGE_PAD, extraPad };
+	const layout = { cell, gutter, weeks, edgePad: EDGE_PAD, extraPad };
+	return layout;
 }
 
 function paintCalendar(container) {
 	if (!calendarConfig) return;
+	// Ensure container doesn't clip bottom of SVG
+	if (container.style.overflow !== 'visible') container.style.overflow = 'visible';
 	const now = calendarConfig.now || new Date();
 	const monthsBack = calendarCompactMode ? 5 : 11;
 	calendarConfig.start = new Date(now.getFullYear(), now.getMonth() - monthsBack, 1);
@@ -750,13 +767,18 @@ function paintCalendar(container) {
 		animationDuration: 150,
 	}, [
 		[window.Legend, { itemSelector: '#calendar-legend', label: 'Minutes per day' }]
-	]).then(() => {
-		try { adjustMonthBackgrounds(container, DOMAIN_GUTTER); } catch {}
-		try { addCalendarWrapper(container); } catch {}
-		try { assignCalendarCellDates(container, layout); } catch (e) { console.warn('assignCalendarCellDates failed', e); }
-		try { applyCalendarA11y(container); } catch {}
-		try { applyInternalSVGPadding(container, layout.edgePad + (calendarCompactMode ? 4 : 0)); } catch {}
-		try { reflectCalendarContainerMode(container); } catch {}
+	]);
+	calHeatmapInstance._lastPaintAt = Date.now();
+	Promise.resolve(calHeatmapInstance).then(() => {
+		calLog('calendar painted');
+		try { adjustMonthBackgrounds(container, DOMAIN_GUTTER); } catch(e){ calWarn('adjustMonthBackgrounds failed', e); }
+		try { addCalendarWrapper(container); } catch(e){ calWarn('addCalendarWrapper failed', e); }
+		try { assignCalendarCellDates(container, layout); } catch (e) { calWarn('assignCalendarCellDates failed', e); }
+		try { applyCalendarA11y(container); } catch(e){ calWarn('applyCalendarA11y failed', e); }
+		try { applyInternalSVGPadding(container, layout.edgePad + (calendarCompactMode ? 4 : 0)); } catch(e){ calWarn('applyInternalSVGPadding failed', e); }
+		try { reflectCalendarContainerMode(container); } catch(e){ calWarn('reflectCalendarContainerMode failed', e); }
+		const rectCount = container.querySelectorAll('rect.ch-subdomain-bg').length;
+		calLog('calendar cells', rectCount);
 	});
 }
 
@@ -958,21 +980,23 @@ function applyInternalSVGPadding(container, pad) {
 		while (svg.firstChild) inner.appendChild(svg.firstChild);
 		svg.appendChild(inner);
 	}
-	inner.setAttribute('transform', `translate(${pad},${pad})`);
+	const hPad = pad;
+	const vPad = 0;
+	inner.setAttribute('transform', `translate(${hPad},${vPad})`);
 	const w = parseFloat(svg.getAttribute('width'));
 	const h = parseFloat(svg.getAttribute('height'));
-	if (!isNaN(w)) svg.setAttribute('width', (w + pad * 2) + '');
-	if (!isNaN(h)) svg.setAttribute('height', (h + pad * 2) + '');
+	if (!isNaN(w)) svg.setAttribute('width', (w + hPad * 2) + '');
 }
 
 function repaintCalendarOnResize() {
 	const container = document.getElementById('calendar-heatmap');
 	if (!container || !calendarConfig) return;
-	const weeks = getCalendarWeeks(calendarConfig.start, calendarConfig.now);
-	const newLayout = computeCalendarLayout(container.clientWidth, weeks);
-	if (!calendarLayout || newLayout.cell !== calendarLayout.cell || newLayout.gutter !== calendarLayout.gutter) {
-		paintCalendar(container);
-	}
+	const weeks = getCalendarWeeks(calendarConfig.start, calendarConfig.now || new Date());
+	if (container.clientWidth === 0) { setTimeout(repaintCalendarOnResize, 300); return; }
+	const newLayout = computeCalendarLayout(container.clientWidth, container.getBoundingClientRect().height || 0, weeks, calendarCompactMode);
+	const needsPaint = !calendarLayout || newLayout.cell !== calendarLayout.cell || newLayout.gutter !== calendarLayout.gutter;
+	const empty = !container.querySelector('svg');
+	if (needsPaint || empty) { paintCalendar(container); }
 }
 	function showCalTooltip(cell, dateObj, val, ev) {
 		let tooltip = document.getElementById('practice-cal-tooltip');
