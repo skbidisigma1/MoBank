@@ -6,6 +6,14 @@ module.exports = async (req, res) => {
   const token = getTokenFromHeader(req); if (!token) return res.status(401).json({ message: 'Unauthorized' });
   let decoded; try { decoded = await verifyToken(token); } catch { return res.status(401).json({ message: 'Token verification failed' }); }
   const uid = decoded.sub;
+  // Guard: require class_period set before starting sessions (enforces yearly reset completion)
+  try {
+    const userDoc = await db.collection('users').doc(uid).get();
+    if (!userDoc.exists) return res.status(404).json({ message: 'User not found' });
+    if (userDoc.data().class_period == null) return res.status(428).json({ message: 'Set class period before starting a practice session' });
+  } catch (e) {
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
 
   const userRef = db.collection('users').doc(uid);
   const nowTs = admin.firestore.Timestamp.now();

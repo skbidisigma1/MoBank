@@ -37,6 +37,7 @@ module.exports = async (req, res) => {
         await db.runTransaction(async tx => {
             const userSnap = await tx.get(userRef);
             if (!userSnap.exists) throw new Error('USER_MISSING');
+            if (userSnap.data().class_period == null) throw new Error('PROFILE_INCOMPLETE');
             let lastIdx = userSnap.get('practice_last_chunk_index');
             if (lastIdx === undefined || lastIdx === null) lastIdx = 0;
             const chunkRef = userRef.collection('practiceChunks').doc(String(lastIdx));
@@ -80,9 +81,8 @@ module.exports = async (req, res) => {
             }
         });
     } catch (e) {
-        if (e.message === 'USER_MISSING') return res.status(404).json({
-            message: 'User not found'
-        });
+        if (e.message === 'USER_MISSING') return res.status(404).json({ message: 'User not found' });
+        if (e.message === 'PROFILE_INCOMPLETE') return res.status(428).json({ message: 'Set class period before logging practice' });
         console.error('logPracticeSession error', e);
         return res.status(500).json({
             message: 'Internal Server Error'

@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Wait for headerFooter.js userDataPromise
             let attempts = 0;
             const maxAttempts = 10;
             while (!window.userDataPromise && attempts < maxAttempts) {
@@ -54,6 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // migration banner for new school year and new users
     function injectMigrationBanner(userData) {
         try {
             const params = new URLSearchParams(window.location.search);
@@ -61,20 +61,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             const needsPeriod = userData.class_period == null;
             if (!force && !needsPeriod) return;
             const returning = !!(userData.instrument || (userData.transactions && userData.transactions.length) || (userData.currency_balance && userData.currency_balance !== 0));
-            const msg = returning
-              ? 'Welcome to MoBank! Choose your class period to begin the new school year.'
-              : 'Welcome to MoBank! Choose your class period to get started.';
+            const msg = returning ? 'Complete your settings to begin the new school year.' : 'Complete your settings to get started.';
             const section = document.querySelector('.profile-section');
             if (section && !document.getElementById('migration-banner')) {
                 const div = document.createElement('div');
                 div.id = 'migration-banner';
-                div.style.background = 'var(--color-primary-dark)';
-                div.style.color = 'var(--color-white)';
-                div.style.padding = '12px 16px';
-                div.style.borderRadius = '8px';
-                div.style.marginBottom = '18px';
-                div.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
-                div.style.fontSize = '0.95rem';
+                div.className = 'migration-banner';
                 div.innerHTML = `<strong>${returning ? 'Welcome Back!' : 'Welcome!'}</strong> ${msg}`;
                 section.insertBefore(div, section.firstChild);
             }

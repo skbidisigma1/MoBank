@@ -83,6 +83,9 @@ module.exports = async (req, res) => {
     }
 
     const senderData = senderDoc.data();
+    if (senderData.class_period == null) {
+      return res.status(428).json({ message: 'Profile incomplete: class period not set' });
+    }
     const senderBalance = senderData.currency_balance || 0;
     if (senderBalance < numericAmount) {
       return res.status(400).json({ message: 'Insufficient balance' });
@@ -90,13 +93,15 @@ module.exports = async (req, res) => {
 
     try {
       await db.runTransaction(async tx => {
-        const [sSnap, rSnap] = await Promise.all([
+  const [sSnap, rSnap] = await Promise.all([
           tx.get(senderRef),
           tx.get(recipientRef),
         ]);
         if (!sSnap.exists || !rSnap.exists) {
           throw new Error('User does not exist');
         }
+  if (sSnap.data().class_period == null) throw new Error('PROFILE_INCOMPLETE');
+  if (rSnap.data().class_period == null) throw new Error('RECIPIENT_INCOMPLETE');
 
         const updatedSenderBalance =
           (sSnap.data().currency_balance || 0) - numericAmount;
@@ -161,6 +166,12 @@ module.exports = async (req, res) => {
     } catch (err) {
       if (err.message === 'Insufficient balance') {
         return res.status(400).json({ message: 'Insufficient balance' });
+      }
+      if (err.message === 'PROFILE_INCOMPLETE') {
+        return res.status(428).json({ message: 'Complete your profile (class period) before transferring.' });
+      }
+      if (err.message === 'RECIPIENT_INCOMPLETE') {
+        return res.status(409).json({ message: 'Recipient has not completed profile yet.' });
       }
       console.error(err);
       return res.status(500).json({ message: 'Internal Server Error' });
