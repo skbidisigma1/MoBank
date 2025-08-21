@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!force && !needsPeriod) return;
             const returning = !!(userData.instrument || (userData.transactions && userData.transactions.length) || (userData.currency_balance && userData.currency_balance !== 0));
             const msg = returning
-              ? 'Welcome back to MoBank! Choose your class period to begin the new school year.'
+              ? 'Welcome to MoBank! Choose your class period to begin the new school year.'
               : 'Welcome to MoBank! Choose your class period to get started.';
             const section = document.querySelector('.profile-section');
             if (section && !document.getElementById('migration-banner')) {
