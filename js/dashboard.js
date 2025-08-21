@@ -110,8 +110,11 @@ function renderDashboard(u = {}) {
   $('#profile-currency').innerHTML = `MoBuck Balance: <span id="currency-value">${balStr}</span>`;
   $('#currency-value').style.color = balance < 0 ? 'rgb(220,53,69)' : '';
 
+  const periodLabel = (u.class_period == null)
+    ? '<span style="color:var(--color-danger);">Not set – please select your class period</span>'
+    : (periodNames[u.class_period] || `Period ${u.class_period}`);
   $('#dashboard-content').innerHTML = `
-    <div class="dashboard-card"><strong>Class Period:</strong> ${periodNames[u.class_period] || `Period ${u.class_period}`}</div>
+    <div class="dashboard-card"><strong>Class Period:</strong> ${periodLabel}</div>
     <div class="dashboard-card"><strong>Instrument:</strong> ${cap(u.instrument)}</div>
   `;
   renderTransactions(u.transactions || []);

@@ -1,4 +1,3 @@
-/* Loads header & footer, manages auth-aware links + notifications  */
 (async () => {
   await documentReady();
 
@@ -12,12 +11,28 @@
   setupProfilePic($header, user);
   setupParticleConfigButton($footer);
   await initNotifications($header, isLoggedIn);
-  // kick off a fresh user-data fetch for the whole app
   window.userDataPromise = isLoggedIn ? fetchAndCacheUserData() : Promise.resolve(null);
+  if (isLoggedIn) {
+    try {
+      window.userDataPromise.then((ud) => {
+        if (!ud) return;
+        const cp = ud.class_period;
+        const current = location.pathname.split('/').pop();
+        const isProfile = current === 'profile' || current === 'profile.html';
+        const protectedPages = [
+          'dashboard.html','admin.html','transfer.html','leaderboard.html','cute.html',
+          'dashboard','admin','transfer','leaderboard','cute'
+        ];
+        if (!isProfile && protectedPages.includes(current) && (cp === null || typeof cp === 'undefined')) {
+          location.replace('profile?welcome=1');
+        }
+      });
+    } catch (e) {
+      console.warn('class_period redirect check failed:', e);
+    }
+  }
   
-  // Initialize particle settings
   await initializeParticleSettings();
-    // Update navigation links after user data is loaded
 })().catch(console.error);
 
 /* ---------- helpers ---------- */
@@ -133,27 +148,22 @@ async function handleParticleConfigClick() {
 }
 
 async function openParticleConfigModal() {
-  // Create modal if it doesn't exist
   let modal = document.getElementById('particle-config-modal');
   if (!modal) {
     await createParticleConfigModal();
     modal = document.getElementById('particle-config-modal');
   }
   
-  // Ensure modal exists before trying to manipulate it
   if (!modal) {
     console.error('Failed to create particle config modal');
     return;
   }
   
-  // Show modal
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
   
-  // Load custom presets
   await loadCustomPresets();
   
-  // Focus trap for accessibility
   const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
   if (firstFocusable) firstFocusable.focus();
 }
@@ -181,10 +191,8 @@ function setupParticleModalEvents() {
     modal.classList.remove('active');
     document.body.style.overflow = '';
     
-    // Clean up all timeouts
     clearTimeout(window.particleUpdateTimeout);
     
-    // Apply any pending particle updates when modal closes
     const settings = getCurrentSettings();
     if (window.particleControls && window.particleControls.updateConfig) {
       setTimeout(() => {
@@ -197,38 +205,30 @@ function setupParticleModalEvents() {
     }
   };
   
-  // Close events
   closeBtn?.addEventListener('click', closeModal);
   closeFooterBtn?.addEventListener('click', closeModal);
   
-  // Click outside to close
   modal?.addEventListener('click', (e) => {
     if (e.target === modal) closeModal();
   });
   
-  // Escape key to close
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && modal.classList.contains('active')) {
       closeModal();
     }
   });
   
-  // Reset button
   resetBtn?.addEventListener('click', () => {
     resetToDefaults();
   });
   
-  // Setup all config controls
   setupConfigControls();
   
-  // Load saved settings
   loadParticleSettings();
 }
 
 function setupConfigControls() {
-  // Add error boundary to prevent crashes
   try {
-    // Basic checkboxes
     const checkboxes = [
       'particles-enabled', 'reduced-motion', 'size-random', 'opacity-random', 'move-enable',
       'move-attract', 'line-linked-enable', 'line-linked-shadow', 'line-warp', 
@@ -241,15 +241,15 @@ function setupConfigControls() {
         checkbox.addEventListener('change', () => {
           try {
             handleConfigChange();
-            updateVisibilityBasedOnSelections(); // Update visibility for conditional controls
+            updateVisibilityBasedOnSelections();
           } catch (error) {
             console.warn(`Error handling change for ${id}:`, error);
           }
         });
       }
     });
-  
-  // Sliders with value display and precision control
+
+  // surprise surprise, sliders
   const sliders = [
     { id: 'particle-count', suffix: '', precision: 0 },
     { id: 'polygon-sides', suffix: '', precision: 0 },
@@ -285,14 +285,12 @@ function setupConfigControls() {
         handleConfigChange();
       });
       
-      // Make value display editable
       setupEditableValue(valueDisplay, slider, suffix, multiplier, precision);
       
-      updateValue(); // Initialize display
+      updateValue();
     }
   });
   
-  // Color inputs
   const colorInputs = [
     'particle-color', 'line-linked-color', 'triangle-color', 'line-shadow-color'
   ];
@@ -305,7 +303,7 @@ function setupConfigControls() {
     }
   });
   
-  // Select dropdowns
+  // select dropdowns
   const selects = [
     'particle-shape', 'color-mode', 'move-type', 'move-direction', 'move-out-mode',
     'detect-on', 'click-mode'
@@ -320,7 +318,6 @@ function setupConfigControls() {
     }
   });
   
-  // Text inputs
   const textInputs = [
     'image-source'
   ];
@@ -333,7 +330,6 @@ function setupConfigControls() {
     }
   });
   
-  // Preset buttons
   const presetButtons = document.querySelectorAll('.preset-btn');
   presetButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -342,10 +338,8 @@ function setupConfigControls() {
     });
   });
   
-  // Special buttons
   setupSpecialButtons();
   
-  // Setup dynamic visibility
   updateVisibilityBasedOnSelections();
   
   } catch (error) {
@@ -386,23 +380,18 @@ function setupEditableValue(valueElement, slider, suffix, multiplier = 1, precis
         newValue = parseFloat(slider.value) * multiplier;
       }
       
-      // Clamp to valid range
       newValue = Math.max(min, Math.min(max, newValue));
       
-      // Update slider value
       slider.value = newValue / multiplier;
       
-      // Update display
       const finalDisplay = precision === 0 ? Math.round(newValue) : newValue.toFixed(precision);
       valueElement.textContent = `${finalDisplay}${suffix}`;
       
-      // Safely replace the node
       try {
         if (input.parentNode && input.parentNode.contains(input)) {
           input.parentNode.replaceChild(valueElement, input);
         }
       } catch (error) {
-        // If replacement fails, just ensure the value element is in the DOM
         if (!valueElement.parentNode) {
           input.parentNode?.appendChild(valueElement);
         }
@@ -420,7 +409,6 @@ function setupEditableValue(valueElement, slider, suffix, multiplier = 1, precis
           input.parentNode.replaceChild(valueElement, input);
         }
       } catch (error) {
-        // If replacement fails, just ensure the value element is in the DOM
         if (!valueElement.parentNode) {
           input.parentNode?.appendChild(valueElement);
         }
@@ -430,7 +418,7 @@ function setupEditableValue(valueElement, slider, suffix, multiplier = 1, precis
     input.addEventListener('blur', finishEdit);
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        e.preventDefault(); // Prevent form submission
+        e.preventDefault();
         finishEdit();
       } else if (e.key === 'Escape') {
         e.preventDefault();
@@ -441,19 +429,16 @@ function setupEditableValue(valueElement, slider, suffix, multiplier = 1, precis
 }
 
 function setupSpecialButtons() {
-  // Add color button
   const addColorBtn = document.getElementById('add-color-btn');
   if (addColorBtn) {
     addColorBtn.addEventListener('click', addNewColor);
   }
   
-  // Save preset button
   const savePresetBtn = document.getElementById('preset-save-btn');
   if (savePresetBtn) {
     savePresetBtn.addEventListener('click', showSavePresetDialog);
   }
   
-  // Import/Export buttons
   const importBtn = document.getElementById('import-config-btn');
   const exportBtn = document.getElementById('export-config-btn');
   
@@ -465,31 +450,26 @@ function setupSpecialButtons() {
     exportBtn.addEventListener('click', exportConfiguration);
   }
   
-  // File input for import
   const fileInput = document.getElementById('config-file-input');
   if (fileInput) {
     fileInput.addEventListener('change', handleConfigImport);
   }
 }
 
-// Sanitize and auto-correct settings where possible
 function sanitizeSettings(settings) {
   const sanitized = { ...settings };
   
-  // Auto-correct negative values
   if (sanitized.count < 0) sanitized.count = 0;
   if (sanitized.size <= 0) sanitized.size = 1;
   if (sanitized.moveSpeed < 0) sanitized.moveSpeed = 0;
   if (sanitized.lineLinkedDistance < 0) sanitized.lineLinkedDistance = 0;
   if (sanitized.lineLinkedWidth <= 0) sanitized.lineLinkedWidth = 1;
   
-  // Clamp values to valid ranges
   sanitized.opacity = Math.max(0, Math.min(1, sanitized.opacity));
   sanitized.lineLinkedOpacity = Math.max(0, Math.min(1, sanitized.lineLinkedOpacity));
   sanitized.sizeVariation = Math.max(0, Math.min(1, sanitized.sizeVariation));
   sanitized.opacityVariation = Math.max(0, Math.min(1, sanitized.opacityVariation));
   
-  // Clamp polygon/star sides
   if (sanitized.shape === 'polygon') {
     sanitized.polygonSides = Math.max(3, Math.min(20, sanitized.polygonSides));
   }
@@ -497,11 +477,9 @@ function sanitizeSettings(settings) {
     sanitized.starSides = Math.max(3, Math.min(20, sanitized.starSides));
   }
   
-  // Clamp attract rotation values
   sanitized.attractRotateX = Math.max(0, Math.min(5000, sanitized.attractRotateX));
   sanitized.attractRotateY = Math.max(0, Math.min(5000, sanitized.attractRotateY));
   
-  // Clamp click effect count
   if (sanitized.clickMode !== 'none') {
     sanitized.pushParticlesNb = Math.max(1, Math.min(50, sanitized.pushParticlesNb));
   }
@@ -512,38 +490,32 @@ function sanitizeSettings(settings) {
 function handleConfigChange() {
   let settings = getCurrentSettings();
   
-  // First sanitize the settings
   settings = sanitizeSettings(settings);
   
-  // Then validate the sanitized settings
   const validation = validateParticleSettings(settings);
   
-  // Handle errors (should be rare after sanitization)
   if (!validation.isValid) {
     showToast('Configuration Error', validation.errors[0], 'error');
     return;
   }
   
-  // Handle warnings (performance-related, non-blocking)
+  // probably a stupid system
   if (validation.warnings.length > 0) {
-    // Only show warnings occasionally to avoid spam
-    if (Math.random() < 0.3) { // 30% chance to show warning
+    if (Math.random() < 0.3) {
       showToast('Performance Note', validation.warnings[0], 'warning');
     }
   }
   
-  // Settings are valid, apply them
   window.currentParticleSettings = settings;
   saveParticleSettings(settings);
   applyParticleSettings(settings);
 }
 
-// Comprehensive validation for particle settings
 function validateParticleSettings(settings) {
   const errors = [];
   const warnings = [];
 
-  // Validate particle count
+  // validate everything
   if (settings.count < 0) {
     errors.push("Particle count cannot be negative");
   } else if (settings.count > 1000) {
@@ -552,21 +524,18 @@ function validateParticleSettings(settings) {
     warnings.push("High particle count (>500) may affect performance on slower devices");
   }
 
-  // Validate size
   if (settings.size <= 0) {
     errors.push("Particle size must be greater than 0");
   } else if (settings.size > 100) {
     warnings.push("Very large particle size (>100px) may look overwhelming");
   }
 
-  // Validate opacity
   if (settings.opacity < 0 || settings.opacity > 1) {
     errors.push("Particle opacity must be between 0 and 1");
   } else if (settings.opacity < 0.1) {
     warnings.push("Very low opacity (<0.1) may make particles nearly invisible");
   }
 
-  // Validate variations
   if (settings.sizeVariation < 0 || settings.sizeVariation > 1) {
     errors.push("Size variation must be between 0% and 100%");
   }
@@ -574,14 +543,12 @@ function validateParticleSettings(settings) {
     errors.push("Opacity variation must be between 0% and 100%");
   }
 
-  // Validate movement speed
   if (settings.moveSpeed < 0) {
     errors.push("Movement speed cannot be negative");
   } else if (settings.moveSpeed > 20) {
     warnings.push("Very high movement speed (>20) may cause motion sickness");
   }
 
-  // Validate polygon/star sides
   if (settings.shape === 'polygon' && (settings.polygonSides < 3 || settings.polygonSides > 20)) {
     errors.push("Polygon sides must be between 3 and 20");
   }
@@ -589,7 +556,6 @@ function validateParticleSettings(settings) {
     errors.push("Star points must be between 3 and 20");
   }
 
-  // Validate image URL for image shapes
   if (settings.shape === 'image') {
     if (!settings.imageSource || settings.imageSource.trim() === '') {
       errors.push("Image URL is required when using image shape");
@@ -598,7 +564,6 @@ function validateParticleSettings(settings) {
     }
   }
 
-  // Validate line settings
   if (settings.lineLinkedEnable) {
     if (settings.lineLinkedDistance < 0) {
       errors.push("Line distance cannot be negative");
@@ -617,7 +582,6 @@ function validateParticleSettings(settings) {
     }
   }
 
-  // Validate click effect settings
   if (settings.clickMode !== 'none') {
     if (settings.pushParticlesNb < 1 || settings.pushParticlesNb > 50) {
       errors.push("Click effect particle count must be between 1 and 50");
@@ -626,7 +590,6 @@ function validateParticleSettings(settings) {
     }
   }
 
-  // Validate attract settings
   if (settings.moveAttract) {
     if (settings.attractRotateX < 0 || settings.attractRotateX > 5000) {
       errors.push("Attract Rotate X must be between 0 and 5000");
@@ -636,7 +599,6 @@ function validateParticleSettings(settings) {
     }
   }
 
-  // Performance-based warnings
   const performanceScore = calculatePerformanceScore(settings);
   if (performanceScore > 80) {
     warnings.push("Current settings may cause performance issues on slower devices");
@@ -645,7 +607,6 @@ function validateParticleSettings(settings) {
   return { errors, warnings, isValid: errors.length === 0 };
 }
 
-// Helper function to validate image URLs
 function isValidImageUrl(url) {
   try {
     const urlObj = new URL(url);
@@ -656,28 +617,22 @@ function isValidImageUrl(url) {
   }
 }
 
-// Calculate a performance impact score
 function calculatePerformanceScore(settings) {
   let score = 0;
   
-  // Particle count impact
   score += Math.min(settings.count / 10, 30);
   
-  // Size impact
   score += Math.min(settings.size / 2, 15);
   
-  // Movement impact
   if (settings.moveEnable) {
     score += Math.min(settings.moveSpeed * 2, 10);
   }
   
-  // Line connections impact
   if (settings.lineLinkedEnable) {
     score += 15;
     score += Math.min(settings.lineLinkedDistance / 50, 10);
   }
   
-  // Interactive features impact
   if (settings.clickMode !== 'none') score += 5;
   if (settings.moveAttract) score += 10;
   if (settings.lineTriangles) score += 10;
@@ -761,7 +716,7 @@ function addNewColor() {
   handleConfigChange();
 }
 
-// Database functions for particle settings
+// indexedDB particle settings
 async function initParticleDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('MoBankParticles', 3);

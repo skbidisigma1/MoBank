@@ -13,9 +13,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const instrumentSelect = document.getElementById('instrument');
     const themeSelect = document.getElementById('theme');
 
-    if (!themeSelect) return;    async function fetchAndCacheUserData() {
+    if (!themeSelect) return;
+
+    async function fetchAndCacheUserData() {
         try {
-            // Check cache first
             const cachedData = CACHE.read(CACHE.USER_KEY);
             if (cachedData) {
                 autofillForm(cachedData);
@@ -25,12 +26,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Wait for headerFooter.js userDataPromise
             let attempts = 0;
             const maxAttempts = 10;
-            
             while (!window.userDataPromise && attempts < maxAttempts) {
                 await new Promise(resolve => setTimeout(resolve, 100));
                 attempts++;
             }
-            
             if (window.userDataPromise) {
                 const userData = await window.userDataPromise;
                 if (userData) {
@@ -38,14 +37,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
             }
-            
-            // Fallback to direct API call if needed
+
+            // Fallback direct API
             const token = await auth0Client.getTokenSilently();
             const response = await fetch('/api/getUserData', {
                 method: 'GET',
                 headers: { Authorization: `Bearer ${token}` },
             });
-
             if (response.ok) {
                 const userData = await response.json();
                 CACHE.write(CACHE.USER_KEY, userData, CACHE.USER_MAX_AGE);
@@ -56,35 +54,60 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function autofillForm(userData) {
-        const defaults = {
-            class_period: 5,
-            instrument: 'violin',
-            theme: 'light'
-        };
+    function injectMigrationBanner(userData) {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const force = params.get('welcome') === '1';
+            const needsPeriod = userData.class_period == null;
+            if (!force && !needsPeriod) return;
+            const returning = !!(userData.instrument || (userData.transactions && userData.transactions.length) || (userData.currency_balance && userData.currency_balance !== 0));
+            const msg = returning
+              ? 'Welcome back to MoBank! New school year – please select your class period to continue.'
+              : 'Welcome to MoBank! Choose your class period to get started.';
+            const section = document.querySelector('.profile-section');
+            if (section && !document.getElementById('migration-banner')) {
+                const div = document.createElement('div');
+                div.id = 'migration-banner';
+                div.style.background = 'var(--color-primary-dark)';
+                div.style.color = 'var(--color-white)';
+                div.style.padding = '12px 16px';
+                div.style.borderRadius = '8px';
+                div.style.marginBottom = '18px';
+                div.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
+                div.style.fontSize = '0.95rem';
+                div.innerHTML = `<strong>${returning ? 'Welcome Back!' : 'Welcome!'}</strong> ${msg}`;
+                section.insertBefore(div, section.firstChild);
+            }
+        } catch (e) {
+            console.warn('migration banner failed:', e);
+        }
+    }
 
+    function autofillForm(userData) {
+        const defaults = { class_period: 5, instrument: 'violin', theme: 'light' };
         const mergedData = { ...defaults, ...userData };
 
         if (classPeriodSelect) {
-            classPeriodSelect.value = mergedData.class_period;
+            if (mergedData.class_period == null) {
+                classPeriodSelect.value = '';
+            } else {
+                classPeriodSelect.value = mergedData.class_period;
+            }
         }
-
-        if (instrumentSelect) {
+        if (instrumentSelect && mergedData.instrument) {
             instrumentSelect.value = mergedData.instrument.toLowerCase();
         }
-
-        if (themeSelect) {
+        if (themeSelect && mergedData.theme) {
             themeSelect.value = mergedData.theme.toLowerCase();
+            document.documentElement.setAttribute('data-theme', mergedData.theme.toLowerCase());
         }
+        injectMigrationBanner(userData || {});
+    }
 
-        document.documentElement.setAttribute('data-theme', mergedData.theme.toLowerCase());
-    }    function setCachedUserData(data) {
+    function setCachedUserData(data) {
         CACHE.write(CACHE.USER_KEY, data, CACHE.USER_MAX_AGE);
     }
-
-    function getCachedUserData() {
-        return CACHE.read(CACHE.USER_KEY);
-    }
+    function getCachedUserData() { return CACHE.read(CACHE.USER_KEY); }
 
     themeSelect.addEventListener('change', () => {
         document.documentElement.setAttribute('data-theme', themeSelect.value.toLowerCase());
@@ -95,7 +118,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     profileForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        
         const classPeriod = parseInt(classPeriodSelect.value, 10);
         const instrument = instrumentSelect.value.trim().toLowerCase();
         const theme = themeSelect.value.trim().toLowerCase();
@@ -111,7 +133,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const cooldownTimestamp = parseInt(sessionStorage.getItem('cooldownTimestamp'), 10) || 0;
         const now = Date.now();
         const COOLDOWN_MILLISECONDS = 5000;
-
         if (now - cooldownTimestamp < COOLDOWN_MILLISECONDS) {
             const remainingTime = Math.ceil((COOLDOWN_MILLISECONDS - (now - cooldownTimestamp))) / 1000;
             return showToast('Error', `Please wait ${remainingTime} seconds before trying again.`);
@@ -126,23 +147,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             const token = await auth0Client.getTokenSilently();
             const response = await fetch('/api/updateProfile', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ class_period: classPeriod, instrument, theme }),
-            });            if (response.ok) {
+            });
+            if (response.ok) {
                 sessionStorage.setItem('cooldownTimestamp', Date.now().toString());
-                // Clear cache so it gets refreshed on next page load
                 localStorage.removeItem(CACHE.USER_KEY);
                 window.location.href = 'dashboard?profile_successful=true';
                 return;
             }
-
             const errorData = await response.json();
-            showToast('Error', response.status === 429 ? 
-                `Please wait ${errorData.waitTime} seconds before trying again.` : 
-                `Error updating profile: ${errorData.message}`);
+            showToast('Error', response.status === 429 ? `Please wait ${errorData.waitTime} seconds before trying again.` : `Error updating profile: ${errorData.message}`);
         } catch (error) {
             showToast('Error', 'An error occurred. Please reload and try again.');
         } finally {
