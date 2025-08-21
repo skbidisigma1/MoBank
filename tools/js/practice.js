@@ -225,7 +225,7 @@
 			sessionState.paused = false;
 			sessionState.elapsedAccumMs = 0;
 			sessionState.startTs = Date.now();
-			sessionState.sessionId = data.sid || ('local-' + Math.random().toString(36).slice(2,9));
+			sessionState.sessionId = data.sid || ('local-' + crypto.getRandomValues(new Uint32Array(1))[0].toString(36));
 			updateSessionUIState();
 			startTimerInterval();
 			showToast('Session Started', data.existing ? 'Resumed active session.' : 'Timer running.');
