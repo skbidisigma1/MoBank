@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const leaderboardTitle = document.getElementById('leaderboard-title');
 
   // Keep 30 seconds for leaderboard cache since it's more frequently updated
+  // okay but like is that not what the duration is for literally everything else
   const LEADERBOARD_CACHE_DURATION = 30 * 1000;
 
   function capitalizeFirstLetter(string) {
@@ -111,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (user.name === 'Luke Collingridge') {
         nameCell.innerHTML = '🛠️ ' + user.name;
       } else if (user.name === 'Stewart Collett') {
-        nameCell.textContent = 'Stewart Collett (likes Bailey)';
+        nameCell.textContent = user.name + ' (likes Bailey)';
       } else if (user.name === 'Eli Nelson') {
         nameCell.innerHTML = '💸 ' + user.name;
       } else {
@@ -127,7 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const instrumentCell = document.createElement('td');
       instrumentCell.className = 'instrument-cell';
       
-      // For global leaderboard, show both instrument and period
+      // for global leaderboard, show both instrument and period
       if (period === 'global' && user.class_period) {
         const periodNames = {
           '5': 'Period 5',

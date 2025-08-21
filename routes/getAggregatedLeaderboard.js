@@ -18,8 +18,6 @@ module.exports = async (req, res) => {
     return res.status(401).json({ message: 'Token verification failed' })
   }
 
-  // decoded currently unused; reserved for potential future role filtering
-
   const period = parseInt(req.query.period, 10)
   const validPeriods = [5, 6, 7, 8, 9, 10]
   if (!period || !validPeriods.includes(period)) {
@@ -30,7 +28,7 @@ module.exports = async (req, res) => {
     const docRef = db.collection('aggregates').doc(`leaderboard_period_${period}`)
     const doc = await docRef.get()
     if (!doc.exists) {
-      return res.status(404).json({ message: 'User names not found' })
+      return res.status(404).json({ message: 'No users in this period' })
     }
     const data = doc.data()
     const cleanedLeaderboardData = data.leaderboardData.map(({ uid, ...rest }) => rest)
