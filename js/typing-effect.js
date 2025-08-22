@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const typingElement = document.getElementById('typing-text');
+    const typingShell = typingElement?.closest('.typing-shell');
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function startGlowEffect() {
@@ -84,18 +85,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (typingElement) {
+        // Option C: Ghost placeholder already reserves space via markup.
+        // Ensure placeholder matches longest word from CONFIG if markup not updated.
+        if (typingShell) {
+            const placeholder = typingShell.querySelector('.typing-placeholder');
+            if (placeholder) {
+                let longest = placeholder.textContent || '';
+                for (const w of CONFIG.words) if (w.length > longest.length) longest = w;
+                placeholder.textContent = longest; // Keep width stable if words list changes.
+            }
+        }
         typingElement.setAttribute('role', 'text');
         typingElement.setAttribute('aria-live', 'polite');
         
         Object.assign(typingElement.style, {
             display: 'inline-block',
-            wordBreak: 'break-word',
-            whiteSpace: 'normal',
-            maxWidth: '100%',
+            whiteSpace: 'nowrap',
+            wordBreak: 'normal',
+            overflow: 'visible',
             transition: 'text-shadow 0.5s ease'
         });
 
-        typingElement.style.padding = '0 5px';
+    typingElement.style.padding = '0 5px';
         
         typeEffect();
         startGlowEffect();
