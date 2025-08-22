@@ -3,7 +3,7 @@
     let previewContainer = null;
     let retryCount = 0;
     const MAX_RETRIES = 5;
-    const RETRY_DELAY = 500;
+    const RETRY_DELAY = 400;
     
     const BREAKPOINTS = {
         MOBILE: 768,
@@ -17,7 +17,7 @@
             number: {
                 value: 50
             },
-            color: { value: "#0066cc" },
+            color: { value: "#bebebe" },
             shape: {
                 type: "circle",
                 options: {
@@ -26,10 +26,7 @@
                     image: { src: "", width: 100, height: 100 }
                 }
             },
-            opacity: {
-                value: 0.5,
-                random: false
-            },
+            opacity: { value: 0.4, random: false },
             size: {
                 value: 3,
                 random: false
@@ -37,14 +34,14 @@
             links: {
                 enable: true,
                 distance: 150,
-                color: "#0066cc",
+                color: "#005fa3",
                 opacity: 0.4,
                 width: 1,
                 shadow: { enable: false, color: "#000000", blur: 5 }
             },
             move: {
                 enable: true,
-                speed: 1,
+                speed: 0.5,
                 direction: "none",
                 random: false,
                 straight: false,
@@ -59,7 +56,7 @@
                 resize: true
             },
             modes: {
-                push: { quantity: 1 },
+                push: { quantity: 1 }, 
                 remove: { quantity: 2 }
             }
         },
@@ -73,17 +70,17 @@
         minimal: {
             particles: {
                 number: { value: 50 },
-                color: { value: "#0066cc" },
+                color: { value: "#005fa3" },
                 shape: { type: "circle" },
                 opacity: { value: 0.6, random: false },
                 size: { value: 2.5, random: false },
                 links: { enable: false },
-                move: { enable: true, speed: 0.3, direction: "none", random: false, straight: false, outModes: { default: "out" } }
+                move: { enable: true, speed: 0.2, direction: "none", random: false, straight: false, outModes: { default: "out" } }
             },
             interactivity: {
                 detectsOn: "canvas",
                 events: { onClick: { enable: true, mode: "remove" }, resize: true },
-                modes: { remove: { quantity: 2 } }
+                modes: { remove: { quantity: 1 } }
             },
             detectRetina: true
         },
@@ -137,7 +134,7 @@
             interactivity: {
                 detectsOn: "canvas",
                 events: { onClick: { enable: true, mode: "push" }, resize: true },
-                modes: { push: { quantity: 2 } }
+                modes: { push: { quantity: 1 } }
             },
             detectRetina: true
         },
@@ -178,50 +175,11 @@
             interactivity: {
                 detectsOn: "canvas",
                 events: { onClick: { enable: true, mode: "push" }, resize: true },
-                modes: { push: { quantity: 3 } }
+                modes: { push: { quantity: 1 } }
             },
             detectRetina: true
         }
     };
-
-    function getResponsiveParticleCount(baseCount = 50) {
-        const width = window.innerWidth;
-        if (width < BREAKPOINTS.MOBILE) return 0;
-        if (width >= BREAKPOINTS.WIDE_2K) return Math.floor(baseCount * 1.5);
-        if (width >= BREAKPOINTS.FULL_HD) return Math.floor(baseCount * 1.3);
-        if (width >= BREAKPOINTS.TABLET) return Math.floor(baseCount * 1.1);
-        return Math.floor(baseCount * 0.9);
-    }
-
-    function getReducedMotionConfig(baseConfig) {
-        return {
-            ...baseConfig,
-            particles: {
-                ...baseConfig.particles,
-                move: {
-                    ...baseConfig.particles.move,
-                    speed: baseConfig.particles.move.speed * 0.3,
-                    bounce: false
-                },
-                number: {
-                    ...baseConfig.particles.number,
-                    value: Math.floor(baseConfig.particles.number.value / 2)
-                },
-                opacity: {
-                    ...baseConfig.particles.opacity,
-                    animation: { ...baseConfig.particles.opacity.animation, enable: false }
-                },
-                size: {
-                    ...baseConfig.particles.size,
-                    animation: { ...baseConfig.particles.size.animation, enable: false }
-                }
-            }
-        };
-    }
-
-    function getCurrentTheme() {
-        return document.documentElement.getAttribute('data-theme') || 'light';
-    }
 
     function destroyParticles(instance = 'main') {
         try {
@@ -238,17 +196,14 @@
     }
 
     function createParticlesConfig(settings) {
-        const config = JSON.parse(JSON.stringify(DEFAULT_CONFIG)); // Deep clone
+        const config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
         
-        // Basic settings - remove density
         config.particles.number.value = settings.enabled ? (settings.count || 50) : 0;
         
-        // Apply minimal particles settings if reduced motion is enabled
         if (settings.reducedMotion) {
             config.particles.number.value = Math.floor(config.particles.number.value / 2);
         }
         
-        // Shape configuration - fix polygon/star sides
         config.particles.shape.type = settings.shape || "circle";
         if (settings.shape === "polygon") {
             config.particles.shape.options = {
@@ -264,7 +219,6 @@
             };
         }
         
-        // Color configuration
         if (settings.colorMode === "single") {
             config.particles.color.value = settings.particleColor || "#0066cc";
         } else if (settings.colorMode === "multiple") {
@@ -273,12 +227,10 @@
             config.particles.color.value = "random";
         }
         
-        // Size configuration - use modern range-based approach
         const baseSize = settings.size || 3;
         const sizeVariation = settings.sizeVariation || 0;
         
         if (settings.sizeRandom && sizeVariation > 0) {
-            // Use range object for size variation
             const minSize = Math.max(0.1, baseSize * (1 - sizeVariation));
             const maxSize = baseSize * (1 + sizeVariation);
             config.particles.size.value = {
@@ -289,12 +241,10 @@
             config.particles.size.value = baseSize;
         }
         
-        // Opacity configuration - use modern range-based approach  
         const baseOpacity = Math.max(0.01, settings.opacity || 0.5);
         const opacityVariation = settings.opacityVariation || 0;
         
         if (settings.opacityRandom && opacityVariation > 0) {
-            // Use range object for opacity variation
             const minOpacity = Math.max(0.01, baseOpacity * (1 - opacityVariation));
             const maxOpacity = Math.min(1, baseOpacity * (1 + opacityVariation));
             config.particles.opacity.value = {
@@ -305,11 +255,9 @@
             config.particles.opacity.value = baseOpacity;
         }
         
-        // Movement - handle new movement type system
         config.particles.move.enable = settings.moveEnable !== false;
         config.particles.move.speed = settings.moveSpeed || 1;
         
-        // Handle movement type
         const moveType = settings.moveType || "default";
         switch (moveType) {
             case "random":
@@ -322,7 +270,7 @@
                 config.particles.move.random = false;
                 config.particles.move.straight = true;
                 break;
-            default: // "default"
+            default:
                 config.particles.move.direction = settings.moveDirection || "none";
                 config.particles.move.random = false;
                 config.particles.move.straight = false;
@@ -336,12 +284,10 @@
             config.particles.move.attract.rotateY = settings.attractRotateY || 1200;
         }
         
-        // Override movement for minimal particles
         if (settings.reducedMotion) {
             config.particles.move.enable = false;
         }
         
-        // Links (formerly line_linked)
         config.particles.links.enable = settings.lineLinkedEnable !== false;
         config.particles.links.distance = settings.lineLinkedDistance || 150;
         config.particles.links.color = settings.lineLinkedColor || settings.particleColor || "#0066cc";
@@ -353,14 +299,12 @@
             color: settings.triangleColor || settings.lineLinkedColor || "#0066cc",
             opacity: settings.triangleOpacity || 0.5
         };
-        // Line shadows disabled due to severe performance impact
         config.particles.links.shadow = {
-            enable: false, // Force disabled for performance
+            enable: false,
             color: settings.lineShadowColor || "#000000",
             blur: settings.lineShadowBlur || 5
         };
         
-    // Interactivity - simplified, disable built-in click
     config.interactivity.detectsOn = settings.detectOn || "canvas";
     config.interactivity.events.onClick.enable = false;
     config.interactivity.events.onClick.mode = [];
@@ -369,7 +313,6 @@
         
         config.interactivity.events.resize = settings.resizeEnable !== false;
         
-        // Advanced settings
         config.detectRetina = settings.retinaDetect !== false;
         
         config.background.color = "transparent";
@@ -404,9 +347,7 @@
             
             destroyParticles('main');
             
-            // Load saved settings or use defaults
             const settings = await loadParticleSettings();
-            // Store current settings for manual click handler
             window.currentParticleSettings = settings;
             
             if (!settings.enabled) {
@@ -416,7 +357,6 @@
             
             const config = createParticlesConfig(settings);
             
-            // Use tsParticles.load instead of particlesJS
             mainContainer = await tsParticles.load({
                 id: 'particles-js',
                 options: config
@@ -431,18 +371,15 @@
 
     function setupClickHandler() {
         if (mainContainer) {
-            // Remove previous handler if exists
             if (window._particleClickHandler) {
                 document.body.removeEventListener('click', window._particleClickHandler);
             }
 
-            // Create a single persistent handler
             window._particleClickHandler = function(e) {
                 if (!document.hidden && mainContainer && window.currentParticleSettings?.enabled) {
                     const pos = { x: e.clientX, y: e.clientY };
 
                     try {
-                        // Determine click effect from settings
                         const clickMode = window.currentParticleSettings.clickMode;
                         if (clickMode === 'push') {
                             const quantity = window.currentParticleSettings.pushParticlesNb || 1;
@@ -463,7 +400,6 @@
         }
     }
 
-    // Theme change handler
     window.addEventListener('themechange', async (e) => {
         const settings = await loadParticleSettings();
         const config = createParticlesConfig(settings);
@@ -477,11 +413,9 @@
         }
     });
 
-    // Reduced motion change handler - updates user preference when device preference changes
     const motionMediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     motionMediaQuery.addEventListener('change', async (e) => {
         const settings = await loadParticleSettings();
-        // Only auto-update if user hasn't manually overridden the preference
         if (settings.reducedMotionAutoSet !== false) {
             settings.reducedMotion = e.matches;
             await saveParticleSettings(settings);
@@ -503,11 +437,8 @@
         }
     });
 
-    // Visibility change handler
     document.addEventListener('visibilitychange', () => {
         if (mainContainer && mainContainer.particles) {
-            // tsParticles automatically handles visibility changes,
-            // but we can manually pause/resume if needed
             if (document.hidden) {
                 mainContainer.pause();
             } else {
@@ -516,14 +447,13 @@
         }
     });
 
-    // Resize handler
+    // resize handler
     let resizeTimeout;
     window.addEventListener('resize', () => {
         if (resizeTimeout) clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(async () => {
             const settings = await loadParticleSettings();
             
-            // Check if resize detection is enabled
             if (!settings.resizeEnable) {
                 return;
             }
@@ -551,18 +481,16 @@
         }, 250);
     });
 
-    // Window load handler
     window.addEventListener('load', function() {
-        setTimeout(setupClickHandler, 100); // Small delay to ensure particles are loaded
+        setTimeout(setupClickHandler, 100); // ensure particles are loaded
     });
 
-    // Window unload handler
     window.addEventListener('unload', function() {
         destroyParticles('main');
         destroyParticles('preview');
     });
 
-    // Database functions
+    // IndexedDB particle settings
     async function initParticleDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open('MoBankParticles', 3);
@@ -618,63 +546,111 @@
     }
 
     function getDefaultSettings() {
-        // Check if user prefers reduced motion
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        
+        const cfg = DEFAULT_CONFIG; // single source of truth
+
+        // Derive color mode & values
+        let colorMode = 'single';
+        let particleColor = '#ffffff';
+        let colors = [];
+        if (Array.isArray(cfg.particles.color.value)) {
+            colorMode = 'multiple';
+            colors = cfg.particles.color.value.slice();
+            particleColor = colors[0];
+        } else if (cfg.particles.color.value === 'random') {
+            colorMode = 'random';
+            particleColor = '#ffffff';
+            colors = ['#ffffff'];
+        } else if (typeof cfg.particles.color.value === 'string') {
+            colorMode = 'single';
+            particleColor = cfg.particles.color.value;
+            colors = [cfg.particles.color.value];
+        }
+
+        let size = 3;
+        let sizeRandom = false;
+        let sizeVariation = 0;
+        if (typeof cfg.particles.size.value === 'object') {
+            sizeRandom = true;
+            size = (cfg.particles.size.value.min + cfg.particles.size.value.max) / 2;
+            sizeVariation = (cfg.particles.size.value.max - size) / size || 0;
+        } else {
+            size = cfg.particles.size.value;
+        }
+
+        let opacity = 0.5;
+        let opacityRandom = false;
+        let opacityVariation = 0;
+        if (typeof cfg.particles.opacity.value === 'object') {
+            opacityRandom = true;
+            opacity = (cfg.particles.opacity.value.min + cfg.particles.opacity.value.max) / 2;
+            opacityVariation = (cfg.particles.opacity.value.max - opacity) / opacity || 0;
+        } else {
+            opacity = cfg.particles.opacity.value;
+        }
+
+        const shape = cfg.particles.shape.type;
+        const polygonSides = cfg.particles.shape.options?.polygon?.sides || 5;
+        const starSides = cfg.particles.shape.options?.star?.sides || 5;
+        const imageSource = cfg.particles.shape.options?.image?.src || '';
+
+        let moveType = 'default';
+        if (cfg.particles.move.random) moveType = 'random';
+        else if (cfg.particles.move.straight) moveType = 'straight';
+
+        const triangles = cfg.particles.links.triangles || { enable: false, color: cfg.particles.links.color, opacity: 0.5 };
+
         return {
-            enabled: true,
-            reducedMotion: prefersReducedMotion, // This will disable particles if device prefers reduced motion
-            count: 50,
-            shape: "circle",
-            polygonSides: 5,
-            starSides: 5,
-            imageSource: "",
-            colorMode: "single",
-            particleColor: "#0066cc",
-            colors: ["#0066cc"],
-            size: 3,
-            sizeRandom: false,
-            sizeVariation: 0.5,
-            opacity: 0.8, // Increased opacity for better visibility
-            opacityRandom: false,
-            opacityVariation: 0.3,
-            moveEnable: true,
-            moveSpeed: 1,
-            moveType: "default",
-            moveDirection: "none",
-            moveOutMode: "out",
-            moveAttract: false,
-            attractRotateX: 600,
-            attractRotateY: 1200,
-            lineLinkedEnable: true,
-            lineLinkedDistance: 150,
-            lineLinkedColor: "#0066cc",
-            lineLinkedOpacity: 0.6, // Increased line opacity for better visibility
-            lineLinkedWidth: 1,
+            enabled: cfg.particles.number.value > 0,
+            reducedMotion: prefersReducedMotion,
+            count: cfg.particles.number.value,
+            shape,
+            polygonSides,
+            starSides,
+            imageSource,
+            colorMode,
+            particleColor,
+            colors,
+            size,
+            sizeRandom,
+            sizeVariation,
+            opacity,
+            opacityRandom,
+            opacityVariation,
+            moveEnable: cfg.particles.move.enable,
+            moveSpeed: cfg.particles.move.speed,
+            moveType,
+            moveDirection: cfg.particles.move.direction || 'none',
+            moveOutMode: (cfg.particles.move.outModes && cfg.particles.move.outModes.default) || 'out',
+            moveAttract: cfg.particles.move.attract?.enable || false,
+            attractRotateX: cfg.particles.move.attract?.rotateX || 600,
+            attractRotateY: cfg.particles.move.attract?.rotateY || 1200,
+            lineLinkedEnable: cfg.particles.links.enable,
+            lineLinkedDistance: cfg.particles.links.distance,
+            lineLinkedColor: cfg.particles.links.color,
+            lineLinkedOpacity: cfg.particles.links.opacity,
+            lineLinkedWidth: cfg.particles.links.width,
             lineLinkedShadow: false,
-            lineWarp: false,
-            lineTriangles: false,
-            triangleColor: "#0066cc",
-            triangleOpacity: 0.5,
-            lineShadowColor: "#000000",
-            lineShadowBlur: 5,
-            detectOn: "canvas",
-            clickMode: "push",
-            resizeEnable: true,
-            pushParticlesNb: 4,
-            retinaDetect: true
+            lineWarp: cfg.particles.links.warp || false,
+            lineTriangles: triangles.enable || false,
+            triangleColor: triangles.color || cfg.particles.links.color,
+            triangleOpacity: triangles.opacity ?? 0.5,
+            lineShadowColor: cfg.particles.links.shadow?.color || '#000000',
+            lineShadowBlur: cfg.particles.links.shadow?.blur || 5,
+            detectOn: cfg.interactivity.detectsOn || 'canvas',
+            clickMode: (cfg.interactivity.events?.onClick?.mode) || 'push',
+            resizeEnable: cfg.interactivity.events?.resize !== false,
+            pushParticlesNb: cfg.interactivity.modes?.push?.quantity || 1,
+            retinaDetect: cfg.detectRetina !== false
         };
     }
 
-    // Initialize particles
     initParticles();
 
-    // Global API for particle configuration
     window.particleControls = {
         updateConfig: async function(settings) {
             if (!settings) return;
             
-            // Prevent multiple concurrent updates
             if (updateConfigRunning) {
                 console.log('UpdateConfig already running, skipping');
                 return;
@@ -682,7 +658,6 @@
             updateConfigRunning = true;
             
             try {
-                // Check if any modal is currently open to avoid interference
                 const isModalOpen = document.querySelector('.modal:not(.hidden)') || 
                                    document.querySelector('[role="dialog"]:not(.hidden)');
                 
@@ -698,7 +673,6 @@
                     particlesContainer.style.display = 'block';
                     destroyParticles('main');
                     
-                    // Small delay if modal is open to prevent interference
                     if (isModalOpen) {
                         await new Promise(resolve => setTimeout(resolve, 100));
                     }
@@ -737,6 +711,5 @@
         loadSettings: loadParticleSettings
     };
 
-    // Initialize particles when page loads
     initParticles();
 })();

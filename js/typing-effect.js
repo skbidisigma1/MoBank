@@ -106,7 +106,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
     typingElement.style.padding = '0 5px';
-        
         typeEffect();
         startGlowEffect();
     }
@@ -178,7 +177,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         state.chaosActivated = true;
         typingElement.textContent = "";
-        typingElement.classList.add("chaos");
+        typingElement.style.overflowWrap = "break-word";
+        typingElement.style.whiteSpace = "normal";
+        typingElement.style.width = "50rem";
 
         const fragment = document.createDocumentFragment();
         const { chaos } = CONFIG;
