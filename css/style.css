@@ -1525,7 +1525,6 @@ background-clip:initial!important;
 color:var(--typing-text-color)!important
 }
 
-/* Ghost placeholder approach (Option C) */
 .typing-shell { position:relative; display:inline-block; white-space:nowrap; overflow:visible; }
 .typing-shell .typing-placeholder { visibility:hidden; pointer-events:none; }
 .typing-shell .typing-overlay { position:absolute; top:0; left:0; white-space:nowrap; }

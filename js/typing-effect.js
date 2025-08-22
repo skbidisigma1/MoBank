@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     const CONFIG = {
-        words: ['Ease', 'Speed', 'Efficiency', 'Trust', 'Confidence', 'MoBank'],
+        words: ['Ease', 'Efficiency', 'Trust', 'Confidence', 'MoBank'],
         timing: {
-            typeSpeed: 120,
-            deleteSpeed: 80,
-            delayBeforeDelete: 1000,
-            delayAfterWord: 120,
-            chaosInterval: 10
+            typeSpeed: 130,
+            deleteSpeed: 90,
+            delayBeforeDelete: 1100,
+            delayAfterWord: 130,
+            chaosInterval: 5
         },
         chaos: {
             fonts: ['Poppins', 'Orbitron', 'Arial', 'Verdana', 'Times New Roman', 'Courier New', 'Georgia', 'Tahoma', 'Comic Sans MS'],
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
             sizeRange: { min: 14, max: 20 }
         },
         effects: {
-            glowColors: ['#0066cc', '#00b894', '#ff6b6b', '#ffd93d']
+            glowColors: ['#0066cc', '#00b894', '#ff8e6bff', '#f5f845ff']
         },
         konamiCode: ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'],
         morseCode: ['...', '---', '...'],
@@ -84,15 +84,14 @@ document.addEventListener('DOMContentLoaded', () => {
         typingElement.dataset.timeoutId = timeoutId;
     }
 
+    // CLS fix
     if (typingElement) {
-        // Option C: Ghost placeholder already reserves space via markup.
-        // Ensure placeholder matches longest word from CONFIG if markup not updated.
         if (typingShell) {
             const placeholder = typingShell.querySelector('.typing-placeholder');
             if (placeholder) {
                 let longest = placeholder.textContent || '';
                 for (const w of CONFIG.words) if (w.length > longest.length) longest = w;
-                placeholder.textContent = longest; // Keep width stable if words list changes.
+                placeholder.textContent = longest;
             }
         }
         typingElement.setAttribute('role', 'text');
@@ -140,6 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // shout out to claude for this easter egg it's soooo cool not boring at all
     function handleMorseCode() {
         if (state.morseIndex >= CONFIG.morseCode.length) {
             state.morseIndex = 0;
@@ -178,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         state.chaosActivated = true;
         typingElement.textContent = "";
+        typingElement.classList.add("chaos");
 
         const fragment = document.createDocumentFragment();
         const { chaos } = CONFIG;
