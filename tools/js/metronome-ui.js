@@ -126,12 +126,10 @@ let isPlaying               = false,
     voiceVolume             = parseFloat(voiceVolumeSlider.value)/100,
     voiceSounds             = {male:{numbers:{},subdivisions:{}}},
     pendulumRaf             = null,
-    constValid              = [1,2,4,8,16,32],
+  validNoteValues         = [1,2,4,8,16,32],
     tapTimes                = [],
     tapTimeout              = null,
     currentEditingPresetId  = null,
-    presetModalSelectedSound= selectedSound,
-    overlayPointerDown      = false,
     wakeLock                = null,
     audioContextStartTime   = 0,
     lateNoteScheduleThreshold = 0.01,
@@ -141,7 +139,7 @@ let isPlaying               = false,
     perfectNoteCount        = 0,
     schedulerId             = null, silentNode = null;
   const isIOS = /iP(ad|hone|od)/.test(navigator.platform) && !window.MSStream;
-  let iosWakeVideo = null;
+  let noSleep = null;
 
 function createSimpleLoggingContainer(){
   const container=document.createElement('div');
@@ -254,31 +252,27 @@ const desyncLogging={
 };
 
 async function requestWakeLock(){
+  if (document.visibilityState !== 'visible') return;
   try {
     if ('wakeLock' in navigator) {
       wakeLock = await navigator.wakeLock.request('screen');
       // re-acquire if released (e.g., system interruption)
       wakeLock.addEventListener('release', async () => {
-        console.warn('Screen Wake Lock was released');
-        if (isPlaying) await requestWakeLock();
+        if (isPlaying && document.visibilityState === 'visible') {
+          try { await requestWakeLock(); } catch {}
+        }
       });
     }
   } catch (err) {
-    console.error('Failed to acquire Wake Lock:', err);
+    if (!(err && err.name === 'NotAllowedError')) console.warn('Failed to acquire Wake Lock:', err);
   }
-  // iOS fallback: play hidden looping video to keep screen awake
-  if (isIOS) {
-    if (!iosWakeVideo) {
-      iosWakeVideo = document.createElement('video');
-      iosWakeVideo.src = '/tools/media/blank.mp4';
-      iosWakeVideo.setAttribute('playsinline', '');
-      iosWakeVideo.muted = true;
-      iosWakeVideo.loop = true;
-      iosWakeVideo.style.cssText = 'width:1px;height:1px;position:absolute;top:0;left:0;opacity:0;pointer-events:none';
-      document.body.appendChild(iosWakeVideo);
+  // Fallback: enable NoSleep.js to keep screen awake on mobile when visible
+  try {
+    if (document.visibilityState === 'visible') {
+      if (!noSleep && typeof NoSleep !== 'undefined') noSleep = new NoSleep();
+      if (noSleep) await noSleep.enable();
     }
-    iosWakeVideo.play().catch(e => console.warn('iOS wake-video play failed', e));
-  }
+  } catch {}
 }
 
 function releaseWakeLock(){
@@ -286,19 +280,17 @@ function releaseWakeLock(){
     wakeLock.release().catch(err => console.error('Failed to release Wake Lock:', err));
     wakeLock = null;
   }
-  // iOS fallback: stop and remove hidden video
-  if (isIOS && iosWakeVideo) {
-    iosWakeVideo.pause();
-    iosWakeVideo.remove();
-    iosWakeVideo = null;
-  }
+  // Disable NoSleep fallback
+  try { if (noSleep) noSleep.disable(); } catch {}
 }
 
 // Re-request wake lock when page becomes visible again
 document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState === 'visible' && isPlaying) {
-    try { await requestWakeLock(); }
-    catch (err) { console.error('Wake Lock re-request on visibility change failed:', err); }
+    try { await requestWakeLock(); } catch {}
+    try { if (noSleep) await noSleep.enable(); } catch {}
+  } else if (document.visibilityState !== 'visible') {
+    try { if (noSleep) noSleep.disable(); } catch {}
   }
 });
 
@@ -328,8 +320,7 @@ function handleWorkletMessage(event){
   const data=event.data;
   if(data.type==='batch'){
     data.events.forEach(ev=>{
-      const state = document.querySelector(`.accent-button[data-beat="${ev.beatInMeasure+1}"]`)?.dataset.state;
-      const isSilent = state === 'silent';
+  const isSilent = !!ev.silent;
       const scheduledTime=ev.time;
       if(!desyncLogging.initialized){
         const beatMs=(60/currentTempo)*(4/noteValue)*1000;
@@ -438,7 +429,7 @@ function updateBeatsPerMeasure(v){
   updateAccentPattern();updateBeatLights();
   if(isPlaying)restartMetronome();
 }
-function updateNoteValue(v){if(constValid.includes(v)){noteValue=v;timeSignatureDenominator.textContent=noteValue;updateAccentPattern();updateBeatLights();if(isPlaying)restartMetronome()}}
+function updateNoteValue(v){if(validNoteValues.includes(v)){noteValue=v;timeSignatureDenominator.textContent=noteValue;updateAccentPattern();updateBeatLights();if(isPlaying)restartMetronome()}}
 
 function updateAccentPattern(p=null){
   accentPattern.innerHTML='';
@@ -534,11 +525,11 @@ async function startMetronome(){
     // fallback scheduling without AudioWorklet
     currentBeat = 0;
     schedulerId = setInterval(() => {
-      const beatIndex = currentBeat % beatsPerMeasure;
-      const isMain = (currentBeat % subdivision) === 0;
-      const subBeat = currentBeat % subdivision;
-      const state = document.querySelector(`.accent-button[data-beat="${beatIndex+1}"]`)?.dataset.state;
-      const isSilent = state === 'silent';
+  const beatIndex = currentBeat % beatsPerMeasure;
+  const isMain = (currentBeat % subdivision) === 0;
+  const subBeat = currentBeat % subdivision;
+  const state = document.querySelector(`.accent-button[data-beat="${beatIndex+1}"]`)?.dataset.state;
+  const isSilent = state === 'silent';
       // play audio
       if (!isSilent) playTickSound({beatInMeasure: beatIndex, isMainBeat: isMain, subBeat, silent: false}, audioContext.currentTime);
       // schedule visual
@@ -583,8 +574,8 @@ tempoIncreaseBtn.onclick=()=>updateTempo(currentTempo+1);
 tempoPlayBtn.onclick=()=>isPlaying?stopMetronome():startMetronome();
 decreaseBeatsBtn.onclick=()=>updateBeatsPerMeasure(beatsPerMeasure-1);
 increaseBeatsBtn.onclick=()=>updateBeatsPerMeasure(beatsPerMeasure+1);
-decreaseNoteValueBtn.onclick=()=>{const i=constValid.indexOf(noteValue);if(i>0)updateNoteValue(constValid[i-1])};
-increaseNoteValueBtn.onclick=()=>{const i=constValid.indexOf(noteValue);if(i<constValid.length-1)updateNoteValue(constValid[i+1])};
+decreaseNoteValueBtn.onclick=()=>{const i=validNoteValues.indexOf(noteValue);if(i>0)updateNoteValue(validNoteValues[i-1])};
+increaseNoteValueBtn.onclick=()=>{const i=validNoteValues.indexOf(noteValue);if(i<validNoteValues.length-1)updateNoteValue(validNoteValues[i+1])};
 volumeSlider.oninput=()=>{volume=parseFloat(volumeSlider.value)/100};
 useVoiceCountingCheckbox.onchange=()=>{useVoiceCounting=useVoiceCountingCheckbox.checked;voiceOptionsPanel.style.display=useVoiceCounting?'block':'none';if(isPlaying)restartMetronome()};
 useClickSubdivisionCheckbox.onchange=()=>{useClickSubdivision=useClickSubdivisionCheckbox.checked;if(isPlaying)restartMetronome()};
@@ -756,16 +747,13 @@ tapButton.addEventListener('click', function() {
 const savePresetBtn = document.getElementById('save-preset');
 if (savePresetBtn) {
   savePresetBtn.addEventListener('click', () => {
-    // ensure Save footer is visible
     saveTabButtons.style.display = 'flex';
     editTabButtons.style.display = 'none';
     presetModal.classList.add('visible');
-    // always show Save tab when opening
+    // Show Save tab
     presetTabs.forEach(t=>t.classList.remove('active'));
     document.querySelector('.preset-tab[data-tab="save"]').classList.add('active');
-    presetTabContents.forEach(c=>{
-      c.id === 'save-tab' ? c.classList.add('active') : c.classList.remove('active');
-    });
+    presetTabContents.forEach(c=> c.id === 'save-tab' ? c.classList.add('active') : c.classList.remove('active'));
     // initialize form defaults
     presetNameInput.value = '';
     presetDescInput.value = '';
@@ -1127,22 +1115,7 @@ presetIncreaseNoteValue?.addEventListener('click', () => {
 alertConfirm?.addEventListener('click', () => alertModal.classList.remove('visible'));
 confirmOk?.addEventListener('click', () => confirmModal.classList.remove('visible'));
 confirmCancel?.addEventListener('click', () => confirmModal.classList.remove('visible'));
-// Open the preset modal when the Manage Presets button is clicked
-savePresetBtn.addEventListener('click', () => {
-  presetModal.classList.add('visible');
-  // always open Save tab
-  presetTabs.forEach(t => t.classList.remove('active'));
-  document.querySelector('.preset-tab[data-tab="save"]').classList.add('active');
-  presetTabContents.forEach(c => c.id === 'save-tab' ? c.classList.add('active') : c.classList.remove('active'));
-  // initialize form defaults
-  presetNameInput.value = '';
-  presetDescInput.value = '';
-  document.getElementById('preset-time-sig-numerator').textContent = beatsPerMeasure;
-  document.getElementById('preset-time-sig-denominator').textContent = noteValue;
-  presetSoundButtons.forEach(b => b.classList.remove('selected'));
-  document.querySelector(`.preset-sound-button[data-sound="${selectedSound}"]`)?.classList.add('selected');
-  renderPresetAccentPattern();
-});
+// (duplicate Open modal code removed; handled earlier above)
 
 presetTabs.forEach(tab => {
   tab.addEventListener('click', () => {
@@ -1180,7 +1153,7 @@ presetSoundButtons.forEach(btn => {
 });
 
 presetCancelBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
-presetCancelEditBtn.addEventListener('click', () => presetModal.classList.remove('visible'));
+// (duplicate cancel-edit listener removed; handled earlier above)
 presetSaveBtn.addEventListener('click', event => {
   const activeTab = Array.from(presetTabs).find(t => t.classList.contains('active')).dataset.tab;
   if (activeTab === 'load') {
