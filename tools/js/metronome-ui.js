@@ -1426,7 +1426,6 @@ loadAndDisplayPagePresets();
         disableMicrophone();
       }
     });
-    // On load, set initial state
     setVoiceIndicatorVisible(microphoneToggle.checked);
   }
-} // leave this brace here to match the opening brace at the top
+}
