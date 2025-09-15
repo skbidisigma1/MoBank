@@ -140,6 +140,63 @@ let isPlaying               = false,
     schedulerId             = null, silentNode = null;
   const isIOS = /iP(ad|hone|od)/.test(navigator.platform) && !window.MSStream;
   let noSleep = null;
+  let voiceSoundsLoaded = false;
+  // Feature flags/config
+  const urlParams = new URLSearchParams(window.location.search);
+  let storedCfg = {};
+  try { storedCfg = JSON.parse(localStorage.getItem('MetronomeConfig')||'{}'); } catch {}
+  const MetronomeConfig = {
+    debug: urlParams.get('debug') === '1' || storedCfg.debug === true,
+    voice: urlParams.get('voice') || storedCfg.voice || 'legacy'
+  };
+  window.MetronomeConfig = MetronomeConfig;
+
+  // --- IndexedDB helpers for persistent settings ---
+  const IDB_ENABLED = !!window.indexedDB;
+  const IDB_NAME = 'metronome-db';
+  const IDB_STORE = 'settings';
+  function openSettingsDB(){
+    return new Promise((resolve, reject)=>{
+      if(!IDB_ENABLED) return resolve(null);
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    });
+  }
+  async function idbGetState(){
+    const db = await openSettingsDB(); if(!db) return null;
+    return new Promise(resolve=>{
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const store = tx.objectStore(IDB_STORE);
+      const getReq = store.get('current');
+      getReq.onsuccess = () => resolve(getReq.result||null);
+      getReq.onerror = () => resolve(null);
+    });
+  }
+  async function idbPutState(state){
+    const db = await openSettingsDB(); if(!db) return false;
+    return new Promise(resolve=>{
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      const store = tx.objectStore(IDB_STORE);
+      store.put(state, 'current');
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+    });
+  }
+  async function idbClearState(){
+    const db = await openSettingsDB(); if(!db) return false;
+    return new Promise(resolve=>{
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      const store = tx.objectStore(IDB_STORE);
+      store.delete('current');
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+    });
+  }
 
 function createSimpleLoggingContainer(){
   const container=document.createElement('div');
@@ -160,7 +217,7 @@ function createSimpleLoggingContainer(){
   container.style.display = 'none';
   return container;
 }
-createSimpleLoggingContainer();
+// Logging container will be created lazily on first toggle
 
 const desyncLogging={
   enabled:false,
@@ -298,7 +355,6 @@ async function initAudio(){
   try{
     audioContext=new(window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive',sampleRate:48000});
     await loadSounds();
-    await loadVoiceSounds();
     await initAudioWorklet();
   }catch(e){console.error('Audio init error:',e);showAlert('Error initializing audio system.')}
 }
@@ -313,7 +369,7 @@ async function initAudioWorklet(){
   }catch(e){console.error('AudioWorklet init failed:',e);console.warn('Falling back to setInterval-based scheduling')}
 }
 
-function adjustedTime(t){return t+(audioContext.outputLatency||0)}
+function adjustedTime(t){return t}
 
 function handleWorkletMessage(event){
   if(!isPlaying)return;
@@ -412,6 +468,7 @@ function updateTempo(v){
   let n=parseInt(v);if(isNaN(n)||n<=0)n=10;
   currentTempo=Math.min(Math.max(n,10),1000);
   tempoDisplay.value=currentTempo;tempoSlider.value=tempoToSliderPosition(currentTempo);
+  try{ saveState(); }catch{}
   if(isPlaying){
     clearTimeout(tempoDebounceTimeout);
     if(metronomeProcessor){
@@ -427,9 +484,10 @@ function updateBeatsPerMeasure(v){
   beatsPerMeasure=Math.min(Math.max(v,1),12);
   timeSignatureNumerator.textContent=beatsPerMeasure;
   updateAccentPattern();updateBeatLights();
+  try{ saveState(); }catch{}
   if(isPlaying)restartMetronome();
 }
-function updateNoteValue(v){if(validNoteValues.includes(v)){noteValue=v;timeSignatureDenominator.textContent=noteValue;updateAccentPattern();updateBeatLights();if(isPlaying)restartMetronome()}}
+function updateNoteValue(v){if(validNoteValues.includes(v)){noteValue=v;timeSignatureDenominator.textContent=noteValue;updateAccentPattern();updateBeatLights();try{ saveState(); }catch{};if(isPlaying)restartMetronome()}}
 
 function updateAccentPattern(p=null){
   accentPattern.innerHTML='';
@@ -449,6 +507,7 @@ function updateAccentPattern(p=null){
       b.classList.toggle('accent',b.dataset.state==='accent');
       b.classList.toggle('silent',b.dataset.state==='silent');
       updateBeatLights();
+      try{ saveState(); }catch{}
       if (isPlaying) {
         restartPendulumLoop();
         if (metronomeProcessor) {
@@ -497,6 +556,10 @@ async function startMetronome(){
   if(isPlaying) return;
   isPlaying = true;
   if(audioContext===null) await initAudio(); else if(audioContext.state==='suspended') await audioContext.resume();
+  // Ensure voice assets are ready if voice counting is enabled
+  if (useVoiceCounting && !voiceSoundsLoaded) {
+    try { await loadVoiceSounds(); voiceSoundsLoaded = true; } catch {}
+  }
   // Unlock audio output by playing a silent buffer (no CSP issues)
   if(!silentNode){
     const silentBuffer = audioContext.createBuffer(1, audioContext.sampleRate, audioContext.sampleRate);
@@ -565,7 +628,7 @@ function stopMetronome(){
 }
 function restartMetronome(){if(isPlaying){stopMetronome();startMetronome()}}
 
-subdivisionSelector.onchange=()=>{subdivision=parseInt(subdivisionSelector.value);if(isPlaying)restartMetronome()};
+subdivisionSelector.onchange=()=>{subdivision=parseInt(subdivisionSelector.value); if(isPlaying)restartMetronome(); try{ saveState(); }catch{}};
 tempoSlider.value=tempoToSliderPosition(currentTempo);
 tempoSlider.oninput=()=>updateTempo(sliderPositionToTempo(parseFloat(tempoSlider.value)));
 tempoDisplay.onchange=tempoDisplay.onblur=()=>updateTempo(tempoDisplay.value);
@@ -576,10 +639,16 @@ decreaseBeatsBtn.onclick=()=>updateBeatsPerMeasure(beatsPerMeasure-1);
 increaseBeatsBtn.onclick=()=>updateBeatsPerMeasure(beatsPerMeasure+1);
 decreaseNoteValueBtn.onclick=()=>{const i=validNoteValues.indexOf(noteValue);if(i>0)updateNoteValue(validNoteValues[i-1])};
 increaseNoteValueBtn.onclick=()=>{const i=validNoteValues.indexOf(noteValue);if(i<validNoteValues.length-1)updateNoteValue(validNoteValues[i+1])};
-volumeSlider.oninput=()=>{volume=parseFloat(volumeSlider.value)/100};
-useVoiceCountingCheckbox.onchange=()=>{useVoiceCounting=useVoiceCountingCheckbox.checked;voiceOptionsPanel.style.display=useVoiceCounting?'block':'none';if(isPlaying)restartMetronome()};
-useClickSubdivisionCheckbox.onchange=()=>{useClickSubdivision=useClickSubdivisionCheckbox.checked;if(isPlaying)restartMetronome()};
-voiceVolumeSlider.oninput=()=>{voiceVolume=parseFloat(voiceVolumeSlider.value)/100};
+volumeSlider.oninput=()=>{volume=parseFloat(volumeSlider.value)/100; try{ saveState(); }catch{}};
+useVoiceCountingCheckbox.onchange=()=>{useVoiceCounting=useVoiceCountingCheckbox.checked;voiceOptionsPanel.style.display=useVoiceCounting?'block':'none';if(isPlaying)restartMetronome(); try{ saveState(); }catch{}};
+// Lazy load voice sounds only when voice counting is enabled the first time
+useVoiceCountingCheckbox.addEventListener('change', async () => {
+  if (useVoiceCounting && !voiceSoundsLoaded) {
+    try { await loadVoiceSounds(); voiceSoundsLoaded = true; } catch {}
+  }
+});
+useClickSubdivisionCheckbox.onchange=()=>{useClickSubdivision=useClickSubdivisionCheckbox.checked;if(isPlaying)restartMetronome(); try{ saveState(); }catch{}};
+voiceVolumeSlider.oninput=()=>{voiceVolume=parseFloat(voiceVolumeSlider.value)/100; try{ saveState(); }catch{}};
 
 soundButtons.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -588,10 +657,12 @@ soundButtons.forEach(btn => {
     selectedSound = sound;
     soundButtons.forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
+  try{ saveState(); }catch{}
   });
 });
 
 function toggleDesyncLogging(){
+  if(!document.getElementById('metronome-log-container')) createSimpleLoggingContainer();
   desyncLogging.enabled=!desyncLogging.enabled;
   if(desyncLogging.enabled){
     desyncLogging.startLogging();
@@ -664,8 +735,61 @@ function clearCachedPresets() {
   localStorage.removeItem('presetsCache');
 }
 
-updateAccentPattern();updateBeatLights();
-initAudio();
+  // Persist/restore state (tempo, sig, etc.)
+  const STATE_KEY = 'metronome:state:v1';
+  let appliedStateUpdatedAt = 0;
+  function saveState(){
+    const state = { tempo: currentTempo, beatsPerMeasure, noteValue, subdivision, selectedSound, volume, useVoiceCounting, useClickSubdivision, voiceVolume, updatedAt: Date.now() };
+    appliedStateUpdatedAt = state.updatedAt;
+    try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch {}
+    // Also persist to IndexedDB (best-effort)
+    idbPutState(state).catch(()=>{});
+  }
+  function loadState(){
+    try {
+      const raw = localStorage.getItem(STATE_KEY);
+      const s = raw? JSON.parse(raw): null;
+      return s;
+    } catch { return null; }
+  }
+  function applyStateObject(s){
+    if (typeof s.tempo==='number') currentTempo = Math.min(Math.max(s.tempo,10),1000);
+    tempoDisplay.value = currentTempo; tempoSlider.value = tempoToSliderPosition(currentTempo);
+    if (typeof s.beatsPerMeasure==='number') beatsPerMeasure = Math.min(Math.max(s.beatsPerMeasure,1),12);
+    timeSignatureNumerator.textContent = beatsPerMeasure;
+    if (typeof s.noteValue==='number' && [1,2,4,8,16,32].includes(s.noteValue)) { noteValue = s.noteValue; timeSignatureDenominator.textContent = noteValue; }
+    if (typeof s.subdivision==='number') { subdivision = s.subdivision; subdivisionSelector.value = subdivision; }
+    if (typeof s.selectedSound==='string' && sounds[s.selectedSound]) { selectedSound = s.selectedSound; }
+    soundButtons.forEach(b => b.classList.toggle('selected', b.dataset.sound===selectedSound));
+    if (typeof s.volume==='number') { volume = s.volume; volumeSlider.value = Math.round(volume*100); }
+    if (typeof s.useVoiceCounting==='boolean') { useVoiceCounting = s.useVoiceCounting; useVoiceCountingCheckbox.checked = useVoiceCounting; voiceOptionsPanel.style.display = useVoiceCounting? 'block':'none'; }
+    if (typeof s.useClickSubdivision==='boolean') { useClickSubdivision = s.useClickSubdivision; useClickSubdivisionCheckbox.checked = useClickSubdivision; }
+    if (typeof s.voiceVolume==='number') { voiceVolume = s.voiceVolume; voiceVolumeSlider.value = Math.round(voiceVolume*100); }
+  }
+  function applySavedState(){
+    const local = loadState();
+    if (local) {
+      applyStateObject(local);
+      appliedStateUpdatedAt = local.updatedAt || 0;
+    }
+    // Compare with IndexedDB and only apply if newer
+    idbGetState().then(dbState=>{
+      if(dbState){
+        const dbTs = dbState.updatedAt || 0;
+        if (dbTs >= appliedStateUpdatedAt) {
+          applyStateObject(dbState);
+          appliedStateUpdatedAt = dbTs;
+          updateAccentPattern();updateBeatLights();
+        }
+      }
+    }).catch(()=>{});
+  }
+
+  applySavedState();
+  updateAccentPattern();updateBeatLights();
+
+  // Auto-enable logging if debug flag
+  if (window.MetronomeConfig?.debug && !desyncLogging.enabled) toggleDesyncLogging();
 
 window.addEventListener('keydown', e => {
   const active = document.activeElement;
@@ -693,11 +817,13 @@ window.addEventListener('keydown', e => {
     if (e.code === 'ArrowUp' || e.code === 'ArrowRight') {
       e.preventDefault();
       updateTempo(currentTempo + step);
+      try{ saveState(); }catch{}
     }
     
     if (e.code === 'ArrowDown' || e.code === 'ArrowLeft') {
       e.preventDefault();
       updateTempo(currentTempo - step);
+      try{ saveState(); }catch{}
     }
     
     if (e.ctrlKey && !e.altKey && e.code === 'KeyD') {
@@ -728,6 +854,7 @@ tapButton.addEventListener('click', function() {
     if (bpm >= 10 && bpm <= 1000) {
       updateTempo(bpm);
       tapDisplay.textContent = bpm + ' BPM';
+      try{ saveState(); }catch{}
     } else {
       tapDisplay.textContent = '-- BPM';
     }
@@ -1019,45 +1146,63 @@ async function loadAndDisplayPresets() {
 // Helper to apply a loaded preset immediately
 function applyPreset(preset) {
   const s = preset.settings || {};
-  if (s.tempo) updateTempo(s.tempo);
-  if (s.timeSignature) {
-    updateBeatsPerMeasure(s.timeSignature[0]);
-    updateNoteValue(s.timeSignature[1]);
-  }
-  if (s.subdivision != null) {
-    subdivision = s.subdivision;
-    subdivisionSelector.value = subdivision;
-    // trigger subdivision control update
-    subdivisionSelector.onchange();
-  }
-  if (s.accentPattern) {
+  // Defaults if preset omits fields
+  const defaults = {
+    tempo: 120,
+    timeSignature: [4,4],
+    subdivision: 1,
+    accentPattern: null, // null = recompute default pattern for current signature
+    sound: 'click',
+    volume: 1,
+  voice: { useVoiceCounting: false, useClickSubdivision: false, voiceVolume: 1 }
+  };
+  const tempoVal = (typeof s.tempo === 'number') ? s.tempo : defaults.tempo;
+  updateTempo(tempoVal);
+
+  const sig = Array.isArray(s.timeSignature) ? s.timeSignature : defaults.timeSignature;
+  updateBeatsPerMeasure(sig[0]);
+  updateNoteValue(sig[1]);
+
+  const subVal = (typeof s.subdivision === 'number') ? s.subdivision : defaults.subdivision;
+  subdivision = subVal; subdivisionSelector.value = subVal; subdivisionSelector.onchange();
+
+  if (Array.isArray(s.accentPattern)) {
     updateAccentPattern(s.accentPattern);
-    updateBeatLights();
-    if (isPlaying) {
-      restartPendulumLoop();
-      if (metronomeProcessor) {
-        const patterns = preset.settings.accentPattern;
-        metronomeProcessor.port.postMessage({ type: 'update', beatPatterns: patterns });
-      }
+  } else if (defaults.accentPattern === null) {
+    // regenerate default pattern for the signature
+    updateAccentPattern();
+  }
+  updateBeatLights();
+  if (isPlaying) {
+    restartPendulumLoop();
+    if (metronomeProcessor && Array.isArray(s.accentPattern)) {
+      metronomeProcessor.port.postMessage({ type: 'update', beatPatterns: s.accentPattern });
     }
   }
-  if (s.sound) {
-    selectedSound = s.sound;
-    soundButtons.forEach(b => b.classList.remove('selected'));
-    document.querySelector(`.sound-button[data-sound="${s.sound}"]`)?.classList.add('selected');
-  }
-  if (s.volume != null) {
-    volume = s.volume;
-    volumeSlider.value = volume * 100;
-  }
-  if (s.voice) {
-    useVoiceCountingCheckbox.checked = s.voice.useVoiceCounting;
-    useClickSubdivisionCheckbox.checked = s.voice.useClickSubdivision;
-    voiceVolumeSlider.value = s.voice.voiceVolume * 100;
-    voiceOptionsPanel.style.display = useVoiceCountingCheckbox.checked ? 'block' : 'none';
-  }
+
+  const soundVal = (typeof s.sound === 'string') ? s.sound : defaults.sound;
+  selectedSound = soundVal;
+  soundButtons.forEach(b => b.classList.remove('selected'));
+  document.querySelector(`.sound-button[data-sound="${soundVal}"]`)?.classList.add('selected');
+
+  const volVal = (typeof s.volume === 'number') ? s.volume : defaults.volume;
+  volume = volVal; volumeSlider.value = Math.round(volVal * 100);
+
+  const voiceVal = s.voice ? {
+    useVoiceCounting: !!s.voice.useVoiceCounting,
+    useClickSubdivision: !!s.voice.useClickSubdivision,
+    voiceVolume: typeof s.voice.voiceVolume==='number' ? s.voice.voiceVolume : defaults.voice.voiceVolume
+  } : defaults.voice;
+  useVoiceCountingCheckbox.checked = voiceVal.useVoiceCounting;
+  useClickSubdivisionCheckbox.checked = voiceVal.useClickSubdivision;
+  voiceVolumeSlider.value = Math.round(voiceVal.voiceVolume * 100);
+  voiceOptionsPanel.style.display = voiceVal.useVoiceCounting ? 'block' : 'none';
+  // Ensure voice assets present if enabling
+  if (voiceVal.useVoiceCounting && !voiceSoundsLoaded) { try { loadVoiceSounds().then(()=>{ voiceSoundsLoaded = true; }); } catch {} }
+
   // only restart timing if core tempo or signature changed
   if (isPlaying && (s.tempo || s.timeSignature || s.subdivision != null)) restartMetronome();
+  try{ saveState(); }catch{}
 }
 
 // Build accent buttons inside the preset modal
@@ -1427,5 +1572,50 @@ loadAndDisplayPagePresets();
       }
     });
     setVoiceIndicatorVisible(microphoneToggle.checked);
+  }
+  // Export small utilities for optional external modules
+  window.MetronomeUtils = Object.assign(window.MetronomeUtils || {}, {
+    isWakeWord,
+    tempoToSliderPosition,
+    sliderPositionToTempo,
+    validNoteValues,
+    requestWakeLock,
+    releaseWakeLock
+  });
+  // Public API for integrations (voice, tests, external controls)
+  window.MetronomeAPI = {
+    get isPlaying(){ return isPlaying; },
+    get currentTempo(){ return currentTempo; },
+    start: () => startMetronome(),
+    stop: () => stopMetronome(),
+    setTempo: (n) => updateTempo(parseInt(n,10)),
+    setBeatsPerMeasure: (n) => updateBeatsPerMeasure(parseInt(n,10)),
+    setNoteValue: (n) => updateNoteValue(parseInt(n,10)),
+    setSubdivision: (n) => { subdivision = parseInt(n,10); subdivisionSelector.value = subdivision; subdivisionSelector.onchange(); },
+    applyPreset: (preset) => applyPreset(preset),
+    getState: () => ({ tempo: currentTempo, beatsPerMeasure, noteValue, subdivision, selectedSound, volume, useVoiceCounting, useClickSubdivision, voiceVolume })
+  };
+
+  // Reset settings button
+  const resetBtn = document.getElementById('reset-settings');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', async () => {
+      try { localStorage.removeItem('metronome:state:v1'); } catch {}
+      await idbClearState();
+      // Defaults
+      updateTempo(120);
+      updateBeatsPerMeasure(4);
+      updateNoteValue(4);
+      subdivision = 1; subdivisionSelector.value = 1; subdivisionSelector.onchange();
+      selectedSound = 'click';
+      soundButtons.forEach(b => b.classList.toggle('selected', b.dataset.sound==='click'));
+      volume = 1; volumeSlider.value = 100;
+      useVoiceCounting = false; useVoiceCountingCheckbox.checked = false; voiceOptionsPanel.style.display = 'none';
+      useClickSubdivision = false; useClickSubdivisionCheckbox.checked = false;
+  voiceVolume = 1; voiceVolumeSlider.value = 100;
+      updateAccentPattern(); updateBeatLights();
+      saveState();
+      showAlert('Settings reset to defaults', 1800);
+    });
   }
 }

@@ -18,6 +18,7 @@
   <script src="/js/toast.js" defer></script>
   <script src="/tools/js/tools-header.js" defer></script>
   <script src="/tools/js/metronome-ui.js" defer></script>
+  <script src="/tools/js/metronome-voice.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/nosleep.js@0.12.0/dist/NoSleep.min.js" defer></script>
 </head>
 <body>
@@ -26,6 +27,7 @@
     <section class="metronome-header">
       <h1 class="tool-title">Metronome</h1>
       <p class="tool-description">Precision tempo training with customizable settings and visual feedback</p>
+      <button id="reset-settings" class="preset-btn preset-btn-secondary" style="margin-top:8px;align-self:flex-start;">Reset Settings</button>
     </section>
     <div class="metronome-wrapper">
       <section class="metronome-display-section">
@@ -168,7 +170,7 @@
                   </div>
                   <div class="control-group">
                     <label for="voice-volume-slider">Voice Volume</label>
-                    <input type="range" id="voice-volume-slider" class="volume-slider" min="0" max="100" value="75">
+                    <input type="range" id="voice-volume-slider" class="volume-slider" min="0" max="100" value="100">
                   </div>
                 </div>
               </div>

@@ -18,6 +18,8 @@
     "jsonwebtoken": "^9.0.2",
     "node-fetch": "^2.6.7",
     "@tsparticles/engine": "^3.0.0",
-    "tsparticles": "^3.0.0"
+    "tsparticles": "^3.0.0",
+    "natural": "^6.6.4",
+    "words-to-numbers": "^1.5.1"
   }
 }
