@@ -1,4 +1,4 @@
-## MoBank – Core Agent Guide
+## MoBank LLM Guide
 
 ### Architecture
 - Static HTML/CSS/JS + serverless API (`api/[...slug].js` dispatches to `routes/<name>.js`).
