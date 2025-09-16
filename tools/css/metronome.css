@@ -1,3 +1,27 @@
+.sig-fraction-grid { display:grid; grid-template-columns:auto 1fr auto; grid-template-rows:56px auto 56px; row-gap:.6rem; column-gap:1rem; align-items:center; justify-items:center; padding:1rem; border:1px solid var(--metronome-panel-border); border-radius:12px; background:var(--metronome-panel-bg); width:fit-content; max-width:100%; margin: 0 auto }
+.sig-fraction-grid > [data-action="decrease-beats"] { grid-column:1; grid-row:1; align-self:center; justify-self:center }
+.sig-fraction-grid > [data-action="increase-beats"] { grid-column:3; grid-row:1; align-self:center; justify-self:center }
+.sig-fraction-grid > [data-action="decrease-note-value"] { grid-column:1; grid-row:3; align-self:center; justify-self:center }
+.sig-fraction-grid > [data-action="increase-note-value"] { grid-column:3; grid-row:3; align-self:center; justify-self:center }
+.sig-fraction-grid .sig-spacer { grid-column:2; grid-row:2; height:0 }
+.sig-vert { display: contents }
+/* Place the inner pieces directly on the parent grid */
+.sig-vert #time-sig-numerator { grid-column:2; grid-row:1; place-self:center }
+.sig-vert .sig-divider { grid-column:2; grid-row:2; place-self:center }
+.sig-vert #time-sig-denominator { grid-column:2; grid-row:3; place-self:center }
+.sig-divider { width:84%; height:2px; background: var(--metronome-text-light); opacity:.5; border-radius:2px; align-self:center; justify-self:center; margin:.1rem 0 }
+.sig-displaylike { border-bottom-color: transparent }
+.sig-displaylike:focus { border-bottom-color: var(--metronome-blue) }
+.sig-input { width:110px; text-align:center; font-size:2.75rem; font-weight:800; background:transparent !important; border:none !important; box-shadow:none !important; border-radius:0 !important; color:var(--metronome-text); padding:0 .25rem; line-height:48px; height:48px; caret-color: var(--metronome-blue); place-self:center }
+.sig-input[type=number]{ background:transparent; border:none; border-radius:0; box-shadow:none; outline:none; appearance:textfield; -moz-appearance:textfield; }
+.sig-input[type=number]::-webkit-outer-spin-button,.sig-input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0 }
+.sig-input::-webkit-outer-spin-button,.sig-input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0 }
+.sig-input[type=number]{ appearance:textfield; -moz-appearance:textfield }
+.tap-compact { display:flex; align-items:center; gap:.8rem; margin-left:auto; align-self:center; }
+.tap-circle.tap-large { width:68px; height:68px; font-weight:700; color:#fff }
+.tap-meta { display:flex; flex-direction:column; line-height:1.1; min-width:98px }
+.tap-label { font-size:.9rem; opacity:.8; color: var(--metronome-text) }
+.tap-readout { font-weight:700; color: var(--metronome-text) }
 :root {
   /* Base colors */
   --metronome-primary: #4A90E2;
@@ -100,14 +124,14 @@
 }
 
 .metronome-container {
-  max-width: 1100px;
+  max-width: clamp(1100px, 90vw, 1800px);
   margin: 0 auto;
   padding: 2rem 1.25rem;
 }
 
 .metronome-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 2.25rem;
 }
 
 .tool-title {
@@ -152,19 +176,78 @@
   box-shadow: 0 10px 30px rgba(0,0,0,0.4);
 }
 
-.metronome-display-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
+.metronome-display-section { display: flex; flex-direction: column; align-items: stretch; gap: 2rem; width: 100%; }
+
+/* Large-display overhaul */
+@media (min-width: 1400px) {
+  .tool-title { font-size: clamp(3rem, 3vw, 4rem); }
+  .tool-description { font-size: clamp(1.05rem, 1.2vw, 1.25rem); }
+
+/* Layout: single-column flow; panels grid on wide screens */
+.settings-panels { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+@media (min-width: 1100px) { .settings-panels { grid-template-columns: 1fr 1fr; gap: 2rem; } }
+
+.metronome-display-section { width: 100%; }
+.tempo-display { width: 100%; }
+.tempo-slider-wrapper { width: 100%; }
+
+}
+@media (min-width: 1400px) {
+  .tempo-indicator-wrapper { width: 360px; height: 180px; }
+  .tempo-indicator { width: 360px; height: 360px; }
+  .tempo-pendulum { left: 180px; height: 180px; }
+  .pendulum-arm { height: 150px; }
+  .visual-beat-indicator { max-width: 560px; }
+  .beat-lights { gap: 1.25rem; }
+  .beat-light { width: 30px; height: 30px; }
 }
 
-.tempo-display {
+/* Presets panel styling to match other panels */
+.metronome-presets-section {
+  background: var(--metronome-panel-bg);
+  border-radius: 1rem;
+  border: 1px solid var(--metronome-panel-border);
+  padding: 1.5rem;
+}
+
+.metronome-presets-section .presets-header {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.metronome-presets-section h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.metronome-presets-section .save-preset-button {
+  background: var(--metronome-panel-bg);
+  border: 1px solid var(--metronome-panel-border);
+  color: var(--metronome-text);
+  padding: 0.6rem 1.1rem;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.metronome-presets-section .save-preset-button:hover {
+  background: var(--metronome-button-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--metronome-control-shadow);
+}
+
+.metronome-presets-section .presets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1rem;
 }
+
+.tempo-display { display: flex; flex-direction: column; align-items: center; gap: 1rem; width: 100%; }
 
 .tempo-value {
   display: flex;
@@ -207,33 +290,11 @@
   color: var(--color-text-light);
 }
 
-.tempo-indicator-wrapper {
-  position: relative;
-  width: 240px;
-  height: 120px;
-  overflow: hidden;
-}
+.tempo-indicator-wrapper { position: relative; width: 100%; aspect-ratio: 2 / 1; height: auto; overflow: hidden; }
 
-.tempo-indicator {
-  position: relative;
-  width: 240px;
-  height: 240px;
-  border-radius: 50%;
-  background: var(--metronome-pendulum-bg);
-  clip-path: inset(0 0 50% 0);
-  border: 1px solid var(--metronome-border);
-}
+.tempo-indicator { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; aspect-ratio: 1 / 1; height: auto; border-radius: 50%; background: var(--metronome-pendulum-bg); clip-path: inset(0 0 50% 0); border: 1px solid var(--metronome-border); margin: 0 auto; }
 
-.tempo-pendulum {
-  position: absolute;
-  top: 0;
-  left: 120px;
-  width: 2px;
-  height: 120px;
-  transform-origin: top center;
-  transform: rotate(0deg);
-  transition: transform 0.1s ease;
-}
+.tempo-pendulum { position: absolute; top: 0; left: 50%; transform: translateX(-50%) rotate(0deg); width: 3px; height: 84%; transform-origin: top center; transition: transform 0.1s ease; }
 
 .pendulum-arm {
   position: absolute;
@@ -255,20 +316,9 @@
   transition: background-color 0.2s ease;
 }
 
-.visual-beat-indicator {
-  width: 100%;
-  max-width: 400px;
-  padding: 1.25rem;
-  border-radius: 0.75rem;
-  background: var(--metronome-input-bg);
-  border: 1px solid var(--metronome-border);
-}
+.visual-beat-indicator { width: 100%; padding: 1.25rem; border-radius: 0.75rem; background: var(--metronome-input-bg); border: 1px solid var(--metronome-border); margin: 0 auto; }
 
-.beat-lights {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-}
+.beat-lights { display: flex; justify-content: space-evenly; gap: 0.75rem; width: 100%; }
 
 .beat-light {
   width: 20px;
@@ -341,11 +391,7 @@
   gap: 1.5rem;
 }
 
-.tempo-slider-wrapper {
-  position: relative;
-  width: 100%;
-  padding: 1rem 0;
-}
+.tempo-slider-wrapper { position: relative; width: 100%; padding: 1rem 0; }
 
 .tempo-slider {
   -webkit-appearance: none;
@@ -392,15 +438,7 @@
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
-.tempo-slider-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 0.5rem;
-  font-size: 0.8rem;
-  color: var(--metronome-text-light);
-  position: relative;
-  width: 100%;
-}
+.tempo-slider-labels { display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.8rem; color: var(--metronome-text-light); position: relative; width: 100%; }
 
 .tempo-slider-labels span {
   position: absolute;
@@ -513,6 +551,25 @@
   gap: 2rem;
   align-items: center;
 }
+
+/* Compact time signature + tap row */
+.time-sig-tap-row { display:flex; flex-direction:column; align-items:center; gap:1rem; justify-content:center; margin-bottom:1.25rem }
+.time-signature-group.compact { flex: 0 0 auto; align-items:center; margin: 0 auto }
+.time-signature-compact { display:flex; align-items:center; gap:.5rem; background: var(--metronome-panel-bg); border:1px solid var(--metronome-panel-border); border-radius:12px; padding:.6rem .75rem }
+.sig-display { display:flex; align-items:center; gap:.5rem }
+.sig-slash { opacity:.7; font-weight:600 }
+.time-signature-compact .sig-input { width:70px; text-align:center; font-size:1.35rem; font-weight:700; background:transparent; border:none; border-bottom:2px solid transparent; color:var(--metronome-text); padding:.1rem .25rem }
+.time-signature-compact .sig-input:focus { outline:none; border-color: var(--metronome-blue) }
+.sig-btn { width:48px; height:48px; border-radius:8px; border:1px solid var(--metronome-panel-border); background:var(--metronome-panel-bg); color:var(--metronome-text); display:flex; align-items:center; justify-content:center; cursor:pointer; transition: all .2s ease; line-height:1 }
+.sig-btn:hover { background: var(--metronome-button-hover) }
+.sig-spacer { width:10px }
+
+.tap-compact { display:flex; align-items:center; justify-content:center; gap:.75rem; width:100%; margin: 0 auto }
+.tap-compact .tap-circle.tap-large { width: 260px; height: 56px; border-radius: 12px; font-weight: 700; letter-spacing: .2px; }
+.tap-compact .tap-meta { min-width:auto }
+.tap-circle { width:44px; height:44px; border-radius:50%; border:none; background: var(--metronome-gradient); box-shadow: var(--metronome-control-shadow); cursor:pointer; transition: transform .15s ease }
+.tap-circle:hover { transform: translateY(-2px) }
+.tap-readout { min-width:40px; text-align:center; font-weight:600; color: var(--metronome-text) }
 
 .numerator-controls,
 .denominator-controls {
@@ -698,7 +755,8 @@ input:disabled + .toggle-slider:before {
 .beat-light.accent::after{color:#fff}
 .beat-light.active{background-color:var(--metronome-blue);opacity:1;transform:scale(1.3);box-shadow:var(--metronome-accent-glow);color:#fff;text-shadow:0 0 2px rgba(0,0,0,.5)}
 .beat-light.active::after{color:#fff;opacity:1;transform:translate(-50%,-50%) scale(1.15)}
-.metronome-controls-section{display:grid;grid-template-columns:1fr;gap:2.5rem;max-width:1200px;margin:0 auto;margin-top:2.5rem}
+.metronome-controls-section{display:grid;grid-template-columns:1fr;gap:2.5rem;width:100%;margin:0 auto;margin-top:2.5rem}
+@media (min-width:1100px){.metronome-controls-section{display:flex;flex-direction:column;gap:2rem}}
 @media (max-width:600px){.metronome-controls-section{margin-top:1.8rem}}
 .tempo-controls{display:flex;flex-direction:column;gap:1.5rem;position:relative;padding:1.5rem;background:var(--metronome-panel-bg);border-radius:1rem;border:1px solid var(--metronome-panel-border)}
 .tempo-slider-wrapper{position:relative;width:100%;padding:1.5rem 0}
@@ -712,6 +770,9 @@ input:disabled + .toggle-slider:before {
 .tempo-button.primary{background:var(--metronome-blue);border:none;color:#fff;width:85px;height:85px;box-shadow:var(--metronome-control-shadow)}
 .tempo-button.primary:hover{transform:translateY(-4px) scale(1.07);box-shadow:0 10px 25px rgba(0,0,0,.25)}
 .time-signature-controls,.subdivision-controls{background:var(--metronome-panel-bg);border-radius:1rem;border:1px solid var(--metronome-panel-border);padding:2rem;width:100%}
+.settings-panel{background:var(--metronome-panel-bg);border:1px solid var(--metronome-panel-border);border-radius:1rem;padding:1.25rem}
+.settings-panel .control-group{z-index:0}
+.sound-selector{z-index:1}
 .accent-pattern{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
 @media (min-width:1550px){.metronome-controls-section{grid-template-columns:1fr 1fr}.tempo-controls{grid-column:1/-1}}
 @media (min-width:1000px){.metronome-settings-section{padding:2.5rem;display:flex;flex-direction:column;align-items:center}.settings-panel{width:100%;max-width:100%}.sound-selector,.control-group{width:100%; margin-bottom:2rem}.selector-row{width:100%;justify-content:space-between}}
@@ -763,7 +824,7 @@ input:disabled + .toggle-slider{background-color:#adb5bd;border-color:#6c757d;op
 .voice-indicator{display:flex;align-items:center;justify-content:center;gap:.75em;margin:-.3em auto;padding:.5em 1.25em .5em .9em;border-radius:2em;background:var(--voice-indicator-bg,#35363a);box-shadow:0 2px 12px rgba(0,0,0,.1);min-width:220px;max-width:95vw;position:relative;transition:background .2s,box-shadow .2s,margin .2s,padding .2s,opacity .18s cubic-bezier(.4,2,.6,1.2)}
 .voice-indicator.hidden{display:none !important;margin:0 !important;padding:0 !important;opacity:0 !important}
 .voice-dot{width:18px;height:18px;border-radius:50%;background-color:#D32F2F;box-shadow:0 0 6px 2px rgba(0,0,0,.08);transition:background .2s,box-shadow .2s,transform 0.18s cubic-bezier(.4,2,.6,1.2);flex-shrink:0}
-.microphone-toggle-row{margin-bottom:0.25em;display:flex;align-items:center;justify-content:center;gap:1.2em}
+.microphone-toggle-row{margin-bottom:0.25em;display:flex;align-items:center;justify-content:center;gap:1.2em;margin-top:-12px}
 #voice-status-text{font-size:1.08em;color:var(--voice-indicator-text);font-weight:500;margin-left:.7em;letter-spacing:.01em;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.1);transition:color .2s}
 @media (max-width:600px){.voice-indicator{min-width:0;padding:.45em .8em .45em .7em;font-size:.98em;margin: -0.4em auto}.voice-dot{width:15px;height:15px}#voice-status-text{font-size:.98em}}
 [data-theme="dark"] .voice-indicator{background:#444652}
@@ -775,6 +836,41 @@ input:disabled + .toggle-slider{background-color:#adb5bd;border-color:#6c757d;op
 .voice-indicator.active .voice-dot{background-color:var(--success-color,#27ae60);animation:none}
 .voice-indicator.awake .voice-dot{background-color:#2ecc71;box-shadow:0 0 15px 5px rgba(46,204,113,.7);animation:voice-pulse 1s infinite ease-in-out}
 @keyframes voice-pulse{0%{box-shadow:0 0 0 0 rgba(52,152,219,.4)}70%{box-shadow:0 0 0 10px rgba(52,152,219,0)}100%{box-shadow:0 0 0 0 rgba(52,152,219,0)}}
+
+/* Floating play button for large displays */
+.floating-play {
+  position: fixed;
+  right: clamp(16px, 3vw, 48px);
+  bottom: clamp(16px, 3vw, 48px);
+  z-index: 100;
+  display: none;
+}
+
+.floating-play button {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: none;
+  color: #fff;
+  background: var(--metronome-gradient);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease;
+  display: grid;
+  place-items: center;
+}
+
+.floating-play button:hover { transform: translateY(-2px) scale(1.04); }
+
+.floating-play button svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+
+@media (min-width: 1400px) {
+  .floating-play { display: block; }
+}
 .preset-modal {
   display: none;
   position: fixed;
@@ -1153,6 +1249,19 @@ input:disabled + .toggle-slider{background-color:#adb5bd;border-color:#6c757d;op
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (min-width: 1400px) {
+  body .metronome-wrapper { display: flex; flex-direction: column; gap: 2.5rem; }
+  body .metronome-display-section { position: static; top: auto; margin-bottom: 0; }
+}
+
+/* --- Time signature size override (beats/denominator) --- */
+:root { --sig-font-size: 3rem; }
+.sig-fraction-grid input#time-sig-numerator,
+.sig-fraction-grid input#time-sig-denominator {
+  font-size: var(--sig-font-size) !important; /* outrank input[type=number] in style.css */
+  font-weight: 700;
 }
 
 .alert-modal {
@@ -1733,7 +1842,38 @@ input:disabled + .toggle-slider{background-color:#adb5bd;border-color:#6c757d;op
   background-color: transparent;
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
+/* manual vertical nudges for time signature */
+.sig-fraction-grid #time-sig-numerator { transform: translateY(12px); }
+.sig-fraction-grid #time-sig-denominator { transform: translateY(12px); }
+
+/* Fill horizontal space on smaller screens (override global main width) */
+@media (max-width: 1920px) {
+  main.metronome-container {
+    width: 100% !important;
+    max-width: 100vw !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  .metronome-container { max-width: 100vw; }
+}
+
+/* From tablet up, use full width with 50px side gutters */
+@media (min-width: 769px) {
+  main.metronome-container {
+    width: 100% !important;
+    max-width: none !important;
+    padding-left: 50px !important;
+    padding-right: 50px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  .metronome-container { max-width: none; }
+}
+
+/* Ensure settings panels are side-by-side and full width below 1400px */
+@media (min-width: 768px) and (max-width: 1399px) {
+  .settings-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; width: 100%; }
+  .settings-panel { min-width: 0; width: 100%; }
 }

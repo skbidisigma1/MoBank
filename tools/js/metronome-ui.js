@@ -60,7 +60,8 @@ const tempoSlider               = document.getElementById('tempo-slider'),
       confirmModal              = document.getElementById('confirm-modal'),
       confirmMessage            = document.getElementById('confirm-message'),
       confirmOk                 = document.getElementById('confirm-ok'),
-      confirmCancel             = document.getElementById('confirm-cancel');
+  confirmCancel             = document.getElementById('confirm-cancel'),
+  floatingPlayBtn           = document.getElementById('floating-play-btn');
 
 const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 if (isMobileDevice) {
@@ -109,8 +110,8 @@ if (isMobileDevice) {
 
 let isPlaying               = false,
     currentTempo            = parseInt(tempoDisplay.value),
-    beatsPerMeasure         = parseInt(timeSignatureNumerator.textContent),
-    noteValue               = parseInt(timeSignatureDenominator.textContent),
+  beatsPerMeasure         = parseInt(timeSignatureNumerator.value || timeSignatureNumerator.textContent),
+  noteValue               = parseInt(timeSignatureDenominator.value || timeSignatureDenominator.textContent),
     subdivision             = parseInt(subdivisionSelector.value),
     currentBeat             = 0,
     pendulumAngle           = 0,
@@ -480,14 +481,20 @@ function updateTempo(v){
     }else tempoDebounceTimeout=setTimeout(restartMetronome,150);
   }
 }
+function clampNumerator(v){
+  const n = parseInt(v,10);
+  if (isNaN(n)) return 1;
+  return Math.min(Math.max(n,1),12);
+}
+function clampDenominator(v){ const n=Math.min(Math.max(parseInt(v,10)||4,1),32); return n===1?1:(n%2===0?n:Math.max(n-1,1)); }
 function updateBeatsPerMeasure(v){
   beatsPerMeasure=Math.min(Math.max(v,1),12);
-  timeSignatureNumerator.textContent=beatsPerMeasure;
+  if (timeSignatureNumerator) timeSignatureNumerator.value=beatsPerMeasure;
   updateAccentPattern();updateBeatLights();
   try{ saveState(); }catch{}
   if(isPlaying)restartMetronome();
 }
-function updateNoteValue(v){if(validNoteValues.includes(v)){noteValue=v;timeSignatureDenominator.textContent=noteValue;updateAccentPattern();updateBeatLights();try{ saveState(); }catch{};if(isPlaying)restartMetronome()}}
+function updateNoteValue(v){if(validNoteValues.includes(v)){noteValue=v;if(timeSignatureDenominator) timeSignatureDenominator.value=noteValue;updateAccentPattern();updateBeatLights();try{ saveState(); }catch{};if(isPlaying)restartMetronome()}}
 
 function updateAccentPattern(p=null){
   accentPattern.innerHTML='';
@@ -575,7 +582,12 @@ async function startMetronome(){
   pendulum.style.transform='rotate(0rad)';
   pendulum.style.transition='';
   audioContextStartTime=audioContext.currentTime;
-  tempoPlayBtn.innerHTML='<svg width="24" height="24"><path d="M6 19h4V5H6zm8-14v14h4V5z" fill="currentColor"/></svg>';
+  tempoPlayBtn.innerHTML='<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 19h4V5H6zm8-14v14h4V5z" fill="currentColor"/></svg>';
+  if (floatingPlayBtn) {
+    floatingPlayBtn.setAttribute('aria-label','Pause');
+    floatingPlayBtn.setAttribute('title','Pause');
+    floatingPlayBtn.innerHTML = '<svg width="26" height="26" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 19h4V5H6zm8-14v14h4V5z" fill="currentColor"/></svg>';
+  }
   const beatSec=(60/currentTempo)*(4/noteValue);
   const subSec=subdivision>1?beatSec/subdivision:beatSec;
   const beatMs=beatSec*1000;
@@ -619,7 +631,12 @@ function stopMetronome(){
   pendulumAngle=0;
   pendulum.style.transition='transform 0.5s ease-out';
   pendulum.style.transform='rotate(0rad)';
-  tempoPlayBtn.innerHTML='<svg width="24" height="24"><path d="M8 5V19L19 12Z" fill="currentColor"/></svg>';
+  tempoPlayBtn.innerHTML='<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5V19L19 12Z" fill="currentColor"/></svg>';
+  if (floatingPlayBtn) {
+    floatingPlayBtn.setAttribute('aria-label','Play');
+    floatingPlayBtn.setAttribute('title','Play');
+    floatingPlayBtn.innerHTML = '<svg width="26" height="26" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5V19L19 12L8 5Z" fill="currentColor"/></svg>';
+  }
   document.querySelectorAll('.beat-light').forEach(l=>l.classList.remove('active'));
   if(desyncLogging.enabled&&desyncLogging.beatCount>0){
     desyncLogging.log('Metronome Stopped - Final Stats:','error');desyncLogging.logStats();
@@ -635,10 +652,26 @@ tempoDisplay.onchange=tempoDisplay.onblur=()=>updateTempo(tempoDisplay.value);
 tempoDecreaseBtn.onclick=()=>updateTempo(currentTempo-1);
 tempoIncreaseBtn.onclick=()=>updateTempo(currentTempo+1);
 tempoPlayBtn.onclick=()=>isPlaying?stopMetronome():startMetronome();
+if (floatingPlayBtn) {
+  floatingPlayBtn.addEventListener('click', () => {
+    // trigger same behavior as main play
+    isPlaying ? stopMetronome() : startMetronome();
+  });
+}
 decreaseBeatsBtn.onclick=()=>updateBeatsPerMeasure(beatsPerMeasure-1);
 increaseBeatsBtn.onclick=()=>updateBeatsPerMeasure(beatsPerMeasure+1);
 decreaseNoteValueBtn.onclick=()=>{const i=validNoteValues.indexOf(noteValue);if(i>0)updateNoteValue(validNoteValues[i-1])};
 increaseNoteValueBtn.onclick=()=>{const i=validNoteValues.indexOf(noteValue);if(i<validNoteValues.length-1)updateNoteValue(validNoteValues[i+1])};
+// direct edit handlers
+timeSignatureNumerator?.addEventListener('change',()=>{
+  updateBeatsPerMeasure(clampNumerator(timeSignatureNumerator.value));
+});
+timeSignatureDenominator?.addEventListener('change',()=>{
+  const raw = clampDenominator(timeSignatureDenominator.value);
+  // snap to nearest power-of-two in validNoteValues or 1
+  const snap = validNoteValues.reduce((prev,curr)=> Math.abs(curr-raw)<Math.abs(prev-raw)?curr:prev , validNoteValues[0]);
+  updateNoteValue(snap);
+});
 volumeSlider.oninput=()=>{volume=parseFloat(volumeSlider.value)/100; try{ saveState(); }catch{}};
 useVoiceCountingCheckbox.onchange=()=>{useVoiceCounting=useVoiceCountingCheckbox.checked;voiceOptionsPanel.style.display=useVoiceCounting?'block':'none';if(isPlaying)restartMetronome(); try{ saveState(); }catch{}};
 // Lazy load voice sounds only when voice counting is enabled the first time
@@ -756,8 +789,8 @@ function clearCachedPresets() {
     if (typeof s.tempo==='number') currentTempo = Math.min(Math.max(s.tempo,10),1000);
     tempoDisplay.value = currentTempo; tempoSlider.value = tempoToSliderPosition(currentTempo);
     if (typeof s.beatsPerMeasure==='number') beatsPerMeasure = Math.min(Math.max(s.beatsPerMeasure,1),12);
-    timeSignatureNumerator.textContent = beatsPerMeasure;
-    if (typeof s.noteValue==='number' && [1,2,4,8,16,32].includes(s.noteValue)) { noteValue = s.noteValue; timeSignatureDenominator.textContent = noteValue; }
+  timeSignatureNumerator.value = beatsPerMeasure;
+  if (typeof s.noteValue==='number' && [1,2,4,8,16,32].includes(s.noteValue)) { noteValue = s.noteValue; timeSignatureDenominator.value = noteValue; }
     if (typeof s.subdivision==='number') { subdivision = s.subdivision; subdivisionSelector.value = subdivision; }
     if (typeof s.selectedSound==='string' && sounds[s.selectedSound]) { selectedSound = s.selectedSound; }
     soundButtons.forEach(b => b.classList.toggle('selected', b.dataset.sound===selectedSound));
@@ -884,8 +917,8 @@ if (savePresetBtn) {
     // initialize form defaults
     presetNameInput.value = '';
     presetDescInput.value = '';
-    document.getElementById('preset-time-sig-numerator').textContent = beatsPerMeasure;
-    document.getElementById('preset-time-sig-denominator').textContent = noteValue;
+  document.getElementById('preset-time-sig-numerator').textContent = beatsPerMeasure;
+  document.getElementById('preset-time-sig-denominator').textContent = noteValue;
     presetSoundButtons.forEach(b => b.classList.remove('selected'));
     document.querySelector(`.preset-sound-button[data-sound="${selectedSound}"]`)?.classList.add('selected');
     renderPresetAccentPattern();

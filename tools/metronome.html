@@ -93,48 +93,47 @@
             </button>
           </div>
         </div>
-        <div class="time-signature-controls">
-          <div class="control-group time-signature-group">
-            <label>Time Signature</label>
-            <div class="time-signature-display">
-              <div class="time-signature-value">
-                <div id="time-sig-numerator" class="time-signature-top">4</div>
-                <div id="time-sig-denominator" class="time-signature-bottom">4</div>
-              </div>
-              <div class="time-signature-buttons">
-                <div class="numerator-controls">
-                  <button class="control-button" data-action="decrease-beats" aria-label="Decrease beats">−</button>
-                  <button class="control-button" data-action="increase-beats" aria-label="Increase beats">+</button>
-                </div>
-                <div class="denominator-controls">
-                  <button class="control-button" data-action="decrease-note-value" aria-label="Decrease note value">−</button>
-                  <button class="control-button" data-action="increase-note-value" aria-label="Increase note value">+</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="subdivision-controls">
-          <div class="control-group">
-            <label for="subdivision-selector">Subdivision</label>
-            <div class="subdivision-selector-wrapper">
-              <select id="subdivision-selector" class="subdivision-selector">
-                <option value="1">None</option>
-                <option value="2">2 per beat (eighth notes)</option>
-                <option value="3">3 per beat (triplets)</option>
-                <option value="4">4 per beat (sixteenth notes)</option>
-              </select>
-            </div>
-          </div>
-          <div class="control-group">
-            <label>Accent pattern</label>
-            <div class="accent-pattern-wrapper">
-              <div id="accent-pattern" class="accent-pattern"></div>
-            </div>
-          </div>
-        </div>
         <div class="metronome-settings-section">
           <div class="settings-panels">
+            <div class="settings-panel">
+              <h3 class="panel-title">Tempo</h3>
+              <div class="time-sig-tap-row">
+                <div class="control-group time-signature-group compact">
+                  <label>Time Signature</label>
+                  <div class="sig-fraction-grid" role="group" aria-label="Time Signature Controls">
+                    <button class="sig-btn" data-action="decrease-beats" aria-label="Decrease beats">−</button>
+                    <div class="sig-vert">
+                      <input id="time-sig-numerator" class="sig-input sig-displaylike" type="number" min="1" max="12" inputmode="numeric" value="4" aria-label="Beats per measure">
+                      <span class="sig-divider" aria-hidden="true"></span>
+                      <input id="time-sig-denominator" class="sig-input sig-displaylike" type="number" min="1" max="32" step="1" inputmode="numeric" value="4" aria-label="Note value">
+                    </div>
+                    <button class="sig-btn" data-action="increase-beats" aria-label="Increase beats">+</button>
+
+                    <button class="sig-btn" data-action="decrease-note-value" aria-label="Decrease note value">−</button>
+                    <span class="sig-spacer" aria-hidden="true"></span>
+                    <button class="sig-btn" data-action="increase-note-value" aria-label="Increase note value">+</button>
+                  </div>
+                </div>
+                <div class="tap-compact">
+                  <button id="tap-tempo-button" class="tap-circle tap-large" aria-label="Tap Tempo">Tap</button>
+                  <div class="tap-meta">
+                    <div class="tap-label">Tap Tempo</div>
+                    <div id="tap-tempo-display" class="tap-readout">-- BPM</div>
+                  </div>
+                </div>
+              </div>
+              <div class="control-group">
+                <label for="subdivision-selector">Subdivision</label>
+                <div class="subdivision-selector-wrapper">
+                  <select id="subdivision-selector" class="subdivision-selector">
+                    <option value="1">None</option>
+                    <option value="2">2 per beat (eighth notes)</option>
+                    <option value="3">3 per beat (triplets)</option>
+                    <option value="4">4 per beat (sixteenth notes)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
             <div class="settings-panel">
               <h3 class="panel-title">Sound Options</h3>
               <div class="sound-selector">
@@ -147,6 +146,12 @@
               <div class="control-group">
                 <label for="volume-slider">Beat Volume</label>
                 <input type="range" id="volume-slider" class="volume-slider" min="0" max="100" value="100">
+              </div>
+              <div class="control-group">
+                <label>Accent pattern</label>
+                <div class="accent-pattern-wrapper">
+                  <div id="accent-pattern" class="accent-pattern"></div>
+                </div>
               </div>
               <div class="voice-settings">
                 <div class="control-group">
@@ -177,11 +182,6 @@
             </div>
           </div>
         </div>
-        <section class="tap-tempo-section">
-          <h3>Tap Tempo</h3>
-          <button id="tap-tempo-button" class="tap-tempo-button">Tap</button>
-          <div id="tap-tempo-display" class="tap-tempo-display">-- BPM</div>
-        </section>
       </section>
       <section class="metronome-presets-section">
         <div class="presets-header">
@@ -198,6 +198,13 @@
         </div>
         <div id="presets-grid" class="presets-grid"></div>
       </section>
+      <div class="floating-play" aria-hidden="false">
+        <button id="floating-play-btn" title="Play / Pause" aria-label="Play / Pause">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
     </div>
     <div id="preset-modal" class="preset-modal">
       <div class="preset-modal-content">
