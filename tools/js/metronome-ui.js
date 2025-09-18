@@ -392,7 +392,6 @@ function handleWorkletMessage(event){
         if(scheduledTime<now+lateNoteScheduleThreshold){droppedNoteCount++;playTickSound(ev)}
         else{perfectNoteCount++;playTickSound(ev,scheduledTime)}
       }
-      // Always schedule visual for main beats, even if silent
       scheduleVisual(()=>{if(ev.isMainBeat)updateVisualBeat(ev.beatInMeasure)},scheduledTime);
       if(!ev.isMainBeat && subdivision>1 && !isSilent) {
         playSubdivisionSound(ev.subBeat,scheduledTime);
@@ -462,18 +461,32 @@ function checkScheduledVisuals(){
 function scheduleVisual(cb,time){scheduledVisuals.push({time:adjustedTime(time),callback:cb})}
 checkScheduledVisuals();
 
-function tempoToSliderPosition(t){const m=10,x=1000,l=Math.log(m),M=Math.log(x);return 100/(M-l)*(Math.log(t)-l)}
-function sliderPositionToTempo(p){const m=10,x=1000,l=Math.log(m),M=Math.log(x);return Math.round(Math.exp(l+p*(M-l)/100))}
+// slider mapping
+const SLIDER_MIN_BPM = 10;
+const SLIDER_MAX_BPM = 500;
+const TEXT_MAX_BPM   = 1000;
+const GAMMA = 0.7;
+
+function tempoToSliderPosition(t){
+  const clamped = Math.max(SLIDER_MIN_BPM, Math.min(t, SLIDER_MAX_BPM));
+  const s = Math.log(clamped / SLIDER_MIN_BPM) / Math.log(SLIDER_MAX_BPM / SLIDER_MIN_BPM);
+  return Math.pow(s, 1 / GAMMA) * 100;
+}
+function sliderPositionToTempo(p){
+  const s = Math.pow(Math.max(0, Math.min(1, p / 100)), GAMMA);
+  const bpm = SLIDER_MIN_BPM * Math.pow(SLIDER_MAX_BPM / SLIDER_MIN_BPM, s);
+  return Math.round(bpm);
+}
 
 function updateTempo(v){
   let n=parseInt(v);if(isNaN(n)||n<=0)n=10;
-  currentTempo=Math.min(Math.max(n,10),1000);
+  currentTempo=Math.min(Math.max(n,SLIDER_MIN_BPM),TEXT_MAX_BPM);
   tempoDisplay.value=currentTempo;tempoSlider.value=tempoToSliderPosition(currentTempo);
+  if (tempoSlider) tempoSlider.classList.toggle('over-500', currentTempo > SLIDER_MAX_BPM);
   try{ saveState(); }catch{}
   if(isPlaying){
     clearTimeout(tempoDebounceTimeout);
     if(metronomeProcessor){
-      // Instead of just sending update, always restart the metronome processor for robust timing
       tempoDebounceTimeout=setTimeout(()=>{
         stopMetronome();
         startMetronome();
@@ -529,12 +542,15 @@ function updateAccentPattern(p=null){
 }
 function updateBeatLights(){
   const c=document.querySelector('.beat-lights');c.innerHTML='';
+  // Expose beats count to CSS for responsive spacing
+  c.style.setProperty('--beats-count', beatsPerMeasure);
   for(let i=0;i<beatsPerMeasure;i++){
     const st=document.querySelector(`.accent-button[data-beat="${i+1}"]`)?.dataset.state||'normal';
     const d=document.createElement('div');d.className='beat-light';
     if(st==='accent')d.classList.add('accent');else if(st==='silent')d.classList.add('silent');
     d.dataset.beat=i+1;c.appendChild(d);
   }
+  layoutBeatLights();
 }
 function updateVisualBeat(i){
   document.querySelectorAll('.beat-light').forEach(l=>l.classList.remove('active'));
@@ -671,6 +687,7 @@ timeSignatureDenominator?.addEventListener('change',()=>{
   // snap to nearest power-of-two in validNoteValues or 1
   const snap = validNoteValues.reduce((prev,curr)=> Math.abs(curr-raw)<Math.abs(prev-raw)?curr:prev , validNoteValues[0]);
   updateNoteValue(snap);
+  layoutBeatLights();
 });
 volumeSlider.oninput=()=>{volume=parseFloat(volumeSlider.value)/100; try{ saveState(); }catch{}};
 useVoiceCountingCheckbox.onchange=()=>{useVoiceCounting=useVoiceCountingCheckbox.checked;voiceOptionsPanel.style.display=useVoiceCounting?'block':'none';if(isPlaying)restartMetronome(); try{ saveState(); }catch{}};
@@ -820,9 +837,53 @@ function clearCachedPresets() {
 
   applySavedState();
   updateAccentPattern();updateBeatLights();
+  // Update slider tick labels for the new mapping (6 labels at 0%,20%,40%,60%,80%,100%)
+  (function updateSliderLabels(){
+    const labels = document.querySelectorAll('.tempo-slider-labels span');
+    if (!labels || labels.length === 0) return;
+    const positions = [0, 20, 40, 60, 80, 100];
+    labels.forEach((el, i)=>{
+      const p = positions[Math.min(i, positions.length-1)];
+      const val = sliderPositionToTempo(p);
+      el.textContent = val.toString();
+    });
+  })();
 
   // Auto-enable logging if debug flag
   if (window.MetronomeConfig?.debug && !desyncLogging.enabled) toggleDesyncLogging();
+  // Initial layout pass once DOM is ready
+  setTimeout(layoutBeatLights, 0);
+
+  // Dynamically size and space beat lights based on count and container width
+  function layoutBeatLights(){
+    const container = document.querySelector('.visual-beat-indicator');
+    const row = document.querySelector('.beat-lights');
+    if (!container || !row) return;
+    const count = Math.max(1, beatsPerMeasure|0);
+    const cw = row.clientWidth || container.clientWidth || 0;
+    // Desired min/max sizes and gaps
+    const minSize = 16, maxSize = 32;
+    const minGap = 4, maxGap = 18;
+    // Start by trying maxSize and compute gap to fit
+    let size = Math.min(maxSize, Math.max(minSize, Math.floor(cw / Math.max(1, count*1.4))));
+    // available width leftover after placing circles
+    const leftover = Math.max(0, cw - size*count);
+    // gaps between items (count-1 gaps)
+    let gap = count > 1 ? Math.floor(leftover / (count - 1)) : 0;
+    gap = Math.max(minGap, Math.min(maxGap, gap));
+    // If total width still overflows, reduce size proportionally
+    const total = size*count + gap*(count-1);
+    if (total > cw && count > 0) {
+      const overflow = total - cw;
+      const reducePer = Math.ceil(overflow / count);
+      size = Math.max(minSize, size - reducePer);
+    }
+    // Apply to CSS variables
+    row.style.setProperty('--beat-gap', `${gap}px`);
+    row.style.setProperty('--beat-size', `${size}px`);
+    row.style.setProperty('--beats-count', `${count}`);
+  }
+  window.addEventListener('resize', () => layoutBeatLights());
 
 window.addEventListener('keydown', e => {
   const active = document.activeElement;
@@ -914,14 +975,8 @@ if (savePresetBtn) {
     presetTabs.forEach(t=>t.classList.remove('active'));
     document.querySelector('.preset-tab[data-tab="save"]').classList.add('active');
     presetTabContents.forEach(c=> c.id === 'save-tab' ? c.classList.add('active') : c.classList.remove('active'));
-    // initialize form defaults
-    presetNameInput.value = '';
-    presetDescInput.value = '';
-  document.getElementById('preset-time-sig-numerator').textContent = beatsPerMeasure;
-  document.getElementById('preset-time-sig-denominator').textContent = noteValue;
-    presetSoundButtons.forEach(b => b.classList.remove('selected'));
-    document.querySelector(`.preset-sound-button[data-sound="${selectedSound}"]`)?.classList.add('selected');
-    renderPresetAccentPattern();
+    // initialize form defaults from current metronome state
+    populatePresetSaveFromCurrent();
   });
 }
 // Close modal on close button
@@ -1339,6 +1394,8 @@ presetSaveBtn.addEventListener('click', event => {
     presetTabContents.forEach(c => c.id === 'save-tab' ? c.classList.add('active') : c.classList.remove('active'));
     saveTabButtons.style.display = 'flex';
     editTabButtons.style.display = 'none';
+    // When switching back to Save, refresh defaults from current state
+    populatePresetSaveFromCurrent();
     return;
   }
   savePreset();
@@ -1357,6 +1414,60 @@ async function loadAndDisplayPagePresets() {
   });
 }
 loadAndDisplayPagePresets();
+
+  // Prefill Save tab fields from current metronome state
+  function populatePresetSaveFromCurrent(){
+    presetNameInput.value = '';
+    presetDescInput.value = '';
+    // Time signature
+    const numEl = document.getElementById('preset-time-sig-numerator');
+    const denEl = document.getElementById('preset-time-sig-denominator');
+    if (numEl) numEl.textContent = beatsPerMeasure;
+    if (denEl) denEl.textContent = noteValue;
+    includeTimeSignatureCheck.checked = true;
+    const timeSigCtrl = document.getElementById('time-sig-control');
+    if (timeSigCtrl) timeSigCtrl.style.display = 'block';
+    // Tempo
+    includeTempoCheck.checked = true;
+    const tempoCtrl = document.getElementById('tempo-control');
+    if (tempoCtrl) tempoCtrl.style.display = 'block';
+    const tempoInput = document.getElementById('preset-tempo-value');
+    if (tempoInput) tempoInput.value = currentTempo;
+    // Subdivision
+    includeSubdivisionCheck.checked = true;
+    const subCtrl = document.getElementById('subdivision-control');
+    if (subCtrl) subCtrl.style.display = 'block';
+    const subSel = document.getElementById('preset-subdivision-selector');
+    if (subSel) subSel.value = subdivision;
+    // Accent pattern from current buttons
+    includeAccentPatternCheck.checked = true;
+    const accentCtrl = document.getElementById('accent-pattern-control');
+    if (accentCtrl) accentCtrl.style.display = 'block';
+    const currentPattern = Array.from(document.querySelectorAll('.accent-button')).map(b => b.dataset.state || 'normal');
+    renderPresetAccentPattern(currentPattern);
+    // Sound selection (leave includeSound optional; keep selection synced)
+    presetSoundButtons.forEach(b => b.classList.remove('selected'));
+    document.querySelector(`.preset-sound-button[data-sound="${selectedSound}"]`)?.classList.add('selected');
+    // Volume
+    includeVolumeCheck.checked = true;
+    const volCtrl = document.getElementById('volume-control');
+    if (volCtrl) volCtrl.style.display = 'block';
+    const presetVol = document.getElementById('preset-volume-slider');
+    if (presetVol) presetVol.value = Math.round(volume * 100);
+    // Voice settings
+    includeVoiceSettingsCheck.checked = true;
+    const voiceCtrl = document.getElementById('voice-settings-control');
+    if (voiceCtrl) voiceCtrl.style.display = 'block';
+    const vUseVoice = document.getElementById('preset-use-voice-counting');
+    const vUseClick = document.getElementById('preset-use-click-subdivision');
+    const vVol = document.getElementById('preset-voice-volume-slider');
+    if (vUseVoice) vUseVoice.checked = !!useVoiceCounting;
+    if (vUseClick) vUseClick.checked = !!useClickSubdivision;
+    if (vVol) vVol.value = Math.round(voiceVolume * 100);
+    // Ensure Save footer visible
+    if (saveTabButtons) saveTabButtons.style.display = 'flex';
+    if (editTabButtons) editTabButtons.style.display = 'none';
+  }
 
   const microphoneToggle = document.getElementById('microphone-toggle');
   const voiceIndicator = document.getElementById('voice-indicator');

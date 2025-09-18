@@ -166,6 +166,7 @@
   gap: 2.5rem;
   border: 1px solid var(--metronome-border);
   transition: box-shadow 0.3s ease;
+  position: relative;
 }
 
 .metronome-wrapper:hover {
@@ -318,7 +319,7 @@
 
 .visual-beat-indicator { width: 100%; padding: 1.25rem; border-radius: 0.75rem; background: var(--metronome-input-bg); border: 1px solid var(--metronome-border); margin: 0 auto; }
 
-.beat-lights { display: flex; justify-content: space-evenly; gap: 0.75rem; width: 100%; }
+.beat-lights { display: flex; justify-content: space-between; gap: clamp(0.25rem, calc(1.1rem - (var(--beats-count, 4) - 4) * 0.12rem), 1.1rem); width: 100%; }
 
 .beat-light {
   width: 20px;
@@ -357,7 +358,7 @@
 }
 
 .beat-light.silent {
-  opacity: 0.1;
+  opacity: 0.2;
   border: 2px solid var(--metronome-border);
 }
 
@@ -368,7 +369,7 @@
 .beat-light.active {
   background-color: var(--metronome-accent);
   opacity: 1;
-  transform: scale(1.2);
+  transform: scale(1.15);
   box-shadow: 0 0 12px var(--metronome-accent);
   /* animation: pulse 0.18s ease-out; */
 }
@@ -416,6 +417,7 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+.tempo-slider.over-500::-webkit-slider-thumb { background: #ff4d4f; border-color: #ff4d4f; }
 
 .tempo-slider::-webkit-slider-thumb:hover {
   transform: scale(1.1);
@@ -432,6 +434,7 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+.tempo-slider.over-500::-moz-range-thumb { background: #ff4d4f; border: 4px solid #ff4d4f; }
 
 .tempo-slider::-moz-range-thumb:hover {
   transform: scale(1.1);
@@ -747,9 +750,9 @@ input:disabled + .toggle-slider:before {
 .pendulum-arm{position:absolute;top:0;left:0;width:3px;height:120px;background:var(--metronome-blue);box-shadow:0 0 8px rgba(74,144,226,.6)}
 .pendulum-weight{position:absolute;bottom:0;left:-14px;width:28px;height:28px;border-radius:50%;background:var(--metronome-blue);box-shadow:0 0 12px rgba(74,144,226,.8);z-index:100}
 .visual-beat-indicator{width:100%;max-width:500px;padding:1.5rem;border-radius:1rem;background:var(--metronome-panel-bg);border:1px solid var(--metronome-panel-border);margin-top:2.5rem;margin-left:auto;margin-right:auto}
-.beat-lights{display:flex;justify-content:center;gap:1.5rem}
-.beat-light{width:28px;height:28px;border-radius:50%;background-color:var(--metronome-border);opacity:.6;position:relative;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;color:var(--metronome-text);text-shadow:none}
-.beat-light::after{content:attr(data-beat);position:absolute;color:var(--metronome-text);opacity:.7}
+.beat-lights{display:flex;justify-content:center;gap:var(--beat-gap, clamp(.25rem, calc(1rem - (var(--beats-count, 4) - 4)*.08rem), 1rem))}
+.beat-light{width:var(--beat-size, 28px);height:var(--beat-size, 28px);border-radius:50%;background-color:var(--metronome-border);opacity:.6;position:relative;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;color:var(--metronome-text);text-shadow:none}
+.beat-light::after{content:attr(data-beat);position:absolute;color:var(--metronome-text);opacity:.7;font-size:clamp(10px, calc(var(--beat-size, 28px) * .45), 16px)}
 [data-theme="dark"] .beat-light::after{color:var(--color-white)}
 .beat-light.accent{background-color:var(--metronome-blue);opacity:.8;color:#fff;text-shadow:0 0 2px rgba(0,0,0,.5)}
 .beat-light.accent::after{color:#fff}
@@ -1732,13 +1735,12 @@ input:disabled + .toggle-slider{background-color:#adb5bd;border-color:#6c757d;op
 }
 
 .preset-button.user-preset .preset-name {
-  font-weight: 600; /* Bolder name */
+  font-weight: 600;
   color: var(--metronome-text);
   font-size: 1rem;
   line-height: 1.3;
   word-break: break-word;
   width: 100%;
-  /* Ellipsis for name (max 2 lines) */
   display: -webkit-box;
   -webkit-line-clamp: 2; 
   line-clamp: 2;
@@ -1753,9 +1755,8 @@ input:disabled + .toggle-slider{background-color:#adb5bd;border-color:#6c757d;op
   line-height: 1.4;
   margin-top: 0.3rem;
   width: 100%;
-  /* Ellipsis for description (max 3 lines) */
   display: -webkit-box;
-  -webkit-line-clamp: 3; /* Show max 3 lines */
+  -webkit-line-clamp: 3;
   line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -1842,11 +1843,10 @@ input:disabled + .toggle-slider{background-color:#adb5bd;border-color:#6c757d;op
   background-color: transparent;
 }
 
-/* manual vertical nudges for time signature */
+/* manual vertical nudges for time signature because I never figured out grids */
 .sig-fraction-grid #time-sig-numerator { transform: translateY(12px); }
 .sig-fraction-grid #time-sig-denominator { transform: translateY(12px); }
 
-/* Fill horizontal space on smaller screens (override global main width) */
 @media (max-width: 1920px) {
   main.metronome-container {
     width: 100% !important;
@@ -1859,7 +1859,6 @@ input:disabled + .toggle-slider{background-color:#adb5bd;border-color:#6c757d;op
   .metronome-container { max-width: 100vw; }
 }
 
-/* From tablet up, use full width with 50px side gutters */
 @media (min-width: 769px) {
   main.metronome-container {
     width: 100% !important;
@@ -1870,9 +1869,17 @@ input:disabled + .toggle-slider{background-color:#adb5bd;border-color:#6c757d;op
     margin-right: 0 !important;
   }
   .metronome-container { max-width: none; }
+  /* Place Reset button in wrapper top-right on desktop */
+  #reset-settings {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: auto !important;
+    padding: 0.4rem 0.8rem;
+    z-index: 5;
+  }
 }
 
-/* Ensure settings panels are side-by-side and full width below 1400px */
 @media (min-width: 768px) and (max-width: 1399px) {
   .settings-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; width: 100%; }
   .settings-panel { min-width: 0; width: 100%; }
