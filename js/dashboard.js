@@ -35,11 +35,11 @@ async function getToken() {
 /* ---------- ui helpers ---------- */
 const $ = (sel) => document.querySelector(sel);
 const periodNames = {
+  4: 'Fourth Period',
   5: 'Period 5',
   6: 'Period 6',
   7: 'Period 7',
   8: 'Symphonic Orchestra',
-  9: 'Full Orchestra',
   10: 'Chamber Orchestra'
 };
 const cap = (s = '') => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
