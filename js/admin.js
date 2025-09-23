@@ -5,12 +5,12 @@ async function loadAdminContent() {
   const user = await getUser();
   const roles = (user && user['https://mo-classroom.us/roles']) || [];
   const periodNames = {
-  '4': 'Fourth Period',
-  '5': 'Period 5',
-  '6': 'Period 6',
-  '7': 'Period 7',
-  '8': 'Symphonic Orchestra',
-  '10': 'Chamber Orchestra'
+    '4': 'Period 4',
+    '5': 'Period 5',
+    '6': 'Period 6',
+    '7': 'Period 7',
+    '8': 'Symphonic Orchestra',
+    '10': 'Chamber Orchestra'
   };
   if (!roles.includes('admin')) {
     window.location.href = '/dashboard';
@@ -107,6 +107,8 @@ async function loadAdminContent() {
   document.getElementById('admin-content').classList.remove('hidden');
 
   const tabButtons = document.querySelectorAll('.tab-button');
+  // Normalize any legacy label
+  tabButtons.forEach(b=>{ if(/Fourth Period/i.test(b.textContent)) b.textContent='Period 4'; });
   const tabPanels = document.querySelectorAll('.tab-panel');
   const manageAnnouncementsBtn = document.getElementById('manage-announcements-btn');
   const announcementsPanel = document.getElementById('announcements-panel');

@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  // Legacy label normalization
+  document.querySelectorAll('.period-button').forEach(btn=>{
+    if(/Fourth Period/i.test(btn.textContent)) btn.textContent = 'Period 4';
+  });
   const loader = document.getElementById('loader');
   const periodButtons = document.querySelectorAll('.period-button');
   const leaderboardBody = document.getElementById('leaderboard-body');
@@ -42,10 +46,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       `#${rank}`;
       
     const periodNames = {
-      '4': 'Fourth',
-      '5': 'Period 5',
-      '6': 'Period 6',
-      '7': 'Period 7',
+      '4': 'P4', // shorthand tag on global cards
+      '5': 'P5',
+      '6': 'P6',
+      '7': 'P7',
       '8': 'Symphonic',
       '10': 'Chamber'
     };
@@ -80,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     leaderboardCards.innerHTML = '';
     
     const periodNames = {
-      '4': 'Fourth Period',
+      '4': 'Period 4',
       '5': 'Period 5',
       '6': 'Period 6',
       '7': 'Period 7',
@@ -131,10 +135,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       // for global leaderboard, show both instrument and period
       if (period === 'global' && user.class_period) {
         const periodNames = {
-          '4': 'Fourth',
-          '5': 'Period 5',
-          '6': 'Period 6',
-          '7': 'Period 7',
+          '4': 'P4',
+          '5': 'P5',
+          '6': 'P6',
+          '7': 'P7',
           '8': 'Symphonic',
           '10': 'Chamber'
         };

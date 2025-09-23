@@ -35,7 +35,7 @@ async function getToken() {
 /* ---------- ui helpers ---------- */
 const $ = (sel) => document.querySelector(sel);
 const periodNames = {
-  4: 'Fourth Period',
+  4: 'Period 4',
   5: 'Period 5',
   6: 'Period 6',
   7: 'Period 7',
