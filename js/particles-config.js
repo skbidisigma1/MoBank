@@ -15,7 +15,7 @@
     const DEFAULT_CONFIG = {
         particles: {
             number: {
-                value: 50
+                value: 40 // reduced ~20% for performance
             },
             color: { value: "#bebebe" },
             shape: {
@@ -69,7 +69,7 @@
     const PRESETS = {
         minimal: {
             particles: {
-                number: { value: 50 },
+                number: { value: 40 },
                 color: { value: "#005fa3" },
                 shape: { type: "circle" },
                 opacity: { value: 0.6, random: false },
@@ -86,7 +86,7 @@
         },
         snow: {
             particles: {
-                number: { value: 300 },
+                number: { value: 240 },
                 color: { value: "#ffffff" },
                 shape: { type: "circle" },
                 opacity: { value: 0.8, random: true, animation: { enable: true, speed: 0.3, minimumValue: 0.7 } },
@@ -103,7 +103,7 @@
         },
         stars: {
             particles: {
-                number: { value: 120 },
+                number: { value: 96 },
                 color: { value: "#ffffff" },
                 shape: { 
                     type: "star",
@@ -123,7 +123,7 @@
         },
         bubbles: {
             particles: {
-                number: { value: 100 },
+                number: { value: 80 },
                 color: { value: ["#33aaff", "#66ccff"] },
                 shape: { type: "circle" },
                 opacity: { value: 0.3, random: true, animation: { enable: true, speed: 0.8, minimumValue: 0.1 } },
@@ -140,7 +140,7 @@
         },
         neon: {
             particles: {
-                number: { value: 90 },
+                number: { value: 72 },
                 color: { value: ["#ff007f", "#00eaff"] },
                 shape: { type: "circle" },
                 opacity: { value: 0.8, random: false },
@@ -164,7 +164,7 @@
         },
         rainbow: {
             particles: {
-                number: { value: 80 },
+                number: { value: 64 },
                 color: { value: "random" },
                 shape: { type: "circle" },
                 opacity: { value: 0.8, random: true, animation: { enable: true, speed: 1.5, minimumValue: 0.4 } },

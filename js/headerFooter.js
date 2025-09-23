@@ -23,8 +23,13 @@
           'dashboard.html','admin.html','transfer.html','leaderboard.html','cute.html',
           'dashboard','admin','transfer','leaderboard','cute'
         ];
+        const privacyPages = ['privacy.html','privacy','tos.html','tos'];
         if (!isProfile && protectedPages.includes(current) && (cp === null || typeof cp === 'undefined')) {
           location.replace('profile?welcome=1');
+        }
+        if (privacyPages.includes(current) && (cp !== null && typeof cp !== 'undefined')) {
+          window.auth0Promise = Promise.resolve();
+          return;
         }
       });
     } catch (e) {
