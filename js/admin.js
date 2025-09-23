@@ -5,11 +5,11 @@ async function loadAdminContent() {
   const user = await getUser();
   const roles = (user && user['https://mo-classroom.us/roles']) || [];
   const periodNames = {
+  '4': 'Fourth Period',
   '5': 'Period 5',
   '6': 'Period 6',
   '7': 'Period 7',
   '8': 'Symphonic Orchestra',
-  '9': 'Full Orchestra',
   '10': 'Chamber Orchestra'
   };
   if (!roles.includes('admin')) {
