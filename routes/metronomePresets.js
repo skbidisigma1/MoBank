@@ -1,4 +1,4 @@
-const { admin, db } = require('../firebase');
+const { db } = require('../firebase');
 const { getTokenFromHeader, verifyToken } = require('../auth-helper');
 
 async function getBody(req) {
@@ -61,7 +61,7 @@ module.exports = async (req, res) => {
         const ref = db.collection('users').doc(uid);
         const snap = await t.get(ref);
         const presets = snap.exists && Array.isArray(snap.data().metronomePresets) ? snap.data().metronomePresets : [];
-        if (presets.length >= 4) throw new Error('LIMIT');
+        if (presets.length >= 8) throw new Error('LIMIT');
         const now = Date.now();
         t.set(
           ref,
