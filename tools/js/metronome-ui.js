@@ -461,37 +461,38 @@ function checkScheduledVisuals(){
 function scheduleVisual(cb,time){scheduledVisuals.push({time:adjustedTime(time),callback:cb})}
 checkScheduledVisuals();
 
-// slider mapping
+// slider mapping (linear 10-200). Manual entry can exceed 200 up to 1000.
 const SLIDER_MIN_BPM = 10;
-const SLIDER_MAX_BPM = 500;
-const TEXT_MAX_BPM   = 1000;
-const GAMMA = 0.7;
+const SLIDER_MAX_BPM = 200; // visual slider max
+const TEXT_MAX_BPM   = 1000; // manual entry / voice / tap max
 
 function tempoToSliderPosition(t){
   const clamped = Math.max(SLIDER_MIN_BPM, Math.min(t, SLIDER_MAX_BPM));
-  const s = Math.log(clamped / SLIDER_MIN_BPM) / Math.log(SLIDER_MAX_BPM / SLIDER_MIN_BPM);
-  return Math.pow(s, 1 / GAMMA) * 100;
+  // map linearly to 0-100
+  return ((clamped - SLIDER_MIN_BPM) / (SLIDER_MAX_BPM - SLIDER_MIN_BPM)) * 100;
 }
 function sliderPositionToTempo(p){
-  const s = Math.pow(Math.max(0, Math.min(1, p / 100)), GAMMA);
-  const bpm = SLIDER_MIN_BPM * Math.pow(SLIDER_MAX_BPM / SLIDER_MIN_BPM, s);
+  const pct = Math.max(0, Math.min(100, p));
+  const bpm = SLIDER_MIN_BPM + (pct/100) * (SLIDER_MAX_BPM - SLIDER_MIN_BPM);
   return Math.round(bpm);
 }
 
 function updateTempo(v){
-  let n=parseInt(v);if(isNaN(n)||n<=0)n=10;
-  currentTempo=Math.min(Math.max(n,SLIDER_MIN_BPM),TEXT_MAX_BPM);
-  tempoDisplay.value=currentTempo;tempoSlider.value=tempoToSliderPosition(currentTempo);
+  let n = parseInt(v,10);
+  if (isNaN(n) || n <= 0) n = SLIDER_MIN_BPM;
+  // clamp overall tempo
+  currentTempo = Math.min(Math.max(n, SLIDER_MIN_BPM), TEXT_MAX_BPM);
+  // update numeric display
+  tempoDisplay.value = currentTempo;
+  // slider only reflects up to 200 (linear). Values >200 keep slider at the end.
+  tempoSlider.value = tempoToSliderPosition(Math.min(currentTempo, SLIDER_MAX_BPM));
   if (tempoSlider) tempoSlider.classList.toggle('over-500', currentTempo > SLIDER_MAX_BPM);
-  try{ saveState(); }catch{}
-  if(isPlaying){
+  try { saveState(); } catch {}
+  if (isPlaying) {
     clearTimeout(tempoDebounceTimeout);
-    if(metronomeProcessor){
-      tempoDebounceTimeout=setTimeout(()=>{
-        stopMetronome();
-        startMetronome();
-      },150);
-    }else tempoDebounceTimeout=setTimeout(restartMetronome,150);
+    if (metronomeProcessor) {
+      tempoDebounceTimeout = setTimeout(() => { stopMetronome(); startMetronome(); }, 150);
+    } else tempoDebounceTimeout = setTimeout(restartMetronome, 150);
   }
 }
 function clampNumerator(v){
@@ -841,11 +842,13 @@ function clearCachedPresets() {
   (function updateSliderLabels(){
     const labels = document.querySelectorAll('.tempo-slider-labels span');
     if (!labels || labels.length === 0) return;
-    const positions = [0, 20, 40, 60, 80, 100];
+    // Recalculate using the same conversion the slider uses for accuracy.
+    const percentPositions = [0,20,40,60,80,100];
     labels.forEach((el, i)=>{
-      const p = positions[Math.min(i, positions.length-1)];
-      const val = sliderPositionToTempo(p);
-      el.textContent = val.toString();
+      const pct = percentPositions[i];
+      if (pct == null) return;
+      const bpm = sliderPositionToTempo(pct);
+      el.textContent = bpm.toString();
     });
   })();
 
