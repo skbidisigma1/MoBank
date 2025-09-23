@@ -42,11 +42,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       `#${rank}`;
       
     const periodNames = {
+      '4': 'Fourth',
       '5': 'Period 5',
       '6': 'Period 6',
       '7': 'Period 7',
       '8': 'Symphonic',
-      '9': 'Full',
       '10': 'Chamber'
     };
     
@@ -80,11 +80,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     leaderboardCards.innerHTML = '';
     
     const periodNames = {
+      '4': 'Fourth Period',
       '5': 'Period 5',
       '6': 'Period 6',
       '7': 'Period 7',
       '8': 'Symphonic Orchestra',
-      '9': 'Full Orchestra',
       '10': 'Chamber Orchestra',
       'global': 'Global'
     };
@@ -131,11 +131,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       // for global leaderboard, show both instrument and period
       if (period === 'global' && user.class_period) {
         const periodNames = {
+          '4': 'Fourth',
           '5': 'Period 5',
           '6': 'Period 6',
           '7': 'Period 7',
           '8': 'Symphonic',
-          '9': 'Full',
           '10': 'Chamber'
         };
         

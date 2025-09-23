@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
   const { class_period, instrument, theme } = bodyData;
 
   const cp = parseInt(class_period, 10);
-  const validClassPeriods = [5, 6, 7, 8, 9, 10];
+  const validClassPeriods = [4, 5, 6, 7, 8, 10];
   const validInstruments = ['violin', 'viola', 'cello', 'bass', 'other'];
   const validThemes = ['light', 'dark'];
 

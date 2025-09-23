@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
   }
 
   const period = parseInt(req.query.period, 10)
-  const validPeriods = [5, 6, 7, 8, 9, 10]
+  const validPeriods = [4, 5, 6, 7, 8, 10]
   if (!period || !validPeriods.includes(period)) {
     return res.status(400).json({ message: 'Invalid period' })
   }
