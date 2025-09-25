@@ -7,11 +7,14 @@
   ]);
   await window.auth0Promise;
   const isLoggedIn = await isAuthenticated();
-  const user = isLoggedIn ? await getUser() : null;  setupNavLinks($header, isLoggedIn, user);
+  const user = isLoggedIn ? await getUser() : null;
+  setupNavLinks($header, isLoggedIn, user);
   setupProfilePic($header, user);
   setupParticleConfigButton($footer);
-  await initNotifications($header, isLoggedIn);
+  setupMobileMenu($header);
+  // IMPORTANT: Establish userDataPromise BEFORE initializing notifications so they can await it.
   window.userDataPromise = isLoggedIn ? fetchAndCacheUserData() : Promise.resolve(null);
+  await initNotifications($header, isLoggedIn);
   if (isLoggedIn) {
     try {
       window.userDataPromise.then((ud) => {
@@ -134,6 +137,71 @@ function setupProfilePic($header, user) {
 
   img.src = user?.picture || '/images/default_profile.svg';
   img.addEventListener('click', () => (location.href = user ? 'dashboard' : 'login'));
+}
+
+/* ---------- mobile menu ---------- */
+function setupMobileMenu($header) {
+  try {
+    const toggleBtn = $header.querySelector('#mobileMenuToggle');
+    const mobileNav = $header.querySelector('.mobile-nav');
+    if (!toggleBtn || !mobileNav) return;
+
+    const closeOnOutside = (e) => {
+      if (!mobileNav.contains(e.target) && e.target !== toggleBtn) {
+        closeMenu();
+      }
+    };
+
+    function openMenu() {
+      mobileNav.classList.add('active');
+      toggleBtn.classList.add('active');
+      toggleBtn.setAttribute('aria-expanded', 'true');
+      // Defer attaching outside listener to next tick to avoid same-event closing quirks on some mobile browsers
+      setTimeout(() => document.addEventListener('click', closeOnOutside, { once: true }), 0);
+    }
+
+    function closeMenu() {
+      mobileNav.classList.remove('active');
+      toggleBtn.classList.remove('active');
+      toggleBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    let touchTriggered = false; // prevent duplicate click after touch
+    const handleToggle = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const isOpen = mobileNav.classList.contains('active');
+      if (isOpen) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    };
+
+    // Touch handler (fires before synthetic click)
+    toggleBtn.addEventListener('touchstart', (e) => {
+      touchTriggered = true;
+      handleToggle(e);
+    }, { passive: false });
+
+    // Pointer devices / keyboard activation
+    toggleBtn.addEventListener('click', (e) => {
+      if (touchTriggered) { // ignore the synthetic click following touchstart
+        touchTriggered = false;
+        return;
+      }
+      handleToggle(e);
+    });
+
+    // Optional: close menu on ESC
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && mobileNav.classList.contains('active')) {
+        closeMenu();
+      }
+    });
+  } catch (err) {
+    console.warn('setupMobileMenu error:', err);
+  }
 }
 
 /* ---------- particle config button ---------- */
@@ -1819,10 +1887,28 @@ async function initNotifications($header, loggedIn) {
   }
 
   async function loadFromUser() {
-    const data = await window.userDataPromise;
+    // Wait briefly if userDataPromise not yet established (shouldn't happen now but defensive)
+    let attempts = 0;
+    while (!window.userDataPromise && attempts < 10) {
+      await new Promise(r => setTimeout(r, 50));
+      attempts++;
+    }
+    let data = null;
+    try {
+      data = await window.userDataPromise;
+    } catch (e) {
+      console.warn('Notifications: userDataPromise rejected:', e);
+    }
+    // Fallback to cache if promise failed
+    if (!data && typeof CACHE !== 'undefined') {
+      try { data = CACHE.read(CACHE.USER_KEY); } catch {}
+    }
     if (data?.notifications) {
       notifications = [...data.notifications];
       unread = notifications.filter((n) => !n.read).length;
+      render();
+    } else {
+      // Show empty state explicitly
       render();
     }
   }

@@ -562,6 +562,11 @@ function animatePendulum(intervalMs){
   if(!audioContext)return;
   const intervalSec=intervalMs/1000;
   const audioTime=audioContext.currentTime-audioContextStartTime;
+  if (audioTime < 0) { // During lead-in keep centered
+    pendulum.style.transform='rotate(0rad) translate3d(0,0,0)';
+    pendulumRaf=requestAnimationFrame(()=>animatePendulum(intervalMs));
+    return;
+  }
   const progress=(audioTime%intervalSec)/intervalSec;
   const direction=Math.floor(audioTime/intervalSec)%2===0?1:-1;
   pendulumAngle=Math.sin(progress*Math.PI)*0.392699*direction;
@@ -598,21 +603,26 @@ async function startMetronome(){
   await requestWakeLock();
   pendulum.style.transform='rotate(0rad)';
   pendulum.style.transition='';
-  audioContextStartTime=audioContext.currentTime;
+  // Compute timing now so we can add a small lead-in for sync
+  const beatSec=(60/currentTempo)*(4/noteValue);
+  const startLead = Math.min(0.12, beatSec/2); // max 120ms, smaller for fast tempi
+  const startAt = audioContext.currentTime + startLead;
+  audioContextStartTime=startAt;
   tempoPlayBtn.innerHTML='<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 19h4V5H6zm8-14v14h4V5z" fill="currentColor"/></svg>';
   if (floatingPlayBtn) {
     floatingPlayBtn.setAttribute('aria-label','Pause');
     floatingPlayBtn.setAttribute('title','Pause');
     floatingPlayBtn.innerHTML = '<svg width="26" height="26" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 19h4V5H6zm8-14v14h4V5z" fill="currentColor"/></svg>';
   }
-  const beatSec=(60/currentTempo)*(4/noteValue);
   const subSec=subdivision>1?beatSec/subdivision:beatSec;
   const beatMs=beatSec*1000;
   desyncLogging.reset();
-  if(pendulumRaf)cancelAnimationFrame(pendulumRaf);animatePendulum(beatMs);
+  if(pendulumRaf)cancelAnimationFrame(pendulumRaf);
+  // Start pendulum just before first beat so first swing aligns with audio
+  setTimeout(()=>{ animatePendulum(beatMs); }, Math.max(0,(startLead*1000)-12));
   const patterns=[];document.querySelectorAll('.accent-button').forEach(btn=>patterns.push(btn.dataset.state||'normal'));
   if(metronomeProcessor){
-    metronomeProcessor.port.postMessage({type:'start',interval:subSec,tempo:currentTempo,beatsPerMeasure,subdivision,beatPatterns:patterns});
+    metronomeProcessor.port.postMessage({type:'start',interval:subSec,tempo:currentTempo,beatsPerMeasure,subdivision,beatPatterns:patterns,startAt});
   } else {
     // fallback scheduling without AudioWorklet
     currentBeat = 0;

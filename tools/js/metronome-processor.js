@@ -17,7 +17,8 @@ class MetronomeProcessor extends AudioWorkletProcessor{
         this.subdivision     = d.subdivision;
         this.beatPatterns    = d.beatPatterns||[];
         this.tickIndex=0;
-        this.startTickTime = currentTime;
+        // Allow a slight lead-in (startAt provided by UI code) so visuals & audio align smoothly
+        this.startTickTime = (typeof d.startAt === 'number' && d.startAt > currentTime) ? d.startAt : currentTime;
         this.isRunning=true;
       }else if(d.type==='stop'){
         this.isRunning=false;
