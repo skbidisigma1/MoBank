@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoStore - MoBank</title>
+    <script src="../js/cache.js"></script>
+    <script src="../js/theme.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/store.css">
+    <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
+    <script src="../js/auth.js" defer></script>
+    <script src="../js/headerFooter.js" defer></script>
+    <script src="../js/toast.js" defer></script>
+    <script src="../js/store.js" defer></script>
+</head>
+<body>
+    <div id="particles-js"></div>
+    <div id="header-placeholder"></div>
+
+    <main class="main-container store-wrapper">
+        <section class="store-hero">
+            <div class="store-hero__content">
+                <h1 class="store-hero__title">The MoStore</h1>
+                <p class="store-hero__subtitle">Spend your MoBucks on special rewards and experiences</p>
+            </div>
+            <div class="store-hero__balance" id="store-balance-panel">
+                <p class="balance-label">Your MoBuck Balance</p>
+                <p class="balance-value" id="store-balance-amount">$0</p>
+            </div>
+        </section>
+
+        <section class="store-content">
+            <section class="store-catalog">
+                <header class="catalog-header">
+                    <div class="catalog-search">
+                        <span class="catalog-search__icon" aria-hidden="true">🔍</span>
+                        <input type="search" id="catalog-search-input" placeholder="Search rewards, experiences, or keywords" aria-label="Search store items">
+                    </div>
+                    <div class="catalog-controls">
+                        <select id="catalog-sort" aria-label="Sort store items">
+                            <option value="new" selected>Newest first</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                        </select>
+                    </div>
+                </header>
+
+                <div id="catalog-grid" class="catalog-grid" role="list" aria-live="polite"></div>
+            </section>
+
+            <aside class="store-cart" aria-label="Shopping cart">
+                <header class="cart-header">
+                    <h2>Cart</h2>
+                    <button id="cart-clear" class="cart-icon-btn" aria-label="Clear cart">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash"><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" __cpp="1"/><path d="M3 6h18" __cpp="1"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" __cpp="1"/></svg>
+                    </button>
+                </header>
+                <div id="cart-items" class="cart-items" aria-live="polite">
+                    <p class="cart-empty">Add something from the catalog to get started.</p>
+                </div>
+                <footer class="cart-footer">
+                    <div class="cart-summary-line">
+                        <span>Subtotal</span>
+                        <span id="cart-subtotal">$0</span>
+                    </div>
+                    <div class="cart-summary-line">
+                        <span>Remaining after purchase</span>
+                        <span id="cart-remaining">$0</span>
+                    </div>
+                    <button id="cart-checkout" class="primary-button" disabled>Checkout (Coming Soon)</button>
+                    <p class="cart-note">Your order stays pending until a shopkeeper or admin fulfills it. You&apos;ll get a receipt instantly.</p>
+                </footer>
+            </aside>
+        </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+</body>
+</html>
