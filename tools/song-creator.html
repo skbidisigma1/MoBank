@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Song Creator | MoBank Tools</title>
+  <meta name="description" content="Real-time pitch detection and melody creation tool">
+  <link rel="preload" href="/js/cache.js" as="script">
+  <link rel="preload" href="/js/theme.js" as="script">
+  <script src="/js/cache.js"></script>
+  <script src="/js/theme.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/tools/css/tools-home.css">
+  <link rel="stylesheet" href="/tools/css/song-creator.css">
+  <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js" crossorigin="anonymous"></script>
+  <script src="/js/auth.js" defer></script>
+  <script src="/js/toast.js" defer></script>
+  <script src="/tools/js/tools-header.js" defer></script>
+  <script type="module" src="/tools/js/song-creator-pitch.js"></script>
+  <script type="module" src="/tools/js/song-creator-ui.js"></script>
+</head>
+<body>
+  <div id="header-placeholder" role="banner"></div>
+  
+  <main class="main-container song-creator-container">
+    <section class="song-creator-header">
+      <h1 class="tool-title">Song Creator</h1>
+      <p class="tool-description">Real-time pitch detection and melody creation tool</p>
+    </section>
+
+    <div class="song-creator-wrapper">
+      <!-- Main Pitch Display -->
+      <section class="pitch-display-section">
+        <div class="pitch-main-display">
+          <div class="pitch-note-display">
+            <div class="pitch-note-name" id="pitch-note">--</div>
+            <div class="pitch-octave" id="pitch-octave">-</div>
+          </div>
+          <div class="pitch-frequency-display">
+            <div class="frequency-value" id="frequency-value">--- Hz</div>
+            <div class="cents-indicator" id="cents-indicator">
+              <div class="cents-bar-container">
+                <div class="cents-bar" id="cents-bar"></div>
+                <div class="cents-marker"></div>
+              </div>
+              <div class="cents-value" id="cents-value">0¢</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual Pitch Indicator -->
+        <div class="pitch-visualizer">
+          <canvas id="pitch-canvas" width="800" height="200"></canvas>
+        </div>
+
+        <!-- Microphone Controls -->
+        <div class="mic-controls">
+          <button id="start-mic" class="mic-button primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+            <span>Start Listening</span>
+          </button>
+          <button id="stop-mic" class="mic-button secondary" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="2" x2="22" y1="2" y2="22"/>
+              <path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"/>
+              <path d="M5 10v2a7 7 0 0 0 12 5"/>
+              <path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/>
+              <path d="M9 9v3a3 3 0 0 0 5.12 2.12"/>
+              <line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+            <span>Stop Listening</span>
+          </button>
+        </div>
+
+        <!-- Status Indicator -->
+        <div class="status-indicator" id="status-indicator">
+          <div class="status-dot"></div>
+          <span id="status-text">Microphone inactive</span>
+        </div>
+      </section>
+
+      <!-- Settings Panel -->
+      <section class="settings-section">
+        <div class="settings-panel">
+          <h3 class="panel-title">Detection Settings</h3>
+          
+          <div class="control-group">
+            <label for="smoothing-slider">Pitch Smoothing</label>
+            <input type="range" id="smoothing-slider" class="slider" min="0" max="100" value="30">
+            <div class="slider-value" id="smoothing-value">30%</div>
+          </div>
+
+          <div class="control-group">
+            <label for="clarity-threshold">Clarity Threshold</label>
+            <input type="range" id="clarity-threshold" class="slider" min="0" max="100" value="90">
+            <div class="slider-value" id="clarity-value">90%</div>
+          </div>
+        </div>
+
+        <div class="settings-panel">
+          <h3 class="panel-title">Display Options</h3>
+          
+          <div class="control-group">
+            <label class="toggle-label">
+              <span class="toggle-switch">
+                <input type="checkbox" id="show-frequency" class="toggle-checkbox" checked>
+                <span class="toggle-slider"></span>
+              </span>
+              <span class="toggle-text">Show Frequency (Hz)</span>
+            </label>
+          </div>
+
+          <div class="control-group">
+            <label class="toggle-label">
+              <span class="toggle-switch">
+                <input type="checkbox" id="show-cents" class="toggle-checkbox" checked>
+                <span class="toggle-slider"></span>
+              </span>
+              <span class="toggle-text">Show Cents Deviation</span>
+            </label>
+          </div>
+
+          <div class="control-group">
+            <label class="toggle-label">
+              <span class="toggle-switch">
+                <input type="checkbox" id="show-waveform" class="toggle-checkbox" checked>
+                <span class="toggle-slider"></span>
+              </span>
+              <span class="toggle-text">Show Waveform</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="info-panel">
+          <h3 class="panel-title">About Pitch Detection</h3>
+          <p class="info-text">
+            This tool uses real-time pitch detection to identify the notes you sing or play. 
+            The cents indicator shows how close you are to the perfect pitch (±50 cents).
+          </p>
+          <p class="info-text">
+            <strong>Tip:</strong> For best results, use in a quiet environment and sing/play clearly into your microphone.
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="footer-placeholder"></div>
+</body>
+</html>

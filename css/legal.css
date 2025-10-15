@@ -50,6 +50,7 @@
   letter-spacing: -0.02em;
   margin: 0 0 0.75rem;
   background: linear-gradient(90deg, var(--legal-accent), #38bdf8);
+  background-clip: text; color: transparent;
   -webkit-background-clip: text; color: transparent;
   font-weight: 700;
 }

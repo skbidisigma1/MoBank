@@ -19,6 +19,7 @@
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.2.0",
     "natural": "^8.1.0",
+    "pitchy": "4.1.0",
     "talisman": "^1.1.4",
     "tsparticles": "^3.0.0"
   }
