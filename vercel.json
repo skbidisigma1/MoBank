@@ -13,6 +13,7 @@
     { "source": "/tools/practice", "destination": "/tools/practice.html" },
     { "source": "/credits", "destination": "/pages/credits.html" },
     { "source": "/webhook", "destination": "/api/webhook" },
+    { "source": "/store", "destination": "/pages/store.html" },
     { "source": "/cute", "destination": "/pages/cute.html" }
   ],
 

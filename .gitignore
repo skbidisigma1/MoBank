@@ -4,3 +4,6 @@ keys/*.json
 .vercel/
 .idea/
 .env*.local
+.vscode/
+.DS_Store
+*.log
