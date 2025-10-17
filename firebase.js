@@ -1,22 +1,20 @@
 const admin = require('firebase-admin');
 
 if (!admin.apps.length) {
+  const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_B64;
+  if (!b64) throw new Error('FIREBASE_SERVICE_ACCOUNT_B64 missing');
+
+  const json = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
+
+  const { project_id: projectId, client_email: clientEmail, private_key: privateKey } = json;
+  if (!projectId || !clientEmail || !privateKey) {
+    throw new Error('Service account JSON missing required fields');
+  }
+
   admin.initializeApp({
-    credential: admin.credential.cert({
-      type: process.env.FIREBASE_TYPE,
-      project_id: process.env.FIREBASE_PROJECT_ID,
-      private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-      private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      client_email: process.env.FIREBASE_CLIENT_EMAIL,
-      client_id: process.env.FIREBASE_CLIENT_ID,
-      auth_uri: process.env.FIREBASE_AUTH_URI,
-      token_uri: process.env.FIREBASE_TOKEN_URI,
-      auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
-      client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
-    }),
+    credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
   });
 }
 
 const db = admin.firestore();
-
 module.exports = { admin, db };
