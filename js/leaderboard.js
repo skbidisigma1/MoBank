@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <div class="card-rank ${rank <= 3 ? `rank-${rank}` : ''}">${rankDisplay}</div>
       <div class="card-name">${displayName}</div>
       <div class="card-divider"></div>
-      <div class="card-balance">${user.balance} MoBucks</div>
+      <div class="card-balance">${formatMoBucks(user.balance, { absolute: true })}</div>
       <div class="card-instrument">${instrumentDisplay}</div>
     `;
 
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const balanceCell = document.createElement('td');
       balanceCell.className = 'balance-cell';
-      balanceCell.textContent = user.balance;
+      balanceCell.innerHTML = formatMoBucks(user.balance, { absolute: true });
       row.appendChild(balanceCell);
 
       const instrumentCell = document.createElement('td');

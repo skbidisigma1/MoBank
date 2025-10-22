@@ -42,5 +42,8 @@ const CACHE = {
     };
     
     localStorage.setItem(key, JSON.stringify(cacheEntry));
+  },
+  remove(key) {
+    localStorage.removeItem(key);
   }
 };

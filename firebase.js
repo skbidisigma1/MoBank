@@ -1,18 +1,23 @@
 const admin = require('firebase-admin');
 
 if (!admin.apps.length) {
+  const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_B64;
+  if (!b64) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_B64 is missing from environment variables');
+  }
+
+  let serviceAccount;
+  try {
+    serviceAccount = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
+  } catch (err) {
+    throw new Error('Failed to parse FIREBASE_SERVICE_ACCOUNT_B64: ' + err.message);
+  }
+
   admin.initializeApp({
     credential: admin.credential.cert({
-      type: process.env.FIREBASE_TYPE,
-      project_id: process.env.FIREBASE_PROJECT_ID,
-      private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-      private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      client_email: process.env.FIREBASE_CLIENT_EMAIL,
-      client_id: process.env.FIREBASE_CLIENT_ID,
-      auth_uri: process.env.FIREBASE_AUTH_URI,
-      token_uri: process.env.FIREBASE_TOKEN_URI,
-      auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
-      client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
+      projectId: serviceAccount.project_id,
+      clientEmail: serviceAccount.client_email,
+      privateKey: serviceAccount.private_key,
     }),
   });
 }

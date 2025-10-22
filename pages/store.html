@@ -9,10 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/store.css">
+    <link rel="stylesheet" href="../css/mobucks-icon.css">
     <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
     <script src="../js/auth.js" defer></script>
     <script src="../js/headerFooter.js" defer></script>
     <script src="../js/toast.js" defer></script>
+    <script src="../js/currency-formatter.js"></script>
     <script src="../js/store.js" defer></script>
 </head>
 <body>
@@ -23,11 +25,11 @@
         <section class="store-hero">
             <div class="store-hero__content">
                 <h1 class="store-hero__title">The MoStore</h1>
-                <p class="store-hero__subtitle">Spend your MoBucks on special rewards and experiences</p>
+                <p class="store-hero__subtitle">Spend your MoBucks on special rewards</p>
             </div>
             <div class="store-hero__balance" id="store-balance-panel">
                 <p class="balance-label">Your MoBuck Balance</p>
-                <p class="balance-value" id="store-balance-amount">$0</p>
+                <p class="balance-value" id="store-balance-amount"><span class="mobucks-icon"></span>0</p>
             </div>
         </section>
 
@@ -36,7 +38,7 @@
                 <header class="catalog-header">
                     <div class="catalog-search">
                         <span class="catalog-search__icon" aria-hidden="true">🔍</span>
-                        <input type="search" id="catalog-search-input" placeholder="Search rewards, experiences, or keywords" aria-label="Search store items">
+                        <input type="search" id="catalog-search-input" placeholder="Search rewards..." aria-label="Search store items">
                     </div>
                     <div class="catalog-controls">
                         <select id="catalog-sort" aria-label="Sort store items">
@@ -50,31 +52,165 @@
                 <div id="catalog-grid" class="catalog-grid" role="list" aria-live="polite"></div>
             </section>
 
-            <aside class="store-cart" aria-label="Shopping cart">
-                <header class="cart-header">
-                    <h2>Cart</h2>
-                    <button id="cart-clear" class="cart-icon-btn" aria-label="Clear cart">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash"><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" __cpp="1"/><path d="M3 6h18" __cpp="1"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" __cpp="1"/></svg>
-                    </button>
-                </header>
-                <div id="cart-items" class="cart-items" aria-live="polite">
-                    <p class="cart-empty">Add something from the catalog to get started.</p>
+            <aside class="store-sidebar">
+                <div class="store-cart" aria-label="Shopping cart">
+                    <header class="cart-header">
+                        <h2>Cart</h2>
+                        <button id="cart-clear" class="cart-icon-btn" aria-label="Clear cart">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash"><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" __cpp="1"/><path d="M3 6h18" __cpp="1"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" __cpp="1"/></svg>
+                        </button>
+                    </header>
+                    <div id="cart-items" class="cart-items" aria-live="polite">
+                        <p class="cart-empty">Add something from the catalog to get started.</p>
+                    </div>
+                    <footer class="cart-footer">
+                        <div class="cart-summary-line">
+                            <span>Subtotal</span>
+                            <span id="cart-subtotal"><span class="mobucks-icon"></span>0</span>
+                        </div>
+                        <div class="cart-summary-line">
+                            <span>Remaining after purchase</span>
+                            <span id="cart-remaining"><span class="mobucks-icon"></span>0</span>
+                        </div>
+                        <button id="cart-checkout" class="primary-button" disabled>Checkout</button>
+                        <p class="cart-note">Your order stays pending until a shopkeeper or admin fulfills it.</p>
+                    </footer>
                 </div>
-                <footer class="cart-footer">
-                    <div class="cart-summary-line">
-                        <span>Subtotal</span>
-                        <span id="cart-subtotal">$0</span>
+
+                <div class="store-orders" aria-label="My orders">
+                    <header class="orders-header">
+                        <h2>My Orders</h2>
+                    </header>
+                    <div id="my-orders-list" class="my-orders-list">
+                        <p class="orders-empty">No orders yet. Start shopping!</p>
                     </div>
-                    <div class="cart-summary-line">
-                        <span>Remaining after purchase</span>
-                        <span id="cart-remaining">$0</span>
-                    </div>
-                    <button id="cart-checkout" class="primary-button" disabled>Checkout (Coming Soon)</button>
-                    <p class="cart-note">Your order stays pending until a shopkeeper or admin fulfills it. You&apos;ll get a receipt instantly.</p>
-                </footer>
+                </div>
             </aside>
         </section>
+
+        <section class="admin-panel" id="admin-panel" style="display: none;">
+            <div class="admin-header">
+                <h2>Store Admin Panel</h2>
+                <p class="admin-subtitle">Manage catalog items and pending orders</p>
+            </div>
+
+            <div class="admin-section">
+                <h3 class="admin-section-title">Catalog Manager</h3>
+                <div class="catalog-manager-v2">
+                    <details class="admin-collapsible" open>
+                        <summary class="admin-collapsible-header">
+                            <span class="admin-collapsible-title">Current Catalog Items</span>
+                            <span class="admin-collapsible-icon">▼</span>
+                        </summary>
+                        <div class="admin-collapsible-content">
+                            <div id="admin-catalog-items" class="admin-catalog-items-grid">
+                                <p class="empty-message">No catalog items yet. Create one below.</p>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="admin-collapsible">
+                        <summary class="admin-collapsible-header">
+                            <span class="admin-collapsible-title" id="form-section-title">Add New Item</span>
+                            <span class="admin-collapsible-icon">▼</span>
+                        </summary>
+                        <div class="admin-collapsible-content">
+                            <form id="catalog-item-form" class="catalog-form-v2">
+                                <input type="hidden" id="item-id" value="">
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="item-name">Name *</label>
+                                        <input type="text" id="item-name" required maxlength="100" placeholder="Item name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="item-price">Price (MoBucks) *</label>
+                                        <input type="number" id="item-price" required min="0" step="1" placeholder="0">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="item-description">Description *</label>
+                                    <textarea id="item-description" required maxlength="500" rows="3" placeholder="Detailed description of the item"></textarea>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="item-stock">Stock (blank = unlimited)</label>
+                                        <input type="number" id="item-stock" min="0" step="1" placeholder="Leave blank for unlimited">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="item-max-per-user">Max Per User (blank = unlimited)</label>
+                                        <input type="number" id="item-max-per-user" min="1" step="1" placeholder="Leave blank for unlimited">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Valid Class Periods (leave all off for all periods)</label>
+                                    <div class="toggle-group">
+                                        <label class="toggle-label">
+                                            <input type="checkbox" name="valid-period" value="4" class="toggle-input">
+                                            <span class="toggle-slider"></span>
+                                            <span class="toggle-text">Period 4</span>
+                                        </label>
+                                        <label class="toggle-label">
+                                            <input type="checkbox" name="valid-period" value="5" class="toggle-input">
+                                            <span class="toggle-slider"></span>
+                                            <span class="toggle-text">Period 5</span>
+                                        </label>
+                                        <label class="toggle-label">
+                                            <input type="checkbox" name="valid-period" value="6" class="toggle-input">
+                                            <span class="toggle-slider"></span>
+                                            <span class="toggle-text">Period 6</span>
+                                        </label>
+                                        <label class="toggle-label">
+                                            <input type="checkbox" name="valid-period" value="7" class="toggle-input">
+                                            <span class="toggle-slider"></span>
+                                            <span class="toggle-text">Period 7</span>
+                                        </label>
+                                        <label class="toggle-label">
+                                            <input type="checkbox" name="valid-period" value="8" class="toggle-input">
+                                            <span class="toggle-slider"></span>
+                                            <span class="toggle-text">Symphonic Orchestra</span>
+                                        </label>
+                                        <label class="toggle-label">
+                                            <input type="checkbox" name="valid-period" value="10" class="toggle-input">
+                                            <span class="toggle-slider"></span>
+                                            <span class="toggle-text">Chamber Orchestra</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="toggle-label toggle-label-block">
+                                        <input type="checkbox" id="item-enabled" checked class="toggle-input">
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-text">Item Enabled (visible to students)</span>
+                                    </label>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="submit" class="primary-button" id="save-item-btn">Create Item</button>
+                                    <button type="button" class="secondary-button" id="cancel-item-btn">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h3 class="admin-section-title">Pending Orders</h3>
+                <div id="pending-orders-list" class="pending-orders-list">
+                    <p class="empty-message">No pending orders</p>
+                </div>
+            </div>
+        </section>
     </main>
+
+    <button id="admin-toggle-btn" class="admin-toggle-btn" style="display: none;">
+        <span id="admin-toggle-text">Switch to Student View</span>
+    </button>
 
     <div id="footer-placeholder"></div>
 </body>

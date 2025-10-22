@@ -11,6 +11,7 @@
     { "source": "/transfer", "destination": "/pages/transfer.html" },
     { "source": "/tools/metronome", "destination": "/tools/metronome.html" },
     { "source": "/tools/practice", "destination": "/tools/practice.html" },
+    { "source": "/tools/tuner", "destination": "/tools/tuner.html" },
     { "source": "/tools/song-creator", "destination": "/tools/song-creator.html" },
     { "source": "/credits", "destination": "/pages/credits.html" },
     { "source": "/webhook", "destination": "/api/webhook" },

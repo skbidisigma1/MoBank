@@ -1,0 +1,633 @@
+:root {
+  /* Tuner colors */
+  --tuner-green: #50E3C2;
+  --tuner-green-glow: 0 0 20px rgba(80, 227, 194, 0.6);
+  --tuner-yellow: #f39c12;
+  --tuner-yellow-glow: 0 0 20px rgba(243, 156, 18, 0.5);
+  --tuner-red: #e74c3c;
+  --tuner-red-glow: 0 0 20px rgba(231, 76, 60, 0.5);
+  
+  /* Gauge colors */
+  --tuner-gauge-bg: #e9ecef;
+  --tuner-gauge-border: #dee2e6;
+  --tuner-needle: #4A90E2;
+  --tuner-track: #dee2e6;
+  
+  /* Text */
+  --tuner-text: #212529;
+  --tuner-text-light: #6c757d;
+  
+  /* Backgrounds */
+  --tuner-bg: #f8f9fa;
+  --tuner-panel-bg: #ffffff;
+  --tuner-panel-border: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+  /* Tuner colors */
+  --tuner-green: #50E3C2;
+  --tuner-green-glow: 0 0 24px rgba(80, 227, 194, 0.7);
+  --tuner-yellow: #f39c12;
+  --tuner-yellow-glow: 0 0 24px rgba(243, 156, 18, 0.6);
+  --tuner-red: #e74c3c;
+  --tuner-red-glow: 0 0 24px rgba(231, 76, 60, 0.6);
+  
+  /* Gauge colors */
+  --tuner-gauge-bg: #161b22;
+  --tuner-gauge-border: #30363d;
+  --tuner-needle: #58a6ff;
+  --tuner-track: #21262d;
+  
+  /* Text */
+  --tuner-text: #c9d1d9;
+  --tuner-text-light: #8b949e;
+  
+  /* Backgrounds */
+  --tuner-bg: #0d1117;
+  --tuner-panel-bg: #161b22;
+  --tuner-panel-border: rgba(240, 246, 252, 0.1);
+}
+
+/* ========================================
+   TUNER LAYOUT
+   ======================================== */
+
+.tuner-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.tuner-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.tuner-wrapper {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .tuner-wrapper {
+    grid-template-columns: 1fr 380px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tuner-container {
+    padding: 3rem 2rem;
+  }
+}
+
+/* ========================================
+   TUNER DISPLAY SECTION
+   ======================================== */
+
+.tuner-display-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  background: var(--tuner-panel-bg);
+  border: 1px solid var(--tuner-panel-border);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Note Display */
+.tuner-note-display {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.note-name {
+  font-size: 5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--tuner-text);
+  font-family: 'Poppins', sans-serif;
+  transition: color 0.12s ease, text-shadow 0.12s ease;
+}
+
+.note-octave {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--tuner-text-light);
+  align-self: flex-start;
+  margin-top: 0.5rem;
+}
+
+.cents-display {
+  position: absolute;
+  margin-top: 5.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--tuner-text-light);
+  transition: color 0.12s ease;
+}
+
+/* Color states for note display */
+.note-name.in-tune {
+  color: var(--tuner-green);
+  text-shadow: var(--tuner-green-glow);
+}
+
+.note-name.close {
+  color: var(--tuner-yellow);
+  text-shadow: var(--tuner-yellow-glow);
+}
+
+.note-name.out-of-tune {
+  color: var(--tuner-red);
+  text-shadow: var(--tuner-red-glow);
+}
+
+/* ========================================
+   CIRCULAR GAUGE
+   ======================================== */
+
+.tuner-gauge-container {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  margin: 1rem 0;
+}
+
+#tuner-gauge {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--tuner-gauge-bg);
+  border: 2px solid var(--tuner-gauge-border);
+}
+
+.gauge-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  margin-top: 2rem;
+}
+
+.frequency-readout {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--tuner-text);
+  margin-bottom: 0.25rem;
+}
+
+.clarity-readout {
+  font-size: 0.9rem;
+  color: var(--tuner-text-light);
+}
+
+/* ========================================
+   LINEAR CENTS BAR
+   ======================================== */
+
+.cents-bar-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 0.5rem 0;
+}
+
+.cents-bar-track {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  background: var(--tuner-track);
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.cents-bar-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 20px;
+  background: var(--tuner-needle);
+  border-radius: 2px;
+  transition: left 0.06s linear, background 0.12s ease, box-shadow 0.12s ease;
+}
+
+.cents-bar-center {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 100%;
+  background: var(--tuner-text-light);
+  opacity: 0.3;
+}
+
+.cents-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--tuner-text-light);
+  padding: 0 0.5rem;
+}
+
+/* Indicator color states */
+.cents-bar-indicator.in-tune {
+  background: var(--tuner-green);
+  box-shadow: var(--tuner-green-glow);
+}
+
+.cents-bar-indicator.close {
+  background: var(--tuner-yellow);
+  box-shadow: var(--tuner-yellow-glow);
+}
+
+.cents-bar-indicator.out-of-tune {
+  background: var(--tuner-red);
+  box-shadow: var(--tuner-red-glow);
+}
+
+/* ========================================
+   CONTROLS & STATUS
+   ======================================== */
+
+.tuner-controls {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.tuner-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.tuner-button.primary {
+  background: linear-gradient(135deg, #4A90E2, #50E3C2);
+  color: white;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.tuner-button.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(74, 144, 226, 0.4);
+}
+
+.tuner-button.secondary {
+  background: var(--tuner-gauge-bg);
+  color: var(--tuner-text);
+  border: 1px solid var(--tuner-panel-border);
+}
+
+.tuner-button.secondary:hover {
+  background: var(--tuner-track);
+}
+
+.tuner-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.tuner-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--tuner-text-light);
+  margin-top: 0.5rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tuner-text-light);
+  transition: background 0.3s ease;
+}
+
+.status-dot.active {
+  background: var(--tuner-green);
+  box-shadow: 0 0 8px rgba(80, 227, 194, 0.6);
+}
+
+/* ========================================
+   SETTINGS SECTION
+   ======================================== */
+
+.tuner-settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.settings-panel {
+  background: var(--tuner-panel-bg);
+  border: 1px solid var(--tuner-panel-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.panel-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--tuner-text);
+  margin-bottom: 1rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.control-group {
+  margin-bottom: 1.25rem;
+}
+
+.control-group:last-child {
+  margin-bottom: 0;
+}
+
+.control-group label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--tuner-text);
+  margin-bottom: 0.5rem;
+}
+
+.control-value {
+  font-size: 0.85rem;
+  color: var(--tuner-text-light);
+  margin-top: 0.25rem;
+}
+
+/* Reference Pitch Control */
+.pitch-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pitch-adjust {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--tuner-panel-border);
+  background: var(--tuner-gauge-bg);
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--tuner-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pitch-adjust:hover {
+  background: var(--tuner-track);
+  border-color: var(--tuner-needle);
+}
+
+.pitch-input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid var(--tuner-panel-border);
+  background: var(--tuner-gauge-bg);
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--tuner-text);
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+}
+
+.pitch-input:focus {
+  outline: none;
+  border-color: var(--tuner-needle);
+}
+
+/* Transpose Control */
+.transpose-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.transpose-adjust {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--tuner-panel-border);
+  background: var(--tuner-gauge-bg);
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--tuner-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.transpose-adjust:hover {
+  background: var(--tuner-track);
+  border-color: var(--tuner-needle);
+}
+
+.transpose-select {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid var(--tuner-panel-border);
+  background: var(--tuner-gauge-bg);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: var(--tuner-text);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+.transpose-select:focus {
+  outline: none;
+  border-color: var(--tuner-needle);
+}
+
+/* Temperament Select */
+.temperament-select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--tuner-panel-border);
+  background: var(--tuner-gauge-bg);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: var(--tuner-text);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+.temperament-select:focus {
+  outline: none;
+  border-color: var(--tuner-needle);
+}
+
+/* Notation Toggle */
+.notation-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.notation-option {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid var(--tuner-panel-border);
+  background: var(--tuner-gauge-bg);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--tuner-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.notation-option:hover {
+  background: var(--tuner-track);
+}
+
+.notation-option.active {
+  background: var(--tuner-needle);
+  color: white;
+  border-color: var(--tuner-needle);
+}
+
+/* Info Panel */
+.info-panel {
+  background: var(--tuner-panel-bg);
+  border: 1px solid var(--tuner-panel-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.info-text {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--tuner-text-light);
+  margin-bottom: 0.75rem;
+}
+
+.info-text:last-child {
+  margin-bottom: 0;
+}
+
+.info-text strong {
+  color: var(--tuner-text);
+  font-weight: 600;
+}
+
+/* ========================================
+   MOBILE RESPONSIVE
+   ======================================== */
+
+@media (max-width: 767px) {
+  .tuner-container {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .tuner-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .tool-title {
+    font-size: 2rem;
+  }
+
+  .tuner-display-section {
+    padding: 1.5rem 1rem;
+  }
+
+  .note-name {
+    font-size: 4rem;
+  }
+
+  .note-octave {
+    font-size: 2rem;
+  }
+
+  .cents-display {
+    font-size: 1.25rem;
+    margin-top: 4.5rem;
+  }
+
+  .tuner-gauge-container {
+    width: 260px;
+    height: 260px;
+  }
+
+  .frequency-readout {
+    font-size: 1.1rem;
+  }
+
+  .tuner-controls {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .tuner-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .settings-panel, .info-panel {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .note-name {
+    font-size: 3.5rem;
+  }
+
+  .tuner-gauge-container {
+    width: 240px;
+    height: 240px;
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .note-name,
+  .cents-bar-indicator,
+  .tuner-button,
+  .status-dot {
+    transition: none;
+  }
+}
+
+/* Focus states */
+.tuner-button:focus-visible,
+.pitch-adjust:focus-visible,
+.transpose-adjust:focus-visible,
+.notation-option:focus-visible {
+  outline: 2px solid var(--tuner-needle);
+  outline-offset: 2px;
+}

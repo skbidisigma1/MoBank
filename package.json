@@ -5,11 +5,16 @@
   "description": "online **mobuck** tracker",
   "main": "index.js",
   "scripts": {
+    "build:song-creator": "tsc",
+    "watch:song-creator": "tsc --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  },
   "dependencies": {
     "@codecompose/words-to-numbers": "^2.0.1",
     "@tsparticles/engine": "^3.0.0",

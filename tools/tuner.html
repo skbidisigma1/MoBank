@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tuner | MoBank Tools</title>
+  <meta name="description" content="Chromatic instrument tuner with real-time pitch detection">
+  <link rel="preload" href="/js/cache.js" as="script">
+  <link rel="preload" href="/js/theme.js" as="script">
+  <script src="/js/cache.js"></script>
+  <script src="/js/theme.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/tools/css/tools-home.css">
+  <link rel="stylesheet" href="/tools/css/tuner.css">
+  <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js" crossorigin="anonymous"></script>
+  <script src="/js/auth.js" defer></script>
+  <script src="/js/toast.js" defer></script>
+  <script src="/tools/js/tools-header.js" defer></script>
+  <script type="module" src="/tools/js/audio/tuner-ui.js"></script>
+</head>
+<body>
+  <div id="header-placeholder" role="banner"></div>
+  
+  <main class="main-container tuner-container">
+    <section class="tuner-header">
+      <h1 class="tool-title">Chromatic Tuner</h1>
+      <p class="tool-description">Real-time pitch detection for all instruments</p>
+    </section>
+
+    <div class="tuner-wrapper">
+      <!-- Main Tuner Display -->
+      <section class="tuner-display-section">
+        <!-- Note Display -->
+        <div class="tuner-note-display">
+          <div class="note-name" id="note-name">--</div>
+          <div class="note-octave" id="note-octave">-</div>
+          <div class="cents-display" id="cents-display">0¢</div>
+        </div>
+
+        <!-- Circular Gauge -->
+        <div class="tuner-gauge-container">
+          <canvas id="tuner-gauge" width="300" height="300"></canvas>
+          <div class="gauge-overlay">
+            <div class="frequency-readout" id="frequency-readout">--- Hz</div>
+            <div class="clarity-readout" id="clarity-readout">--</div>
+          </div>
+        </div>
+
+        <!-- Linear Cents Bar (Backup) -->
+        <div class="cents-bar-container">
+          <div class="cents-bar-track">
+            <div class="cents-bar-indicator" id="cents-bar-indicator"></div>
+            <div class="cents-bar-center"></div>
+          </div>
+          <div class="cents-bar-labels">
+            <span>-50¢</span>
+            <span>0¢</span>
+            <span>+50¢</span>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="tuner-controls">
+          <button id="start-tuner" class="tuner-button primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+            <span>Start Tuner</span>
+          </button>
+          <button id="stop-tuner" class="tuner-button secondary" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="6" y="6" width="12" height="12"/>
+            </svg>
+            <span>Stop</span>
+          </button>
+        </div>
+
+        <!-- Status -->
+        <div class="tuner-status" id="tuner-status">
+          <div class="status-dot"></div>
+          <span id="status-text">Ready to tune</span>
+        </div>
+      </section>
+
+      <!-- Settings Panel -->
+      <section class="tuner-settings-section">
+        <div class="settings-panel">
+          <h3 class="panel-title">Settings</h3>
+          
+          <div class="control-group">
+            <label for="reference-pitch">Reference Pitch (A4)</label>
+            <div class="pitch-control">
+              <button class="pitch-adjust" data-action="decrease-pitch" aria-label="Decrease reference pitch">−</button>
+              <input type="number" id="reference-pitch" class="pitch-input" min="415" max="466" value="440" step="1">
+              <button class="pitch-adjust" data-action="increase-pitch" aria-label="Increase reference pitch">+</button>
+            </div>
+            <div class="control-value" id="reference-display">440 Hz</div>
+          </div>
+
+          <div class="control-group">
+            <label for="transpose">Transpose</label>
+            <div class="transpose-control">
+              <button class="transpose-adjust" data-action="decrease-transpose" aria-label="Transpose down">−</button>
+              <select id="transpose" class="transpose-select">
+                <option value="0" selected>C (Concert Pitch)</option>
+                <option value="2">Bb</option>
+                <option value="9">Eb</option>
+                <option value="7">F</option>
+                <option value="5">G</option>
+                <option value="-2">D</option>
+              </select>
+              <button class="transpose-adjust" data-action="increase-transpose" aria-label="Transpose up">+</button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label for="temperament">Temperament</label>
+            <select id="temperament" class="temperament-select">
+              <option value="equal" selected>Equal Temperament (12‑TET)</option>
+              <option value="just">Just Intonation (C major)</option>
+              <option value="pythagorean">Pythagorean</option>
+              <option value="meantone">¼‑Comma Meantone</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="notation-preference">Notation</label>
+            <div class="notation-toggle">
+              <button class="notation-option active" data-notation="sharps">♯ Sharps</button>
+              <button class="notation-option" data-notation="flats">♭ Flats</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="footer-placeholder"></div>
+</body>
+</html>

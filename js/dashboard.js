@@ -106,7 +106,7 @@ function renderDashboard(u = {}) {
   $('#profile-name').textContent = `Welcome, ${u.name || 'User'}!`;
 
   const balance = Number(u.currency_balance || 0);
-  const balStr = `${balance < 0 ? '-' : ''}$${Math.abs(balance)}`;
+  const balStr = formatMoBucks(balance, { absolute: false });
   $('#profile-currency').innerHTML = `MoBuck Balance: <span id="currency-value">${balStr}</span>`;
   $('#currency-value').style.color = balance < 0 ? 'rgb(220,53,69)' : '';
 
@@ -132,8 +132,9 @@ function renderTransactions(txns) {
   txns.forEach((t) => {
     const ts = t.timestamp?._seconds * 1000 + (t.timestamp?._nanoseconds || 0) / 1e6 || Date.now();
     const li = document.createElement('li');
+    const amountFormatted = formatMoBucks(t.amount, { showSign: true });
     li.innerHTML = `
-      <span class="transaction-amount ${t.type}">${t.type === 'credit' ? '+' : '-'}$${t.amount}</span>
+      <span class="transaction-amount ${t.type}">${t.type === 'credit' ? '+' : '-'}${amountFormatted.replace(/^[+-]/, '')}</span>
       <span class="transaction-details">
         <span class="transaction-type">${t.type === 'credit' ? 'from' : 'to'} ${t.counterpart}</span>
         <span class="transaction-date">${new Date(ts).toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</span>

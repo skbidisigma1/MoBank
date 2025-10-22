@@ -1,6 +1,10 @@
 const { db } = require('../firebase');
 const { getTokenFromHeader, verifyToken } = require('../auth-helper');
 
+const generateOrderId = () => {
+  return `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+};
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
@@ -47,7 +51,8 @@ module.exports = async (req, res) => {
 
   const admin = require('firebase-admin');
   const userRef = db.collection('users').doc(uid);
-  const catalogRef = db.collection('store_catalog');
+  const catalogRef = db.collection('store_catalog').doc('items');
+  const userOrdersRef = db.collection('store_orders').doc(uid);
 
   try {
     // Use transaction for atomic balance deduction and order creation
@@ -59,36 +64,84 @@ module.exports = async (req, res) => {
 
       const userData = userDoc.data();
       const currentBalance = userData.currency_balance || 0;
+      const userPeriod = userData.class_period;
+
+      // Get catalog
+      const catalogDoc = await tx.get(catalogRef);
+      if (!catalogDoc.exists) {
+        throw new Error('Catalog not found');
+      }
+
+      const catalogData = catalogDoc.data();
+      const catalogItems = catalogData.items || [];
+      const catalogMap = new Map(catalogItems.map(item => [item.id, item]));
+
+      // Get user's existing orders to check per-user limits
+      const userOrdersDoc = await tx.get(userOrdersRef);
+      const userOrdersData = userOrdersDoc.exists ? userOrdersDoc.data() : { orders: [] };
+      const existingOrders = userOrdersData.orders || [];
+
+      // Check if order limit reached
+      if (existingOrders.length >= 1200) {
+        throw new Error('Order limit reached. Please contact an administrator.');
+      }
 
       // Validate and calculate order
       const orderItems = [];
       let totalCost = 0;
+      const stockUpdates = new Map(); // Track stock changes
 
       for (const item of items) {
         if (!item.id || !item.quantity || item.quantity < 1) {
           throw new Error('Invalid item format');
         }
 
-        const catalogDoc = await tx.get(catalogRef.doc(item.id));
-        if (!catalogDoc.exists) {
+        const catalogItem = catalogMap.get(item.id);
+        if (!catalogItem) {
           throw new Error(`Item not found: ${item.id}`);
         }
 
-        const catalogItem = catalogDoc.data();
-        
         // Check if item is enabled
         if (catalogItem.enabled === false) {
           throw new Error(`Item unavailable: ${catalogItem.name}`);
         }
 
-        // Check stock
-        if (catalogItem.stock !== null && catalogItem.stock < item.quantity) {
-          throw new Error(`Insufficient stock for: ${catalogItem.name}`);
+        // Check class period eligibility
+        const validPeriods = catalogItem.validPeriods || [];
+        if (validPeriods.length > 0 && !validPeriods.includes(userPeriod)) {
+          throw new Error(`Item not available for your class period: ${catalogItem.name}`);
         }
 
-        // Check per-user limit
-        if (catalogItem.maxPerUser !== null && item.quantity > catalogItem.maxPerUser) {
-          throw new Error(`Per-user limit exceeded for: ${catalogItem.name}`);
+        // Check stock
+        if (catalogItem.stock !== null) {
+          const currentStock = stockUpdates.has(item.id) 
+            ? stockUpdates.get(item.id) 
+            : catalogItem.stock;
+          
+          if (currentStock < item.quantity) {
+            throw new Error(`Insufficient stock for: ${catalogItem.name}`);
+          }
+          
+          stockUpdates.set(item.id, currentStock - item.quantity);
+        }
+
+        // Check per-user limit (INSIDE TRANSACTION for atomicity)
+        if (catalogItem.maxPerUser !== null) {
+          // Count how many of this item user has already ordered (fulfilled + pending)
+          let totalPurchased = 0;
+          
+          for (const order of existingOrders) {
+            if (order.status === 'fulfilled' || order.status === 'pending') {
+              const orderItem = order.items.find(i => i.id === item.id);
+              if (orderItem) {
+                totalPurchased += orderItem.quantity;
+              }
+            }
+          }
+          
+          if (totalPurchased + item.quantity > catalogItem.maxPerUser) {
+            throw new Error(`Per-user lifetime limit exceeded for: ${catalogItem.name} (limit: ${catalogItem.maxPerUser}, you've ordered: ${totalPurchased})`);
+          }
         }
 
         const itemTotal = catalogItem.price * item.quantity;
@@ -101,13 +154,6 @@ module.exports = async (req, res) => {
           quantity: item.quantity,
           total: itemTotal
         });
-
-        // Decrement stock if limited
-        if (catalogItem.stock !== null) {
-          tx.update(catalogRef.doc(item.id), {
-            stock: admin.firestore.FieldValue.increment(-item.quantity)
-          });
-        }
       }
 
       // Check balance
@@ -115,21 +161,41 @@ module.exports = async (req, res) => {
         throw new Error('Insufficient balance');
       }
 
+      // Update catalog stock
+      if (stockUpdates.size > 0) {
+        const updatedCatalogItems = catalogItems.map(item => {
+          if (stockUpdates.has(item.id)) {
+            return { ...item, stock: stockUpdates.get(item.id) };
+          }
+          return item;
+        });
+
+        tx.set(catalogRef, {
+          items: updatedCatalogItems,
+          version: Date.now(),
+          lastUpdated: admin.firestore.Timestamp.now()
+        }, { merge: true });
+      }
+
       // Create order
-      const orderRef = db.collection('store_orders').doc();
-      const orderId = orderRef.id;
-      
-      const orderData = {
-        userId: uid,
+      const orderId = generateOrderId();
+      const newOrder = {
+        id: orderId,
         items: orderItems,
         total: totalCost,
         status: 'pending',
-        createdAt: admin.firestore.Timestamp.now(),
+        createdAt: Date.now(),
         fulfilledBy: null,
         fulfilledAt: null
       };
 
-      tx.set(orderRef, orderData);
+      // Add order to user's orders
+      existingOrders.unshift(newOrder);
+
+      tx.set(userOrdersRef, {
+        orders: existingOrders,
+        lastUpdated: admin.firestore.Timestamp.now()
+      });
 
       // Deduct balance
       const newBalance = currentBalance - totalCost;

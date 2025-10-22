@@ -7,3 +7,4 @@ keys/*.json
 .vscode/
 .DS_Store
 *.log
+tools/js/audio/*.js
