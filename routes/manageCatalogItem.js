@@ -115,7 +115,7 @@ module.exports = async (req, res) => {
   }
 
   const admin = require('firebase-admin');
-  const catalogRef = db.collection('store_catalog');
+  const catalogRef = db.collection('store_catalog').doc('items');
 
   try {
     // CREATE
@@ -125,7 +125,11 @@ module.exports = async (req, res) => {
         return res.status(400).json({ message: 'Validation failed', errors });
       }
 
+      // Generate unique ID
+      const itemId = db.collection('_').doc().id;
+      
       const newItem = {
+        id: itemId,
         name: sanitize(bodyData.name),
         description: sanitize(bodyData.description),
         price: bodyData.price,
@@ -133,15 +137,27 @@ module.exports = async (req, res) => {
         maxPerUser: bodyData.maxPerUser,
         validPeriods: bodyData.validPeriods || [],
         enabled: bodyData.enabled !== undefined ? bodyData.enabled : true,
-        createdAt: admin.firestore.Timestamp.now(),
-        updatedAt: admin.firestore.Timestamp.now()
+        createdAt: Date.now(),
+        updatedAt: Date.now()
       };
 
-      const docRef = await catalogRef.add(newItem);
+      // Get existing catalog or create new
+      const catalogDoc = await catalogRef.get();
+      const catalogData = catalogDoc.exists ? catalogDoc.data() : { items: [] };
+      const items = catalogData.items || [];
+      
+      items.push(newItem);
+      
+      await catalogRef.set({
+        items,
+        version: Date.now(),
+        lastUpdated: admin.firestore.Timestamp.now()
+      });
+
       return res.status(201).json({ 
         message: 'Item created successfully',
-        id: docRef.id,
-        item: { id: docRef.id, ...newItem }
+        id: itemId,
+        item: newItem
       });
     }
 
@@ -158,24 +174,37 @@ module.exports = async (req, res) => {
         return res.status(400).json({ message: 'Validation failed', errors });
       }
 
-      const itemRef = catalogRef.doc(id);
-      const itemDoc = await itemRef.get();
+      const catalogDoc = await catalogRef.get();
+      if (!catalogDoc.exists) {
+        return res.status(404).json({ message: 'Catalog not found' });
+      }
+
+      const catalogData = catalogDoc.data();
+      const items = catalogData.items || [];
+      const itemIndex = items.findIndex(item => item.id === id);
       
-      if (!itemDoc.exists) {
+      if (itemIndex === -1) {
         return res.status(404).json({ message: 'Item not found' });
       }
 
-      const sanitizedUpdates = {};
-      if (updates.name !== undefined) sanitizedUpdates.name = sanitize(updates.name);
-      if (updates.description !== undefined) sanitizedUpdates.description = sanitize(updates.description);
-      if (updates.price !== undefined) sanitizedUpdates.price = updates.price;
-      if (updates.stock !== undefined) sanitizedUpdates.stock = updates.stock;
-      if (updates.maxPerUser !== undefined) sanitizedUpdates.maxPerUser = updates.maxPerUser;
-      if (updates.validPeriods !== undefined) sanitizedUpdates.validPeriods = updates.validPeriods;
-      if (updates.enabled !== undefined) sanitizedUpdates.enabled = updates.enabled;
-      sanitizedUpdates.updatedAt = admin.firestore.Timestamp.now();
+      // Apply updates
+      const item = items[itemIndex];
+      if (updates.name !== undefined) item.name = sanitize(updates.name);
+      if (updates.description !== undefined) item.description = sanitize(updates.description);
+      if (updates.price !== undefined) item.price = updates.price;
+      if (updates.stock !== undefined) item.stock = updates.stock;
+      if (updates.maxPerUser !== undefined) item.maxPerUser = updates.maxPerUser;
+      if (updates.validPeriods !== undefined) item.validPeriods = updates.validPeriods;
+      if (updates.enabled !== undefined) item.enabled = updates.enabled;
+      item.updatedAt = Date.now();
 
-      await itemRef.update(sanitizedUpdates);
+      items[itemIndex] = item;
+
+      await catalogRef.set({
+        items,
+        version: Date.now(),
+        lastUpdated: admin.firestore.Timestamp.now()
+      });
       
       return res.status(200).json({ 
         message: 'Item updated successfully',
@@ -191,14 +220,26 @@ module.exports = async (req, res) => {
         return res.status(400).json({ message: 'Item ID required' });
       }
 
-      const itemRef = catalogRef.doc(id);
-      const itemDoc = await itemRef.get();
+      const catalogDoc = await catalogRef.get();
+      if (!catalogDoc.exists) {
+        return res.status(404).json({ message: 'Catalog not found' });
+      }
+
+      const catalogData = catalogDoc.data();
+      const items = catalogData.items || [];
+      const itemIndex = items.findIndex(item => item.id === id);
       
-      if (!itemDoc.exists) {
+      if (itemIndex === -1) {
         return res.status(404).json({ message: 'Item not found' });
       }
 
-      await itemRef.delete();
+      items.splice(itemIndex, 1);
+
+      await catalogRef.set({
+        items,
+        version: Date.now(),
+        lastUpdated: admin.firestore.Timestamp.now()
+      });
       
       return res.status(200).json({ message: 'Item deleted successfully' });
     }

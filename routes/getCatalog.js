@@ -27,35 +27,28 @@ module.exports = async (req, res) => {
     const userData = userDoc.data();
     const userPeriod = userData.class_period;
 
-    // Fetch all enabled catalog items
-    const catalogSnapshot = await db.collection('store_catalog')
-      .where('enabled', '==', true)
-      .get();
+    // Fetch catalog from single document
+    const catalogDoc = await db.collection('store_catalog').doc('items').get();
+    
+    if (!catalogDoc.exists) {
+      return res.status(200).json({ items: [], version: Date.now() });
+    }
 
-    const items = [];
-    catalogSnapshot.forEach(doc => {
-      const data = doc.data();
-      const validPeriods = data.validPeriods || [];
+    const catalogData = catalogDoc.data();
+    const allItems = catalogData.items || [];
+
+    // Filter for enabled items and user's period
+    const items = allItems.filter(item => {
+      if (item.enabled === false) return false;
       
+      const validPeriods = item.validPeriods || [];
       // Include item if validPeriods is empty (all periods) or includes user's period
-      if (validPeriods.length === 0 || validPeriods.includes(userPeriod)) {
-        items.push({
-          id: doc.id,
-          name: data.name,
-          description: data.description,
-          price: data.price,
-          stock: data.stock,
-          category: data.category,
-          maxPerUser: data.maxPerUser,
-          validPeriods: data.validPeriods,
-          createdAt: data.createdAt?.toMillis?.() || Date.now()
-        });
-      }
+      return validPeriods.length === 0 || validPeriods.includes(userPeriod);
     });
 
     return res.status(200).json({ 
       items,
-      version: Date.now() // For client cache invalidation
+      version: catalogData.version || Date.now()
     });
 
   } catch (error) {
