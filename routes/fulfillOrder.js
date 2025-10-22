@@ -56,7 +56,11 @@ module.exports = async (req, res) => {
 
   try {
     await db.runTransaction(async (tx) => {
+      // Do ALL reads first
       const userOrdersDoc = await tx.get(userOrdersRef);
+      const userRef = db.collection('users').doc(userId);
+      const userDoc = await tx.get(userRef);
+      
       if (!userOrdersDoc.exists) {
         throw new Error('Order not found');
       }
@@ -79,6 +83,7 @@ module.exports = async (req, res) => {
         throw new Error('Cannot fulfill cancelled order');
       }
 
+      // Now do ALL writes
       // Update order status
       orders[orderIndex] = {
         ...order,
@@ -93,9 +98,6 @@ module.exports = async (req, res) => {
       });
 
       // Send notification to user
-      const userRef = db.collection('users').doc(userId);
-      const userDoc = await tx.get(userRef);
-      
       if (userDoc.exists) {
         const userData = userDoc.data();
         const notification = {
