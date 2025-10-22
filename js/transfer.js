@@ -11,7 +11,7 @@ async function loadTransferPage() {
       userData = await getUserData();
       setCachedUserData(userData);
     }
-    document.getElementById('current-balance').textContent = `$${userData.currency_balance || 0}`;
+    document.getElementById('current-balance').innerHTML = formatMoBucks(userData.currency_balance || 0);
     const classPeriod = userData.class_period;
     if (!classPeriod) {
       showToast('Error', 'User class period is undefined.');
@@ -264,7 +264,7 @@ function setupTransferForm(period, senderName) {
         showToast('Success', result.message);
         const updatedUserData = await getUserData();
         setCachedUserData(updatedUserData);
-        document.getElementById('current-balance').textContent = `$${updatedUserData.currency_balance || 0}`;
+        document.getElementById('current-balance').innerHTML = formatMoBucks(updatedUserData.currency_balance || 0);
         displayRecentTransactions(updatedUserData.transactions || []);
       } else {
         showToast('Error', result.message || 'An error occurred.');
@@ -307,7 +307,8 @@ function displayRecentTransactions(transactions) {
         minute: '2-digit'
     });
 
-    const amount = tx.type === 'credit' ? `+$${tx.amount}` : `-$${tx.amount}`;
+    const amountFormatted = formatMoBucks(tx.amount, { absolute: true });
+    const amount = tx.type === 'credit' ? `+${amountFormatted}` : `-${amountFormatted}`;
     const amountClass = tx.type === 'credit' ? 'credit' : 'debit';
     
     li.innerHTML = `

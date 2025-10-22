@@ -1,0 +1,50 @@
+.mobucks-icon {
+  display: inline-block;
+  width: 1.2em;
+  height: 1.2em;
+  vertical-align: -0.2em;
+  mask-image: url('/images/mobucks.svg');
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-image: url('/images/mobucks.svg');
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  background-color: currentColor;
+  margin-right: 0.15em;
+}
+
+/* Specific sizing for different contexts */
+.mobucks-icon--small {
+  width: 1.05em;
+  height: 1.05em;
+  vertical-align: -0.15em;
+}
+
+.mobucks-icon--large {
+  width: 1.5em;
+  height: 1.5em;
+  vertical-align: -0.25em;
+}
+
+.mobucks-icon--xlarge {
+  width: 1.8em;
+  height: 1.8em;
+  vertical-align: -0.3em;   
+}
+
+/* Ensure icon scales with text */
+h1 .mobucks-icon,
+h2 .mobucks-icon,
+h3 .mobucks-icon,
+.balance-value .mobucks-icon,
+.balance-amount .mobucks-icon {
+  vertical-align: -0.25em;
+}
+
+/* For inline usage in paragraphs */
+p .mobucks-icon,
+span .mobucks-icon {
+  vertical-align: -0.2em;
+}

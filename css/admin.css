@@ -1,6 +1,3 @@
-/* Admin panel styles for announcements */
-
-/* Fix for navigation alignment - override responsive main width for admin panel */
 @media (min-width: 769px) {
   #admin-content.main-container {
     width: 100%;
@@ -231,10 +228,18 @@
 .form-group-inline {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 1rem; /* Add gap for spacing */
   padding: 0.75rem 1rem;
   background-color: var(--color-light-bg);
   border-radius: 8px;
+}
+
+.form-group-inline .toggle-label {
+  order: 2; /* Move label to the right */
+}
+
+.form-group-inline .toggle-switch {
+  order: 1; /* Move switch to the left */
 }
 
 /* Loading state styling */

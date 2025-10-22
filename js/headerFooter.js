@@ -12,7 +12,6 @@
   setupProfilePic($header, user);
   setupParticleConfigButton($footer);
   setupMobileMenu($header);
-  // IMPORTANT: Establish userDataPromise BEFORE initializing notifications so they can await it.
   window.userDataPromise = isLoggedIn ? fetchAndCacheUserData() : Promise.resolve(null);
   await initNotifications($header, isLoggedIn);
   if (isLoggedIn) {
@@ -43,7 +42,7 @@
   await initializeParticleSettings();
 })().catch(console.error);
 
-/* ---------- helpers ---------- */
+/* helpers */
 const $$ = (sel) => document.querySelectorAll(sel);
 function documentReady() {
   return new Promise((r) =>

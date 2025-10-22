@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Song Creator | MoBank Tools</title>
+  <meta name="description" content="Real-time pitch detection and melody creation tool">
+  <link rel="preload" href="/js/cache.js" as="script">
+  <link rel="preload" href="/js/theme.js" as="script">
+  <script src="/js/cache.js"></script>
+  <script src="/js/theme.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/tools/css/tools-home.css">
+  <link rel="stylesheet" href="/tools/css/song-creator.css">
+  <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js" crossorigin="anonymous"></script>
+  <script src="/js/auth.js" defer></script>
+  <script src="/js/toast.js" defer></script>
+  <script src="/tools/js/tools-header.js" defer></script>
+  <script type="module" src="/tools/js/audio/song-creator-ui.js"></script>
+</head>
+<body>
+  <div id="header-placeholder" role="banner"></div>
+  
+  <main class="main-container song-creator-container">
+    <section class="song-creator-header">
+      <h1 class="tool-title">Song Creator</h1>
+      <p class="tool-description">Real-time pitch detection and melody creation tool</p>
+    </section>
+
+    <div class="song-creator-wrapper">
+      <!-- Main Pitch Display -->
+      <section class="pitch-display-section">
+        <div class="pitch-main-display">
+          <div class="pitch-note-display">
+            <div class="pitch-note-name" id="pitch-note">--</div>
+            <div class="pitch-octave" id="pitch-octave">-</div>
+          </div>
+          <div class="pitch-frequency-display">
+            <div class="frequency-value" id="frequency-value">--- Hz</div>
+            <div class="cents-indicator" id="cents-indicator">
+              <div class="cents-bar-container">
+                <div class="cents-bar" id="cents-bar"></div>
+                <div class="cents-marker"></div>
+              </div>
+              <div class="cents-value" id="cents-value">0¢</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual Pitch Indicator -->
+        <div class="pitch-visualizer">
+          <canvas id="pitch-canvas" width="800" height="200"></canvas>
+        </div>
+
+        <!-- Microphone Controls -->
+        <div class="mic-controls">
+          <button id="start-mic" class="mic-button primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+            <span>Start Listening</span>
+          </button>
+          <button id="stop-mic" class="mic-button secondary" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="2" x2="22" y1="2" y2="22"/>
+              <path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"/>
+              <path d="M5 10v2a7 7 0 0 0 12 5"/>
+              <path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/>
+              <path d="M9 9v3a3 3 0 0 0 5.12 2.12"/>
+              <line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+            <span>Stop Listening</span>
+          </button>
+        </div>
+
+        <!-- Status Indicator -->
+        <div class="status-indicator" id="status-indicator">
+          <div class="status-dot"></div>
+          <span id="status-text">Microphone inactive</span>
+        </div>
+
+        <!-- Recording Controls -->
+        <div class="recording-controls" style="display: none;" id="recording-controls">
+          <button id="start-recording" class="rec-button primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+            <span>Start Recording</span>
+          </button>
+          <button id="stop-recording" class="rec-button danger" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="6" y="6" width="12" height="12"/>
+            </svg>
+            <span>Stop Recording</span>
+          </button>
+          <button id="play-recording" class="rec-button secondary" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            <span>Play</span>
+          </button>
+          <button id="clear-recording" class="rec-button secondary" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            <span>Clear</span>
+          </button>
+        </div>
+
+        <!-- Recorded Notes Display -->
+        <div class="notes-display" style="display: none;" id="notes-display">
+          <div class="notes-header">
+            <h3>Recorded Notes</h3>
+            <div class="notes-stats" id="notes-stats">0 notes</div>
+          </div>
+          <div class="notes-timeline" id="notes-timeline">
+            <div class="notes-empty">No notes recorded yet</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Settings Panel -->
+      <section class="settings-section">
+        <div class="settings-panel">
+          <h3 class="panel-title">Recording Settings</h3>
+          
+          <div class="control-group">
+            <label for="tempo-slider">Tempo (BPM)</label>
+            <input type="range" id="tempo-slider" class="slider" min="40" max="240" value="120" step="1">
+            <div class="slider-value" id="tempo-value">120 BPM</div>
+          </div>
+          
+          <div class="control-group">
+            <label for="tolerance-slider">Note Tolerance (cents)</label>
+            <input type="range" id="tolerance-slider" class="slider" min="0" max="100" value="70" step="5">
+            <div class="slider-value" id="tolerance-value">±70¢</div>
+            <p class="control-hint">Higher = fewer note changes from pitch wobbles</p>
+          </div>
+          
+          <div class="control-group">
+            <label for="min-duration-slider">Min Note Duration (ms)</label>
+            <input type="range" id="min-duration-slider" class="slider" min="50" max="500" value="200" step="10">
+            <div class="slider-value" id="min-duration-value">200ms</div>
+            <p class="control-hint">Minimum time before accepting a note change</p>
+          </div>
+        </div>
+
+        <div class="settings-panel">
+          <h3 class="panel-title">Post-Processing</h3>
+          
+          <div class="control-group">
+            <label class="toggle-label">
+              <span class="toggle-switch">
+                <input type="checkbox" id="smooth-recording" class="toggle-checkbox" checked>
+                <span class="toggle-slider"></span>
+              </span>
+              <span class="toggle-text">Smooth Recording</span>
+            </label>
+            <p class="control-hint">Removes brief fluctuations and merges duplicate notes</p>
+          </div>
+          
+          <div class="control-group">
+            <label for="fluctuation-threshold">Fluctuation Threshold (ms)</label>
+            <input type="range" id="fluctuation-threshold" class="slider" min="100" max="500" value="200" step="50">
+            <div class="slider-value" id="fluctuation-value">200ms</div>
+            <p class="control-hint">Notes shorter than this between same notes are removed</p>
+          </div>
+        </div>
+
+        <div class="settings-panel">
+          <h3 class="panel-title">Silence Detection</h3>
+          
+          <div class="control-group">
+            <label for="silence-duration">Min Silence Gap (ms)</label>
+            <input type="range" id="silence-duration" class="slider" min="50" max="300" value="100" step="10">
+            <div class="slider-value" id="silence-value">100ms</div>
+            <p class="control-hint">Silence gap needed to separate repeated notes</p>
+          </div>
+          
+          <div class="control-group">
+            <label for="silence-threshold">Silence Threshold</label>
+            <input type="range" id="silence-threshold" class="slider" min="1" max="20" value="1" step="1">
+            <div class="slider-value" id="silence-threshold-value">0.001</div>
+            <p class="control-hint">RMS volume below this is considered silence</p>
+          </div>
+          
+          <div class="control-group">
+            <label for="attack-threshold">Volume Attack Ratio</label>
+            <input type="range" id="attack-threshold" class="slider" min="10" max="50" value="20" step="5">
+            <div class="slider-value" id="attack-value">2.0x</div>
+            <p class="control-hint">Volume increase needed to detect new note articulation</p>
+          </div>
+        </div>
+
+        <div class="settings-panel">
+          <h3 class="panel-title">Detection Settings</h3>
+          
+          <div class="control-group">
+            <label for="smoothing-slider">Pitch Smoothing</label>
+            <input type="range" id="smoothing-slider" class="slider" min="0" max="100" value="30">
+            <div class="slider-value" id="smoothing-value">30%</div>
+          </div>
+
+          <div class="control-group">
+            <label for="clarity-threshold">Clarity Threshold</label>
+            <input type="range" id="clarity-threshold" class="slider" min="0" max="100" value="90">
+            <div class="slider-value" id="clarity-value">90%</div>
+          </div>
+        </div>
+
+        <div class="settings-panel">
+          <h3 class="panel-title">Display Options</h3>
+          
+          <div class="control-group">
+            <label class="toggle-label">
+              <span class="toggle-switch">
+                <input type="checkbox" id="show-frequency" class="toggle-checkbox" checked>
+                <span class="toggle-slider"></span>
+              </span>
+              <span class="toggle-text">Show Frequency (Hz)</span>
+            </label>
+          </div>
+
+          <div class="control-group">
+            <label class="toggle-label">
+              <span class="toggle-switch">
+                <input type="checkbox" id="show-cents" class="toggle-checkbox" checked>
+                <span class="toggle-slider"></span>
+              </span>
+              <span class="toggle-text">Show Cents Deviation</span>
+            </label>
+          </div>
+
+          <div class="control-group">
+            <label class="toggle-label">
+              <span class="toggle-switch">
+                <input type="checkbox" id="show-waveform" class="toggle-checkbox" checked>
+                <span class="toggle-slider"></span>
+              </span>
+              <span class="toggle-text">Show Waveform</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="info-panel">
+          <h3 class="panel-title">How to Use</h3>
+          <p class="info-text">
+            1. Click <strong>Start Listening</strong> to enable pitch detection<br>
+            2. Click <strong>Start Recording</strong> to capture your melody<br>
+            3. Sing or play notes - they'll be quantized to 16th notes<br>
+            4. Click <strong>Stop Recording</strong> when done<br>
+            5. Click <strong>Play</strong> to hear your creation!
+          </p>
+          <p class="info-text">
+            <strong>Tip:</strong> Adjust tempo before recording for accurate quantization.
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="footer-placeholder"></div>
+</body>
+</html>
