@@ -41,48 +41,66 @@ module.exports = async (req, res) => {
     }
   }
 
-  const { orderId } = bodyData;
+  const { orderId, userId } = bodyData;
 
   if (!orderId || typeof orderId !== 'string') {
     return res.status(400).json({ message: 'Order ID required' });
   }
 
+  if (!userId || typeof userId !== 'string') {
+    return res.status(400).json({ message: 'User ID required' });
+  }
+
   const admin = require('firebase-admin');
-  const orderRef = db.collection('store_orders').doc(orderId);
+  const userOrdersRef = db.collection('store_orders').doc(userId);
 
   try {
     await db.runTransaction(async (tx) => {
-      const orderDoc = await tx.get(orderRef);
-      if (!orderDoc.exists) {
+      const userOrdersDoc = await tx.get(userOrdersRef);
+      if (!userOrdersDoc.exists) {
         throw new Error('Order not found');
       }
 
-      const orderData = orderDoc.data();
+      const userOrdersData = userOrdersDoc.data();
+      const orders = userOrdersData.orders || [];
+      const orderIndex = orders.findIndex(o => o.id === orderId);
       
-      if (orderData.status === 'fulfilled') {
+      if (orderIndex === -1) {
+        throw new Error('Order not found');
+      }
+
+      const order = orders[orderIndex];
+      
+      if (order.status === 'fulfilled') {
         throw new Error('Order already fulfilled');
       }
 
-      if (orderData.status === 'cancelled') {
+      if (order.status === 'cancelled') {
         throw new Error('Cannot fulfill cancelled order');
       }
 
       // Update order status
-      tx.update(orderRef, {
+      orders[orderIndex] = {
+        ...order,
         status: 'fulfilled',
         fulfilledBy: adminUid,
-        fulfilledAt: admin.firestore.Timestamp.now()
+        fulfilledAt: admin.firestore.Timestamp.now().toMillis()
+      };
+
+      tx.update(userOrdersRef, {
+        orders,
+        lastUpdated: admin.firestore.Timestamp.now()
       });
 
       // Send notification to user
-      const userRef = db.collection('users').doc(orderData.userId);
+      const userRef = db.collection('users').doc(userId);
       const userDoc = await tx.get(userRef);
       
       if (userDoc.exists) {
         const userData = userDoc.data();
         const notification = {
           type: 'store_fulfilled',
-          message: `Your order (${orderData.items.length} ${orderData.items.length === 1 ? 'item' : 'items'}) has been fulfilled! Check with your teacher to claim your rewards.`,
+          message: `Your order (${order.items.length} ${order.items.length === 1 ? 'item' : 'items'}) has been fulfilled! Check with your teacher to claim your rewards.`,
           timestamp: admin.firestore.Timestamp.now(),
           read: false,
           orderId: orderId
