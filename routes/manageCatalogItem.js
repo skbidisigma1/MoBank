@@ -39,11 +39,7 @@ const validateItem = (data, isUpdate = false) => {
   }
 
   if (!isUpdate || data.category !== undefined) {
-    if (!data.category || typeof data.category !== 'string' || data.category.trim().length === 0) {
-      errors.push('Category is required');
-    } else if (data.category.trim().length > 50) {
-      errors.push('Category must be 50 characters or less');
-    }
+    // Category removed from schema - ignore if present
   }
 
   if (!isUpdate || data.maxPerUser !== undefined) {
@@ -134,7 +130,6 @@ module.exports = async (req, res) => {
         description: sanitize(bodyData.description),
         price: bodyData.price,
         stock: bodyData.stock,
-        category: sanitize(bodyData.category),
         maxPerUser: bodyData.maxPerUser,
         validPeriods: bodyData.validPeriods || [],
         enabled: bodyData.enabled !== undefined ? bodyData.enabled : true,
@@ -175,7 +170,6 @@ module.exports = async (req, res) => {
       if (updates.description !== undefined) sanitizedUpdates.description = sanitize(updates.description);
       if (updates.price !== undefined) sanitizedUpdates.price = updates.price;
       if (updates.stock !== undefined) sanitizedUpdates.stock = updates.stock;
-      if (updates.category !== undefined) sanitizedUpdates.category = sanitize(updates.category);
       if (updates.maxPerUser !== undefined) sanitizedUpdates.maxPerUser = updates.maxPerUser;
       if (updates.validPeriods !== undefined) sanitizedUpdates.validPeriods = updates.validPeriods;
       if (updates.enabled !== undefined) sanitizedUpdates.enabled = updates.enabled;
