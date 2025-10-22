@@ -3,10 +3,6 @@ const { getTokenFromHeader, verifyToken } = require('../auth-helper');
 
 const sanitize = str => (str || '').toString().trim().slice(0, 500);
 
-const generateId = () => {
-  return `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-};
-
 const validateItem = (data, isUpdate = false) => {
   const errors = [];
 
@@ -39,6 +35,14 @@ const validateItem = (data, isUpdate = false) => {
       errors.push('Stock must be null or a non-negative integer');
     } else if (data.stock !== null && data.stock > 1000000) {
       errors.push('Stock cannot exceed 1,000,000');
+    }
+  }
+
+  if (!isUpdate || data.category !== undefined) {
+    if (!data.category || typeof data.category !== 'string' || data.category.trim().length === 0) {
+      errors.push('Category is required');
+    } else if (data.category.trim().length > 50) {
+      errors.push('Category must be 50 characters or less');
     }
   }
 
@@ -115,7 +119,7 @@ module.exports = async (req, res) => {
   }
 
   const admin = require('firebase-admin');
-  const catalogRef = db.collection('store_catalog').doc('items');
+  const catalogRef = db.collection('store_catalog');
 
   try {
     // CREATE
@@ -125,37 +129,24 @@ module.exports = async (req, res) => {
         return res.status(400).json({ message: 'Validation failed', errors });
       }
 
-      const newItemId = generateId();
       const newItem = {
-        id: newItemId,
         name: sanitize(bodyData.name),
         description: sanitize(bodyData.description),
         price: bodyData.price,
         stock: bodyData.stock,
+        category: sanitize(bodyData.category),
         maxPerUser: bodyData.maxPerUser,
         validPeriods: bodyData.validPeriods || [],
         enabled: bodyData.enabled !== undefined ? bodyData.enabled : true,
-        createdAt: Date.now()
+        createdAt: admin.firestore.Timestamp.now(),
+        updatedAt: admin.firestore.Timestamp.now()
       };
 
-      await db.runTransaction(async (tx) => {
-        const catalogDoc = await tx.get(catalogRef);
-        const catalogData = catalogDoc.exists ? catalogDoc.data() : { items: [] };
-        const items = catalogData.items || [];
-        
-        items.push(newItem);
-        
-        tx.set(catalogRef, {
-          items,
-          version: Date.now(),
-          lastUpdated: admin.firestore.Timestamp.now()
-        }, { merge: true });
-      });
-
+      const docRef = await catalogRef.add(newItem);
       return res.status(201).json({ 
         message: 'Item created successfully',
-        id: newItemId,
-        item: newItem
+        id: docRef.id,
+        item: { id: docRef.id, ...newItem }
       });
     }
 
@@ -172,48 +163,25 @@ module.exports = async (req, res) => {
         return res.status(400).json({ message: 'Validation failed', errors });
       }
 
-      let itemFound = false;
-
-      await db.runTransaction(async (tx) => {
-        const catalogDoc = await tx.get(catalogRef);
-        
-        if (!catalogDoc.exists) {
-          throw new Error('Catalog not found');
-        }
-
-        const catalogData = catalogDoc.data();
-        const items = catalogData.items || [];
-        const itemIndex = items.findIndex(item => item.id === id);
-        
-        if (itemIndex === -1) {
-          throw new Error('Item not found');
-        }
-
-        itemFound = true;
-
-        // Update the item
-        const updatedItem = { ...items[itemIndex] };
-        if (updates.name !== undefined) updatedItem.name = sanitize(updates.name);
-        if (updates.description !== undefined) updatedItem.description = sanitize(updates.description);
-        if (updates.price !== undefined) updatedItem.price = updates.price;
-        if (updates.stock !== undefined) updatedItem.stock = updates.stock;
-        if (updates.maxPerUser !== undefined) updatedItem.maxPerUser = updates.maxPerUser;
-        if (updates.validPeriods !== undefined) updatedItem.validPeriods = updates.validPeriods;
-        if (updates.enabled !== undefined) updatedItem.enabled = updates.enabled;
-        updatedItem.updatedAt = Date.now();
-
-        items[itemIndex] = updatedItem;
-
-        tx.set(catalogRef, {
-          items,
-          version: Date.now(),
-          lastUpdated: admin.firestore.Timestamp.now()
-        }, { merge: true });
-      });
-
-      if (!itemFound) {
+      const itemRef = catalogRef.doc(id);
+      const itemDoc = await itemRef.get();
+      
+      if (!itemDoc.exists) {
         return res.status(404).json({ message: 'Item not found' });
       }
+
+      const sanitizedUpdates = {};
+      if (updates.name !== undefined) sanitizedUpdates.name = sanitize(updates.name);
+      if (updates.description !== undefined) sanitizedUpdates.description = sanitize(updates.description);
+      if (updates.price !== undefined) sanitizedUpdates.price = updates.price;
+      if (updates.stock !== undefined) sanitizedUpdates.stock = updates.stock;
+      if (updates.category !== undefined) sanitizedUpdates.category = sanitize(updates.category);
+      if (updates.maxPerUser !== undefined) sanitizedUpdates.maxPerUser = updates.maxPerUser;
+      if (updates.validPeriods !== undefined) sanitizedUpdates.validPeriods = updates.validPeriods;
+      if (updates.enabled !== undefined) sanitizedUpdates.enabled = updates.enabled;
+      sanitizedUpdates.updatedAt = admin.firestore.Timestamp.now();
+
+      await itemRef.update(sanitizedUpdates);
       
       return res.status(200).json({ 
         message: 'Item updated successfully',
@@ -229,46 +197,20 @@ module.exports = async (req, res) => {
         return res.status(400).json({ message: 'Item ID required' });
       }
 
-      let itemFound = false;
-
-      await db.runTransaction(async (tx) => {
-        const catalogDoc = await tx.get(catalogRef);
-        
-        if (!catalogDoc.exists) {
-          throw new Error('Catalog not found');
-        }
-
-        const catalogData = catalogDoc.data();
-        const items = catalogData.items || [];
-        const filteredItems = items.filter(item => item.id !== id);
-        
-        if (filteredItems.length === items.length) {
-          throw new Error('Item not found');
-        }
-
-        itemFound = true;
-
-        tx.set(catalogRef, {
-          items: filteredItems,
-          version: Date.now(),
-          lastUpdated: admin.firestore.Timestamp.now()
-        }, { merge: true });
-      });
-
-      if (!itemFound) {
+      const itemRef = catalogRef.doc(id);
+      const itemDoc = await itemRef.get();
+      
+      if (!itemDoc.exists) {
         return res.status(404).json({ message: 'Item not found' });
       }
+
+      await itemRef.delete();
       
       return res.status(200).json({ message: 'Item deleted successfully' });
     }
 
   } catch (error) {
     console.error('manageCatalogItem error:', error);
-    
-    if (error.message.includes('not found')) {
-      return res.status(404).json({ message: error.message });
-    }
-    
     return res.status(500).json({ message: 'Failed to manage catalog item' });
   }
 };

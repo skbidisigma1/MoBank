@@ -18,25 +18,25 @@ module.exports = async (req, res) => {
   const uid = decoded.sub;
 
   try {
-    // Fetch user's orders from their document
-    const userOrdersDoc = await db.collection('store_orders').doc(uid).get();
+    // Fetch user's orders
+    const ordersSnapshot = await db.collection('store_orders')
+      .where('userId', '==', uid)
+      .orderBy('createdAt', 'desc')
+      .get();
 
-    if (!userOrdersDoc.exists) {
-      return res.status(200).json({ orders: [] });
-    }
-
-    const userOrdersData = userOrdersDoc.data();
-    const orders = (userOrdersData.orders || []).map(order => ({
-      id: order.id,
-      items: order.items,
-      total: order.total,
-      status: order.status,
-      createdAt: order.createdAt,
-      fulfilledBy: order.fulfilledBy,
-      fulfilledAt: order.fulfilledAt || null,
-      cancelledBy: order.cancelledBy || null,
-      cancelReason: order.cancelReason || null
-    }));
+    const orders = [];
+    ordersSnapshot.forEach(doc => {
+      const data = doc.data();
+      orders.push({
+        id: doc.id,
+        items: data.items,
+        total: data.total,
+        status: data.status,
+        createdAt: data.createdAt?.toMillis?.() || Date.now(),
+        fulfilledBy: data.fulfilledBy,
+        fulfilledAt: data.fulfilledAt?.toMillis?.() || null
+      });
+    });
 
     return res.status(200).json({ orders });
 

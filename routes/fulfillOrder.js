@@ -41,85 +41,63 @@ module.exports = async (req, res) => {
     }
   }
 
-  const { orderId, userId } = bodyData;
+  const { orderId } = bodyData;
 
   if (!orderId || typeof orderId !== 'string') {
     return res.status(400).json({ message: 'Order ID required' });
   }
 
-  if (!userId || typeof userId !== 'string') {
-    return res.status(400).json({ message: 'User ID required' });
-  }
-
   const admin = require('firebase-admin');
-  const userOrdersRef = db.collection('store_orders').doc(userId);
-  const userRef = db.collection('users').doc(userId);
+  const orderRef = db.collection('store_orders').doc(orderId);
 
   try {
     await db.runTransaction(async (tx) => {
-      // ALL READS FIRST
-      const userOrdersDoc = await tx.get(userOrdersRef);
-      if (!userOrdersDoc.exists) {
-        throw new Error('User orders not found');
-      }
-
-      const userDoc = await tx.get(userRef);
-      if (!userDoc.exists) {
-        throw new Error('User not found');
-      }
-
-      // Process order data
-      const userOrdersData = userOrdersDoc.data();
-      const orders = userOrdersData.orders || [];
-      const orderIndex = orders.findIndex(o => o.id === orderId);
-
-      if (orderIndex === -1) {
+      const orderDoc = await tx.get(orderRef);
+      if (!orderDoc.exists) {
         throw new Error('Order not found');
       }
 
-      const order = orders[orderIndex];
-
-      if (order.status === 'fulfilled') {
+      const orderData = orderDoc.data();
+      
+      if (orderData.status === 'fulfilled') {
         throw new Error('Order already fulfilled');
       }
 
-      if (order.status === 'cancelled') {
+      if (orderData.status === 'cancelled') {
         throw new Error('Cannot fulfill cancelled order');
       }
 
-      // ALL WRITES AFTER
       // Update order status
-      orders[orderIndex] = {
-        ...order,
+      tx.update(orderRef, {
         status: 'fulfilled',
         fulfilledBy: adminUid,
-        fulfilledAt: Date.now()
-      };
-
-      tx.set(userOrdersRef, {
-        orders,
-        lastUpdated: admin.firestore.Timestamp.now()
-      }, { merge: true });
+        fulfilledAt: admin.firestore.Timestamp.now()
+      });
 
       // Send notification to user
-      const userData = userDoc.data();
-      const notification = {
-        type: 'store_fulfilled',
-        message: `Your order (${order.items.length} ${order.items.length === 1 ? 'item' : 'items'}) has been fulfilled! Check with your teacher to claim your rewards.`,
-        timestamp: admin.firestore.Timestamp.now(),
-        read: false,
-        orderId: orderId
-      };
-
-      const notifications = userData.notifications || [];
-      notifications.unshift(notification);
-      const trimmedNotifications = notifications.slice(0, 10).sort((a, b) => {
-        const aTime = a.timestamp?.toMillis?.() || 0;
-        const bTime = b.timestamp?.toMillis?.() || 0;
-        return bTime - aTime;
-      });
+      const userRef = db.collection('users').doc(orderData.userId);
+      const userDoc = await tx.get(userRef);
       
-      tx.update(userRef, { notifications: trimmedNotifications });
+      if (userDoc.exists) {
+        const userData = userDoc.data();
+        const notification = {
+          type: 'store_fulfilled',
+          message: `Your order (${orderData.items.length} ${orderData.items.length === 1 ? 'item' : 'items'}) has been fulfilled! Check with your teacher to claim your rewards.`,
+          timestamp: admin.firestore.Timestamp.now(),
+          read: false,
+          orderId: orderId
+        };
+
+        const notifications = userData.notifications || [];
+        notifications.unshift(notification);
+        const trimmedNotifications = notifications.slice(0, 10).sort((a, b) => {
+          const aTime = a.timestamp?.toMillis?.() || 0;
+          const bTime = b.timestamp?.toMillis?.() || 0;
+          return bTime - aTime;
+        });
+        
+        tx.update(userRef, { notifications: trimmedNotifications });
+      }
     });
 
     return res.status(200).json({ message: 'Order fulfilled successfully' });

@@ -4,7 +4,4 @@ keys/*.json
 .vercel/
 .idea/
 .env*.local
-.vscode/
-.DS_Store
-*.log
-tools/js/audio/*.js
+.vercel
