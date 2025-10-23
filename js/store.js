@@ -80,41 +80,42 @@ async function getToken() {
   }
 }
 
-async function fetchUserProfile() {
-  try {
-    const token = await getToken();
-    const res = await fetch('/api/getUserData', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (!res.ok) {
-      throw new Error(`Profile fetch failed: ${res.status}`);
-    }
-    const data = await res.json();
-    CACHE.write(CACHE.USER_KEY, data, CACHE.USER_MAX_AGE);
-    return data;
-  } catch (error) {
-    console.error('MoStore: fetchUserProfile failed', error);
-    throw error;
-  }
-}
-
-async function getUserProfile({ forceRefresh = false } = {}) {
-  if (!forceRefresh) {
-    const cached = CACHE.read(CACHE.USER_KEY);
-    if (cached) return cached;
-    if (window.userDataPromise) {
-      try {
-        const fromPromise = await window.userDataPromise;
-        if (fromPromise) {
-          CACHE.write(CACHE.USER_KEY, fromPromise, CACHE.USER_MAX_AGE);
-          return fromPromise;
-        }
-      } catch (err) {
-        console.warn('MoStore: userDataPromise rejected', err);
-      }
+async function getUserProfile() {
+  // Check cache first for instant load
+  const cached = CACHE.read(CACHE.USER_KEY);
+  if (cached) return cached;
+  
+  // Wait for headerFooter.js to set window.userDataPromise
+  // This prevents duplicate API calls
+  if (window.userDataPromise) {
+    try {
+      const userData = await window.userDataPromise;
+      // Cache it for next time
+      CACHE.write(CACHE.USER_KEY, userData, CACHE.USER_MAX_AGE);
+      return userData;
+    } catch (err) {
+      console.error('MoStore: userDataPromise rejected', err);
+      throw err;
     }
   }
-  return fetchUserProfile();
+  
+  // If promise doesn't exist yet, wait a bit and retry
+  // (headerFooter.js might still be loading)
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  if (window.userDataPromise) {
+    try {
+      const userData = await window.userDataPromise;
+      CACHE.write(CACHE.USER_KEY, userData, CACHE.USER_MAX_AGE);
+      return userData;
+    } catch (err) {
+      console.error('MoStore: userDataPromise rejected', err);
+      throw err;
+    }
+  }
+  
+  // Still no promise - something is wrong
+  throw new Error('User data not available');
 }
 
 async function loadCatalog({ forceRefresh = false } = {}) {
@@ -223,6 +224,26 @@ function sortItems(list, method) {
   }
 }
 
+function getUserPurchasedQuantity(itemId) {
+  // Check localStorage cache for user's orders
+  const ORDERS_CACHE_KEY = '__mobank_my_orders';
+  const cached = CACHE.read(ORDERS_CACHE_KEY);
+  
+  if (!cached || !cached.orders) return 0;
+  
+  let totalPurchased = 0;
+  cached.orders.forEach(order => {
+    if (order.status === 'fulfilled' || order.status === 'pending') {
+      const orderItem = order.items.find(i => i.id === itemId);
+      if (orderItem) {
+        totalPurchased += orderItem.quantity;
+      }
+    }
+  });
+  
+  return totalPurchased;
+}
+
 function renderCatalog() {
   const grid = selectors.catalogGrid();
   if (!grid) {
@@ -243,8 +264,26 @@ function renderCatalog() {
     card.className = 'catalog-card';
     card.dataset.itemId = item.id;
 
-    const stockLabel = item.stock == null ? 'Unlimited' : `${item.stock} left`;
-    const isSoldOut = item.stock === 0;
+    // Calculate how many the user can still buy
+    let userCanBuy = Infinity;
+    
+    // Check stock limit
+    if (item.stock !== null) {
+      userCanBuy = Math.min(userCanBuy, item.stock);
+    }
+    
+    // Check per-user limit
+    if (item.maxPerUser !== null) {
+      // Calculate how many user has already purchased
+      const userPurchased = getUserPurchasedQuantity(item.id);
+      const remaining = item.maxPerUser - userPurchased;
+      userCanBuy = Math.min(userCanBuy, Math.max(0, remaining));
+    }
+    
+    const stockLabel = userCanBuy === Infinity ? 'Unlimited' : 
+                       userCanBuy === 1 ? '1 left for you' :
+                       `${userCanBuy} left for you`;
+    const isSoldOut = userCanBuy === 0;
 
     const title = document.createElement('h3');
     title.className = 'catalog-card__title';
@@ -383,12 +422,14 @@ function addToCart(itemId) {
   }
 
   state.cart.set(itemId, { item, quantity: nextQty });
+  saveCartToSession();
   renderCart();
   showToast('Added to cart', `${item.name} added successfully.`);
 }
 
 function removeFromCart(itemId) {
   state.cart.delete(itemId);
+  saveCartToSession();
   renderCart();
 }
 
@@ -409,12 +450,41 @@ function updateCartQuantity(itemId, delta) {
     return;
   }
   state.cart.set(itemId, { item: entry.item, quantity: nextQty });
+  saveCartToSession();
   renderCart();
 }
 
 function clearCart() {
   state.cart.clear();
+  saveCartToSession();
   renderCart();
+}
+
+function saveCartToSession() {
+  const cartData = Array.from(state.cart.entries()).map(([itemId, { item, quantity }]) => ({
+    itemId,
+    item,
+    quantity
+  }));
+  sessionStorage.setItem('__mobank_cart', JSON.stringify(cartData));
+}
+
+function loadCartFromSession() {
+  try {
+    const cartData = sessionStorage.getItem('__mobank_cart');
+    if (!cartData) return;
+    
+    const items = JSON.parse(cartData);
+    state.cart.clear();
+    
+    items.forEach(({ itemId, item, quantity }) => {
+      state.cart.set(itemId, { item, quantity });
+    });
+    
+    renderCart();
+  } catch (err) {
+    console.error('Failed to load cart from session:', err);
+  }
 }
 
 function wireCatalogEvents() {
@@ -560,7 +630,12 @@ async function handleCheckout() {
   }, 0);
   
   if (subtotal > state.balance) {
-    showToast('Insufficient balance', 'You\'re too broke to afford this item.', 'danger');
+    const shortfall = subtotal - state.balance;
+    showToast(
+      'Insufficient balance', 
+      `You need ${formatMoBucksPlain(shortfall)} more to complete this purchase.`, 
+      'danger'
+    );
     return;
   }
   if (!state.cart.size) return;
@@ -589,7 +664,20 @@ async function handleCheckout() {
     
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.message || `Order failed: ${res.status}`);
+      const errorMessage = errorData.message || `Order failed with status ${res.status}`;
+      
+      // Provide specific error messages for common issues
+      if (errorMessage.includes('stock')) {
+        throw new Error('One or more items are out of stock. Please refresh the page.');
+      } else if (errorMessage.includes('limit')) {
+        throw new Error('You\'ve reached the purchase limit for one or more items.');
+      } else if (errorMessage.includes('unavailable')) {
+        throw new Error('One or more items are no longer available.');
+      } else if (errorMessage.includes('period')) {
+        throw new Error('Some items are not available for your class period.');
+      } else {
+        throw new Error(errorMessage);
+      }
     }
     
     const result = await res.json();
@@ -604,6 +692,9 @@ async function handleCheckout() {
     CACHE.remove(STORE_CACHE_KEY);
     CACHE.remove(STORE_ADMIN_CATALOG_CACHE_KEY);
     CACHE.remove(STORE_ORDERS_CACHE_KEY);
+    
+    // Clear session cart
+    sessionStorage.removeItem('__mobank_cart');
     
     // force refresh catalog
     try {
@@ -626,7 +717,7 @@ async function handleCheckout() {
     
   } catch (error) {
     console.error('Checkout error:', error);
-    showToast('Checkout failed', error.message || 'Could not complete your order.', 'danger');
+    showToast('Checkout failed', error.message || 'Could not complete your order. Please try again.', 'danger');
   } finally {
     if (checkoutBtn) {
       checkoutBtn.disabled = false;
@@ -745,6 +836,13 @@ let adminViewMode = true; // true = admin mode, false = student mode
 let allCatalogItems = [];
 let isEditingItem = false;
 
+// Pagination state for admin orders
+let pendingOrdersPage = 1;
+let fulfilledOrdersPage = 1;
+const ORDERS_PER_PAGE = 50;
+let allPendingOrders = [];
+let allFulfilledOrders = [];
+
 async function checkAdminRole() {
   try {
     const token = await getToken();
@@ -826,9 +924,11 @@ function initAdminUI() {
 
   loadAdminCatalog();
   loadPendingOrders();
+  loadFulfilledOrders();
   
   wireAdminEvents();
   wireAdminCollapsiblePersistence();
+  wirePaginationControls();
 }
 
 // Persist which admin collapsible is open
@@ -929,6 +1029,10 @@ function renderAdminCatalog() {
   allCatalogItems.forEach(item => {
     const card = document.createElement('div');
     card.className = 'admin-catalog-card';
+    
+    // Use formatMoBucks which includes the icon
+    const priceHTML = formatMoBucks(item.price, { absolute: true });
+    
     card.innerHTML = `
       <div class="admin-card-header">
         <h5>${item.name}</h5>
@@ -936,7 +1040,7 @@ function renderAdminCatalog() {
       </div>
       <p class="admin-card-description">${item.description}</p>
       <div class="admin-card-meta">
-        <span>${formatMoBucks(item.price, { absolute: true })}</span>
+        <span>${priceHTML}</span>
         <span>${item.stock === null ? 'Unlimited' : `${item.stock} in stock`}</span>
       </div>
       <div class="admin-card-periods">
@@ -999,7 +1103,10 @@ async function handleCatalogSubmit(evt) {
     
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.message || `Failed: ${res.status}`);
+      const errorMsg = errorData.errors && errorData.errors.length > 0
+        ? errorData.errors.join(', ')
+        : errorData.message || `Failed: ${res.status}`;
+      throw new Error(errorMsg);
     }
     
     showToast('Success', itemId ? 'Item updated successfully' : 'Item created successfully', 'success');
@@ -1101,7 +1208,10 @@ function deleteCatalogItem(itemId) {
 
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}));
-          throw new Error(errorData.message || `Failed: ${res.status}`);
+          const errorMsg = errorData.errors && errorData.errors.length > 0
+            ? errorData.errors.join(', ')
+            : errorData.message || `Failed: ${res.status}`;
+          throw new Error(errorMsg);
         }
 
         showToast('Success', 'Item deleted', 'success');
@@ -1132,15 +1242,17 @@ function deleteCatalogItem(itemId) {
 async function loadPendingOrders() {
   const cached = CACHE.read(STORE_ORDERS_CACHE_KEY);
   if (cached && Array.isArray(cached)) {
-    const pendingOrders = cached.filter(o => o.status === 'pending');
-    renderPendingOrders(pendingOrders);
+    allPendingOrders = cached.filter(o => o.status === 'pending');
+    allFulfilledOrders = cached.filter(o => o.status === 'fulfilled' || o.status === 'cancelled');
+    renderPendingOrders();
+    renderFulfilledOrders();
     return;
   }
   
   try {
     const token = await getToken();
     
-    // fetch all pending orders
+    // fetch all orders
     const res = await fetch('/api/getOrdersAdmin', {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -1148,28 +1260,49 @@ async function loadPendingOrders() {
     if (!res.ok) throw new Error(`Failed to load orders: ${res.status}`);
     const data = await res.json();
     
-    // cache all pending orders
+    // cache all orders
     CACHE.write(STORE_ORDERS_CACHE_KEY, data.orders || [], STORE_CACHE_MAX_AGE);
     
-    const pendingOrders = (data.orders || []).filter(o => o.status === 'pending');
-    renderPendingOrders(pendingOrders);
+    allPendingOrders = (data.orders || []).filter(o => o.status === 'pending');
+    allFulfilledOrders = (data.orders || []).filter(o => o.status === 'fulfilled' || o.status === 'cancelled');
+    renderPendingOrders();
+    renderFulfilledOrders();
   } catch (error) {
     console.error('loadPendingOrders error:', error);
+    showToast('Error', 'Failed to load orders', 'danger');
   }
 }
 
-function renderPendingOrders(orders) {
+async function loadFulfilledOrders() {
+  // Already loaded in loadPendingOrders
+  renderFulfilledOrders();
+}
+
+function renderPendingOrders() {
   const container = document.getElementById('pending-orders-list');
+  const pagination = document.getElementById('pending-pagination');
+  const pageInfo = document.getElementById('pending-page-info');
+  const prevBtn = document.getElementById('pending-prev');
+  const nextBtn = document.getElementById('pending-next');
+  
   if (!container) return;
   
   container.innerHTML = '';
   
-  if (!orders.length) {
+  if (!allPendingOrders.length) {
     container.innerHTML = '<p class="empty-message">No pending orders</p>';
+    if (pagination) pagination.style.display = 'none';
     return;
   }
   
-  orders.forEach(order => {
+  // Calculate pagination
+  const totalPages = Math.ceil(allPendingOrders.length / ORDERS_PER_PAGE);
+  const startIdx = (pendingOrdersPage - 1) * ORDERS_PER_PAGE;
+  const endIdx = startIdx + ORDERS_PER_PAGE;
+  const pageOrders = allPendingOrders.slice(startIdx, endIdx);
+  
+  // Render orders
+  pageOrders.forEach(order => {
     const card = document.createElement('div');
     card.className = 'pending-order-card';
     const date = new Date(order.createdAt).toLocaleString();
@@ -1193,6 +1326,134 @@ function renderPendingOrders(orders) {
       </div>
     `;
     container.appendChild(card);
+  });
+  
+  // Update pagination controls
+  if (pagination && totalPages > 1) {
+    pagination.style.display = 'flex';
+    if (pageInfo) pageInfo.textContent = `Page ${pendingOrdersPage} of ${totalPages}`;
+    if (prevBtn) prevBtn.disabled = pendingOrdersPage === 1;
+    if (nextBtn) nextBtn.disabled = pendingOrdersPage === totalPages;
+  } else if (pagination) {
+    pagination.style.display = 'none';
+  }
+}
+
+function renderFulfilledOrders() {
+  const container = document.getElementById('fulfilled-orders-list');
+  const pagination = document.getElementById('fulfilled-pagination');
+  const pageInfo = document.getElementById('fulfilled-page-info');
+  const prevBtn = document.getElementById('fulfilled-prev');
+  const nextBtn = document.getElementById('fulfilled-next');
+  
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  if (!allFulfilledOrders.length) {
+    container.innerHTML = '<p class="empty-message">No fulfilled orders</p>';
+    if (pagination) pagination.style.display = 'none';
+    return;
+  }
+  
+  // Calculate pagination
+  const totalPages = Math.ceil(allFulfilledOrders.length / ORDERS_PER_PAGE);
+  const startIdx = (fulfilledOrdersPage - 1) * ORDERS_PER_PAGE;
+  const endIdx = startIdx + ORDERS_PER_PAGE;
+  const pageOrders = allFulfilledOrders.slice(startIdx, endIdx);
+  
+  // Render orders
+  pageOrders.forEach(order => {
+    const card = document.createElement('div');
+    const isFulfilled = order.status === 'fulfilled';
+    const isCancelled = order.status === 'cancelled';
+    card.className = isFulfilled ? 'fulfilled-order-card' : 'cancelled-order-card';
+    
+    const createdDate = new Date(order.createdAt).toLocaleString();
+    const actionDate = isFulfilled 
+      ? (order.fulfilledAt ? new Date(order.fulfilledAt).toLocaleString() : 'Unknown')
+      : (order.cancelledAt ? new Date(order.cancelledAt).toLocaleString() : 'Unknown');
+    const itemsList = order.items.map(item => `${item.name} (x${item.quantity})`).join(', ');
+    
+    const customerInfo = order.userName ? `${order.userName}${order.userPeriod ? ` · ${periodNames[order.userPeriod] || `Period ${order.userPeriod}`}` : ''}` : 'Unknown User';
+    
+    // Get admin name from order data
+    const adminName = isFulfilled 
+      ? (order.fulfilledByName || 'Unknown Admin')
+      : (order.cancelledByName || 'Unknown Admin');
+    const actionInfo = isFulfilled ? `Fulfilled by ${adminName}` : `Declined by ${adminName}`;
+    const actionLabel = isFulfilled ? 'Fulfilled' : 'Declined';
+    
+    const statusIcon = isFulfilled ? '✓' : '✕';
+    const statusClass = isFulfilled ? 'fulfilled' : 'cancelled';
+    
+    let extraInfo = '';
+    if (isCancelled && order.cancelReason) {
+      extraInfo = `<span class="order-reason">Reason: ${order.cancelReason}</span>`;
+    }
+    
+    card.innerHTML = `
+      <div class="order-header">
+        <span class="order-id">Order #${order.id.slice(-8)}</span>
+        <span class="order-status ${statusClass}">${statusIcon} ${actionLabel}</span>
+      </div>
+      <div class="order-customer">Customer: ${customerInfo}</div>
+      <div class="order-items">${itemsList}</div>
+      <div class="order-footer">
+        <div class="order-details">
+          <span class="order-total">Total: ${formatMoBucks(order.total, { absolute: true })}</span>
+          <span class="order-meta">${actionInfo}</span>
+          <span class="order-date">Ordered: ${createdDate}</span>
+          <span class="order-date">${actionLabel}: ${actionDate}</span>
+          ${extraInfo}
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+  
+  // Update pagination controls
+  if (pagination && totalPages > 1) {
+    pagination.style.display = 'flex';
+    if (pageInfo) pageInfo.textContent = `Page ${fulfilledOrdersPage} of ${totalPages}`;
+    if (prevBtn) prevBtn.disabled = fulfilledOrdersPage === 1;
+    if (nextBtn) nextBtn.disabled = fulfilledOrdersPage === totalPages;
+  } else if (pagination) {
+    pagination.style.display = 'none';
+  }
+}
+
+function wirePaginationControls() {
+  // Pending orders pagination
+  document.getElementById('pending-prev')?.addEventListener('click', () => {
+    if (pendingOrdersPage > 1) {
+      pendingOrdersPage--;
+      renderPendingOrders();
+    }
+  });
+  
+  document.getElementById('pending-next')?.addEventListener('click', () => {
+    const totalPages = Math.ceil(allPendingOrders.length / ORDERS_PER_PAGE);
+    if (pendingOrdersPage < totalPages) {
+      pendingOrdersPage++;
+      renderPendingOrders();
+    }
+  });
+  
+  // Fulfilled orders pagination
+  document.getElementById('fulfilled-prev')?.addEventListener('click', () => {
+    if (fulfilledOrdersPage > 1) {
+      fulfilledOrdersPage--;
+      renderFulfilledOrders();
+    }
+  });
+  
+  document.getElementById('fulfilled-next')?.addEventListener('click', () => {
+    const totalPages = Math.ceil(allFulfilledOrders.length / ORDERS_PER_PAGE);
+    if (fulfilledOrdersPage < totalPages) {
+      fulfilledOrdersPage++;
+      renderFulfilledOrders();
+    }
   });
 }
 
@@ -1258,6 +1519,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!authenticated) return;
 
   try {
+    // Use userData from headerFooter.js - no API call needed
     state.user = await getUserProfile();
     state.balance = state.user?.currency_balance || 0;
     renderBalance();
@@ -1270,22 +1532,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   // isAdmin check
   isAdmin = await checkAdminRole();
   
+  // Load user's orders FIRST so catalog display has purchase history
+  try {
+    await loadMyOrders();
+  } catch (err) {
+    console.error('MoStore: Unable to load orders', err);
+  }
+  
   try {
     const catalogPayload = await loadCatalog();
     state.catalog = catalogPayload.items || [];
     buildCatalogIndex(state.catalog);
     state.filtered = [...state.catalog];
     applyFilters();
+    
+    // Load cart from session after catalog is ready
+    loadCartFromSession();
   } catch (err) {
     console.error('MoStore: Unable to load catalog', err);
     showToast('Error', 'Store catalog failed to load. Please retry shortly.', 'danger');
-  }
-  
-  // Load user's orders
-  try {
-    await loadMyOrders();
-  } catch (err) {
-    console.error('MoStore: Unable to load orders', err);
   }
   
   if (isAdmin) {
@@ -1299,6 +1564,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadMyOrders() {
+  // Check cache first (20 second duration)
+  const ORDERS_CACHE_KEY = '__mobank_my_orders';
+  const ORDERS_CACHE_DURATION = 20 * 1000; // 20 seconds
+  
+  const cached = CACHE.read(ORDERS_CACHE_KEY);
+  if (cached && cached.orders) {
+    renderMyOrders(cached.orders);
+    return;
+  }
+  
   try {
     const token = await getToken();
     const res = await fetch('/api/getOrders', {
@@ -1310,6 +1585,10 @@ async function loadMyOrders() {
     }
     
     const data = await res.json();
+    
+    // Cache the orders
+    CACHE.write(ORDERS_CACHE_KEY, data, ORDERS_CACHE_DURATION);
+    
     renderMyOrders(data.orders || []);
   } catch (error) {
     console.error('loadMyOrders error:', error);

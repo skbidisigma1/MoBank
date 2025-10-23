@@ -46,6 +46,14 @@ module.exports = async (req, res) => {
 
     // Fetch user data for all users
     const userDataMap = {};
+    const adminIds = new Set();
+    
+    // Collect admin IDs from orders
+    allOrders.forEach(order => {
+      if (order.fulfilledBy) adminIds.add(order.fulfilledBy);
+      if (order.cancelledBy) adminIds.add(order.cancelledBy);
+    });
+    
     const userPromises = userIds.map(async (uid) => {
       try {
         const userDoc = await db.collection('users').doc(uid).get();
@@ -60,13 +68,32 @@ module.exports = async (req, res) => {
         console.error(`Failed to fetch user ${uid}:`, err);
       }
     });
+    
+    // Fetch admin names
+    const adminPromises = Array.from(adminIds).map(async (adminId) => {
+      try {
+        const adminDoc = await db.collection('users').doc(adminId).get();
+        if (adminDoc.exists) {
+          const adminData = adminDoc.data();
+          userDataMap[adminId] = {
+            name: adminData.name || 'Unknown Admin',
+            period: adminData.class_period
+          };
+        }
+      } catch (err) {
+        console.error(`Failed to fetch admin ${adminId}:`, err);
+      }
+    });
 
-    await Promise.all(userPromises);
+    await Promise.all([...userPromises, ...adminPromises]);
 
     // Build orders array with user info and sort
     const orders = allOrders
       .map(order => {
         const userInfo = userDataMap[order.userId] || { name: 'Unknown', period: null };
+        const fulfilledByInfo = order.fulfilledBy ? userDataMap[order.fulfilledBy] : null;
+        const cancelledByInfo = order.cancelledBy ? userDataMap[order.cancelledBy] : null;
+        
         return {
           id: order.id,
           userId: order.userId,
@@ -77,7 +104,12 @@ module.exports = async (req, res) => {
           status: order.status,
           createdAt: order.createdAt,
           fulfilledBy: order.fulfilledBy,
-          fulfilledAt: order.fulfilledAt || null
+          fulfilledByName: fulfilledByInfo ? fulfilledByInfo.name : order.fulfilledByName || 'Unknown Admin',
+          fulfilledAt: order.fulfilledAt || null,
+          cancelledBy: order.cancelledBy,
+          cancelledByName: cancelledByInfo ? cancelledByInfo.name : order.cancelledByName || 'Unknown Admin',
+          cancelledAt: order.cancelledAt || null,
+          cancelReason: order.cancelReason || null
         };
       })
       .sort((a, b) => b.createdAt - a.createdAt); // Sort by newest first

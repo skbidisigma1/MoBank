@@ -39,14 +39,14 @@ const validateItem = (data, isUpdate = false) => {
   }
 
   if (!isUpdate || data.category !== undefined) {
-    // Category removed from schema - ignore if present
+    // ignore if present
   }
 
   if (!isUpdate || data.maxPerUser !== undefined) {
     if (data.maxPerUser !== null && (typeof data.maxPerUser !== 'number' || data.maxPerUser < 1 || !Number.isInteger(data.maxPerUser))) {
       errors.push('maxPerUser must be null or a positive integer');
-    } else if (data.maxPerUser !== null && data.maxPerUser > 100) {
-      errors.push('maxPerUser cannot exceed 100');
+    } else if (data.maxPerUser !== null && data.maxPerUser > 10000) {
+      errors.push('maxPerUser cannot exceed 10,000');
     }
   }
 

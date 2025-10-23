@@ -1197,6 +1197,11 @@ html[data-theme="dark"] .cart-footer {
   padding: 6px 12px;
   border-radius: 8px;
   font-weight: 500;
+  color: var(--color-text);
+}
+
+.admin-card-meta span .mobucks-icon {
+  background-color: var(--color-primary);
 }
 
 .admin-card-periods {
@@ -1307,6 +1312,124 @@ html[data-theme="dark"] .cart-footer {
 .order-actions .danger-button {
   min-width: 100px;
   width: auto;
+}
+
+/* Pagination Controls */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border);
+}
+
+.pagination-info {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  font-weight: 500;
+  min-width: 100px;
+  text-align: center;
+}
+
+/* Fulfilled Orders */
+.fulfilled-orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fulfilled-order-card {
+  background: var(--color-hover-bg);
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  transition: var(--store-transition);
+  opacity: 0.9;
+}
+
+.fulfilled-order-card:hover {
+  border-color: #10b981;
+  box-shadow: var(--store-shadow);
+  opacity: 1;
+}
+
+.fulfilled-order-card .order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.fulfilled-order-card .order-status {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.fulfilled-order-card .order-status.fulfilled {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.cancelled-order-card {
+  background: var(--color-hover-bg);
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  transition: var(--store-transition);
+  opacity: 0.85;
+}
+
+.cancelled-order-card:hover {
+  border-color: #ef4444;
+  box-shadow: var(--store-shadow);
+  opacity: 1;
+}
+
+.cancelled-order-card .order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.cancelled-order-card .order-status {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.cancelled-order-card .order-status.cancelled {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.order-reason {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  font-style: italic;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--color-main-bg);
+  border-radius: 6px;
+  border-left: 3px solid #ef4444;
+}
+
+.order-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.order-meta {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  font-style: italic;
 }
 
 .empty-message {

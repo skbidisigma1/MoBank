@@ -55,7 +55,28 @@ module.exports = async (req, res) => {
   const userOrdersRef = db.collection('store_orders').doc(uid);
 
   try {
-    // Use transaction for atomic balance deduction and order creation
+    // Pre-fetch catalog OUTSIDE transaction to reduce lock contention
+    const catalogDoc = await catalogRef.get();
+    if (!catalogDoc.exists) {
+      return res.status(400).json({ message: 'Catalog not found' });
+    }
+
+    const catalogData = catalogDoc.data();
+    const catalogItems = catalogData.items || [];
+    const catalogMap = new Map(catalogItems.map(item => [item.id, item]));
+
+    // Pre-validate items exist and are enabled
+    for (const item of items) {
+      const catalogItem = catalogMap.get(item.id);
+      if (!catalogItem) {
+        return res.status(400).json({ message: `Item not found: ${item.id}` });
+      }
+      if (catalogItem.enabled === false) {
+        return res.status(400).json({ message: `Item unavailable: ${catalogItem.name}` });
+      }
+    }
+
+    // Now run transaction with only user and orders documents
     const result = await db.runTransaction(async (tx) => {
       const userDoc = await tx.get(userRef);
       if (!userDoc.exists) {
@@ -65,16 +86,6 @@ module.exports = async (req, res) => {
       const userData = userDoc.data();
       const currentBalance = userData.currency_balance || 0;
       const userPeriod = userData.class_period;
-
-      // Get catalog
-      const catalogDoc = await tx.get(catalogRef);
-      if (!catalogDoc.exists) {
-        throw new Error('Catalog not found');
-      }
-
-      const catalogData = catalogDoc.data();
-      const catalogItems = catalogData.items || [];
-      const catalogMap = new Map(catalogItems.map(item => [item.id, item]));
 
       // Get user's existing orders to check per-user limits
       const userOrdersDoc = await tx.get(userOrdersRef);
@@ -86,6 +97,28 @@ module.exports = async (req, res) => {
         throw new Error('Order limit reached. Please contact an administrator.');
       }
 
+      // Re-read catalog inside transaction only if we need to update stock
+      let needsStockUpdate = false;
+      for (const item of items) {
+        const catalogItem = catalogMap.get(item.id);
+        if (catalogItem && catalogItem.stock !== null) {
+          needsStockUpdate = true;
+          break;
+        }
+      }
+
+      // Only lock catalog if updating stock
+      let freshCatalogItems = catalogItems;
+      if (needsStockUpdate) {
+        const freshCatalogDoc = await tx.get(catalogRef);
+        if (!freshCatalogDoc.exists) {
+          throw new Error('Catalog not found');
+        }
+        freshCatalogItems = freshCatalogDoc.data().items || [];
+      }
+
+      const freshCatalogMap = new Map(freshCatalogItems.map(item => [item.id, item]));
+
       // Validate and calculate order
       const orderItems = [];
       let totalCost = 0;
@@ -96,7 +129,7 @@ module.exports = async (req, res) => {
           throw new Error('Invalid item format');
         }
 
-        const catalogItem = catalogMap.get(item.id);
+        const catalogItem = freshCatalogMap.get(item.id);
         if (!catalogItem) {
           throw new Error(`Item not found: ${item.id}`);
         }
@@ -161,9 +194,9 @@ module.exports = async (req, res) => {
         throw new Error('Insufficient balance');
       }
 
-      // Update catalog stock
+      // Update catalog stock (only if needed)
       if (stockUpdates.size > 0) {
-        const updatedCatalogItems = catalogItems.map(item => {
+        const updatedCatalogItems = freshCatalogItems.map(item => {
           if (stockUpdates.has(item.id)) {
             return { ...item, stock: stockUpdates.get(item.id) };
           }
@@ -212,7 +245,7 @@ module.exports = async (req, res) => {
 
       const transactions = userData.transactions || [];
       transactions.unshift(transaction);
-      const trimmedTransactions = transactions.slice(0, 8);
+      const trimmedTransactions = transactions.slice(0, 100);
       tx.update(userRef, { transactions: trimmedTransactions });
 
       // Add notification

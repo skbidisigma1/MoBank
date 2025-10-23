@@ -23,6 +23,7 @@ module.exports = async (req, res) => {
   }
 
   const adminUid = decoded.sub;
+  const adminName = decoded.name || decoded['https://mo-classroom.us/name'] || 'Admin';
 
   let bodyData = {};
   if (req.body && Object.keys(req.body).length) {
@@ -89,6 +90,7 @@ module.exports = async (req, res) => {
         ...order,
         status: 'fulfilled',
         fulfilledBy: adminUid,
+        fulfilledByName: adminName,
         fulfilledAt: admin.firestore.Timestamp.now().toMillis()
       };
 

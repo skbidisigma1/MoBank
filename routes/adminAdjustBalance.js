@@ -114,7 +114,7 @@ module.exports = async (req, res) => {
         if (newBalance > 100000000000) newBalance = 100000000000;
         if (newBalance < -100000000000) newBalance = -100000000000;
 
-        const transactions = [txn(numericAmount), ...(doc.data().transactions || [])].slice(0, 5);
+        const transactions = [txn(numericAmount), ...(doc.data().transactions || [])].slice(0, 100);
         const notifications = [
           ...(doc.data().notifications || []),
           note(numericAmount),
@@ -156,7 +156,7 @@ module.exports = async (req, res) => {
             let newBalance = (d.data().currency_balance || 0) + numericAmount;
             if (newBalance > 100000000000) newBalance = 100000000000;
 
-            const transactions = [txn(numericAmount), ...(d.data().transactions || [])].slice(0, 5);
+            const transactions = [txn(numericAmount), ...(d.data().transactions || [])].slice(0, 100);
             const notifications = [
               ...(d.data().notifications || []),
               note(numericAmount, `${instrument} section`),

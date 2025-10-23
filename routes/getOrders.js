@@ -18,25 +18,26 @@ module.exports = async (req, res) => {
   const uid = decoded.sub;
 
   try {
-    // Fetch user's orders
-    const ordersSnapshot = await db.collection('store_orders')
-      .where('userId', '==', uid)
-      .orderBy('createdAt', 'desc')
-      .get();
+    // Fetch user's orders from store_orders/{uid} document
+    const userOrdersDoc = await db.collection('store_orders').doc(uid).get();
+    
+    if (!userOrdersDoc.exists) {
+      return res.status(200).json({ orders: [] });
+    }
 
-    const orders = [];
-    ordersSnapshot.forEach(doc => {
-      const data = doc.data();
-      orders.push({
-        id: doc.id,
-        items: data.items,
-        total: data.total,
-        status: data.status,
-        createdAt: data.createdAt?.toMillis?.() || Date.now(),
-        fulfilledBy: data.fulfilledBy,
-        fulfilledAt: data.fulfilledAt?.toMillis?.() || null
-      });
-    });
+    const userOrdersData = userOrdersDoc.data();
+    const orders = (userOrdersData.orders || []).map(order => ({
+      id: order.id,
+      items: order.items,
+      total: order.total,
+      status: order.status,
+      createdAt: order.createdAt,
+      fulfilledBy: order.fulfilledBy || null,
+      fulfilledAt: order.fulfilledAt || null
+    }));
+
+    // Sort by newest first
+    orders.sort((a, b) => b.createdAt - a.createdAt);
 
     return res.status(200).json({ orders });
 

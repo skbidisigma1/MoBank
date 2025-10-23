@@ -23,6 +23,7 @@ module.exports = async (req, res) => {
   }
 
   const adminUid = decoded.sub;
+  const adminName = decoded.name || decoded['https://mo-classroom.us/name'] || 'Admin';
 
   let bodyData = {};
   if (req.body && Object.keys(req.body).length) {
@@ -107,6 +108,7 @@ module.exports = async (req, res) => {
         ...order,
         status: 'cancelled',
         cancelledBy: adminUid,
+        cancelledByName: adminName,
         cancelledAt: Date.now(),
         cancelReason: reason || 'Declined by admin'
       };
@@ -150,7 +152,7 @@ module.exports = async (req, res) => {
 
       const transactions = userData.transactions || [];
       transactions.unshift(transaction);
-      const trimmedTransactions = transactions.slice(0, 8);
+      const trimmedTransactions = transactions.slice(0, 100);
       tx.update(userRef, { transactions: trimmedTransactions });
 
       // Send notification to user

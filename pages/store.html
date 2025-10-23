@@ -204,6 +204,23 @@
                 <div id="pending-orders-list" class="pending-orders-list">
                     <p class="empty-message">No pending orders</p>
                 </div>
+                <div class="pagination-controls" id="pending-pagination" style="display: none;">
+                    <button class="secondary-button" id="pending-prev" disabled>← Previous</button>
+                    <span class="pagination-info" id="pending-page-info">Page 1 of 1</span>
+                    <button class="secondary-button" id="pending-next" disabled>Next →</button>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h3 class="admin-section-title">Recent Order History</h3>
+                <div id="fulfilled-orders-list" class="fulfilled-orders-list">
+                    <p class="empty-message">No recent history</p>
+                </div>
+                <div class="pagination-controls" id="fulfilled-pagination" style="display: none;">
+                    <button class="secondary-button" id="fulfilled-prev" disabled>← Previous</button>
+                    <span class="pagination-info" id="fulfilled-page-info">Page 1 of 1</span>
+                    <button class="secondary-button" id="fulfilled-next" disabled>Next →</button>
+                </div>
             </div>
         </section>
     </main>
