@@ -93,9 +93,13 @@ export class PitchDetector extends EventTarget {
             this.stream?.getTracks().forEach(t => t.stop());
             this.stream = undefined;
         }
-        catch { }
+        catch (err) {
+            // Swallow errors during cleanup
+            console.warn('Error stopping microphone:', err);
+        }
     }
     destroy() {
+        this.isRunning = false;
         this.stopMicrophone();
         try {
             this.node?.disconnect();
@@ -105,7 +109,13 @@ export class PitchDetector extends EventTarget {
             this.zeroGain?.disconnect();
         }
         catch { }
-        this.ctx?.close();
+        try {
+            this.ctx?.close();
+        }
+        catch { }
+        // Clear references
+        this.node = undefined;
+        this.zeroGain = undefined;
     }
     updateWorkletConfig(partial) {
         this.config = { ...this.config, ...partial };

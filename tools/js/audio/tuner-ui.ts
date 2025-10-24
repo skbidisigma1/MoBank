@@ -255,6 +255,9 @@ class TunerUI {
     this.buildGaugeBackground();
     this.drawGauge(0);
 
+    // initialize reference pitch display
+    this.elements.referenceDisplay.textContent = `${this.state.referencePitch} Hz`;
+
     this.setupEventListeners();
   }
 
@@ -458,10 +461,6 @@ class TunerUI {
     if (this.state.lockedMidi === null) {
       this.state.lockedMidi = nearest.midi;
     } else if (nearest.midi !== this.state.lockedMidi) {
-      // compare cents distance to both centers
-      const lockedFreq = this.centers['nearest'](this.centers['nearest'](frame.frequency)!.freq) // residue but we need locked freq
-      // We'll compute locked center directly:
-      const lockedCenter = this.centers['nearest'](this.centers['nearest'](frame.frequency)!.freq);
       // Simpler/robust: switch if |cents| > 35 OR clarity high and |cents| > 25
       const absC = Math.abs(nearest.cents);
       if (absC > 35 || (frame.clarity >= 0.88 && absC > 25)) {

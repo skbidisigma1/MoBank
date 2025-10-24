@@ -388,6 +388,7 @@
 .pitch-adjust {
   width: 32px;
   height: 32px;
+  flex-shrink: 0;
   border: 1px solid var(--tuner-panel-border);
   background: var(--tuner-gauge-bg);
   border-radius: 6px;
@@ -399,6 +400,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0; /* override global button margin */
 }
 
 .pitch-adjust:hover {
@@ -408,6 +410,7 @@
 
 .pitch-input {
   flex: 1;
+  min-width: 0;
   padding: 0.5rem;
   border: 1px solid var(--tuner-panel-border);
   background: var(--tuner-gauge-bg);
@@ -417,6 +420,15 @@
   color: var(--tuner-text);
   text-align: center;
   font-family: 'Inter', sans-serif;
+  height: 40px;
+  margin: 0; /* override global input margin */
+}
+
+/* Stronger override in case a global input rule is still applying */
+.pitch-control input.pitch-input,
+input.pitch-input[type="number"] {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 .pitch-input:focus {
@@ -434,6 +446,7 @@
 .transpose-adjust {
   width: 32px;
   height: 32px;
+  flex-shrink: 0;
   border: 1px solid var(--tuner-panel-border);
   background: var(--tuner-gauge-bg);
   border-radius: 6px;
@@ -445,6 +458,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0; /* override global button margin */
 }
 
 .transpose-adjust:hover {
@@ -454,6 +468,7 @@
 
 .transpose-select {
   flex: 1;
+  min-width: 0;
   padding: 0.5rem;
   border: 1px solid var(--tuner-panel-border);
   background: var(--tuner-gauge-bg);
@@ -462,6 +477,8 @@
   color: var(--tuner-text);
   cursor: pointer;
   font-family: 'Inter', sans-serif;
+  height: 40px;
+  margin: 0; /* override global select margin */
 }
 
 .transpose-select:focus {
@@ -611,6 +628,335 @@
 }
 
 /* ========================================
+   MODE TOGGLE
+   ======================================== */
+
+.mode-toggle-container {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.mode-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid var(--tuner-panel-border);
+  background: var(--tuner-panel-bg);
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--tuner-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.mode-toggle-btn:hover {
+  border-color: var(--tuner-needle);
+  transform: translateY(-2px);
+}
+
+.mode-toggle-btn.active {
+  background: linear-gradient(135deg, #4A90E2, #50E3C2);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.mode-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ========================================
+   DRONE MODE SECTION
+   ======================================== */
+
+.drone-mode-section {
+  background: var(--tuner-panel-bg);
+  border: 1px solid var(--tuner-panel-border);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Octave Control */
+.drone-octave-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.octave-btn {
+  width: 44px;
+  height: 44px;
+  border: 2px solid var(--tuner-panel-border);
+  background: var(--tuner-gauge-bg);
+  border-radius: 50%;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--tuner-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.octave-btn:hover {
+  background: var(--tuner-needle);
+  color: white;
+  border-color: var(--tuner-needle);
+  transform: scale(1.05);
+}
+
+.octave-btn:active {
+  transform: scale(0.95);
+}
+
+.octave-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.octave-display label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--tuner-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.octave-input {
+  width: 80px;
+  padding: 0.5rem;
+  border: 2px solid var(--tuner-panel-border);
+  background: var(--tuner-gauge-bg);
+  border-radius: 8px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--tuner-text);
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+}
+
+.octave-input:focus {
+  outline: none;
+  border-color: var(--tuner-needle);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+/* Drone Gauge */
+.drone-gauge-container {
+  position: relative;
+  width: 400px;
+  height: 400px;
+  margin: 0 auto 2rem;
+}
+
+#drone-gauge {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--tuner-gauge-bg);
+  border: 2px solid var(--tuner-gauge-border);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+#drone-gauge:active {
+  transform: scale(0.98);
+}
+
+/* Active Drones Display */
+.active-drones {
+  background: var(--tuner-gauge-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.active-drones h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--tuner-text);
+  margin-bottom: 1rem;
+  font-family: 'Poppins', sans-serif;
+}
+
+.active-drones-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  min-height: 40px;
+}
+
+.no-drones {
+  width: 100%;
+  text-align: center;
+  color: var(--tuner-text-light);
+  font-size: 0.9rem;
+  font-style: italic;
+  padding: 0.5rem;
+}
+
+.drone-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--tuner-panel-bg);
+  border: 2px solid var(--tuner-needle);
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--tuner-text);
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.15);
+}
+
+.drone-chip .drone-note {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.1rem;
+}
+
+.drone-chip .drone-freq {
+  font-size: 0.85rem;
+  color: var(--tuner-text-light);
+}
+
+.drone-chip .remove-drone {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: var(--tuner-red);
+  color: white;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  margin-top: 0;
+  align-self: center;
+}
+
+.drone-chip .remove-drone:hover {
+  background: #c0392b;
+  transform: scale(1.1);
+}
+
+/* Volume Control */
+.drone-volume-control {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.drone-volume-control label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--tuner-text);
+  min-width: 60px;
+}
+
+.volume-slider {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--tuner-track);
+  border-radius: 3px;
+  outline: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--tuner-needle);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 8px rgba(74, 144, 226, 0.5);
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--tuner-needle);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.volume-slider::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 8px rgba(74, 144, 226, 0.5);
+}
+
+.volume-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--tuner-text);
+  min-width: 45px;
+  text-align: right;
+}
+
+/* Mobile Responsive for Drone Mode */
+@media (max-width: 767px) {
+  .mode-toggle-container {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .mode-toggle-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .drone-mode-section {
+    padding: 1.5rem 1rem;
+  }
+
+  .drone-gauge-container {
+    width: 300px;
+    height: 300px;
+  }
+
+  .drone-chip {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .drone-volume-control {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .drone-volume-control label {
+    min-width: auto;
+  }
+}
+
+/* ========================================
    ACCESSIBILITY
    ======================================== */
 
@@ -618,8 +964,11 @@
   .note-name,
   .cents-bar-indicator,
   .tuner-button,
-  .status-dot {
+  .status-dot,
+  .note-btn,
+  .mode-toggle-btn {
     transition: none;
+    animation: none;
   }
 }
 
@@ -627,7 +976,10 @@
 .tuner-button:focus-visible,
 .pitch-adjust:focus-visible,
 .transpose-adjust:focus-visible,
-.notation-option:focus-visible {
+.notation-option:focus-visible,
+.mode-toggle-btn:focus-visible,
+.note-btn:focus-visible,
+.octave-btn:focus-visible {
   outline: 2px solid var(--tuner-needle);
   outline-offset: 2px;
 }

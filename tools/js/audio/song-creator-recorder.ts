@@ -15,6 +15,7 @@ export type RecorderOptions = {
   minChangeMs?: number;        // required stability before pitch change
   minSilenceMs?: number;       // gap to split repeated notes
   silenceDb?: number;          // dBFS silence threshold
+  clarityFloor?: number;       // minimum clarity for voiced detection (0..1)
   attackRatio?: number;        // sudden RMS gain → new articulation
   latencyMs?: number;          // compensate input path
   tempo?: number;              // BPM
@@ -44,6 +45,7 @@ export class SongRecorder {
       minChangeMs: options.minChangeMs ?? 110,
       minSilenceMs: options.minSilenceMs ?? 80,
       silenceDb: options.silenceDb ?? -55,
+      clarityFloor: options.clarityFloor ?? 0.20,
       attackRatio: options.attackRatio ?? 1.8,
       latencyMs: options.latencyMs ?? 0,
       tempo: options.tempo ?? 120,
@@ -115,24 +117,39 @@ export class SongRecorder {
     let current: NoteEvent | null = null;
     const tolMidi = this.opts.centsTolerance / 100; // in semitones
 
+    // Cache to avoid O(n) per frame for sustained check
+    const sustainedCache = new Map<number, boolean>();
+    
     const sustained = (from: number, pitch: number) => {
+      const key = (from << 16) | (Math.round(pitch * 100) & 0xFFFF);
+      if (sustainedCache.has(key)) return sustainedCache.get(key)!;
+      
       // Require stability (minChangeMs) around this pitch
-      const to = from + this.opts.minChangeMs;
+      const endTime = this.frames[from].tMs + this.opts.minChangeMs;
       const p0 = pitch;
-      for (let i = from; i < this.frames.length && this.frames[i].tMs <= to; i++) {
+      let result = true;
+      
+      for (let i = from; i < this.frames.length && this.frames[i].tMs <= endTime; i++) {
         const dt = Math.abs(this.frames[i].midi - p0);
-        if (dt > tolMidi) return false;
+        if (dt > tolMidi) {
+          result = false;
+          break;
+        }
       }
-      return true;
+      
+      sustainedCache.set(key, result);
+      return result;
     };
 
     for (let i = 0; i < this.frames.length; i++) {
       const f = this.frames[i];
-      const voiced = f.rmsDb > this.opts.silenceDb && f.clarity >= 0.20 && f.freq > 0;
+      const voiced = f.rmsDb > this.opts.silenceDb && f.clarity >= (this.opts.clarityFloor ?? 0.20) && f.freq > 0;
 
       // Attack detection (articulation)
       const prevRms = i > 0 ? this.frames[i - 1].rmsDb : -120;
-      const attack = (f.rmsDb - prevRms) > (10 * Math.log10(this.opts.attackRatio));
+      // Convert dB difference to linear ratio: 10*log10(ratio) = delta_dB
+      const targetDeltaDb = 10 * Math.log10(this.opts.attackRatio);
+      const attack = (f.rmsDb - prevRms) > targetDeltaDb;
 
       if (!voiced) {
         // Silence—maybe close current note if enough gap
@@ -165,12 +182,15 @@ export class SongRecorder {
         current.durationMs = Math.max(current.durationMs, f.tMs - current.startMs);
         // Re-articulation on strong attack (creates new same-pitch note)
         if (attack && timeSinceOn > this.opts.minNoteMs && sepBySilence) {
+          // Close previous note
+          current.durationMs = f.tMs - current.startMs;
+          // Create new note
           current = this.makeNoteFromFrame(f, midi);
           this.recorded.push(current);
           this.lastArticMs = f.tMs;
         } else {
-          // accumulate clarity/velocity
-          current.clarity = 0.9 * current.clarity + 0.1 * f.clarity;
+          // accumulate clarity/velocity (exponential moving average)
+          current.clarity = 0.85 * current.clarity + 0.15 * f.clarity;
           current.velocity = Math.max(current.velocity, this.dbToVel(f.rmsDb));
         }
       } else {
@@ -194,8 +214,12 @@ export class SongRecorder {
     let notes = this.recorded.slice();
     if (!notes.length) return;
 
-    // 1) Drop too-short notes
+    // 1) Drop too-short notes (less than minimum duration)
     notes = notes.filter(n => n.durationMs >= this.opts.minNoteMs);
+    if (!notes.length) {
+      this.recorded = [];
+      return;
+    }
 
     // 2) Merge identical neighbors separated by tiny gaps
     const merged: NoteEvent[] = [];
