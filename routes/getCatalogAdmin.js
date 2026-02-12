@@ -40,6 +40,8 @@ module.exports = async (req, res) => {
       maxPerUser: item.maxPerUser,
       validPeriods: item.validPeriods || [],
       enabled: item.enabled !== false,
+      hasImage: item.hasImage,
+      imageVersion: item.imageVersion,
       createdAt: item.createdAt || Date.now()
     }));
 

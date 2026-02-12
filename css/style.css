@@ -40,6 +40,7 @@
 --color-success-dark:#146c43;
 --color-motools:#6e6e6e;
 --color-motools-dark:#5b5b5b;
+--color-mostore:#C49D29;
 --overlay-bg-rgb:244,246,248
 }
 
@@ -80,6 +81,7 @@
 --color-danger-dark:#e60000;
 --color-success:#00b371;
 --color-success-dark:#008f5b;
+--color-mostore-dark: #C49D29;
 --overlay-bg-rgb:18,18,18
 }
 
@@ -2212,6 +2214,10 @@ background:var(--color-primary)
 
 .action-button.secondary {
 background:var(--color-secondary)
+}
+
+.action-button.mostore {
+background:var(--color-mostore)
 }
 
 .action-button.motools {

@@ -182,6 +182,7 @@ async function setProfileImage() {
 
 function initButtons() {
   const nav = (btn, to) => btn && btn.addEventListener('click', () => (location.href = to));
+  nav($('#mostore-btn'), 'store');
   nav($('#motools-btn'), 'tools');
   nav($('#transfer-mobucks-btn'), 'transfer');
   nav($('#profile-btn'), 'profile');

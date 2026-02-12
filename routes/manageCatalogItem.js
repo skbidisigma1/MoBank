@@ -15,9 +15,9 @@ const validateItem = (data, isUpdate = false) => {
   }
 
   if (!isUpdate || data.description !== undefined) {
-    if (!data.description || typeof data.description !== 'string' || data.description.trim().length === 0) {
-      errors.push('Description is required');
-    } else if (data.description.trim().length > 500) {
+    if (data.description !== undefined && data.description !== null && typeof data.description !== 'string') {
+      errors.push('Description must be a string');
+    } else if (data.description && data.description.trim().length > 500) {
       errors.push('Description must be 500 characters or less');
     }
   }
@@ -117,6 +117,27 @@ module.exports = async (req, res) => {
   const admin = require('firebase-admin');
   const catalogRef = db.collection('store_catalog').doc('items');
 
+  // Helper to handle image persistence
+  const handleImage = async (itemId, imageBase64) => {
+    if (!imageBase64 || typeof imageBase64 !== 'string') return null;
+    
+    // Strict server-side limit (1MB max for Firestore doc)
+    // Client should have compressed to ~750KB
+    if (imageBase64.length > 1000000) {
+      throw new Error('Image too large (server limit 1MB)'); 
+    }
+    
+    const version = Date.now();
+    // Use set with merge: true to avoid overwriting other potential future fields
+    await db.collection('store_images').doc(itemId).set({
+      base64: imageBase64,
+      id: itemId,
+      updatedAt: version
+    }, { merge: true });
+    
+    return version;
+  };
+
   try {
     // CREATE
     if (req.method === 'POST') {
@@ -140,6 +161,17 @@ module.exports = async (req, res) => {
         createdAt: Date.now(),
         updatedAt: Date.now()
       };
+
+      // Handle Image
+      if (bodyData.imageBase64) {
+         try {
+           const v = await handleImage(itemId, bodyData.imageBase64);
+           newItem.hasImage = true;
+           newItem.imageVersion = v;
+         } catch (e) {
+           return res.status(400).json({ message: e.message });
+         }
+      }
 
       // Get existing catalog or create new
       const catalogDoc = await catalogRef.get();
@@ -198,6 +230,26 @@ module.exports = async (req, res) => {
       if (updates.enabled !== undefined) item.enabled = updates.enabled;
       item.updatedAt = Date.now();
 
+      // Handle Image Removal
+      if (bodyData.removeImage) {
+          item.hasImage = false;
+          item.imageVersion = null;
+          try {
+             await db.collection('store_images').doc(id).delete();
+          } catch(e) {}
+      }
+
+      // Handle Image Update
+      if (bodyData.imageBase64) {
+         try {
+           const v = await handleImage(id, bodyData.imageBase64);
+           item.hasImage = true;
+           item.imageVersion = v;
+         } catch (e) {
+           return res.status(400).json({ message: e.message });
+         }
+      }
+
       items[itemIndex] = item;
 
       await catalogRef.set({
@@ -240,6 +292,13 @@ module.exports = async (req, res) => {
         version: Date.now(),
         lastUpdated: admin.firestore.Timestamp.now()
       });
+      
+      // Attempt to delete associated image (fire and forget)
+      try {
+        await db.collection('store_images').doc(id).delete();
+      } catch (e) {
+        console.warn('Failed to delete associated image', e);
+      }
       
       return res.status(200).json({ message: 'Item deleted successfully' });
     }

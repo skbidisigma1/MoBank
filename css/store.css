@@ -3,7 +3,7 @@
   --store-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
   --store-shadow-dark: 0 16px 32px rgba(3, 7, 18, 0.45);
   --store-chip-bg: rgba(0, 0, 0, 0.06);
-  --store-chip-active: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  --store-chip-active: var(--color-primary);
   --store-chip-text: var(--color-white);
   --store-transition: all 180ms ease-in-out;
   --store-text-primary: var(--color-text);
@@ -112,6 +112,8 @@ body[data-theme="dark"] {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  position: sticky;
+  top: 24px;
 }
 
 .store-catalog {
@@ -126,7 +128,7 @@ body[data-theme="dark"] {
   display: flex;
   align-items: center;
   gap: 16px;
-  background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  background: var(--color-primary);
   padding: 12px 16px;
   border-radius: 18px;
   margin-bottom: 20px;
@@ -242,12 +244,14 @@ html[data-theme="dark"] .catalog-controls::after {
 .catalog-grid {
   display: grid;
   gap: 24px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  /* Reduced min-width to allow more items per row on desktop */
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
 .catalog-card {
-  padding: 24px;
-  border-radius: 22px;
+  padding: 16px; /* Reduced padding for denser layout */
+  border-radius: 12px;
+
   background: var(--store-card-bg);
   border: 1px solid var(--store-card-border);
   display: flex;
@@ -268,7 +272,7 @@ html[data-theme="dark"] .catalog-controls::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(6, 102, 204, 0.12), transparent 70%);
+  background: transparent;
   opacity: 0;
   transition: var(--store-transition);
 }
@@ -398,15 +402,13 @@ html[data-theme="dark"] .catalog-controls::after {
   gap: 20px;
   height: fit-content;
   box-shadow: var(--store-shadow);
-  position: sticky;
-  top: 24px;
 }
 
 .cart-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  background: var(--color-primary);
   border-radius: 18px;
   padding: 14px 12px 14px 18px;
   color: var(--color-white);
@@ -660,7 +662,7 @@ html[data-theme="dark"] .cart-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  background: var(--color-primary);
   border-radius: 14px;
   padding: 12px 18px;
   color: var(--color-white);
@@ -778,6 +780,7 @@ html[data-theme="dark"] .cart-footer {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    position: static;
   }
 }
 
@@ -936,7 +939,7 @@ html[data-theme="dark"] .cart-footer {
 
 .admin-catalog-items-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
 }
 
@@ -1444,7 +1447,7 @@ html[data-theme="dark"] .cart-footer {
   bottom: 24px;
   right: 24px;
   padding: 12px 20px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  background: var(--color-primary);
   color: var(--color-white);
   border: none;
   border-radius: 12px;
@@ -1517,3 +1520,241 @@ html[data-theme="dark"] .cart-footer {
     width: 100%;
   }
 }
+
+/* Image Support */
+.catalog-card__image-container {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    background: var(--color-hover-bg);
+    position: relative;
+    border: 1px solid var(--color-border);
+}
+.catalog-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--color-hover-bg);
+    color: var(--color-muted);
+    font-weight: 700;
+    font-size: 20px;
+}
+
+/* Image Upload Styles */
+.image-uploader-container {
+    margin-top: 8px;
+}
+
+.image-upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    border: 2px dashed var(--color-border);
+    border-radius: 12px;
+    background: var(--color-main-bg);
+    cursor: pointer;
+    transition: var(--store-transition);
+    gap: 12px;
+    color: var(--color-muted);
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.image-upload-label:hover {
+    border-color: var(--color-primary);
+    background: var(--store-surface-muted);
+    color: var(--color-primary);
+}
+
+.store-cropper-modal {
+    background-color: var(--container-color) !important;
+    opacity: 1 !important;
+    position: relative !important;
+    margin: auto !important;
+    inset: auto !important;
+}
+
+#cropper-modal.active {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.upload-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-hover-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    transition: var(--store-transition);
+    margin: 0 auto;
+}
+
+.image-upload-label:hover .upload-icon-wrapper {
+    background: rgba(6, 102, 204, 0.1);
+}
+
+.upload-text {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* Image Preview Styles */
+.image-preview-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-main-bg);
+}
+
+.preview-thumb-wrapper {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid var(--color-border);
+}
+
+.preview-thumb-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.preview-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.preview-filename {
+    font-weight: 500;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.danger-button.small-btn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    width: fit-content;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Specific gradient for checkout button per request */
+button#cart-checkout {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    border: none;
+    box-shadow: 0 4px 12px rgba(6, 102, 204, 0.25);
+}
+
+button#cart-checkout:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(6, 102, 204, 0.35);
+    transform: translateY(-1px);
+}
+
+.admin-search-bar {
+  /* Remove container styling that should be on the input */
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.admin-search-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-main-bg);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  transition: var(--store-transition);
+  font-family: inherit;
+}
+
+.admin-search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(6, 102, 204, 0.1);
+}
+
+/* Period Selector Grid */
+.period-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.period-chip {
+  display: flex;
+  position: relative;
+  cursor: pointer;
+}
+
+.period-chip input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.chip-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 10px;
+  background: var(--color-main-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.period-chip:hover .chip-content {
+  background: var(--color-hover-bg);
+  border-color: var(--color-primary);
+}
+
+.period-chip input:checked + .chip-content {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(6, 102, 204, 0.25);
+}
+
+.period-chip input:focus + .chip-content {
+  box-shadow: 0 0 0 3px rgba(6, 102, 204, 0.2);
+}
+
+

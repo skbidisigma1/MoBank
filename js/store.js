@@ -1,8 +1,88 @@
 const STORE_CACHE_KEY = '__mobank_store_catalog';
 const STORE_ORDERS_CACHE_KEY = '__mobank_store_orders';
 const STORE_ADMIN_CATALOG_CACHE_KEY = '__mobank_store_admin_catalog';
-const STORE_CACHE_MAX_AGE = 30 * 1000; // 30 seconds
+const STORE_CACHE_MAX_AGE = 180 * 1000; // 3 minutes
 const STORE_CART_MAX_ITEMS = 20;
+
+const ADMIN_CATALOG_PER_PAGE = 10;
+let adminCatalogPage = 1;
+let adminSearchTerm = '';
+
+// Cropper variables
+let cropperInstance = null;
+let currentCroppedBase64 = null;
+let currentOriginalFile = null; // Store the original file for re-cropping
+let isCroppingExisting = false; // Flag to know if we are cropping an existing server image
+
+// Image processing utility
+function processImage(file) {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) {
+        reject(new Error('File must be an image'));
+        return;
+    }
+    
+    // 10MB hard limit for input file to prevent crashing browser
+    if (file.size > 10 * 1024 * 1024) { 
+       reject(new Error('Image too large. Please choose an image under 10MB.'));
+       return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        // Increased max size for better quality on desktop
+        const maxSize = 1000; 
+        
+        if (width > height) {
+          if (width > maxSize) {
+            height *= maxSize / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width *= maxSize / height;
+            height = maxSize;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        // Good quality resampling
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Compress to webp (0.85 quality - much better than 0.7)
+        const dataUrl = canvas.toDataURL('image/webp', 0.85);
+        
+        // Safety check for Firestore 1MB limit
+        // 1MB = 1,048,576 bytes. Base64 is ~1.33x size.
+        // Target max string length approx 1,300,000 for safety, but staying under 1,000,000 is safer for other fields.
+        if (dataUrl.length > 1000000) {
+           // If too big, try again with slightly lower quality
+           const retryDataUrl = canvas.toDataURL('image/webp', 0.70);
+           if (retryDataUrl.length > 1000000) {
+             reject(new Error('Image is too complex to compress safely. Please use a simpler or smaller image.'));
+           } else {
+             resolve(retryDataUrl);
+           }
+        } else {
+           resolve(dataUrl);
+        }
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
 
 // Debounce utility
 const debounce = (func, wait) => {
@@ -264,6 +344,25 @@ function renderCatalog() {
     card.className = 'catalog-card';
     card.dataset.itemId = item.id;
 
+    // Image container
+    const imgContainer = document.createElement('div');
+    imgContainer.className = 'catalog-card__image-container';
+    imgContainer.innerHTML = '<div class="image-placeholder"><svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-image-icon lucide-file-image"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><circle cx="10" cy="12" r="2"/><path d="m20 17-1.296-1.296a2.41 2.41 0 0 0-3.408 0L9 22"/></svg></div>';
+
+    if (item.hasImage && item.imageVersion && CACHE.images) {
+       CACHE.images.get(item.id, item.imageVersion).then(base64 => {
+           if (base64) {
+               imgContainer.innerHTML = '';
+               const img = document.createElement('img');
+               img.src = base64;
+               img.alt = item.name;
+               img.className = 'catalog-card__image';
+               img.loading = 'lazy';
+               imgContainer.appendChild(img);
+           }
+       });
+    }
+
     // Calculate how many the user can still buy
     let userCanBuy = Infinity;
     
@@ -313,6 +412,7 @@ function renderCatalog() {
     button.textContent = isSoldOut ? 'Sold Out' : 'Add to cart';
     if (isSoldOut) button.disabled = true;
 
+    card.appendChild(imgContainer);
     card.appendChild(title);
     card.appendChild(description);
     card.appendChild(meta);
@@ -929,6 +1029,225 @@ function initAdminUI() {
   wireAdminEvents();
   wireAdminCollapsiblePersistence();
   wirePaginationControls();
+
+  // Admin Search Listener
+  const adminSearchInput = document.getElementById('admin-catalog-search');
+  adminSearchInput?.addEventListener('input', (e) => {
+      adminSearchTerm = e.target.value.trim().toLowerCase();
+      adminCatalogPage = 1; 
+      renderAdminCatalog();
+  });
+  
+  // Image upload preview
+  const imgInput = document.getElementById('item-image');
+  const uploadArea = document.getElementById('image-upload-area');
+  const previewContainer = document.getElementById('image-preview-container');
+  const previewImg = document.getElementById('image-preview');
+  const previewFilename = document.getElementById('preview-filename');
+  
+  // Cropper Modal Elements
+  const cropperModal = document.getElementById('cropper-modal');
+  const cropperImage = document.getElementById('cropper-image');
+  const cropperCancel = document.getElementById('cropper-cancel');
+  const cropperSave = document.getElementById('cropper-save');
+  const cropperControls = document.querySelector('.cropper-controls');
+
+  // Input Change: Open Cropper with new file
+  imgInput?.addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+      const file = this.files[0];
+      
+      // Basic validation
+      if (!file.type.startsWith('image/')) {
+         showToast('Invalid File', 'Please select an image file.', 'warning');
+         return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+         showToast('File Too Large', 'Please select an image smaller than 10MB.', 'warning');
+         return;
+      }
+      
+      currentOriginalFile = file; // Store original for re-cropping
+      isCroppingExisting = false;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        openCropperModal(e.target.result);
+      };
+      reader.readAsDataURL(file);
+      
+      // Clear input so change event fires again if same file selected
+      this.value = '';
+    }
+  });
+  
+  // Preview Click: Re-crop
+  previewImg?.addEventListener('click', () => {
+     if (currentOriginalFile) {
+        // Re-crop the original file we just uploaded
+        const reader = new FileReader();
+        reader.onload = (e) => {
+           isCroppingExisting = false;
+           openCropperModal(e.target.result);
+        };
+        reader.readAsDataURL(currentOriginalFile);
+     } else if (isEditingItem && previewImg.src) {
+        // Crop the existing server image further
+        isCroppingExisting = true;
+        // Need to ensure crossOrigin is handled for server images if on different domain, 
+        // but here they are likely base64 or same origin. 
+        // Base64 is safe.
+        openCropperModal(previewImg.src);
+     }
+  });
+  
+  // Helper: Open Cropper Modal
+  function openCropperModal(imageSrc) {
+     if (!cropperModal || !cropperImage) return;
+     
+     cropperImage.src = imageSrc;
+     cropperModal.style.display = 'flex';
+     cropperModal.classList.add('active'); // For transition if any
+     
+     // Destroy previous instance if exists (cleanup)
+     if (cropperInstance) {
+        cropperInstance.destroy();
+        cropperInstance = null;
+     }
+     
+     // Initialize Cropper
+     // Wait for image to load in modal? usually fast for dataURL
+     cropperInstance = new Cropper(cropperImage, {
+        viewMode: 0, // Allow crop box to go outside image
+        dragMode: 'move', // Allow moving the image canvas
+        aspectRatio: 1, // Force square crop
+        autoCropArea: 1, // Default to largest possible crop
+        restore: false,
+        guides: false, // No grid lines
+        center: false, // No center indicator
+        highlight: false,
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        toggleDragModeOnDblclick: false,
+        background: true, // Use checkerboard to see transparency/void
+     });
+  }
+  
+  // Helper: Close Cropper Modal
+  function closeCropperModal() {
+     if (cropperModal) {
+        cropperModal.style.display = 'none';
+        cropperModal.classList.remove('active');
+     }
+     if (cropperInstance) {
+        cropperInstance.destroy();
+        cropperInstance = null;
+     }
+     // If we cancelled without saving a new crop, and we don't have a current result,
+     // we should probably clear the input if it was a new upload.
+     // But since we stored currentOriginalFile only on input change, 
+     // and we didn't clear preview yet, it's fine.
+  }
+  
+  // Cropper Controls
+  cropperControls?.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn || !cropperInstance) return;
+      const action = btn.dataset.cropperAction;
+      
+      switch(action) {
+          case 'rotate-left': cropperInstance.rotate(-90); break;
+          case 'rotate-right': cropperInstance.rotate(90); break;
+          case 'zoom-in': cropperInstance.zoom(0.1); break;
+          case 'zoom-out': cropperInstance.zoom(-0.1); break;
+          case 'reset': cropperInstance.reset(); break;
+      }
+  });
+
+  // Save Button
+  cropperSave?.addEventListener('click', () => {
+     if (!cropperInstance) return;
+     
+     // Get cropped canvas
+     // Max 1000px dimension
+     const canvas = cropperInstance.getCroppedCanvas({
+        maxWidth: 1000,
+        maxHeight: 1000,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
+     });
+     
+     if (!canvas) {
+         showToast('Error', 'Could not crop image', 'danger');
+         return;
+     }
+     
+     // Convert to Base64 (WebP 0.85)
+     let base64 = canvas.toDataURL('image/webp', 0.85);
+     
+     // Check size limit (1MB safely)
+     if (base64.length > 1000000) {
+         // Try lower quality
+         base64 = canvas.toDataURL('image/webp', 0.70);
+         if (base64.length > 1000000) {
+              showToast('Image Too Large', 'The cropped image is too complex/large. Please crop smaller or use a simpler image.', 'warning');
+              return;
+         }
+     }
+     
+     // Success
+     currentCroppedBase64 = base64;
+     
+     // Update Preview
+     if (previewImg) previewImg.src = base64;
+     if (previewFilename) {
+        if (currentOriginalFile) {
+            previewFilename.textContent = currentOriginalFile.name;
+        } else {
+            previewFilename.textContent = "Cropped Image";
+        }
+     }
+     
+     // Show preview area
+     if (uploadArea) uploadArea.style.display = 'none';
+     if (previewContainer) previewContainer.style.display = 'flex';
+     
+     // Close Modal
+     closeCropperModal();
+  });
+  
+  // Cancel Button
+  cropperCancel?.addEventListener('click', () => {
+     closeCropperModal();
+     // If we cancelled a NEW upload (no previous result), we might want to clear state
+     if (!currentCroppedBase64 && !isEditingItem) {
+        currentOriginalFile = null;
+        if(imgInput) imgInput.value = '';
+     }
+  });
+  
+  // Remove Image Button Logic
+  document.getElementById('remove-image-btn')?.addEventListener('click', () => {
+    // Determine if we are just clearing a new upload or removing an existing saved image
+    const inp = document.getElementById('item-image');
+    if (inp) inp.value = '';
+    
+    // Clear preview
+    if (previewImg) previewImg.src = '';
+    
+    // Reset State
+    currentOriginalFile = null;
+    currentCroppedBase64 = null;
+    
+    // Show upload area again
+    if (previewContainer) previewContainer.style.display = 'none';
+    if (uploadArea) uploadArea.style.display = 'flex';
+    
+    // Mark for removal if we are editing an existing item with an image
+    if (isEditingItem) {
+        // We set a flag on the form to know we want to remove the image on submit
+        document.getElementById('catalog-item-form').dataset.removeImage = 'true';
+    }
+  });
 }
 
 // Persist which admin collapsible is open
@@ -1017,16 +1336,44 @@ async function loadAdminCatalog() {
 
 function renderAdminCatalog() {
   const container = document.getElementById('admin-catalog-items');
+  const pagination = document.getElementById('admin-catalog-pagination');
+  const pageInfo = document.getElementById('admin-catalog-page-info');
+  const prevBtn = document.getElementById('admin-catalog-prev');
+  const nextBtn = document.getElementById('admin-catalog-next');
+  
   if (!container) return;
   
   container.innerHTML = '';
   
   if (!allCatalogItems.length) {
     container.innerHTML = '<p class="empty-message">No catalog items yet. Create one below.</p>';
+    if (pagination) pagination.style.display = 'none';
     return;
   }
   
-  allCatalogItems.forEach(item => {
+  let itemsToRender = allCatalogItems;
+  if (adminSearchTerm) {
+    itemsToRender = allCatalogItems.filter(item => 
+      item.name.toLowerCase().includes(adminSearchTerm)
+    );
+  }
+
+  if (!itemsToRender.length) {
+    container.innerHTML = '<p class="empty-message">No matching items found.</p>';
+    if (pagination) pagination.style.display = 'none';
+    return;
+  }
+  
+  // Calculate pagination
+  const totalPages = Math.ceil(itemsToRender.length / ADMIN_CATALOG_PER_PAGE);
+  if (adminCatalogPage > totalPages) adminCatalogPage = totalPages;
+  if (adminCatalogPage < 1) adminCatalogPage = 1;
+  
+  const startIdx = (adminCatalogPage - 1) * ADMIN_CATALOG_PER_PAGE;
+  const endIdx = startIdx + ADMIN_CATALOG_PER_PAGE;
+  const pageItems = itemsToRender.slice(startIdx, endIdx);
+  
+  pageItems.forEach(item => {
     const card = document.createElement('div');
     card.className = 'admin-catalog-card';
     
@@ -1055,6 +1402,18 @@ function renderAdminCatalog() {
     `;
     container.appendChild(card);
   });
+  
+  // Update pagination controls
+  if (pagination) {
+     if (totalPages > 1) {
+        pagination.style.display = 'flex';
+        if (pageInfo) pageInfo.textContent = `Page ${adminCatalogPage} of ${totalPages}`;
+        if (prevBtn) prevBtn.disabled = adminCatalogPage === 1;
+        if (nextBtn) nextBtn.disabled = adminCatalogPage === totalPages;
+     } else {
+        pagination.style.display = 'none';
+     }
+  }
 }
 
 async function handleCatalogSubmit(evt) {
@@ -1073,6 +1432,36 @@ async function handleCatalogSubmit(evt) {
   const periodCheckboxes = document.querySelectorAll('input[name="valid-period"]:checked');
   const validPeriods = Array.from(periodCheckboxes).map(cb => parseInt(cb.value, 10));
   
+  // Handle image processing
+  let imageBase64 = null;
+  const imageInput = document.getElementById('item-image');
+  const shouldRemoveImage = document.getElementById('catalog-item-form').dataset.removeImage === 'true';
+  
+  const saveBtn = document.getElementById('save-item-btn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Processing...';
+
+  try {
+     // PRIORITIZE CROPPED RESULT
+     if (currentCroppedBase64) {
+         imageBase64 = currentCroppedBase64;
+     } else if (imageInput.files && imageInput.files[0]) {
+       // Fallback: If user somehow bypassed cropper (drag drop not handled?), process file directly
+       // But we force cropper on input change.
+       try {
+         // Auto-crop center? Or just process as before
+         imageBase64 = await processImage(imageInput.files[0]);
+       } catch (imgErr) {
+         throw new Error(imgErr.message);
+       }
+     }
+  } catch (err) {
+    showToast('Image Error', err.message, 'danger');
+    saveBtn.disabled = false;
+    saveBtn.textContent = itemId ? 'Update Item' : 'Create Item';
+    return;
+  }
+  
   const payload = {
     name,
     description,
@@ -1083,8 +1472,12 @@ async function handleCatalogSubmit(evt) {
     validPeriods
   };
   
-  const saveBtn = document.getElementById('save-item-btn');
-  saveBtn.disabled = true;
+  if (imageBase64) {
+      payload.imageBase64 = imageBase64;
+  } else if (shouldRemoveImage) {
+      payload.removeImage = true;
+  }
+  
   saveBtn.textContent = 'Saving...';
   
   try {
@@ -1137,8 +1530,16 @@ async function handleCatalogSubmit(evt) {
 
 function resetCatalogForm() {
   const wasEditing = isEditingItem;
+  
+  // Reset Cropper State
+  currentOriginalFile = null;
+  currentCroppedBase64 = null;
+  isCroppingExisting = false;
+
   const form = document.getElementById('catalog-item-form');
   form?.reset();
+  if (form) delete form.dataset.removeImage;
+
   document.getElementById('item-id').value = '';
   document.getElementById('save-item-btn').textContent = 'Create Item';
   document.getElementById('cancel-item-btn').textContent = 'Cancel';
@@ -1146,17 +1547,36 @@ function resetCatalogForm() {
   const formTitle = document.getElementById('form-section-title');
   if (formTitle) formTitle.textContent = 'Add New Item';
   
+  // Reset image preview state
+  const imgInp = document.getElementById('item-image');
+  if (imgInp) imgInp.value = '';
+  
+  const prevContainer = document.getElementById('image-preview-container');
+  if(prevContainer) prevContainer.style.display = 'none';
+  
+  const upArea = document.getElementById('image-upload-area');
+  if(upArea) upArea.style.display = 'flex';
+  
+  const prevImg = document.getElementById('image-preview');
+  if (prevImg) prevImg.src = '';
+  
+  const pFilename = document.getElementById('preview-filename');
+  if (pFilename) pFilename.textContent = '';
+  
   isEditingItem = false;
   if (wasEditing) {
     showToast('Editing canceled', 'Ready to create a new item');
   }
 }
 
+
 function editCatalogItem(itemId) {
   const item = allCatalogItems.find(i => i.id === itemId);
   if (!item) return;
   
   isEditingItem = true;
+  const form = document.getElementById('catalog-item-form');
+  if (form) delete form.dataset.removeImage;
   
   document.getElementById('item-id').value = item.id;
   document.getElementById('item-name').value = item.name;
@@ -1165,6 +1585,31 @@ function editCatalogItem(itemId) {
   document.getElementById('item-stock').value = item.stock === null ? '' : item.stock;
   document.getElementById('item-max-per-user').value = item.maxPerUser === null ? '' : item.maxPerUser;
   document.getElementById('item-enabled').checked = item.enabled !== false;
+
+  // Handle image preview for existing item
+  const uploadArea = document.getElementById('image-upload-area');
+  const previewContainer = document.getElementById('image-preview-container');
+  const previewImg = document.getElementById('image-preview');
+  const previewFilename = document.getElementById('preview-filename');
+
+  // Reset file input
+  const imgInp = document.getElementById('item-image');
+  if (imgInp) imgInp.value = '';
+
+  if (item.hasImage && CACHE.images) {
+      if (previewFilename) previewFilename.textContent = "Current Image";
+      if (uploadArea) uploadArea.style.display = 'none';
+      if (previewContainer) previewContainer.style.display = 'flex';
+      
+      CACHE.images.get(item.id, item.imageVersion).then(base64 => {
+          if (base64 && previewImg) {
+              previewImg.src = base64;
+          }
+      });
+  } else {
+      if (uploadArea) uploadArea.style.display = 'flex';
+      if (previewContainer) previewContainer.style.display = 'none';
+  }
   
   // uncheck all period checkboxes
   document.querySelectorAll('input[name="valid-period"]').forEach(cb => cb.checked = false);
@@ -1424,6 +1869,26 @@ function renderFulfilledOrders() {
 }
 
 function wirePaginationControls() {
+  // Admin Catalog pagination
+  document.getElementById('admin-catalog-prev')?.addEventListener('click', () => {
+    if (adminCatalogPage > 1) {
+      adminCatalogPage--;
+      renderAdminCatalog();
+    }
+  });
+
+  document.getElementById('admin-catalog-next')?.addEventListener('click', () => {
+    let count = allCatalogItems.length;
+    if (adminSearchTerm) {
+        count = allCatalogItems.filter(i => i.name.toLowerCase().includes(adminSearchTerm)).length;
+    }
+    const totalPages = Math.ceil(count / ADMIN_CATALOG_PER_PAGE);
+    if (adminCatalogPage < totalPages) {
+      adminCatalogPage++;
+      renderAdminCatalog();
+    }
+  });
+
   // Pending orders pagination
   document.getElementById('pending-prev')?.addEventListener('click', () => {
     if (pendingOrdersPage > 1) {

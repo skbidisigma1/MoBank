@@ -15,7 +15,6 @@
   margin-right: 0.15em;
 }
 
-/* Specific sizing for different contexts */
 .mobucks-icon--small {
   width: 1.05em;
   height: 1.05em;
@@ -34,7 +33,7 @@
   vertical-align: -0.3em;   
 }
 
-/* Ensure icon scales with text */
+/* ensure icon scales with text */
 h1 .mobucks-icon,
 h2 .mobucks-icon,
 h3 .mobucks-icon,
@@ -43,7 +42,7 @@ h3 .mobucks-icon,
   vertical-align: -0.25em;
 }
 
-/* For inline usage in paragraphs */
+/* for inline usage in paragraphs */
 p .mobucks-icon,
 span .mobucks-icon {
   vertical-align: -0.2em;

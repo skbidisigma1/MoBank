@@ -125,7 +125,7 @@ module.exports = async (req, res) => {
       const stockUpdates = new Map(); // Track stock changes
 
       for (const item of items) {
-        if (!item.id || !item.quantity || item.quantity < 1) {
+        if (!item.id || !item.quantity || item.quantity < 1 || !Number.isInteger(item.quantity)) {
           throw new Error('Invalid item format');
         }
 
