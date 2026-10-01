@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>MoBank - Admin Panel</title>
   <script src="../js/cache.js"></script>
   <script src="../js/theme.js"></script>
+  <script src="../js/class-periods.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">  <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/admin.css">
@@ -13,12 +14,15 @@
   <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tsparticles@3.3.0/tsparticles.bundle.min.js" crossorigin="anonymous" defer></script>
   <script src="../js/auth.js"></script>
+    <script src="../js/particle-config-ui.js" defer></script>
+    <script src="../js/notifications-ui.js" defer></script>
     <script src="../js/headerFooter.js" defer></script>
     <script src="../js/toast.js" defer></script>
     <script src="../js/particles-config.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js"></script>
     <script src="../js/currency-formatter.js"></script>
     <script src="../js/admin.js" defer></script>
+    <script src="../js/school-year-reset.js" defer></script>
 </head>
 <body>
   <div id="particles-js"></div>
@@ -27,6 +31,21 @@
     <section class="admin-section">
       <h1 class="page-heading">Admin Panel</h1>
       <p class="page-description">Manage student MoBucks balances</p>
+      <section class="admin-card" aria-labelledby="school-year-reset-heading">
+        <h2 class="admin-card-title" id="school-year-reset-heading">School-year setup</h2>
+        <p>Preview and reset class periods for a new school year. Balances and account history are preserved.</p>
+        <div class="form-group">
+          <label for="reset-source-year">Current school year</label>
+          <input id="reset-source-year" type="text" inputmode="numeric" pattern="[0-9]{4}-[0-9]{4}" placeholder="2025-2026" required>
+        </div>
+        <div class="form-group">
+          <label for="reset-target-year">New school year</label>
+          <input id="reset-target-year" type="text" inputmode="numeric" pattern="[0-9]{4}-[0-9]{4}" placeholder="2026-2027" required>
+        </div>
+        <button id="preview-class-period-reset" class="secondary-button" type="button">Preview reset</button>
+        <button id="run-class-period-reset" class="submit-button" type="button" disabled>Reset class periods</button>
+        <p id="class-period-reset-status" role="status" aria-live="polite"></p>
+      </section>
       <div class="tab-container">
         <button class="tab-button active" data-period="4">Period 4</button>
         <button class="tab-button" data-period="5">Period 5</button>

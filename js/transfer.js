@@ -13,11 +13,12 @@ async function loadTransferPage() {
     }
     document.getElementById('current-balance').innerHTML = formatMoBucks(userData.currency_balance || 0);
     const classPeriod = userData.class_period;
-    if (!classPeriod) {
-      showToast('Error', 'User class period is undefined.');
+    const validPeriods = (window.MOBANK_CLASS_PERIODS || []).map(period => period.value);
+    if (!validPeriods.includes(Number(classPeriod))) {
+      window.location.replace('/profile?welcome=1');
       return;
     }
-    setupTransferForm(classPeriod, userData.name);
+    setupTransferForm();
     displayRecentTransactions(userData.transactions || []);
   } catch (error) {
     showToast('Error', 'Failed to load user data.');
@@ -26,91 +27,12 @@ async function loadTransferPage() {
 
 document.addEventListener('DOMContentLoaded', loadTransferPage);
 
-async function getCachedUser() {
-    try {
-        // Check cache first
-        const cachedData = CACHE.read(CACHE.USER_KEY);
-        if (cachedData) {
-            return cachedData;
-        }
-
-        // If no cache, fetch fresh data
-        return await refreshUserData();
-    } catch (error) {
-        console.error('Error getting cached user:', error);
-        throw error;
-    }
-}
-
-async function refreshUserData() {
-    try {
-        const response = await fetch('/api/user/data', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const userData = await response.json();
-        
-        // Cache the fresh data
-        CACHE.write(CACHE.USER_KEY, userData, CACHE.USER_MAX_AGE);
-        
-        return userData;
-    } catch (error) {
-        console.error('Error fetching user data:', error);
-        throw error;
-    }
-}
-
 function getCachedUserData() {
   return CACHE.read(CACHE.USER_KEY);
 }
 
 function setCachedUserData(data) {
   CACHE.write(CACHE.USER_KEY, data, CACHE.USER_MAX_AGE);
-}
-
-// Map period numbers to user-friendly names
-const periodNames = {
-  '4': 'Period 4',
-  '5': 'Period 5',
-  '6': 'Period 6',
-  '7': 'Period 7',
-  '8': 'Symphonic Orchestra',
-  '10': 'Chamber Orchestra'
-};
-
-function getPeriodName(period) {
-  return periodNames[period] || `Period ${period}`;
-}
-
-function getCachedNames(period) {
-  const cached = localStorage.getItem(`namesByPeriod-${period}`);
-  if (cached) {
-    try {
-      const parsed = JSON.parse(cached);
-      const now = Date.now();
-      if (now - parsed.timestamp < (10 * 60 * 1000)) { // Keep 10 minutes for names cache
-        return parsed.data;
-      }
-    } catch (e) {
-      return null;
-    }
-  }
-  return null;
-}
-
-function setCachedNames(period, data) {
-  const cacheEntry = {
-    data: data,
-    timestamp: Date.now(),
-  };
-  localStorage.setItem(`namesByPeriod-${period}`, JSON.stringify(cacheEntry));
 }
 
 async function getUserData() {
@@ -154,64 +76,70 @@ async function getUserData() {
   return userData;
 }
 
-async function getNamesForPeriod(period) {
-  let names = getCachedNames(period);
-  if (names) {
-    return names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+async function getTransferRecipients() {
+  const token = await getToken();
+  const response = await fetch('/api/getTransferRecipients', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    const error = new Error(data.message || 'Failed to load recipients.');
+    error.status = response.status;
+    throw error;
   }
-  try {
-    const token = await getToken();
-    const response = await fetch(`/api/getAggregatedLeaderboard?period=${period}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const data = await response.json();    if (response.ok) {
-      const extractedNames = (data.leaderboardData || []).map(item => item.name);
-      setCachedNames(period, extractedNames);
-      return extractedNames.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-    } else {
-      showToast('Error', data.message || `Failed to load student names for ${getPeriodName(period)}.`);
-      return [];
-    }
-  } catch (error) {
-    showToast('Error', `Failed to load student names for ${getPeriodName(period)}.`);
-    return [];
-  }
+  return Array.isArray(data.recipients) ? data.recipients : [];
 }
 
-function setupTransferForm(period, senderName) {
+function setupTransferForm() {
   const recipientInput = document.getElementById('recipient-name');
   const amountInput = document.getElementById('transfer-amount');
   const transferForm = document.getElementById('transfer-form');
   const suggestionsContainer = recipientInput.nextElementSibling;
-  let names = null;
+  let recipients = null;
+  let recipientsPromise = null;
+  let selectedRecipient = null;
 
-  const loadNames = async () => {
-    if (names) return;
-    names = await getNamesForPeriod(period);
-    names = names.filter((name) => name !== senderName);
+  const loadRecipients = async () => {
+    if (recipients) return recipients;
+    if (!recipientsPromise) {
+      recipientsPromise = getTransferRecipients()
+        .then(data => {
+          recipients = data;
+          return data;
+        })
+        .catch(error => {
+          if (error.status === 428) {
+            window.location.replace('/profile?welcome=1');
+          }
+          showToast('Error', error.message || 'Failed to load recipients.');
+          recipientsPromise = null;
+          return [];
+        });
+    }
+    return recipientsPromise;
   };
 
-  recipientInput.addEventListener('focus', loadNames);
+  recipientInput.addEventListener('focus', loadRecipients);
 
-  recipientInput.addEventListener('input', () => {
+  recipientInput.addEventListener('input', async () => {
+    selectedRecipient = null;
     const query = recipientInput.value.trim().toLowerCase();
     suggestionsContainer.innerHTML = '';
-    if (!query || !names) {
+    if (!query) {
       return;
     }
-    const matches = names.filter((name) => name.toLowerCase().includes(query));
-    matches.forEach((name) => {
+    const allRecipients = await loadRecipients();
+    if (recipientInput.value.trim().toLowerCase() !== query) return;
+    const matches = allRecipients.filter(user =>
+      user.name.toLowerCase().includes(query)
+    );
+    matches.forEach(user => {
       const suggestion = document.createElement('div');
       suggestion.classList.add('suggestion-item');
-      const highlightedName = name.replace(
-        new RegExp(query, 'gi'),
-        (match) => `<span class="highlighted">${match}</span>`
-      );
-      suggestion.innerHTML = highlightedName;
+      suggestion.textContent = user.name;
       suggestion.addEventListener('click', () => {
-        recipientInput.value = name;
+        recipientInput.value = user.name;
+        selectedRecipient = user;
         suggestionsContainer.innerHTML = '';
       });
       suggestionsContainer.appendChild(suggestion);
@@ -229,20 +157,14 @@ function setupTransferForm(period, senderName) {
     const submitButton = transferForm.querySelector('button[type="submit"]');
     if (submitButton.disabled) return;
     submitButton.disabled = true;
-    const recipientName = recipientInput.value.trim();
-    const amount = parseInt(amountInput.value, 10);
-    if (!recipientName) {
-      showToast('Validation Error', 'Please enter a valid recipient name.');
+    const amount = amountInput.valueAsNumber;
+    if (!selectedRecipient || selectedRecipient.name !== recipientInput.value.trim()) {
+      showToast('Validation Error', 'Select a recipient from the suggestions.');
       submitButton.disabled = false;
       return;
     }
-    if (recipientName.toLowerCase() === senderName.toLowerCase()) {
-      showToast('Error', 'Why are you even trying to transfer to yourself smh');
-      submitButton.disabled = false;
-      return;
-    }
-    if (!amount || amount <= 0) {
-      showToast('Validation Error', 'Please enter a valid amount greater than zero.');
+    if (!Number.isSafeInteger(amount) || amount <= 0) {
+      showToast('Validation Error', 'Please enter a positive whole number.');
       submitButton.disabled = false;
       return;
     }
@@ -255,18 +177,29 @@ function setupTransferForm(period, senderName) {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          recipientName,
+          recipientUid: selectedRecipient.uid,
           amount,
         }),
       });
       const result = await response.json();
       if (response.ok) {
         showToast('Success', result.message);
-        const updatedUserData = await getUserData();
+        // The transfer response carries the sender data committed by the same
+        // transaction, so the fresh balance cannot be shadowed by local cache.
+        const updatedUserData = result.userData;
         setCachedUserData(updatedUserData);
         document.getElementById('current-balance').innerHTML = formatMoBucks(updatedUserData.currency_balance || 0);
         displayRecentTransactions(updatedUserData.transactions || []);
       } else {
+        if (response.status === 428) {
+          window.location.replace('/profile?welcome=1');
+          return;
+        }
+        if (response.status === 409) {
+          // The selected user may have changed periods after this list loaded.
+          recipients = null;
+          recipientsPromise = null;
+        }
         showToast('Error', result.message || 'An error occurred.');
       }
     } catch (error) {
@@ -274,6 +207,7 @@ function setupTransferForm(period, senderName) {
     }
     recipientInput.value = '';
     amountInput.value = '';
+    selectedRecipient = null;
     suggestionsContainer.innerHTML = '';
     setTimeout(() => {
       submitButton.disabled = false;
@@ -296,9 +230,11 @@ function displayRecentTransactions(transactions) {
 
   transactions.forEach(tx => {
     const li = document.createElement('li');
-    const date = tx.timestamp 
-        ? new Date(tx.timestamp._seconds * 1000 + (tx.timestamp._nanoseconds || 0) / 1000000)
-        : new Date();
+    const seconds = tx.timestamp?._seconds ?? tx.timestamp?.seconds;
+    const nanoseconds = tx.timestamp?._nanoseconds ?? tx.timestamp?.nanoseconds ?? 0;
+    const date = Number.isFinite(seconds)
+      ? new Date(seconds * 1000 + nanoseconds / 1000000)
+      : new Date();
         
     const formattedDate = date.toLocaleString(undefined, {
         month: 'short',
@@ -310,14 +246,21 @@ function displayRecentTransactions(transactions) {
     const amountFormatted = formatMoBucks(tx.amount, { absolute: true });
     const amount = tx.type === 'credit' ? `+${amountFormatted}` : `-${amountFormatted}`;
     const amountClass = tx.type === 'credit' ? 'credit' : 'debit';
-    
-    li.innerHTML = `
-        <span class="transaction-amount ${amountClass}">${amount}</span>
-        <span class="transaction-details">
-            <span class="transaction-type">${tx.type === 'credit' ? 'from' : 'to'} ${tx.counterpart}</span>
-            <span class="transaction-date">${formattedDate}</span>
-        </span>
-    `;
+
+    const amountElement = document.createElement('span');
+    amountElement.className = `transaction-amount ${amountClass}`;
+    amountElement.textContent = amount;
+
+    const details = document.createElement('span');
+    details.className = 'transaction-details';
+    const description = document.createElement('span');
+    description.className = 'transaction-type';
+    description.textContent = `${tx.type === 'credit' ? 'from' : 'to'} ${tx.counterpart || 'Unknown User'}`;
+    const dateElement = document.createElement('span');
+    dateElement.className = 'transaction-date';
+    dateElement.textContent = formattedDate;
+    details.append(description, dateElement);
+    li.append(amountElement, details);
     list.appendChild(li);
   });
 }

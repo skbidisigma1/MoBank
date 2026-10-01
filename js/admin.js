@@ -4,14 +4,9 @@ async function loadAdminContent() {
   await window.auth0Promise;
   const user = await getUser();
   const roles = (user && user['https://mo-classroom.us/roles']) || [];
-  const periodNames = {
-    '4': 'Period 4',
-    '5': 'Period 5',
-    '6': 'Period 6',
-    '7': 'Period 7',
-    '8': 'Symphonic Orchestra',
-    '10': 'Chamber Orchestra'
-  };
+  const periodNames = Object.fromEntries(
+    (window.MOBANK_CLASS_PERIODS || []).map(period => [String(period.value), period.label])
+  );
   if (!roles.includes('admin')) {
     window.location.href = '/dashboard';
     return;
@@ -801,7 +796,7 @@ async function loadAdminContent() {
   }
 
   function getCachedNames(period) {
-    const cached = localStorage.getItem(`namesByPeriod-${period}`);
+    const cached = localStorage.getItem(`adminNamesByPeriod-v2-${period}`);
     if (cached) {
       const parsed = JSON.parse(cached);
       const now = Date.now();
@@ -814,7 +809,7 @@ async function loadAdminContent() {
 
   function setCachedNames(period, data) {
     const cacheEntry = { data: data, timestamp: Date.now() };
-    localStorage.setItem(`namesByPeriod-${period}`, JSON.stringify(cacheEntry));
+    localStorage.setItem(`adminNamesByPeriod-v2-${period}`, JSON.stringify(cacheEntry));
   }
 
   async function getNamesForPeriod(period) {

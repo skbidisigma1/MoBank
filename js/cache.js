@@ -36,9 +36,14 @@ const CACHE = {
       const parsed = JSON.parse(raw);
       
       // Check if data has timestamp (for expiration checking)
-      if (parsed && typeof parsed === 'object' && parsed.timestamp && parsed.data) {
+      if (parsed && typeof parsed === 'object' &&
+          Number.isFinite(parsed.timestamp) &&
+          Object.prototype.hasOwnProperty.call(parsed, 'data')) {
         const age = Date.now() - parsed.timestamp;
-        const maxAge = key === this.USER_KEY ? this.USER_MAX_AGE : this.TOKEN_MAX_AGE;
+        const fallbackMaxAge = key === this.USER_KEY ? this.USER_MAX_AGE : this.TOKEN_MAX_AGE;
+        const maxAge = Number.isFinite(parsed.maxAge) && parsed.maxAge >= 0
+          ? parsed.maxAge
+          : fallbackMaxAge;
         
         if (age > maxAge) {
           localStorage.removeItem(key);
@@ -61,7 +66,10 @@ const CACHE = {
     // Wrap with timestamp for expiration checking
     const cacheEntry = {
       data: value,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      maxAge: Number.isFinite(maxAge) && maxAge >= 0
+        ? maxAge
+        : key === this.USER_KEY ? this.USER_MAX_AGE : this.TOKEN_MAX_AGE
     };
     
     localStorage.setItem(key, JSON.stringify(cacheEntry));

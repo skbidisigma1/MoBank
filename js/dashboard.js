@@ -34,14 +34,9 @@ async function getToken() {
 
 /* ---------- ui helpers ---------- */
 const $ = (sel) => document.querySelector(sel);
-const periodNames = {
-  4: 'Period 4',
-  5: 'Period 5',
-  6: 'Period 6',
-  7: 'Period 7',
-  8: 'Symphonic Orchestra',
-  10: 'Chamber Orchestra'
-};
+const periodNames = Object.fromEntries(
+  (window.MOBANK_CLASS_PERIODS || []).map(period => [period.value, period.label])
+);
 const cap = (s = '') => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 
 /* ---------- main ---------- */

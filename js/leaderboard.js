@@ -1,21 +1,34 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  // Legacy label normalization
-  document.querySelectorAll('.period-button').forEach(btn=>{
-    if(/Fourth Period/i.test(btn.textContent)) btn.textContent = 'Period 4';
-  });
   const loader = document.getElementById('loader');
   const periodButtons = document.querySelectorAll('.period-button');
   const leaderboardBody = document.getElementById('leaderboard-body');
-  const leaderboardCards = document.getElementById('leaderboard-cards');  const lastUpdatedElement = document.getElementById('last-updated');
+  const leaderboardCards = document.getElementById('leaderboard-cards');
+  const lastUpdatedElement = document.getElementById('last-updated');
   const errorContainer = document.getElementById('error-container');
   const errorMessage = document.getElementById('error-message');
   const leaderboardTitle = document.getElementById('leaderboard-title');
 
   // Keep 30 seconds for leaderboard cache since it's more frequently updated
-  // okay but like is that not what the duration is for literally everything else
   const LEADERBOARD_CACHE_DURATION = 30 * 1000;
+  // Bump this namespace when changing how leaderboard data is sourced so
+  // localStorage snapshots from the previous school-year flow are ignored.
+  const LEADERBOARD_CACHE_PREFIX = 'leaderboard_v2_period_';
+  const classPeriods = Array.isArray(window.MOBANK_CLASS_PERIODS)
+    ? window.MOBANK_CLASS_PERIODS
+    : [];
+
+  function getPeriodDefinition(period) {
+    return classPeriods.find(item => Number(item.value) === Number(period));
+  }
+
+  function getPeriodLabel(period, short = false) {
+    const definition = getPeriodDefinition(period);
+    if (!definition) return `Period ${period}`;
+    return short ? definition.shortLabel : definition.label;
+  }
 
   function capitalizeFirstLetter(string) {
+    if (typeof string !== 'string' || !string) return 'N/A';
     return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
   }
 
@@ -36,6 +49,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     errorMessage.textContent = '';
     errorContainer.classList.add('hidden');
   }
+  function appendInstrumentDisplay(container, user, isGlobal) {
+    container.appendChild(document.createTextNode(capitalizeFirstLetter(user.instrument)));
+    if (!isGlobal || !user.class_period) return;
+
+    const periodTag = document.createElement('span');
+    periodTag.className = 'period-tag';
+    periodTag.textContent = getPeriodLabel(user.class_period, true);
+    container.appendChild(periodTag);
+  }
+
   function createCard(user, index, isGlobal = false) {
     const rank = index + 1;
     const card = document.createElement('div');
@@ -45,59 +68,39 @@ document.addEventListener('DOMContentLoaded', async () => {
       (rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉') : 
       `#${rank}`;
       
-    const periodNames = {
-      '4': 'P4', // shorthand tag on global cards
-      '5': 'P5',
-      '6': 'P6',
-      '7': 'P7',
-      '8': 'Symphonic',
-      '10': 'Chamber'
-    };
-    
-    let instrumentDisplay = capitalizeFirstLetter(user.instrument);
-    
-    if (isGlobal && user.class_period) {
-      const periodDisplay = periodNames[user.class_period] || `Period ${user.class_period}`;
-      instrumentDisplay += `<span class="period-tag">${periodDisplay}</span>`;
-    }
+    const rankElement = document.createElement('div');
+    rankElement.className = `card-rank ${rank <= 3 ? `rank-${rank}` : ''}`.trim();
+    rankElement.textContent = rankDisplay;
 
-    let displayName = user.name;
-    if (user.name === 'Luke Collingridge') {
-      displayName = '🛠️ ' + user.name;
-    } else if (user.name === 'Stewart Collett') {
-      displayName = 'Stewart Collett (likes Bailey)';
-    } else if (user.name === 'Eli Nelson') {
-      displayName = '💸 ' + user.name;
-    }
+    const nameElement = document.createElement('div');
+    nameElement.className = 'card-name';
+    nameElement.textContent = user.name || 'Unknown User';
 
-    card.innerHTML = `
-      <div class="card-rank ${rank <= 3 ? `rank-${rank}` : ''}">${rankDisplay}</div>
-      <div class="card-name">${displayName}</div>
-      <div class="card-divider"></div>
-      <div class="card-balance">${formatMoBucks(user.balance, { absolute: true })}</div>
-      <div class="card-instrument">${instrumentDisplay}</div>
-    `;
+    const divider = document.createElement('div');
+    divider.className = 'card-divider';
+
+    const balanceElement = document.createElement('div');
+    balanceElement.className = 'card-balance';
+    balanceElement.innerHTML = formatMoBucks(user.balance, { absolute: true });
+
+    const instrumentElement = document.createElement('div');
+    instrumentElement.className = 'card-instrument';
+    appendInstrumentDisplay(instrumentElement, user, isGlobal);
+
+    card.append(rankElement, nameElement, divider, balanceElement, instrumentElement);
 
     return card;
-  }function populateLeaderboard(data, period) {
+  }
+
+  function populateLeaderboard(data, period) {
     leaderboardBody.innerHTML = '';
     leaderboardCards.innerHTML = '';
     
-    const periodNames = {
-      '4': 'Period 4',
-      '5': 'Period 5',
-      '6': 'Period 6',
-      '7': 'Period 7',
-      '8': 'Symphonic Orchestra',
-      '10': 'Chamber Orchestra',
-      'global': 'Global'
-    };
+    const periodLabel = period === 'global' ? 'Global' : getPeriodLabel(period);
+    leaderboardTitle.querySelector('span').textContent = `Leaderboard - ${periodLabel}`;
     
-    leaderboardTitle.querySelector('span').textContent = `Leaderboard - ${periodNames[period] || `Period ${period}`}`;
-    
-    const filteredData = data.leaderboardData.filter(
-      user => user.name !== 'Madison Moline'
-    );    filteredData.forEach((user, index) => {
+    const leaderboardData = Array.isArray(data.leaderboardData) ? data.leaderboardData : [];
+    leaderboardData.forEach((user, index) => {
       const row = document.createElement('tr');
       const rank = index + 1;
 
@@ -113,15 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const nameCell = document.createElement('td');
       nameCell.className = 'name-cell';
-      if (user.name === 'Luke Collingridge') {
-        nameCell.innerHTML = '🛠️ ' + user.name;
-      } else if (user.name === 'Stewart Collett') {
-        nameCell.textContent = user.name + ' (likes Bailey)';
-      } else if (user.name === 'Eli Nelson') {
-        nameCell.innerHTML = '💸 ' + user.name;
-      } else {
-        nameCell.textContent = user.name;
-      }
+      nameCell.textContent = user.name || 'Unknown User';
       row.appendChild(nameCell);
 
       const balanceCell = document.createElement('td');
@@ -133,32 +128,37 @@ document.addEventListener('DOMContentLoaded', async () => {
       instrumentCell.className = 'instrument-cell';
       
       // for global leaderboard, show both instrument and period
-      if (period === 'global' && user.class_period) {
-        const periodNames = {
-          '4': 'P4',
-          '5': 'P5',
-          '6': 'P6',
-          '7': 'P7',
-          '8': 'Symphonic',
-          '10': 'Chamber'
-        };
-        
-        const periodDisplay = periodNames[user.class_period] || `Period ${user.class_period}`;
-        instrumentCell.innerHTML = `${capitalizeFirstLetter(user.instrument)}<span class="period-tag">${periodDisplay}</span>`;
-      } else {
-        instrumentCell.textContent = capitalizeFirstLetter(user.instrument);
-      }
+      appendInstrumentDisplay(instrumentCell, user, period === 'global');
       
       row.appendChild(instrumentCell);
 
       leaderboardBody.appendChild(row);
-    });    filteredData.forEach((user, index) => {
+    });
+    leaderboardData.forEach((user, index) => {
       const card = createCard(user, index, period === 'global');
       leaderboardCards.appendChild(card);
     });
 
-    if (data.lastUpdated && data.lastUpdated._seconds) {
-      const timestamp = new Date(data.lastUpdated._seconds * 1000);
+    if (leaderboardData.length === 0) {
+      const message = period === 'global'
+        ? 'No users are assigned to any period yet.'
+        : `No users are assigned to ${getPeriodLabel(period)} yet.`;
+      const emptyRow = document.createElement('tr');
+      const emptyCell = document.createElement('td');
+      emptyCell.colSpan = 4;
+      emptyCell.textContent = message;
+      emptyRow.appendChild(emptyCell);
+      leaderboardBody.appendChild(emptyRow);
+
+      const emptyCardMessage = document.createElement('div');
+      emptyCardMessage.className = 'leaderboard-empty';
+      emptyCardMessage.textContent = message;
+      leaderboardCards.appendChild(emptyCardMessage);
+    }
+
+    const updatedSeconds = data.lastUpdated?._seconds ?? data.lastUpdated?.seconds;
+    if (Number.isFinite(updatedSeconds)) {
+      const timestamp = new Date(updatedSeconds * 1000);
       const formatter = new Intl.DateTimeFormat('en-US', {
         month: '2-digit',
         day: '2-digit',
@@ -184,12 +184,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
   function getCachedLeaderboard(period) {
-    const cached = localStorage.getItem(`leaderboard_period_${period}`);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      const now = Date.now();
-      if (now - parsed.timestamp < LEADERBOARD_CACHE_DURATION) {
-        return parsed.data;
+    try {
+      const cached = localStorage.getItem(`${LEADERBOARD_CACHE_PREFIX}${period}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        const age = Date.now() - Number(parsed.timestamp);
+        if (parsed.data && Number.isFinite(age) && age >= 0 && age < LEADERBOARD_CACHE_DURATION) {
+          return parsed.data;
+        }
+      }
+    } catch (error) {
+      try {
+        localStorage.removeItem(`${LEADERBOARD_CACHE_PREFIX}${period}`);
+      } catch (storageError) {
+        // The page can still fetch fresh data when browser storage is unavailable.
       }
     }
     return null;
@@ -200,7 +208,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       data: data,
       timestamp: Date.now()
     };
-    localStorage.setItem(`leaderboard_period_${period}`, JSON.stringify(cacheEntry));
+    try {
+      localStorage.setItem(`${LEADERBOARD_CACHE_PREFIX}${period}`, JSON.stringify(cacheEntry));
+    } catch (error) {
+      // Caching is optional; keep the freshly fetched leaderboard visible.
+    }
   }
   async function fetchLeaderboard(period) {
     showLoader();
@@ -249,20 +261,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       const token = await getToken();
-      const validPeriods = [5, 6, 7, 8, 9, 10];
+      const validPeriods = classPeriods.map(item => item.value);
       const leaderboardPromises = validPeriods.map(period => 
         fetch(`/api/getAggregatedLeaderboard?period=${period}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
-        }).then(response => {
+        }).then(async response => {
           if (!response.ok) {
-            return { leaderboardData: [] };
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Failed to fetch global leaderboard data.');
           }
           return response.json();
         })
       );
-        const results = await Promise.all(leaderboardPromises);
+      const results = await Promise.all(leaderboardPromises);
       
       let combinedData = [];
       results.forEach((result, index) => {
@@ -277,14 +290,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
       
-      const uniqueUsers = {};
-      combinedData.forEach(user => {
-        if (!uniqueUsers[user.name] || user.balance > uniqueUsers[user.name].balance) {
-          uniqueUsers[user.name] = user;
-        }
-      });
-      
-      const globalLeaderboardData = Object.values(uniqueUsers).sort((a, b) => b.balance - a.balance);
+      const globalLeaderboardData = combinedData.sort((a, b) => b.balance - a.balance);
       
       const globalData = {
         leaderboardData: globalLeaderboardData,
@@ -294,7 +300,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       populateLeaderboard(globalData, 'global');
       setCachedLeaderboard('global', globalData);
     } catch (error) {
-      showError('Failed to fetch global leaderboard data.');
+      showError(error.message || 'Failed to fetch global leaderboard data.');
     } finally {
       hideLoader();
     }
@@ -326,12 +332,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       periodButtonsContainer.classList.remove('hidden');
     }
     
-    let defaultPeriod = 5;
+    let defaultPeriod = getPeriodDefinition(5)?.value ?? classPeriods[0]?.value ?? 5;
     
     // Check cache first for user data
     const cachedUserData = CACHE.read(CACHE.USER_KEY);
-    if (cachedUserData && cachedUserData.class_period) {
-      defaultPeriod = cachedUserData.class_period;
+    if (cachedUserData && getPeriodDefinition(cachedUserData.class_period)) {
+      defaultPeriod = Number(cachedUserData.class_period);
     } else {
       // Wait for headerFooter.js to set up userDataPromise
       let attempts = 0;
@@ -345,8 +351,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (window.userDataPromise) {
         try {
           const userData = await window.userDataPromise;
-          if (userData && userData.class_period) {
-            defaultPeriod = userData.class_period;
+          if (userData && getPeriodDefinition(userData.class_period)) {
+            defaultPeriod = Number(userData.class_period);
           }
         } catch (error) {
         }

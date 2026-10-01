@@ -124,14 +124,9 @@ const selectors = {
   cartClear: () => document.getElementById('cart-clear')
 };
 
-const periodNames = {
-  4: 'Period 4',
-  5: 'Period 5',
-  6: 'Period 6',
-  7: 'Period 7',
-  8: 'Symphonic',
-  10: 'Chamber'
-};
+const periodNames = Object.fromEntries(
+  (window.MOBANK_CLASS_PERIODS || []).map(period => [period.value, period.shortLabel])
+);
 
 // auth helpers
 async function ensureAuthenticated() {
@@ -198,65 +193,42 @@ async function getUserProfile() {
   throw new Error('User data not available');
 }
 
-async function loadCatalog({ forceRefresh = false } = {}) {
+function redirectToProfileForPeriod() {
+  window.location.replace('/profile?welcome=1');
+}
+
+async function loadCatalog() {
   const cached = CACHE.read(STORE_CACHE_KEY);
-  
-  // If not forcing refresh and cache is valid, return immediately
-  if (!forceRefresh && cached && cached.items && Array.isArray(cached.items)) {
-    return cached;
-  }
-  
-  // If forcing refresh but cache exists (stale), return it immediately
-  // and update with fresh data in background
-  if (forceRefresh && cached && cached.items) {
-    // Return stale data immediately for instant display
-    const staleData = cached;
-    
-    // Fetch fresh data in background
-    (async () => {
-      try {
-        const token = await getToken();
-        const res = await fetch('/api/getCatalog', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (res.ok) {
-          const freshData = await res.json();
-          CACHE.write(STORE_CACHE_KEY, freshData, STORE_CACHE_MAX_AGE);
-          
-          // Update state with fresh data
-          state.catalog = freshData.items || [];
-          buildCatalogIndex(state.catalog);
-          applyFilters();
-        }
-      } catch (err) {
-        console.warn('Background catalog refresh failed:', err);
-      }
-    })();
-    
-    return staleData;
-  }
-  
-  // No cache - fetch fresh data
   try {
     const token = await getToken();
     const res = await fetch('/api/getCatalog', {
       headers: { Authorization: `Bearer ${token}` }
     });
-    
+
     if (!res.ok) {
-      throw new Error(`Catalog fetch failed: ${res.status}`);
+      const errorData = await res.json().catch(() => ({}));
+      if (errorData.code === 'PROFILE_INCOMPLETE') {
+        redirectToProfileForPeriod();
+        const error = new Error(errorData.message || 'Please select your class period.');
+        error.code = 'PROFILE_INCOMPLETE';
+        error.status = res.status;
+        throw error;
+      }
+      const error = new Error(errorData.message || `Catalog fetch failed: ${res.status}`);
+      error.code = errorData.code;
+      error.status = res.status;
+      throw error;
     }
-    
+
     const payload = await res.json();
     CACHE.write(STORE_CACHE_KEY, payload, STORE_CACHE_MAX_AGE);
     return payload;
   } catch (error) {
+    if (error.code === 'PROFILE_INCOMPLETE' || error.status) throw error;
     console.error('loadCatalog error:', error);
-    const stale = CACHE.read(STORE_CACHE_KEY);
-    if (stale && stale.items) {
+    if (cached && Array.isArray(cached.items)) {
       console.warn('loadCatalog: using stale cache as fallback');
-      return stale;
+      return cached;
     }
     throw error;
   }
@@ -309,19 +281,22 @@ function getUserPurchasedQuantity(itemId) {
   const ORDERS_CACHE_KEY = '__mobank_my_orders';
   const cached = CACHE.read(ORDERS_CACHE_KEY);
   
-  if (!cached || !cached.orders) return 0;
+  if (!cached || !Array.isArray(cached.orders)) return 0;
   
-  let totalPurchased = 0;
-  cached.orders.forEach(order => {
-    if (order.status === 'fulfilled' || order.status === 'pending') {
-      const orderItem = order.items.find(i => i.id === itemId);
-      if (orderItem) {
-        totalPurchased += orderItem.quantity;
-      }
-    }
-  });
-  
-  return totalPurchased;
+  return cached.orders.reduce((total, order) => {
+    if (order.status !== 'fulfilled' && order.status !== 'pending') return total;
+    const matchingItems = Array.isArray(order.items)
+      ? order.items.filter(orderItem => orderItem.id === itemId)
+      : [];
+    return total + matchingItems.reduce((itemTotal, orderItem) => (
+      itemTotal + (Number.isSafeInteger(orderItem.quantity) && orderItem.quantity > 0 ? orderItem.quantity : 0)
+    ), 0);
+  }, 0);
+}
+
+function getRemainingUserLimit(item) {
+  if (item.maxPerUser == null) return Infinity;
+  return Math.max(0, item.maxPerUser - getUserPurchasedQuantity(item.id));
 }
 
 function renderCatalog() {
@@ -367,17 +342,12 @@ function renderCatalog() {
     let userCanBuy = Infinity;
     
     // Check stock limit
-    if (item.stock !== null) {
+    if (item.stock != null) {
       userCanBuy = Math.min(userCanBuy, item.stock);
     }
     
-    // Check per-user limit
-    if (item.maxPerUser !== null) {
-      // Calculate how many user has already purchased
-      const userPurchased = getUserPurchasedQuantity(item.id);
-      const remaining = item.maxPerUser - userPurchased;
-      userCanBuy = Math.min(userCanBuy, Math.max(0, remaining));
-    }
+    // Check per-user lifetime limit, including purchases already made.
+    userCanBuy = Math.min(userCanBuy, getRemainingUserLimit(item));
     
     const stockLabel = userCanBuy === Infinity ? 'Unlimited' : 
                        userCanBuy === 1 ? '1 left for you' :
@@ -448,25 +418,50 @@ function renderCart() {
     row.dataset.itemId = item.id;
     
     const canIncrement = (
-      (item.stock === null || quantity < item.stock) &&
-      (item.maxPerUser === null || quantity < item.maxPerUser) &&
+      (item.stock == null || quantity < item.stock) &&
+      quantity < getRemainingUserLimit(item) &&
       (remaining >= item.price)
     );
     
-    row.innerHTML = `
-      <div>
-        <p class="cart-item__name">${item.name}</p>
-        <p class="cart-item__details">${formatMoBucks(item.price, { absolute: true })} · ${quantity} ${quantity === 1 ? 'unit' : 'units'}</p>
-      </div>
-      <div class="cart-item__actions">
-        <div class="cart-quantity" role="group" aria-label="Quantity controls" data-item-id="${item.id}">
-          <button type="button" data-action="decrement" aria-label="Decrease quantity">−</button>
-          <span class="cart-quantity-value" data-action="edit-quantity">${quantity}</span>
-          <button type="button" data-action="increment" aria-label="Increase quantity" ${!canIncrement ? 'disabled' : ''}>+</button>
-        </div>
-        <button type="button" class="cart-remove" data-action="remove">Remove</button>
-      </div>
-    `;
+    const itemInfo = document.createElement('div');
+    const name = document.createElement('p');
+    name.className = 'cart-item__name';
+    name.textContent = item.name;
+    const details = document.createElement('p');
+    details.className = 'cart-item__details';
+    details.textContent = `${formatMoBucks(item.price, { absolute: true })} · ${quantity} ${quantity === 1 ? 'unit' : 'units'}`;
+    itemInfo.append(name, details);
+
+    const actions = document.createElement('div');
+    actions.className = 'cart-item__actions';
+    const quantityControls = document.createElement('div');
+    quantityControls.className = 'cart-quantity';
+    quantityControls.setAttribute('role', 'group');
+    quantityControls.setAttribute('aria-label', 'Quantity controls');
+    quantityControls.dataset.itemId = item.id;
+    const decrement = document.createElement('button');
+    decrement.type = 'button';
+    decrement.dataset.action = 'decrement';
+    decrement.setAttribute('aria-label', 'Decrease quantity');
+    decrement.textContent = '−';
+    const quantityValue = document.createElement('span');
+    quantityValue.className = 'cart-quantity-value';
+    quantityValue.dataset.action = 'edit-quantity';
+    quantityValue.textContent = quantity;
+    const increment = document.createElement('button');
+    increment.type = 'button';
+    increment.dataset.action = 'increment';
+    increment.setAttribute('aria-label', 'Increase quantity');
+    increment.disabled = !canIncrement;
+    increment.textContent = '+';
+    quantityControls.append(decrement, quantityValue, increment);
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'cart-remove';
+    remove.dataset.action = 'remove';
+    remove.textContent = 'Remove';
+    actions.append(quantityControls, remove);
+    row.append(itemInfo, actions);
     frag.appendChild(row);
   });
 
@@ -516,7 +511,7 @@ function addToCart(itemId) {
     showToast('Inventory limit', 'You cannot add more than the remaining stock for this item.', 'danger');
     return;
   }
-  if (item.maxPerUser != null && nextQty > item.maxPerUser) {
+  if (nextQty > getRemainingUserLimit(item)) {
     showToast('Limit reached', 'Per-user limit reached for this item.', 'danger');
     return;
   }
@@ -545,7 +540,7 @@ function updateCartQuantity(itemId, delta) {
     showToast('Inventory limit', 'No more stock available for this item.', 'danger');
     return;
   }
-  if (entry.item.maxPerUser != null && nextQty > entry.item.maxPerUser) {
+  if (nextQty > getRemainingUserLimit(entry.item)) {
     showToast('Limit reached', 'Per-user limit reached for this item.', 'danger');
     return;
   }
@@ -577,10 +572,17 @@ function loadCartFromSession() {
     const items = JSON.parse(cartData);
     state.cart.clear();
     
-    items.forEach(({ itemId, item, quantity }) => {
-      state.cart.set(itemId, { item, quantity });
+    items.forEach(({ itemId, quantity }) => {
+      if (typeof itemId !== 'string' || !Number.isSafeInteger(quantity) || quantity < 1 ||
+          state.cart.size >= STORE_CART_MAX_ITEMS) return;
+      const item = state.catalogIndex.get(itemId);
+      if (!item) return;
+      const stockLimit = item.stock == null ? Infinity : item.stock;
+      const safeQuantity = Math.min(quantity, stockLimit, getRemainingUserLimit(item));
+      if (safeQuantity > 0) state.cart.set(itemId, { item, quantity: safeQuantity });
     });
-    
+
+    saveCartToSession();
     renderCart();
   } catch (err) {
     console.error('Failed to load cart from session:', err);
@@ -643,8 +645,8 @@ function editCartQuantity(itemId, spanElement) {
   
   const currentQty = entry.quantity;
   const maxQty = Math.min(
-    entry.item.stock === null ? 999 : entry.item.stock,
-    entry.item.maxPerUser === null ? 999 : entry.item.maxPerUser
+    entry.item.stock == null ? 999 : entry.item.stock,
+    getRemainingUserLimit(entry.item)
   );
   
   const input = document.createElement('input');
@@ -664,6 +666,7 @@ function editCartQuantity(itemId, spanElement) {
       const entry = state.cart.get(itemId);
       if (entry) {
         state.cart.set(itemId, { item: entry.item, quantity: newQty });
+        saveCartToSession();
       }
     }
     renderCart();
@@ -765,6 +768,19 @@ async function handleCheckout() {
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
       const errorMessage = errorData.message || `Order failed with status ${res.status}`;
+
+      if (errorData.code === 'PROFILE_INCOMPLETE') {
+        redirectToProfileForPeriod();
+        const error = new Error(errorMessage);
+        error.code = 'PROFILE_INCOMPLETE';
+        throw error;
+      }
+
+      if (errorData.code === 'MAINTENANCE') {
+        const error = new Error(errorMessage);
+        error.code = 'MAINTENANCE';
+        throw error;
+      }
       
       // Provide specific error messages for common issues
       if (errorMessage.includes('stock')) {
@@ -817,7 +833,11 @@ async function handleCheckout() {
     
   } catch (error) {
     console.error('Checkout error:', error);
-    showToast('Checkout failed', error.message || 'Could not complete your order. Please try again.', 'danger');
+    if (error.code === 'MAINTENANCE') {
+      showToast('School-year setup in progress', error.message, 'warning');
+    } else if (error.code !== 'PROFILE_INCOMPLETE') {
+      showToast('Checkout failed', error.message || 'Could not complete your order. Please try again.', 'danger');
+    }
   } finally {
     if (checkoutBtn) {
       checkoutBtn.disabled = false;
@@ -1989,6 +2009,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     state.balance = state.user?.currency_balance || 0;
     renderBalance();
     renderUserContext(state.user || {});
+    if (state.user && state.user.class_period == null) {
+      redirectToProfileForPeriod();
+      return;
+    }
   } catch (err) {
     console.error('MoStore: Unable to load user profile', err);
     showToast('Error', 'Could not load your profile. Some data may be unavailable.', 'danger');
@@ -2015,7 +2039,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadCartFromSession();
   } catch (err) {
     console.error('MoStore: Unable to load catalog', err);
-    showToast('Error', 'Store catalog failed to load. Please retry shortly.', 'danger');
+    if (err.code === 'MAINTENANCE') {
+      showToast('School-year setup in progress', err.message, 'warning');
+    } else if (err.code !== 'PROFILE_INCOMPLETE') {
+      showToast('Error', 'Store catalog failed to load. Please retry shortly.', 'danger');
+    }
   }
   
   if (isAdmin) {

@@ -1,5 +1,7 @@
 const { db } = require('../firebase');
 const { getTokenFromHeader, verifyToken } = require('../auth-helper');
+const parseRequestBody = require('../request-body');
+const validClassPeriods = require('../js/class-periods').map(period => period.value);
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -17,27 +19,20 @@ module.exports = async (req, res) => {
   }
   const uid = decoded.sub;
 
-  let bodyData = {};
-  if (req.body && Object.keys(req.body).length) {
-    bodyData = req.body;
-  } else {
-    let raw = '';
-    await new Promise((resolve, reject) => {
-      req.on('data', chunk => (raw += chunk));
-      req.on('end', resolve);
-      req.on('error', reject);
-    });
-    try {
-      bodyData = JSON.parse(raw || '{}');
-    } catch {
-      return res.status(400).json({ message: 'Invalid JSON format' });
-    }
+  let bodyData;
+  try {
+    bodyData = await parseRequestBody(req);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
   }
 
   const { class_period, instrument, theme } = bodyData;
 
-  const cp = parseInt(class_period, 10);
-  const validClassPeriods = [4, 5, 6, 7, 8, 10];
+  const cp = typeof class_period === 'number'
+    ? class_period
+    : typeof class_period === 'string' && /^\d+$/.test(class_period)
+      ? Number(class_period)
+      : NaN;
   const validInstruments = ['violin', 'viola', 'cello', 'bass', 'other'];
   const validThemes = ['light', 'dark'];
 
@@ -58,16 +53,24 @@ module.exports = async (req, res) => {
   }
 
   try {
-    await db.collection('users').doc(uid).set(
-      {
+    const userRef = db.collection('users').doc(uid);
+    const migrationLockRef = db.collection('maintenance').doc('classPeriodReset');
+    await db.runTransaction(async tx => {
+      const migrationLock = await tx.get(migrationLockRef);
+      if (migrationLock.exists && migrationLock.data().status === 'running') {
+        throw new Error('SCHOOL_YEAR_SETUP_IN_PROGRESS');
+      }
+      tx.set(userRef, {
         class_period: cp,
         instrument: instrument.toLowerCase(),
         theme: theme.toLowerCase(),
-      },
-      { merge: true }
-    );
+      }, { merge: true });
+    });
     return res.status(200).json({ message: 'Profile updated successfully' });
-  } catch {
+  } catch (error) {
+    if (error.message === 'SCHOOL_YEAR_SETUP_IN_PROGRESS') {
+      return res.status(503).json({ message: 'School-year setup is in progress. Please try again shortly.' });
+    }
     return res.status(500).json({ message: 'Internal Server Error' });
   }
 };

@@ -78,7 +78,7 @@ module.exports = async (req, res) => {
   if (res.headersSent) return;
   try {
     const ct = req.headers['content-type'] || '';
-    if (['POST', 'PUT'].includes(req.method) && (ct.includes('application/json') || !ct))
+    if (['POST', 'PUT', 'DELETE'].includes(req.method) && (ct.includes('application/json') || !ct))
       req.body = await parseBody(req);
     else req.body = {};
     const routePath = getRoutePath(req.url);

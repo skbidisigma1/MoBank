@@ -1,5 +1,6 @@
 const { db } = require('../firebase');
 const { getTokenFromHeader, verifyToken } = require('../auth-helper');
+const parseRequestBody = require('../request-body');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -25,24 +26,14 @@ module.exports = async (req, res) => {
   const adminUid = decoded.sub;
   const adminName = decoded.name || decoded['https://mo-classroom.us/name'] || 'Admin';
 
-  let bodyData = {};
-  if (req.body && Object.keys(req.body).length) {
-    bodyData = req.body;
-  } else {
-    let raw = '';
-    await new Promise((resolve, reject) => {
-      req.on('data', chunk => (raw += chunk));
-      req.on('end', resolve);
-      req.on('error', reject);
-    });
-    try {
-      bodyData = JSON.parse(raw || '{}');
-    } catch {
-      return res.status(400).json({ message: 'Invalid JSON format' });
-    }
+  let bodyData;
+  try {
+    bodyData = await parseRequestBody(req);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
   }
 
-  const { orderId, userId, reason } = bodyData;
+  const { orderId, userId, reason: rawReason } = bodyData;
 
   if (!orderId || typeof orderId !== 'string') {
     return res.status(400).json({ message: 'Order ID required' });
@@ -51,6 +42,10 @@ module.exports = async (req, res) => {
   if (!userId || typeof userId !== 'string') {
     return res.status(400).json({ message: 'User ID required' });
   }
+  if (rawReason !== undefined && rawReason !== null && typeof rawReason !== 'string') {
+    return res.status(400).json({ message: 'Invalid decline reason' });
+  }
+  const reason = typeof rawReason === 'string' ? rawReason.trim().slice(0, 500) : '';
 
   const admin = require('firebase-admin');
   const userOrdersRef = db.collection('store_orders').doc(userId);
@@ -66,7 +61,7 @@ module.exports = async (req, res) => {
       }
 
       const userOrdersData = userOrdersDoc.data();
-      const orders = userOrdersData.orders || [];
+      const orders = Array.isArray(userOrdersData.orders) ? [...userOrdersData.orders] : [];
       const orderIndex = orders.findIndex(o => o.id === orderId);
 
       if (orderIndex === -1) {
@@ -75,12 +70,10 @@ module.exports = async (req, res) => {
 
       const order = orders[orderIndex];
 
-      if (order.status === 'fulfilled') {
-        throw new Error('Cannot decline fulfilled order');
-      }
-
-      if (order.status === 'cancelled') {
-        throw new Error('Order already cancelled');
+      if (order.status !== 'pending') {
+        throw new Error(order.status === 'cancelled'
+          ? 'Order already cancelled'
+          : 'Cannot decline an order unless it is pending');
       }
 
       // Read user data
@@ -92,6 +85,9 @@ module.exports = async (req, res) => {
 
       const userData = userDoc.data();
       const refundAmount = order.total;
+      if (!Number.isSafeInteger(refundAmount) || refundAmount < 0) {
+        throw new Error('Invalid order refund amount');
+      }
 
       // Read catalog
       const catalogDoc = await tx.get(catalogRef);
@@ -100,7 +96,7 @@ module.exports = async (req, res) => {
       }
 
       const catalogData = catalogDoc.data();
-      const catalogItems = catalogData.items || [];
+      const catalogItems = Array.isArray(catalogData.items) ? catalogData.items : [];
       
       // Now do ALL writes
       // Update order status
@@ -119,17 +115,35 @@ module.exports = async (req, res) => {
       }, { merge: true });
 
       // Refund the user
-      const newBalance = (userData.currency_balance || 0) + refundAmount;
-      tx.update(userRef, { currency_balance: newBalance });
+      const currentBalance = Number(userData.currency_balance ?? 0);
+      const newBalance = currentBalance + refundAmount;
+      if (!Number.isFinite(currentBalance) || !Number.isFinite(newBalance) ||
+          Math.abs(currentBalance) > Number.MAX_SAFE_INTEGER ||
+          Math.abs(newBalance) > Number.MAX_SAFE_INTEGER) {
+        throw new Error('Invalid user balance');
+      }
 
-      // Restore stock for items (CRITICAL BUG FIX: check for null stock)
+      // Restore finite stock, summing duplicate item rows in older orders too.
+      const restoredQuantities = new Map();
+      for (const orderItem of Array.isArray(order.items) ? order.items : []) {
+        if (!orderItem || typeof orderItem.id !== 'string' ||
+            !Number.isSafeInteger(orderItem.quantity) || orderItem.quantity < 1) continue;
+        restoredQuantities.set(
+          orderItem.id,
+          (restoredQuantities.get(orderItem.id) || 0) + orderItem.quantity
+        );
+      }
+
       const updatedCatalogItems = catalogItems.map(catalogItem => {
-        const orderItem = order.items.find(item => item.id === catalogItem.id);
-        if (orderItem && catalogItem.stock !== null) {
-          // Only restore stock if it's not unlimited (null)
+        const restoredQuantity = catalogItem && restoredQuantities.get(catalogItem.id);
+        if (restoredQuantity && catalogItem.stock != null) {
+          if (!Number.isSafeInteger(catalogItem.stock) || catalogItem.stock < 0 ||
+              !Number.isSafeInteger(catalogItem.stock + restoredQuantity)) {
+            throw new Error('Invalid catalog stock');
+          }
           return {
             ...catalogItem,
-            stock: catalogItem.stock + orderItem.quantity
+            stock: catalogItem.stock + restoredQuantity
           };
         }
         return catalogItem;
@@ -150,10 +164,9 @@ module.exports = async (req, res) => {
         orderId: orderId
       };
 
-      const transactions = userData.transactions || [];
+      const transactions = Array.isArray(userData.transactions) ? [...userData.transactions] : [];
       transactions.unshift(transaction);
       const trimmedTransactions = transactions.slice(0, 100);
-      tx.update(userRef, { transactions: trimmedTransactions });
 
       // Send notification to user
       const notificationMessage = reason 
@@ -168,7 +181,7 @@ module.exports = async (req, res) => {
         orderId: orderId
       };
 
-      const notifications = userData.notifications || [];
+      const notifications = Array.isArray(userData.notifications) ? [...userData.notifications] : [];
       notifications.unshift(notification);
       const trimmedNotifications = notifications.slice(0, 10).sort((a, b) => {
         const aTime = a.timestamp?.toMillis?.() || 0;
@@ -176,7 +189,11 @@ module.exports = async (req, res) => {
         return bTime - aTime;
       });
       
-      tx.update(userRef, { notifications: trimmedNotifications });
+      tx.update(userRef, {
+        currency_balance: newBalance,
+        transactions: trimmedTransactions,
+        notifications: trimmedNotifications
+      });
     });
 
     return res.status(200).json({ message: 'Order declined and refunded successfully' });
@@ -186,7 +203,8 @@ module.exports = async (req, res) => {
     
     if (error.message.includes('not found') || 
         error.message.includes('already') || 
-        error.message.includes('Cannot decline')) {
+        error.message.includes('Cannot decline') ||
+        error.message.includes('Invalid')) {
       return res.status(400).json({ message: error.message });
     }
     

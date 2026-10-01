@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
     await window.auth0Promise;
 
+    const forceReenrollment = new URLSearchParams(window.location.search).get('welcome') === '1';
+
     const isLoggedIn = await isAuthenticated();
     if (!isLoggedIn) {
         window.location.href = 'login';
@@ -13,23 +15,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     const instrumentSelect = document.getElementById('instrument');
     const themeSelect = document.getElementById('theme');
 
+    if (classPeriodSelect && window.MOBANK_CLASS_PERIODS) {
+        for (const period of window.MOBANK_CLASS_PERIODS) {
+            const option = document.createElement('option');
+            option.value = String(period.value);
+            option.textContent = period.label;
+            classPeriodSelect.appendChild(option);
+        }
+    }
+
     if (!themeSelect) return;
 
-    async function fetchAndCacheUserData() {
+    async function fetchAndCacheUserData({ forceRefresh = false } = {}) {
         try {
             const cachedData = CACHE.read(CACHE.USER_KEY);
-            if (cachedData) {
+            if (cachedData && !forceRefresh) {
                 autofillForm(cachedData);
                 return;
             }
 
             let attempts = 0;
             const maxAttempts = 10;
-            while (!window.userDataPromise && attempts < maxAttempts) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
+            if (!forceRefresh) {
+                while (!window.userDataPromise && attempts < maxAttempts) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
             }
-            if (window.userDataPromise) {
+            if (window.userDataPromise && !forceRefresh) {
                 const userData = await window.userDataPromise;
                 if (userData) {
                     autofillForm(userData);
@@ -80,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const mergedData = { ...defaults, ...userData };
 
         if (classPeriodSelect) {
-            if (mergedData.class_period == null) {
+            if (forceReenrollment || mergedData.class_period == null) {
                 classPeriodSelect.value = '';
             } else {
                 classPeriodSelect.value = mergedData.class_period;
@@ -105,8 +118,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.documentElement.setAttribute('data-theme', themeSelect.value.toLowerCase());
     });
 
-    const cachedUserData = getCachedUserData();
-    cachedUserData ? autofillForm(cachedUserData) : await fetchAndCacheUserData();
+    const cachedUserData = forceReenrollment ? null : getCachedUserData();
+    if (forceReenrollment) CACHE.remove(CACHE.USER_KEY);
+    cachedUserData ? autofillForm(cachedUserData) : await fetchAndCacheUserData({ forceRefresh: forceReenrollment });
 
     profileForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -114,7 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const instrument = instrumentSelect.value.trim().toLowerCase();
         const theme = themeSelect.value.trim().toLowerCase();
 
-        const validClassPeriods = [4, 5, 6, 7, 8, 10];
+        const validClassPeriods = (window.MOBANK_CLASS_PERIODS || []).map(period => period.value);
         const validInstruments = ['violin', 'viola', 'cello', 'bass', 'other'];
         const validThemes = ['light', 'dark'];
 

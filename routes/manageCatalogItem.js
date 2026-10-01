@@ -1,5 +1,7 @@
 const { db } = require('../firebase');
 const { getTokenFromHeader, verifyToken } = require('../auth-helper');
+const parseRequestBody = require('../request-body');
+const validPeriodNumbers = require('../js/class-periods').map(period => period.value);
 
 const sanitize = str => (str || '').toString().trim().slice(0, 500);
 
@@ -54,7 +56,6 @@ const validateItem = (data, isUpdate = false) => {
     if (!Array.isArray(data.validPeriods)) {
       errors.push('validPeriods must be an array');
     } else {
-      const validPeriodNumbers = [4, 5, 6, 7, 8, 10];
       for (const period of data.validPeriods) {
         if (!validPeriodNumbers.includes(period)) {
           errors.push('validPeriods must contain only valid period numbers: 4, 5, 6, 7, 8, 10');
@@ -97,27 +98,18 @@ module.exports = async (req, res) => {
     return res.status(403).json({ message: 'Forbidden' });
   }
 
-  let bodyData = {};
-  if (req.body && Object.keys(req.body).length) {
-    bodyData = req.body;
-  } else {
-    let raw = '';
-    await new Promise((resolve, reject) => {
-      req.on('data', chunk => (raw += chunk));
-      req.on('end', resolve);
-      req.on('error', reject);
-    });
-    try {
-      bodyData = JSON.parse(raw || '{}');
-    } catch {
-      return res.status(400).json({ message: 'Invalid JSON format' });
-    }
+  let bodyData;
+  try {
+    bodyData = await parseRequestBody(req);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
   }
 
   const admin = require('firebase-admin');
   const catalogRef = db.collection('store_catalog').doc('items');
 
-  // Helper to handle image persistence
+  // Validate image size before the Firestore transaction. Image and catalog
+  // metadata are written together so retries cannot leave them out of sync.
   const handleImage = async (itemId, imageBase64) => {
     if (!imageBase64 || typeof imageBase64 !== 'string') return null;
     
@@ -127,15 +119,7 @@ module.exports = async (req, res) => {
       throw new Error('Image too large (server limit 1MB)'); 
     }
     
-    const version = Date.now();
-    // Use set with merge: true to avoid overwriting other potential future fields
-    await db.collection('store_images').doc(itemId).set({
-      base64: imageBase64,
-      id: itemId,
-      updatedAt: version
-    }, { merge: true });
-    
-    return version;
+    return Date.now();
   };
 
   try {
@@ -163,27 +147,35 @@ module.exports = async (req, res) => {
       };
 
       // Handle Image
+      let imageVersion = null;
       if (bodyData.imageBase64) {
          try {
-           const v = await handleImage(itemId, bodyData.imageBase64);
+           imageVersion = await handleImage(itemId, bodyData.imageBase64);
            newItem.hasImage = true;
-           newItem.imageVersion = v;
+           newItem.imageVersion = imageVersion;
          } catch (e) {
            return res.status(400).json({ message: e.message });
          }
       }
 
-      // Get existing catalog or create new
-      const catalogDoc = await catalogRef.get();
-      const catalogData = catalogDoc.exists ? catalogDoc.data() : { items: [] };
-      const items = catalogData.items || [];
-      
-      items.push(newItem);
-      
-      await catalogRef.set({
-        items,
-        version: Date.now(),
-        lastUpdated: admin.firestore.Timestamp.now()
+      await db.runTransaction(async tx => {
+        const catalogDoc = await tx.get(catalogRef);
+        const catalogData = catalogDoc.exists ? catalogDoc.data() : {};
+        const items = Array.isArray(catalogData.items) ? [...catalogData.items] : [];
+        items.push(newItem);
+
+        tx.set(catalogRef, {
+          items,
+          version: Date.now(),
+          lastUpdated: admin.firestore.Timestamp.now()
+        });
+        if (imageVersion !== null) {
+          tx.set(db.collection('store_images').doc(itemId), {
+            base64: bodyData.imageBase64,
+            id: itemId,
+            updatedAt: imageVersion
+          }, { merge: true });
+        }
       });
 
       return res.status(201).json({ 
@@ -206,56 +198,65 @@ module.exports = async (req, res) => {
         return res.status(400).json({ message: 'Validation failed', errors });
       }
 
-      const catalogDoc = await catalogRef.get();
-      if (!catalogDoc.exists) {
-        return res.status(404).json({ message: 'Catalog not found' });
-      }
-
-      const catalogData = catalogDoc.data();
-      const items = catalogData.items || [];
-      const itemIndex = items.findIndex(item => item.id === id);
-      
-      if (itemIndex === -1) {
-        return res.status(404).json({ message: 'Item not found' });
-      }
-
-      // Apply updates
-      const item = items[itemIndex];
-      if (updates.name !== undefined) item.name = sanitize(updates.name);
-      if (updates.description !== undefined) item.description = sanitize(updates.description);
-      if (updates.price !== undefined) item.price = updates.price;
-      if (updates.stock !== undefined) item.stock = updates.stock;
-      if (updates.maxPerUser !== undefined) item.maxPerUser = updates.maxPerUser;
-      if (updates.validPeriods !== undefined) item.validPeriods = updates.validPeriods;
-      if (updates.enabled !== undefined) item.enabled = updates.enabled;
-      item.updatedAt = Date.now();
-
-      // Handle Image Removal
-      if (bodyData.removeImage) {
-          item.hasImage = false;
-          item.imageVersion = null;
-          try {
-             await db.collection('store_images').doc(id).delete();
-          } catch(e) {}
-      }
-
-      // Handle Image Update
+      let imageVersion = null;
       if (bodyData.imageBase64) {
          try {
-           const v = await handleImage(id, bodyData.imageBase64);
-           item.hasImage = true;
-           item.imageVersion = v;
+           imageVersion = await handleImage(id, bodyData.imageBase64);
          } catch (e) {
            return res.status(400).json({ message: e.message });
          }
       }
 
-      items[itemIndex] = item;
+      await db.runTransaction(async tx => {
+        const catalogDoc = await tx.get(catalogRef);
+        if (!catalogDoc.exists) {
+          const error = new Error('Catalog not found');
+          error.code = 'CATALOG_NOT_FOUND';
+          throw error;
+        }
 
-      await catalogRef.set({
-        items,
-        version: Date.now(),
-        lastUpdated: admin.firestore.Timestamp.now()
+        const catalogData = catalogDoc.data();
+        const items = Array.isArray(catalogData.items) ? [...catalogData.items] : [];
+        const itemIndex = items.findIndex(item => item?.id === id);
+        if (itemIndex === -1) {
+          const error = new Error('Item not found');
+          error.code = 'ITEM_NOT_FOUND';
+          throw error;
+        }
+
+        const item = { ...items[itemIndex] };
+        if (updates.name !== undefined) item.name = sanitize(updates.name);
+        if (updates.description !== undefined) item.description = sanitize(updates.description);
+        if (updates.price !== undefined) item.price = updates.price;
+        if (updates.stock !== undefined) item.stock = updates.stock;
+        if (updates.maxPerUser !== undefined) item.maxPerUser = updates.maxPerUser;
+        if (updates.validPeriods !== undefined) item.validPeriods = updates.validPeriods;
+        if (updates.enabled !== undefined) item.enabled = updates.enabled;
+        item.updatedAt = Date.now();
+
+        if (imageVersion !== null) {
+          item.hasImage = true;
+          item.imageVersion = imageVersion;
+        } else if (bodyData.removeImage) {
+          item.hasImage = false;
+          item.imageVersion = null;
+        }
+        items[itemIndex] = item;
+
+        tx.set(catalogRef, {
+          items,
+          version: Date.now(),
+          lastUpdated: admin.firestore.Timestamp.now()
+        });
+        if (imageVersion !== null) {
+          tx.set(db.collection('store_images').doc(id), {
+            base64: bodyData.imageBase64,
+            id,
+            updatedAt: imageVersion
+          }, { merge: true });
+        } else if (bodyData.removeImage) {
+          tx.delete(db.collection('store_images').doc(id));
+        }
       });
       
       return res.status(200).json({ 
@@ -272,39 +273,40 @@ module.exports = async (req, res) => {
         return res.status(400).json({ message: 'Item ID required' });
       }
 
-      const catalogDoc = await catalogRef.get();
-      if (!catalogDoc.exists) {
-        return res.status(404).json({ message: 'Catalog not found' });
-      }
+      await db.runTransaction(async tx => {
+        const catalogDoc = await tx.get(catalogRef);
+        if (!catalogDoc.exists) {
+          const error = new Error('Catalog not found');
+          error.code = 'CATALOG_NOT_FOUND';
+          throw error;
+        }
 
-      const catalogData = catalogDoc.data();
-      const items = catalogData.items || [];
-      const itemIndex = items.findIndex(item => item.id === id);
-      
-      if (itemIndex === -1) {
-        return res.status(404).json({ message: 'Item not found' });
-      }
+        const catalogData = catalogDoc.data();
+        const items = Array.isArray(catalogData.items) ? [...catalogData.items] : [];
+        const itemIndex = items.findIndex(item => item?.id === id);
+        if (itemIndex === -1) {
+          const error = new Error('Item not found');
+          error.code = 'ITEM_NOT_FOUND';
+          throw error;
+        }
 
-      items.splice(itemIndex, 1);
-
-      await catalogRef.set({
-        items,
-        version: Date.now(),
-        lastUpdated: admin.firestore.Timestamp.now()
+        items.splice(itemIndex, 1);
+        tx.set(catalogRef, {
+          items,
+          version: Date.now(),
+          lastUpdated: admin.firestore.Timestamp.now()
+        });
+        tx.delete(db.collection('store_images').doc(id));
       });
-      
-      // Attempt to delete associated image (fire and forget)
-      try {
-        await db.collection('store_images').doc(id).delete();
-      } catch (e) {
-        console.warn('Failed to delete associated image', e);
-      }
       
       return res.status(200).json({ message: 'Item deleted successfully' });
     }
 
   } catch (error) {
     console.error('manageCatalogItem error:', error);
+    if (error.code === 'CATALOG_NOT_FOUND' || error.code === 'ITEM_NOT_FOUND') {
+      return res.status(404).json({ message: error.message });
+    }
     return res.status(500).json({ message: 'Failed to manage catalog item' });
   }
 };

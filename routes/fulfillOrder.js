@@ -1,5 +1,6 @@
 const { db } = require('../firebase');
 const { getTokenFromHeader, verifyToken } = require('../auth-helper');
+const parseRequestBody = require('../request-body');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -25,21 +26,11 @@ module.exports = async (req, res) => {
   const adminUid = decoded.sub;
   const adminName = decoded.name || decoded['https://mo-classroom.us/name'] || 'Admin';
 
-  let bodyData = {};
-  if (req.body && Object.keys(req.body).length) {
-    bodyData = req.body;
-  } else {
-    let raw = '';
-    await new Promise((resolve, reject) => {
-      req.on('data', chunk => (raw += chunk));
-      req.on('end', resolve);
-      req.on('error', reject);
-    });
-    try {
-      bodyData = JSON.parse(raw || '{}');
-    } catch {
-      return res.status(400).json({ message: 'Invalid JSON format' });
-    }
+  let bodyData;
+  try {
+    bodyData = await parseRequestBody(req);
+  } catch (error) {
+    return res.status(400).json({ message: error.message });
   }
 
   const { orderId, userId } = bodyData;
