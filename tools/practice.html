@@ -15,16 +15,11 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/tools/css/tools-home.css">
     <link rel="stylesheet" href="/tools/css/practice.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.4/dist/cal-heatmap.css">
-    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2/dist/umd/popper.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.4/dist/cal-heatmap.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.4/dist/plugins/Tooltip.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/cal-heatmap@4.2.4/dist/plugins/Legend.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@1.21.0/dist/auth0-spa-js.production.js" crossorigin="anonymous"></script>
     <script src="/js/auth.js" defer></script>
     <script src="/js/toast.js" defer></script>
     <script src="/tools/js/tools-header.js" defer></script>
+    <script src="/tools/js/practice-calendar.js" defer></script>
     <script src="/tools/js/practice.js" defer></script>
 </head>
 <body>
@@ -100,12 +95,10 @@
                             </div>
                         </div>
                         <div class="insights" id="practice-insights">
-                            <div class="insight-line" id="insight-top-piece" aria-live="polite"></div>
                             <div class="insight-line" id="insight-avg-length" aria-live="polite"></div>
-                            <div class="insight-line" id="insight-gap" aria-live="polite"></div>
                         </div>
                         <div style="display:flex; align-items:center; justify-content:center; margin-top:.9rem;">
-                            <div id="calendar-heatmap" class="calendar-heatmap" style="flex:1; height: 180px;" aria-label="Practice calendar" role="img"></div>
+                            <div id="calendar-heatmap" class="calendar-heatmap" aria-label="Practice calendar" role="group"></div>
                         </div>
                         <div class="calendar-legend-bar" style="display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-top:.55rem;">
                             <div id="calendar-legend" class="calendar-legend" aria-hidden="true"></div>

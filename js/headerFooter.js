@@ -102,7 +102,11 @@ async function fetchAndCacheUserData() {
 
 /* ---------- header nav / auth ---------- */
 function setupNavLinks($header, loggedIn, user = null) {
-  const show = (sel, visible) => $header.querySelectorAll(sel).forEach((n) => (n.style.display = visible ? '' : 'none'));
+  const show = (sel, visible) => $header.querySelectorAll(sel).forEach((n) => {
+    n.style.display = visible ? '' : 'none';
+    const item = n.closest('li');
+    if (item) item.hidden = !visible;
+  });
 
   const roles = user?.['https://mo-classroom.us/roles'] || [];
   const isAdmin = roles.includes('admin');
@@ -110,8 +114,13 @@ function setupNavLinks($header, loggedIn, user = null) {
   show('#admin-link, #admin-link-mobile', isAdmin);
 
   // logged-in links
-  show('#leaderboard-link, #leaderboard-link-mobile', loggedIn);
-  show('#dashboard-link, #dashboard-link-mobile', true);
+  show('#leaderboard-link, #leaderboard-link-mobile, #dashboard-link, #dashboard-link-mobile, #transfer-link, #transfer-link-mobile, #store-link, #store-link-mobile', loggedIn);
+  $header.querySelectorAll('nav a, .mobile-nav a').forEach(link => {
+    if (link.getAttribute('href')?.startsWith('/') &&
+        new URL(link.href).pathname === location.pathname) {
+      link.setAttribute('aria-current', 'page');
+    }
+  });
 
   // auth link text/handler
   $header.querySelectorAll('#auth-link, #auth-link-mobile').forEach((lnk) => {

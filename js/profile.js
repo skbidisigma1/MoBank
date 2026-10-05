@@ -92,6 +92,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const defaults = { class_period: 5, instrument: 'violin', theme: 'light' };
         const mergedData = { ...defaults, ...userData };
 
+        if (!forceReenrollment && userData.class_period != null) {
+            document.querySelector('.profile-heading').textContent = 'Account Settings';
+            document.querySelector('.profile-description').textContent = 'Update your class period, instrument, and appearance.';
+            document.title = 'Account Settings - MoBank';
+        }
+
         if (classPeriodSelect) {
             if (forceReenrollment || mergedData.class_period == null) {
                 classPeriodSelect.value = '';
@@ -158,6 +164,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             if (response.ok) {
                 sessionStorage.setItem('cooldownTimestamp', Date.now().toString());
+                await window.updateMoBankTheme?.(theme);
                 localStorage.removeItem(CACHE.USER_KEY);
                 window.location.href = 'dashboard?profile_successful=true';
                 return;

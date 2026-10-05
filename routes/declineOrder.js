@@ -1,6 +1,7 @@
 const { db } = require('../firebase');
 const { getTokenFromHeader, verifyToken } = require('../auth-helper');
 const parseRequestBody = require('../request-body');
+const { MOBANK_MAX_BALANCE } = require('../js/balance-limits');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -119,7 +120,8 @@ module.exports = async (req, res) => {
       const newBalance = currentBalance + refundAmount;
       if (!Number.isFinite(currentBalance) || !Number.isFinite(newBalance) ||
           Math.abs(currentBalance) > Number.MAX_SAFE_INTEGER ||
-          Math.abs(newBalance) > Number.MAX_SAFE_INTEGER) {
+          Math.abs(newBalance) > Number.MAX_SAFE_INTEGER ||
+          newBalance > MOBANK_MAX_BALANCE) {
         throw new Error('Invalid user balance');
       }
 

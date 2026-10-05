@@ -22,7 +22,7 @@
 
 .practice-layout {
 	display: grid;
-	grid-template-columns: 1fr;
+	grid-template-columns: minmax(0, 1fr);
 	grid-template-areas:
 		"session"
 		"summary"
@@ -36,6 +36,7 @@
 #recent-card { grid-area: recent; }
 
 .card {
+	min-width: 0;
 	background: var(--container-color);
 	border-radius: var(--radius-lg);
 	padding: 1.25rem 1.4rem 1.4rem;
@@ -324,17 +325,17 @@ input[type=date]:focus { outline: 2px solid var(--color-primary); outline-offset
 .chart-legend .legend-block.l4 { background: var(--color-secondary); filter: brightness(.85); }
 
 /* calendar heatmap */
-.calendar-heatmap { background: var(--color-light-bg); border: 1px solid var(--color-border); border-radius: 12px; position: relative; display:flex; align-items:center; justify-content:center; padding:.55rem .65rem .6rem; overflow:hidden; transition: padding .25s ease, margin .25s ease; }
+.calendar-heatmap { background: var(--color-light-bg); border: 1px solid var(--color-border); border-radius: 12px; position: relative; display:block; width:100%; min-width:0; min-height:150px; padding:0; overflow-x:auto; }
 .calendar-heatmap svg { display:block; }
 .calendar-heatmap svg g[transform^="translate("] { transform-box: fill-box; }
 .calendar-heatmap.cal-scroll { overflow-x: auto; }
 .calendar-heatmap.cal-scroll::-webkit-scrollbar { height: 8px; }
-.calendar-heatmap.cal-scroll::-webkit-scrollbar-track { background: transparent; }
-.calendar-heatmap.cal-scroll::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
-[data-theme="dark"] .calendar-heatmap.cal-scroll::-webkit-scrollbar-thumb { background: #333; }
-.calendar-heatmap .cal-inner { padding: 4px 6px 6px; position: relative; }
-.calendar-heatmap.cal-scroll { padding-bottom: .35rem; }
-.calendar-heatmap.cal-scroll .cal-inner { min-width: max-content; }
+.calendar-heatmap.cal-scroll::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+.calendar-heatmap.cal-scroll::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+.calendar-heatmap .cal-inner { width:max-content; min-width:100%; padding:0; position:relative; }
+.calendar-heatmap svg { margin-inline:auto; }
+.calendar-legend { display:flex; align-items:center; gap:3px; font-size:.65rem; }
+.calendar-legend-swatch { width:12px; height:12px; border-radius:2px; }
 .calendar-heatmap:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 #calendar-heatmap rect[data-value="0"],
 #calendar-heatmap rect:not([data-value]) { fill: var(--calendar-zero, #e2e5e9); }
@@ -391,7 +392,7 @@ input[type=date]:focus { outline: 2px solid var(--color-primary); outline-offset
 
 /* Calendar range toggle styles (adapted from metronome toggle) */
 .calendar-range-toggle .toggle-switch { position:relative; display:inline-block; width:50px; height:26px; }
-.calendar-range-toggle .toggle-switch input { opacity:0; width:0; height:0; }
+.calendar-range-toggle .toggle-switch input { position:absolute; inset:0; opacity:0; width:100%; height:100%; margin:0; z-index:1; cursor:pointer; }
 .calendar-range-toggle .toggle-slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background: var(--color-border); border:1px solid var(--color-border); transition:.35s; border-radius:34px; box-sizing:border-box; }
 [data-theme="dark"] .calendar-range-toggle .toggle-slider { background:#333; border-color:#333; }
 .calendar-range-toggle .toggle-slider:before { position:absolute; content:""; height:18px; width:18px; left:4px; bottom:4px; background: var(--color-bg,#fff); transition:.35s; border-radius:50%; box-shadow:0 1px 4px rgba(0,0,0,.25); }
@@ -401,7 +402,7 @@ input[type=date]:focus { outline: 2px solid var(--color-primary); outline-offset
 .calendar-range-toggle .cal-range-label.active { color: var(--color-primary); opacity:1; }
 
 /* Compact (6mo) mode allows slight outer margin to breathe */
-.calendar-heatmap.compact-mode { margin: 6px 8px; padding:.6rem .7rem .65rem; }
+.calendar-heatmap.compact-mode { margin:0; padding:0; }
 /* Ensure calendar wrapper flex parent does not collapse margins visually */
 .calendar-heatmap.compact-mode svg { overflow: visible; }
 
@@ -442,9 +443,8 @@ select:focus-visible {
 [data-theme="dark"] .session-hint { opacity: .85; }
 
 .modal-body::-webkit-scrollbar { width: 8px; }
-.modal-body::-webkit-scrollbar-track { background: transparent; }
-.modal-body::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
-[data-theme="dark"] .modal-body::-webkit-scrollbar-thumb { background: #444; }
+.modal-body::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+.modal-body::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
 
 .primary-btn, .secondary-btn, .success-btn, .danger-btn, .refresh-btn, .collapse-toggle, .close-btn { transition: background-color .2s ease, color .2s ease, transform .15s ease; }
 .primary-btn:active, .secondary-btn:active, .success-btn:active, .danger-btn:active, .refresh-btn:active, .collapse-toggle:active { transform: translateY(1px); }
@@ -458,7 +458,6 @@ select:focus-visible {
 
 /* scrollbar styling */
 .recent-list::-webkit-scrollbar { width: 8px; }
-.recent-list::-webkit-scrollbar-track { background: transparent; }
-.recent-list::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
-[data-theme="dark"] .recent-list::-webkit-scrollbar-thumb { background: #444; }
+.recent-list::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+.recent-list::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
 

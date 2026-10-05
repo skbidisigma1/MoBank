@@ -1,17 +1,20 @@
 <header>
-    <button id="mobileMenuToggle" aria-label="Toggle navigation" aria-expanded="false">
+    <button id="mobileMenuToggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mobile-navigation">
         <span class="bar"></span>
         <span class="bar"></span>
         <span class="bar"></span>
     </button>
-    <h1>MoBank</h1>
-    <nav>
+    <h1><a class="brand-link" href="/">MoBank</a></h1>
+    <nav aria-label="Main navigation">
         <ul class="nav-links">
             <li><a href="/">Home</a></li>
             <li><a href="#" id="auth-link">Login</a></li>
-            <li><a href="dashboard">Dashboard</a></li>
-            <li><a href="store">Store</a></li>
-            <li><a href="admin" id="admin-link">Admin</a></li>
+            <li><a href="/dashboard" id="dashboard-link">Dashboard</a></li>
+            <li><a href="/transfer" id="transfer-link">Transfer</a></li>
+            <li><a href="/leaderboard" id="leaderboard-link">Leaderboard</a></li>
+            <li><a href="/store" id="store-link">Store</a></li>
+            <li><a href="/tools">MoTools</a></li>
+            <li><a href="/admin" id="admin-link">Admin</a></li>
         </ul>
     </nav>
     <div class="header-right">
@@ -24,13 +27,16 @@
         </div>
         <img id="profile-pic" class="profile-icon" src="/images/default_profile.svg" alt="Profile Picture">
     </div>
-    <div class="mobile-nav">
+    <div class="mobile-nav" id="mobile-navigation">
         <ul>
             <li><a href="/">Home</a></li>
             <li><a href="#" id="auth-link-mobile">Login</a></li>
-            <li><a href="dashboard">Dashboard</a></li>
-            <li><a href="store">Store</a></li>
-            <li><a href="admin" id="admin-link-mobile">Admin</a></li>
+            <li><a href="/dashboard" id="dashboard-link-mobile">Dashboard</a></li>
+            <li><a href="/transfer" id="transfer-link-mobile">Transfer</a></li>
+            <li><a href="/leaderboard" id="leaderboard-link-mobile">Leaderboard</a></li>
+            <li><a href="/store" id="store-link-mobile">Store</a></li>
+            <li><a href="/tools">MoTools</a></li>
+            <li><a href="/admin" id="admin-link-mobile">Admin</a></li>
         </ul>
     </div>
 </header>

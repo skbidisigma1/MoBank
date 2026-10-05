@@ -1,5 +1,39 @@
-const rateLimit = require('express-rate-limit');
+const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 const { getTokenFromHeader, verifyToken } = require('../auth-helper');
+
+const routeLoaders = Object.freeze({
+  adminAdjustBalance: () => require('../routes/adminAdjustBalance'),
+  announcements: () => require('../routes/announcements'),
+  cancelPracticeSession: () => require('../routes/cancelPracticeSession'),
+  declineOrder: () => require('../routes/declineOrder'),
+  deletePracticeSession: () => require('../routes/deletePracticeSession'),
+  editPracticeSession: () => require('../routes/editPracticeSession'),
+  endPracticeSession: () => require('../routes/endPracticeSession'),
+  fulfillOrder: () => require('../routes/fulfillOrder'),
+  getAggregatedLeaderboard: () => require('../routes/getAggregatedLeaderboard'),
+  getCatalog: () => require('../routes/getCatalog'),
+  getCatalogAdmin: () => require('../routes/getCatalogAdmin'),
+  getItemImage: () => require('../routes/getItemImage'),
+  getOrders: () => require('../routes/getOrders'),
+  getOrdersAdmin: () => require('../routes/getOrdersAdmin'),
+  getPracticeData: () => require('../routes/getPracticeData'),
+  getPracticeTrends: () => require('../routes/getPracticeTrends'),
+  getTransactions: () => require('../routes/getTransactions'),
+  getTransferRecipients: () => require('../routes/getTransferRecipients'),
+  getUserData: () => require('../routes/getUserData'),
+  getUserNames: () => require('../routes/getUserNames'),
+  logPracticeSession: () => require('../routes/logPracticeSession'),
+  login: () => require('../routes/login'),
+  manageCatalogItem: () => require('../routes/manageCatalogItem'),
+  metronomePresets: () => require('../routes/metronomePresets'),
+  notifications: () => require('../routes/notifications'),
+  resetClassPeriods: () => require('../routes/resetClassPeriods'),
+  setPracticeGoal: () => require('../routes/setPracticeGoal'),
+  startPracticeSession: () => require('../routes/startPracticeSession'),
+  submitOrder: () => require('../routes/submitOrder'),
+  transferFunds: () => require('../routes/transferFunds'),
+  updateProfile: () => require('../routes/updateProfile')
+});
 
 const createLimiter = max =>
   rateLimit({
@@ -8,14 +42,8 @@ const createLimiter = max =>
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: 'Too many requests, please try again later.' },
-    keyGenerator: req => {
-      const key =
-    req.auth?.payload?.sub ||
-    (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
-    req.socket.remoteAddress ||
-    '';
-  return key;
-    }
+    keyGenerator: req => req.auth?.payload?.sub ||
+      ipKeyGenerator(req.socket.remoteAddress || 'unknown')
   });
 
 const regularLimiter = createLimiter(400);
@@ -30,11 +58,16 @@ const attachAuth = async req => {
   } catch {}
 };
 
-const enforceRateLimit = (req, res) =>
-  new Promise(resolve => {
-    const roles = req.auth?.payload?.['https://mo-classroom.us/roles'] || [];
-    (roles.includes('admin') ? adminLimiter : regularLimiter)(req, res, () => resolve());
-  });
+const runLimiter = async (limiter, req, res) => {
+  let allowed = false;
+  await limiter(req, res, () => { allowed = true; });
+  return allowed;
+};
+
+const enforceRateLimit = async (req, res) => {
+  const roles = req.auth?.payload?.['https://mo-classroom.us/roles'] || [];
+  return runLimiter(roles.includes('admin') ? adminLimiter : regularLimiter, req, res);
+};
 
 const handlers = {};
 const profiler = {
@@ -46,20 +79,35 @@ const profiler = {
   }
 };
 
-const parseBody = req =>
-  new Promise(resolve => {
-    const len = +req.headers['content-length'] || 0;
-    if (!len || len > 1e6) return resolve({});
-    let b = '';
-    req.on('data', c => (b += c));
-    req.on('end', () => {
-      try {
-        resolve(JSON.parse(b));
-      } catch {
-        resolve({});
-      }
-    });
-  });
+const parseBody = (req, routePath) => {
+  const contentType = req.headers['content-type'] || '';
+  const rawLength = req.headers['content-length'];
+  const contentLength = rawLength === undefined ? 0 : Number(rawLength);
+  if (contentLength === 0 && !req.headers['transfer-encoding']) {
+    return { body: {} };
+  }
+  if (!/^application\/json(?:\s*;|\s*$)/i.test(contentType)) {
+    return { error: 415, message: 'Content-Type must be application/json' };
+  }
+  const maxBytes = routePath === 'manageCatalogItem' ? 2_000_000 : 1_000_000;
+  if (Number.isFinite(contentLength) && contentLength > maxBytes) {
+    return { error: 413, message: 'Request body too large' };
+  }
+  let body;
+  try {
+    body = req.body;
+    if (typeof body === 'string') body = JSON.parse(body);
+  } catch {
+    return { error: 400, message: 'Invalid JSON body' };
+  }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return { error: 400, message: 'Request body must be an object' };
+  }
+  if (Buffer.byteLength(JSON.stringify(body)) > maxBytes) {
+    return { error: 413, message: 'Request body too large' };
+  }
+  return { body };
+};
 
 const getRoutePath = url => {
   const i = url.indexOf('/api/');
@@ -74,18 +122,22 @@ const getRoutePath = url => {
 module.exports = async (req, res) => {
   profiler.start('total');
   await attachAuth(req);
-  await enforceRateLimit(req, res);
-  if (res.headersSent) return;
+  const allowed = await enforceRateLimit(req, res);
+  if (!allowed || res.headersSent) return;
   try {
-    const ct = req.headers['content-type'] || '';
-    if (['POST', 'PUT', 'DELETE'].includes(req.method) && (ct.includes('application/json') || !ct))
-      req.body = await parseBody(req);
-    else req.body = {};
     const routePath = getRoutePath(req.url);
     if (!routePath) return res.status(404).json({ message: 'API endpoint not found' });
-    const handler = handlers[routePath] || (handlers[routePath] = require(`../routes/${routePath}`));
+    const loader = Object.hasOwn(routeLoaders, routePath) ? routeLoaders[routePath] : null;
+    if (!loader) return res.status(404).json({ message: 'API endpoint not found' });
+    if (['POST', 'PUT', 'DELETE'].includes(req.method)) {
+      const parsed = parseBody(req, routePath);
+      if (parsed.error) return res.status(parsed.error).json({ message: parsed.message });
+      req.body = parsed.body;
+    }
+    const handler = handlers[routePath] || (handlers[routePath] = loader());
     await handler(req, res);
   } catch (e) {
+    console.error('API route failed:', e);
     if (!res.headersSent)
       res.status(500).json({
         message: 'Internal server error',
@@ -95,3 +147,5 @@ module.exports = async (req, res) => {
     profiler.end('total');
   }
 };
+
+module.exports.__test = { parseBody, getRoutePath, runLimiter, createLimiter };

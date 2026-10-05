@@ -84,9 +84,6 @@ module.exports = async (req, res) => {
       if (!validClassPeriods.includes(recipientData.class_period)) {
         throw new Error('RECIPIENT_INCOMPLETE');
       }
-      if (senderData.class_period !== recipientData.class_period) {
-        throw new Error('RECIPIENT_DIFFERENT_PERIOD');
-      }
 
       const senderBalanceValue = Number(senderData.currency_balance);
       const recipientBalanceValue = Number(recipientData.currency_balance);
@@ -196,11 +193,6 @@ module.exports = async (req, res) => {
     if (err.message === 'RECIPIENT_INCOMPLETE') {
       return res.status(409).json({
         message: 'Recipient has not completed profile yet.',
-      });
-    }
-    if (err.message === 'RECIPIENT_DIFFERENT_PERIOD') {
-      return res.status(409).json({
-        message: 'Recipient is no longer in your class period. Choose someone from the updated list.',
       });
     }
     console.error(err);

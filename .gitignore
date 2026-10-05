@@ -5,3 +5,6 @@ keys/*.json
 .idea/
 .env*.local
 .vercel
+scripts/
+test/
+docs/

@@ -1,7 +1,6 @@
 const crypto = require('crypto');
 const { admin, db } = require('../firebase');
 const { getTokenFromHeader, verifyToken } = require('../auth-helper');
-const classPeriods = require('../js/class-periods');
 
 const PAGE_SIZE = 400;
 const YEAR_PATTERN = /^\d{4}-\d{4}$/;
@@ -221,14 +220,6 @@ module.exports = async (req, res) => {
       const complete = !hasMore;
       const lastUid = users.length ? users[users.length - 1].id : migrationState.lastUid;
       const fieldValue = admin.firestore.FieldValue;
-      if (complete) {
-        for (const period of classPeriods) {
-          tx.set(db.collection('aggregates').doc(`leaderboard_period_${period.value}`), {
-            leaderboardData: [],
-            lastUpdated: fieldValue.serverTimestamp()
-          }, { merge: true });
-        }
-      }
 
       const nextState = {
         ...currentMigration,

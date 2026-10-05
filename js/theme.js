@@ -154,7 +154,7 @@
             document.documentElement.setAttribute('data-theme', newTheme);
             
             // Update new CACHE utility if available
-            if (CACHE && CACHE.read && CACHE.write && CACHE.USER_KEY) {
+            if (typeof CACHE !== 'undefined' && CACHE.read && CACHE.write && CACHE.USER_KEY) {
                 const existingData = CACHE.read(CACHE.USER_KEY) || {};
                 existingData.theme = newTheme;
                 CACHE.write(CACHE.USER_KEY, existingData, CACHE.USER_MAX_AGE);
@@ -187,7 +187,7 @@
             await updateTheme(newTheme);
         });        mediaQuery.addListener(async (e) => {
             // Check new CACHE first, then fallback to old localStorage
-            const cachedUserData = CACHE && CACHE.read ? CACHE.read(CACHE.USER_KEY) : null;
+            const cachedUserData = typeof CACHE !== 'undefined' && CACHE.read ? CACHE.read(CACHE.USER_KEY) : null;
             const userData = cachedUserData || safeParse(localStorage.getItem('userData'));
             if (!userData?.theme && !userData?.data?.theme) {
                 const newTheme = e.matches ? THEME.DARK : THEME.LIGHT;
@@ -204,6 +204,8 @@
             }
         });
     }
+
+    window.updateMoBankTheme = updateTheme;
 
     try {
         const theme = await getStoredTheme();

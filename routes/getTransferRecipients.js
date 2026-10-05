@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
       }
 
       const usersSnap = await tx.get(
-        db.collection('users').where('class_period', '==', period)
+        db.collection('users').where('class_period', 'in', validClassPeriods)
       );
       const recipients = usersSnap.docs
         .filter(doc => doc.id !== senderUid)

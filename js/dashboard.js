@@ -106,12 +106,22 @@ function renderDashboard(u = {}) {
   $('#currency-value').style.color = balance < 0 ? 'rgb(220,53,69)' : '';
 
   const periodLabel = (u.class_period == null)
-    ? '<span style="color:var(--color-danger);">Not set – please select your class period</span>'
+    ? 'Not set – please select your class period'
     : (periodNames[u.class_period] || `Period ${u.class_period}`);
-  $('#dashboard-content').innerHTML = `
-    <div class="dashboard-card"><strong>Class Period:</strong> ${periodLabel}</div>
-    <div class="dashboard-card"><strong>Instrument:</strong> ${cap(u.instrument)}</div>
-  `;
+  const makeCard = (label, value) => {
+    const card = document.createElement('div');
+    card.className = 'dashboard-card';
+    const heading = document.createElement('strong');
+    heading.textContent = `${label}: `;
+    const text = document.createElement('span');
+    text.textContent = value;
+    card.append(heading, text);
+    return card;
+  };
+  $('#dashboard-content').replaceChildren(
+    makeCard('Class Period', periodLabel),
+    makeCard('Instrument', cap(u.instrument || ''))
+  );
   renderTransactions(u.transactions || []);
 }
 
@@ -127,13 +137,23 @@ function renderTransactions(txns) {
   txns.forEach((t) => {
     const ts = t.timestamp?._seconds * 1000 + (t.timestamp?._nanoseconds || 0) / 1e6 || Date.now();
     const li = document.createElement('li');
-    const amountFormatted = formatMoBucks(t.amount, { showSign: true });
-    li.innerHTML = `
-      <span class="transaction-amount ${t.type}">${t.type === 'credit' ? '+' : '-'}${amountFormatted.replace(/^[+-]/, '')}</span>
-      <span class="transaction-details">
-        <span class="transaction-type">${t.type === 'credit' ? 'from' : 'to'} ${t.counterpart}</span>
-        <span class="transaction-date">${new Date(ts).toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</span>
-      </span>`;
+    const type = t.type === 'credit' ? 'credit' : 'debit';
+    const amount = document.createElement('span');
+    amount.className = `transaction-amount ${type}`;
+    amount.append(document.createTextNode(type === 'credit' ? '+' : '-'));
+    const icon = document.createElement('span');
+    icon.className = 'mobucks-icon';
+    amount.append(icon, document.createTextNode(Math.abs(Number(t.amount) || 0).toLocaleString()));
+    const details = document.createElement('span');
+    details.className = 'transaction-details';
+    const counterpart = document.createElement('span');
+    counterpart.className = 'transaction-type';
+    counterpart.textContent = `${type === 'credit' ? 'from' : 'to'} ${t.counterpart || 'Unknown'}`;
+    const date = document.createElement('span');
+    date.className = 'transaction-date';
+    date.textContent = new Date(ts).toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    details.append(counterpart, date);
+    li.append(amount, details);
     list.appendChild(li);
   });
 }

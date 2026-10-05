@@ -18,7 +18,7 @@
 	const PRACTICE_COMPUTED_KEY = 'practiceComputedV1'; // derived aggregates
 	const META_MAX_AGE_MS = 5 * 60 * 1000; // 5 minutes before probing meta again
 	const RAW_EXPIRY_MS = 12 * 60 * 60 * 1000; // 12h soft expiry for raw cache
-	const COMPUTED_VERSION = 'v1';
+	const COMPUTED_VERSION = 'v2';
 	const RECENT_LIMIT = 10;
 
 	let cachedSummary = null; // summary for top stats
@@ -551,27 +551,11 @@
 			dom.recentList.innerHTML = '';
 			data.recentSessions.forEach(s => dom.recentList.appendChild(renderRecentSession(s)));
 		}
-		const topPieceEl = document.getElementById('insight-top-piece');
 		const avgLenEl = document.getElementById('insight-avg-length');
-		const gapEl = document.getElementById('insight-gap');
-		if (topPieceEl) {
-			const first = data.recentSessions && data.recentSessions[0];
-			if (first) {
-				const dt = first.date ? new Date(first.date + 'T00:00:00') : new Date();
-				const label = dt.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
-				const snippet = first.notes ? first.notes.slice(0,30) : 'Logged session';
-				topPieceEl.textContent = `${label}: ${snippet}`;
-			} else {
-				topPieceEl.textContent = 'No sessions yet';
-			}
-		}
 		if (avgLenEl) {
 			const sessions = data.recentSessions || [];
 			const avg = sessions.length ? Math.floor(sessions.reduce((a,s)=>a+(s.durationMinutes||0),0)/sessions.length) : 0;
 			avgLenEl.textContent = `Avg Length: ${avg} min`;
-		}
-		if (gapEl) {
-			gapEl.textContent = 'Next: Keep the streak!';
 		}
 	}
 
@@ -586,7 +570,7 @@
 	}
 
 	// calendar heatmap
-	let calHeatmapInstance = null; let calendarDataLoaded = false;
+	let calendarDataLoaded = false;
 	let calendarSourceDays = null;
 	let calendarLayout = null;
 	let calendarConfig = null;
@@ -647,10 +631,9 @@ async function maybeRenderCalendarHeatmap(force) {
 	calLog('maybeRenderCalendarHeatmap', { force, attempts: calendarRenderAttempts });
 	const container = document.getElementById('calendar-heatmap');
 	if (!container) { return; }
-	if (typeof window.CalHeatmap === 'undefined' || typeof window.Legend === 'undefined') { setTimeout(()=>maybeRenderCalendarHeatmap(force), 200); return; }
 	const needConfig = !calendarConfig && !!calendarSourceDays;
-	const needInstance = calendarConfig && !calHeatmapInstance;
-	if (force) { calendarConfig = null; calHeatmapInstance = null; }
+	const needInstance = calendarConfig && !container.querySelector('svg');
+	if (force) { calendarConfig = null; }
 	if (force || !calendarDataLoaded || needConfig || needInstance) {
 		if (!calendarPrefLoaded) {
 			try { const stored = await getCalendarPref(); if (stored === '6mo') calendarCompactMode = true; else if (stored === '12mo') calendarCompactMode = false; else calendarCompactMode = determineInitialCalendarMode(window.innerWidth); calendarPrefLoaded = true; } catch(e){}
@@ -662,7 +645,7 @@ async function maybeRenderCalendarHeatmap(force) {
 		if (calendarCompactMode) container.classList.add('compact-mode'); else container.classList.remove('compact-mode');
 		if (!calendarConfig) {
 			buildCalendarChart(container, calendarSourceDays);
-		} else if (!calHeatmapInstance) {
+		} else if (!container.querySelector('svg')) {
 			paintCalendar(container);
 		}
 		setupCalendarRangeToggle(container, { reveal: true });
@@ -672,331 +655,121 @@ async function maybeRenderCalendarHeatmap(force) {
 	function maybeRenderCalendarHeatmapFromCached(force){ maybeRenderCalendarHeatmap(force); }
 
 function buildCalendarChart(container, days) {
-	calendarSourceDays = days;
-	const now = new Date();
-	const monthsBack = calendarCompactMode ? 5 : 11;
-	const start = new Date(now.getFullYear(), now.getMonth() - monthsBack, 1);
-	const filtered = days.filter(d => {
-		const parts = d.date.split('-');
-		if (parts.length !== 3) return false;
-		const dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-		return dt >= start && dt <= now;
-	});
-	const source = filtered.map(d => ({ date: d.date, minutes: d.minutes }));
-	const maxVal = Math.max(0, ...source.map(s => s.minutes));
-	let thresholds = [1,10,30,60];
-	if (maxVal > 0 && maxVal < 60) {
-		const q1 = 1;
-		const q2 = Math.max(2, Math.round(maxVal * 0.25));
-		const q3 = Math.max(q2+1, Math.round(maxVal * 0.55));
-		const q4 = Math.max(q3+1, Math.round(maxVal * 0.8));
-		thresholds = Array.from(new Set([q1,q2,q3,q4])).filter(n=>n>0).sort((a,b)=>a-b);
-	}
-	const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-	const zeroColor = dark ? '#2a2d31' : '#ebedf0';
-	const palette = [zeroColor, '#9be9a8', '#30c463', '#30a14e', '#216e39'];
-	calendarConfig = { thresholds, palette, start, now, source };
-	paintCalendar(container);
-}
-
-function getCalendarWeeks(start, end) {
-	const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-	const e = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-	const sSunday = new Date(s.getFullYear(), s.getMonth(), s.getDate() - s.getDay());
-	const eSundayNext = new Date(e.getFullYear(), e.getMonth(), e.getDate() - e.getDay() + 7);
-	return Math.round((eSundayNext - sSunday) / (7 * 86400000));
-}
-
-function computeCalendarLayout(containerWidth, containerHeight, weeks, compact) {
-	const MIN_CELL = 8;
-	const MAX_CELL = 20;
-	let gutter = 2;
-	const EDGE_PAD = 4;
-	const extraPad = compact ? 4 : 0;
-	let innerWidth = containerWidth - EDGE_PAD * 2 - extraPad;
-	if (innerWidth < 100) innerWidth = containerWidth;
-	let cell = Math.floor((innerWidth - (weeks - 1) * gutter) / weeks);
-	if (cell < MIN_CELL) {
-		gutter = 1;
-		cell = Math.floor((innerWidth - (weeks - 1) * gutter) / weeks);
-		if (cell < MIN_CELL) cell = MIN_CELL;
-	}
-	if (cell > MAX_CELL) {
-		while (cell > MAX_CELL && gutter < 4) {
-			gutter++;
-			cell = Math.floor((innerWidth - (weeks - 1) * gutter) / weeks);
-		}
-		cell = Math.min(cell, MAX_CELL);
-	}
-	if (containerHeight && containerHeight > 0) {
-		const labelH = 16;
-		const avail = containerHeight - (EDGE_PAD * 2 + extraPad) - labelH;
-		if (avail > 0) {
-			const maxByHeight = Math.floor((avail - gutter * 6) / 7);
-			if (maxByHeight > 0 && maxByHeight < cell) {
-				cell = Math.max(MIN_CELL, maxByHeight);
-			}
-		}
-	}
-	const layout = { cell, gutter, weeks, edgePad: EDGE_PAD, extraPad };
-	return layout;
+    calendarSourceDays = days;
+    calendarConfig = { days };
+    paintCalendar(container);
 }
 
 function paintCalendar(container) {
-	if (!calendarConfig) return;
-	// Ensure container doesn't clip bottom of SVG
-	if (container.style.overflow !== 'visible') container.style.overflow = 'visible';
-	const now = calendarConfig.now || new Date();
-	const monthsBack = calendarCompactMode ? 5 : 11;
-	calendarConfig.start = new Date(now.getFullYear(), now.getMonth() - monthsBack, 1);
-	const { thresholds, palette, start, source } = calendarConfig;
-	container.innerHTML = '';
-	const weeks = getCalendarWeeks(start, now);
-	const layout = computeCalendarLayout(container.clientWidth, container.getBoundingClientRect().height || 0, weeks, calendarCompactMode);
-	calendarLayout = layout;
-	const DOMAIN_GUTTER = 3;
-	calHeatmapInstance = new window.CalHeatmap();
-	calHeatmapInstance.paint({
-		itemSelector: '#calendar-heatmap',
-		range: calendarCompactMode ? 6 : 12,
-		date: { start, highlight: [now] },
-		domain: { type: 'month', gutter: DOMAIN_GUTTER, dynamicDimension: false, label: { text: 'MMM', position: 'top', textAlign: 'start' } },
-		subDomain: { type: 'ghDay', width: layout.cell, height: layout.cell, gutter: layout.gutter, radius: 3, label: null },
-		data: { source, x: 'date', y: 'minutes', groupY: 'sum', defaultValue: 0 },
-		scale: { color: { type: 'threshold', domain: thresholds, range: palette } },
-		animationDuration: 150,
-	}, [
-		[window.Legend, { itemSelector: '#calendar-legend', label: 'Minutes per day' }]
-	]);
-	calHeatmapInstance._lastPaintAt = Date.now();
-	Promise.resolve(calHeatmapInstance).then(() => {
-		calLog('calendar painted');
-		try { adjustMonthBackgrounds(container, DOMAIN_GUTTER); } catch(e){ calWarn('adjustMonthBackgrounds failed', e); }
-		try { addCalendarWrapper(container); } catch(e){ calWarn('addCalendarWrapper failed', e); }
-		try { assignCalendarCellDates(container, layout); } catch (e) { calWarn('assignCalendarCellDates failed', e); }
-		try { applyCalendarA11y(container); } catch(e){ calWarn('applyCalendarA11y failed', e); }
-		try { applyInternalSVGPadding(container, layout.edgePad + (calendarCompactMode ? 4 : 0)); } catch(e){ calWarn('applyInternalSVGPadding failed', e); }
-		try { reflectCalendarContainerMode(container); } catch(e){ calWarn('reflectCalendarContainerMode failed', e); }
-		const rectCount = container.querySelectorAll('rect.ch-subdomain-bg').length;
-		calLog('calendar cells', rectCount);
-	});
+    if (!calendarConfig) return;
+    hideCalTooltip();
+    const model = window.PracticeCalendar.build(calendarConfig.days, {
+        months: calendarCompactMode ? 6 : 12, width: container.clientWidth
+    });
+    calendarLayout = { width: container.clientWidth };
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const palette = [dark ? '#202429' : '#d9dde2', '#9be9a8', '#30c463', '#30a14e', '#216e39'];
+    const max = Math.max(0, ...model.cells.map(cell => cell.minutes));
+    const thresholds = max > 0 && max < 60
+        ? [...new Set([1, Math.max(2, Math.round(max * .25)), Math.max(3, Math.round(max * .55)), Math.max(4, Math.round(max * .8))])]
+        : [1, 10, 30, 60];
+    const svgElement = (tag, attrs) => {
+        const element = document.createElementNS('http://www.w3.org/2000/svg', tag);
+        Object.entries(attrs).forEach(([key, value]) => element.setAttribute(key, value));
+        return element;
+    };
+    const svg = svgElement('svg', { width: model.width, height: model.height, viewBox: `0 0 ${model.width} ${model.height}` });
+    model.labels.forEach(label => {
+        const text = svgElement('text', { x: label.x, y: model.padding + 12, fill: 'currentColor', 'font-size': 11 });
+        text.textContent = label.text;
+        svg.appendChild(text);
+    });
+    const today = window.PracticeCalendar.dateKey(new Date());
+    model.cells.forEach(cell => {
+        const level = thresholds.filter(threshold => cell.minutes >= threshold).length;
+        const rect = svgElement('rect', {
+            x: cell.x, y: cell.y, width: model.cell, height: model.cell, rx: 3,
+            fill: palette[level], 'data-date': cell.date, 'data-value': cell.minutes,
+            class: 'practice-calendar-cell'
+        });
+        if (cell.future) {
+            rect.setAttribute('opacity', '.35');
+            rect.setAttribute('aria-hidden', 'true');
+        } else {
+            rect.setAttribute('role', 'img');
+            rect.setAttribute('tabindex', '0');
+            rect.setAttribute('aria-label', `${cell.date}: ${cell.minutes} minutes`);
+            if (cell.date === today) rect.setAttribute('stroke', 'var(--color-muted)');
+        }
+        svg.appendChild(rect);
+    });
+    const inner = document.createElement('div');
+    inner.className = 'cal-inner';
+    inner.appendChild(svg);
+    container.replaceChildren(inner);
+    container.classList.toggle('cal-scroll', model.width > container.clientWidth);
+    const legend = document.getElementById('calendar-legend');
+    if (legend) {
+        legend.replaceChildren(document.createTextNode('Less '));
+        palette.forEach(color => {
+            const swatch = document.createElement('span');
+            swatch.className = 'calendar-legend-swatch';
+            swatch.style.backgroundColor = color;
+            legend.appendChild(swatch);
+        });
+        legend.appendChild(document.createTextNode(' More'));
+    }
+    reflectCalendarContainerMode(container);
+    initCalendarTooltipDelegation(container);
 }
 
 function reflectCalendarContainerMode(container) {
-	const calEl = container;
-	if (!calEl) return;
-	if (calendarCompactMode) calEl.classList.add('compact-mode'); else calEl.classList.remove('compact-mode');
-	const toggle = document.getElementById('calendar-range-toggle');
-	if (toggle) {
-		toggle.checked = !calendarCompactMode;
-		const six = document.querySelector('.cal-range-label.cal-range-6');
-		const twelve = document.querySelector('.cal-range-label.cal-range-12');
-		if (six && twelve) {
-			six.classList.toggle('active', calendarCompactMode);
-			twelve.classList.toggle('active', !calendarCompactMode);
-		}
-	}
+    container.classList.toggle('compact-mode', calendarCompactMode);
+    const toggle = document.getElementById('calendar-range-toggle');
+    if (toggle) toggle.checked = !calendarCompactMode;
+    document.querySelector('.cal-range-label.cal-range-6')?.classList.toggle('active', calendarCompactMode);
+    document.querySelector('.cal-range-label.cal-range-12')?.classList.toggle('active', !calendarCompactMode);
 }
 
-function setupCalendarRangeToggle(container, opts={}) {
-	const toggle = document.getElementById('calendar-range-toggle');
-	const wrapper = document.getElementById('calendar-range-toggle-wrapper');
-	if (!toggle) return;
-	reflectCalendarContainerMode(container);
-	if (!toggle.dataset.bound) {
-		toggle.addEventListener('change', async () => {
-			calendarCompactMode = !toggle.checked;
-			await setCalendarPref(calendarCompactMode ? '6mo' : '12mo');
-			paintCalendar(container);
-		});
-		toggle.dataset.bound = '1';
-	}
-	if (opts.reveal && wrapper && wrapper.hasAttribute('hidden')) {
-		wrapper.hidden = false;
-	}
-}
-
-function adjustMonthBackgrounds(container, DOMAIN_GUTTER) {
-	const bgs = container.querySelectorAll('.ch-domain-bg');
-	bgs.forEach((bg, idx) => {
-		if (idx === bgs.length - 1) return;
-		const w = parseFloat(bg.getAttribute('width'));
-		if (!isNaN(w)) bg.setAttribute('width', (w + DOMAIN_GUTTER) + '');
-	});
-}
-
-function addCalendarWrapper(container) {
-	const svg = container.querySelector('svg');
-	if (svg && !container.querySelector('.cal-inner')) {
-		const wrap = document.createElement('div');
-		wrap.className = 'cal-inner';
-		container.appendChild(wrap);
-		wrap.appendChild(svg);
-	}
-}
-
-function applyCalendarA11y(container) {
-	const rects = container.querySelectorAll('rect');
-	rects.forEach(rect => {
-		if (rect.classList.contains('ch-domain-bg')) return;
-		let dateObj = extractRectDate(rect);
-		if (!dateObj || isNaN(dateObj.getTime())) return;
-		const val = rect.getAttribute('data-value') || '0';
-		const iso = dateObj.toISOString().slice(0,10);
-		rect.setAttribute('role','img');
-		rect.setAttribute('tabindex','0');
-		rect.setAttribute('aria-label', `${iso} ${val} minutes`);
-	});
-	initCalendarTooltipDelegation(container);
+function setupCalendarRangeToggle(container, opts = {}) {
+    const toggle = document.getElementById('calendar-range-toggle');
+    if (!toggle) return;
+    reflectCalendarContainerMode(container);
+    if (!toggle.dataset.bound) {
+        toggle.addEventListener('change', async () => {
+            calendarCompactMode = !toggle.checked;
+            paintCalendar(container);
+            await setCalendarPref(calendarCompactMode ? '6mo' : '12mo');
+        });
+        toggle.dataset.bound = '1';
+    }
+    const wrapper = document.getElementById('calendar-range-toggle-wrapper');
+    if (opts.reveal && wrapper) wrapper.hidden = false;
 }
 
 function extractRectDate(rect) {
-	const attrs = [
-		() => rect.getAttribute('data-timestamp'),
-		() => rect.parentElement && rect.parentElement.getAttribute('data-timestamp'),
-		() => rect.getAttribute('data-date'),
-		() => rect.getAttribute('data-cal-date'),
-		() => rect.parentElement && rect.parentElement.getAttribute('data-date'),
-		() => rect.parentElement && rect.parentElement.getAttribute('data-cal-date')
-	];
-	for (const getter of attrs) {
-		const raw = getter();
-		if (!raw) continue;
-		if (/^\d+$/.test(raw)) {
-			const num = Number(raw);
-			if (!Number.isNaN(num) && num > 1000) return new Date(num * (num < 1e12 ? 1000 : 1));
-		}
-		if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return new Date(raw + 'T00:00:00');
-	}
-	return null;
+    return window.PracticeCalendar.parseDate(rect.getAttribute('data-date'));
 }
 
 let calendarTooltipDelegated = false;
 function initCalendarTooltipDelegation(container) {
-	if (calendarTooltipDelegated) return;
-	calendarTooltipDelegated = true;
-	container.addEventListener('mousemove', e => {
-		const rectEl = findCalendarCellRect(e.target);
-		if (!rectEl) { hideCalTooltip(); return; }
-		const dateObj = extractRectDate(rectEl);
-		if (!dateObj) { hideCalTooltip(); return; }
-		const val = rectEl.getAttribute('data-value') || '0';
-		showCalTooltip(rectEl, dateObj, val, e);
-	});
-	container.addEventListener('mouseleave', hideCalTooltip);
-	container.addEventListener('focusin', e => {
-		const rectEl = findCalendarCellRect(e.target);
-		if (!rectEl) return;
-		const dateObj = extractRectDate(rectEl);
-		if (!dateObj) return;
-		const val = rectEl.getAttribute('data-value') || '0';
-		showCalTooltip(rectEl, dateObj, val);
-	});
-	container.addEventListener('focusout', hideCalTooltip);
-}
-
-function findCalendarCellRect(el) {
-	if (!el) return null;
-	if (el.tagName === 'rect' || el.tagName === 'RECT') {
-		if (el.classList.contains('ch-domain-bg')) return null;
-		return el;
-	}
-	if (el.querySelector) {
-		const r = el.querySelector('rect');
-		if (r && !r.classList.contains('ch-domain-bg')) return r;
-	}
-	return null;
-}
-
-function assignCalendarCellDates(container, layout) {
-	if (!calendarConfig) return;
-	const rects = Array.from(container.querySelectorAll('rect.ch-subdomain-bg'));
-	if (!rects.length) return;
-	const lefts = rects.map(r => Math.round(r.getBoundingClientRect().left));
-	const uniqueLefts = Array.from(new Set(lefts)).sort((a,b)=>a-b);
-	const leftToWeek = new Map(); uniqueLefts.forEach((val, idx) => leftToWeek.set(val, idx));
-	const tops = rects.map(r => Math.round(r.getBoundingClientRect().top));
-	const uniqueTops = Array.from(new Set(tops)).sort((a,b)=>a-b);
-	const topToDay = new Map(); uniqueTops.forEach((val, idx) => topToDay.set(val, idx));
-
-	const start = calendarConfig.start;
-	let baseSunday = new Date(start.getFullYear(), start.getMonth(), start.getDate() - start.getDay());
-	const today = calendarConfig.now || new Date();
-
-	const highlight = container.querySelector('rect.highlight.ch-subdomain-bg, rect.ch-subdomain-bg.highlight');
-	if (highlight) {
-		const hbr = highlight.getBoundingClientRect();
-		const hWeek = leftToWeek.get(Math.round(hbr.left));
-		const hDay = topToDay.get(Math.round(hbr.top));
-		if (hWeek != null && hDay != null) {
-			const predicted = new Date(baseSunday.getFullYear(), baseSunday.getMonth(), baseSunday.getDate() + hWeek*7 + hDay);
-			const norm = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-			const pd = norm(predicted); const td = norm(today);
-			const diffDays = Math.round((pd - td)/86400000);
-			if (diffDays !== 0) {
-				baseSunday = new Date(baseSunday.getFullYear(), baseSunday.getMonth(), baseSunday.getDate() - diffDays);
-			}
-		}
-	} else {
-		const sample = rects[0];
-		if (sample) {
-			const br = sample.getBoundingClientRect();
-			const w = leftToWeek.get(Math.round(br.left));
-			const d = topToDay.get(Math.round(br.top));
-			if (w != null && d != null) {
-				const predictedFirst = new Date(baseSunday.getFullYear(), baseSunday.getMonth(), baseSunday.getDate() + w*7 + d);
-				if (predictedFirst > start) {
-					const deltaWeeks = Math.round((predictedFirst - start)/(7*86400000));
-					if (deltaWeeks > 0) baseSunday = new Date(baseSunday.getFullYear(), baseSunday.getMonth(), baseSunday.getDate() - deltaWeeks*7);
-				}
-			}
-		}
-	}
-	// minutes lookup map
-	const minutesMap = new Map(); calendarConfig.source.forEach(d => minutesMap.set(d.date, d.minutes));
-
-	rects.forEach(r => {
-		const br = r.getBoundingClientRect();
-		const weekIdx = leftToWeek.get(Math.round(br.left));
-		const dayIdx = topToDay.get(Math.round(br.top));
-		if (weekIdx == null || dayIdx == null) return;
-		const dateObj = new Date(baseSunday.getFullYear(), baseSunday.getMonth(), baseSunday.getDate() + weekIdx*7 + dayIdx);
-		if (dateObj < baseSunday || dateObj > today) return; // future or before anchor
-		const dateStr = `${dateObj.getFullYear()}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${String(dateObj.getDate()).padStart(2,'0')}`;
-		r.setAttribute('data-date', dateStr);
-		r.setAttribute('data-timestamp', Math.floor(dateObj.getTime()/1000));
-		const mins = minutesMap.get(dateStr) || 0;
-		r.setAttribute('data-value', String(mins));
-	});
-}
-
-function applyInternalSVGPadding(container, pad) {
-	const svg = container.querySelector('svg');
-	if (!svg) return;
-	let inner = svg.querySelector('g[data-innerwrap="1"]');
-	if (!inner) {
-		inner = document.createElementNS('http://www.w3.org/2000/svg','g');
-		inner.setAttribute('data-innerwrap','1');
-		while (svg.firstChild) inner.appendChild(svg.firstChild);
-		svg.appendChild(inner);
-	}
-	const hPad = pad;
-	const vPad = 0;
-	inner.setAttribute('transform', `translate(${hPad},${vPad})`);
-	const w = parseFloat(svg.getAttribute('width'));
-	const h = parseFloat(svg.getAttribute('height'));
-	if (!isNaN(w)) svg.setAttribute('width', (w + hPad * 2) + '');
+    if (calendarTooltipDelegated) return;
+    calendarTooltipDelegated = true;
+    const show = event => {
+        const cell = event.target.closest?.('.practice-calendar-cell:not([aria-hidden])');
+        if (!cell || !container.contains(cell)) { hideCalTooltip(); return; }
+        showCalTooltip(cell, extractRectDate(cell), cell.getAttribute('data-value'), event.type === 'mousemove' ? event : null);
+    };
+    container.addEventListener('mousemove', show);
+    container.addEventListener('click', show);
+    container.addEventListener('focusin', show);
+    container.addEventListener('mouseleave', hideCalTooltip);
+    container.addEventListener('focusout', hideCalTooltip);
 }
 
 function repaintCalendarOnResize() {
-	const container = document.getElementById('calendar-heatmap');
-	if (!container || !calendarConfig) return;
-	const weeks = getCalendarWeeks(calendarConfig.start, calendarConfig.now || new Date());
-	if (container.clientWidth === 0) { setTimeout(repaintCalendarOnResize, 300); return; }
-	const newLayout = computeCalendarLayout(container.clientWidth, container.getBoundingClientRect().height || 0, weeks, calendarCompactMode);
-	const needsPaint = !calendarLayout || newLayout.cell !== calendarLayout.cell || newLayout.gutter !== calendarLayout.gutter;
-	const empty = !container.querySelector('svg');
-	if (needsPaint || empty) { paintCalendar(container); }
+    const container = document.getElementById('calendar-heatmap');
+    if (container && calendarConfig && container.clientWidth > 0 && calendarLayout?.width !== container.clientWidth) paintCalendar(container);
 }
 	function showCalTooltip(cell, dateObj, val, ev) {
 		let tooltip = document.getElementById('practice-cal-tooltip');
@@ -1020,6 +793,8 @@ function repaintCalendarOnResize() {
 			x = rect.left + window.scrollX + rect.width/2;
 			y = rect.top + window.scrollY - 6;
 		}
+		const halfWidth = tooltip.getBoundingClientRect().width / 2;
+		x = Math.max(window.scrollX + halfWidth + 12, Math.min(x, window.scrollX + window.innerWidth - halfWidth - 12));
 		tooltip.style.left = x + 'px';
 		tooltip.style.top = y + 'px';
 		tooltip.style.opacity = '1';
@@ -1036,7 +811,7 @@ function repaintCalendarOnResize() {
 	});
 
 	const observer = new MutationObserver(muts => {
-		if (!calHeatmapInstance) return;
+		if (!calendarConfig) return;
 		for (const m of muts) {
 			if (m.type === 'attributes' && m.attributeName === 'data-theme') {
 				const dark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -1091,16 +866,16 @@ function repaintCalendarOnResize() {
 		const dayMap = new Map(); let minutesAccumulator=0; let sessionsCount=0;
 		for (const s of sessions) { if (!s.date) continue; const m=s.durationMinutes||0; dayMap.set(s.date,(dayMap.get(s.date)||0)+m); minutesAccumulator+=m; sessionsCount++; }
 		const today = new Date(); const trendsDays=[]; const RANGE=56;
-		for (let i=RANGE-1;i>=0;i--){ const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()-i); const iso=d.toISOString().slice(0,10); trendsDays.push({ date:iso, minutes:dayMap.get(iso)||0 }); }
+		for (let i=RANGE-1;i>=0;i--){ const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()-i); const iso=dateToLocalISO(d); trendsDays.push({ date:iso, minutes:dayMap.get(iso)||0 }); }
 		const sorted = Array.from(dayMap.keys()).sort(); let longest=0, run=0, prev=null;
 		for (const ds of sorted){ if (prev){ const delta=(new Date(ds)-new Date(prev))/86400000; if (delta===1) run++; else run=1; } else run=1; if (run>longest) longest=run; prev=ds; }
-		const todayISO = today.toISOString().slice(0,10); let currentStreak=0; let cursor = dayMap.get(todayISO)>0 ? new Date(today) : new Date(today.getFullYear(), today.getMonth(), today.getDate()-1);
-		while(true){ const iso=cursor.toISOString().slice(0,10); if (dayMap.get(iso)>0){ currentStreak++; cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate()-1);} else break; }
+		const todayISO = dateToLocalISO(today); let currentStreak=0; let cursor = dayMap.get(todayISO)>0 ? new Date(today) : new Date(today.getFullYear(), today.getMonth(), today.getDate()-1);
+		while(true){ const iso=dateToLocalISO(cursor); if (dayMap.get(iso)>0){ currentStreak++; cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate()-1);} else break; }
 		const summary = computeSummary(pd);
 		const last7Minutes = trendsDays.slice(-7).reduce((a,d)=>a+d.minutes,0);
 		const last14Minutes = trendsDays.slice(-14).reduce((a,d)=>a+d.minutes,0);
 		const avgSessionLength = sessionsCount ? Math.round(minutesAccumulator / sessionsCount) : 0;
-		const calDays=[]; for (let i=399;i>=0;i--){ const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()-i); const iso=d.toISOString().slice(0,10); calDays.push({ date: iso, minutes: dayMap.get(iso)||0 }); }
+		const calDays=[]; for (let i=399;i>=0;i--){ const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()-i); const iso=dateToLocalISO(d); calDays.push({ date: iso, minutes: dayMap.get(iso)||0 }); }
 		return { metaHash, summary, trendsDays, calendarDays: calDays, currentStreak, longestStreak:longest, last7Minutes, last14Minutes, avgSessionLength, sessionsCount, recentSessions: summary.recentSessions };
 	}
 	function flattenSessions(pd) {

@@ -196,7 +196,7 @@ function setupTransferForm() {
           return;
         }
         if (response.status === 409) {
-          // The selected user may have changed periods after this list loaded.
+          // Reload eligibility if the selected recipient's profile has changed.
           recipients = null;
           recipientsPromise = null;
         }
@@ -243,13 +243,14 @@ function displayRecentTransactions(transactions) {
         minute: '2-digit'
     });
 
-    const amountFormatted = formatMoBucks(tx.amount, { absolute: true });
-    const amount = tx.type === 'credit' ? `+${amountFormatted}` : `-${amountFormatted}`;
     const amountClass = tx.type === 'credit' ? 'credit' : 'debit';
 
     const amountElement = document.createElement('span');
     amountElement.className = `transaction-amount ${amountClass}`;
-    amountElement.textContent = amount;
+    amountElement.append(document.createTextNode(amountClass === 'credit' ? '+' : '-'));
+    const icon = document.createElement('span');
+    icon.className = 'mobucks-icon';
+    amountElement.append(icon, document.createTextNode(Math.abs(Number(tx.amount) || 0).toLocaleString()));
 
     const details = document.createElement('span');
     details.className = 'transaction-details';

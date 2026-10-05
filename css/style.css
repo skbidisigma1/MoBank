@@ -1,4 +1,7 @@
 :root {
+color-scheme:light;
+--scrollbar-track:#e8edf3;
+--scrollbar-thumb:#8997a8;
 --color-primary:#06c;
 --color-primary-dark:#004c99;
 --color-secondary:#00b894;
@@ -45,6 +48,9 @@
 }
 
 [data-theme="dark"] {
+color-scheme:dark;
+--scrollbar-track:#171d26;
+--scrollbar-thumb:#647084;
 --color-primary:#005fa3;
 --color-primary-dark:#004c99;
 --color-secondary:#00d1a7;
@@ -157,6 +163,18 @@ margin:0
 #mobileMenuToggle:focus {
 outline:none
 }
+
+:root, [data-theme] * {
+scrollbar-color:var(--scrollbar-thumb) var(--scrollbar-track);
+scrollbar-width:thin
+}
+
+::-webkit-scrollbar { width:10px; height:10px }
+::-webkit-scrollbar-track { background:var(--scrollbar-track) }
+::-webkit-scrollbar-thumb { background:var(--scrollbar-thumb); border:2px solid var(--scrollbar-track); border-radius:10px }
+::-webkit-scrollbar-corner { background:var(--scrollbar-track) }
+
+header .mobile-nav { background:inherit }
 
 .bar {
 width:100%;

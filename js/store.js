@@ -429,7 +429,9 @@ function renderCart() {
     name.textContent = item.name;
     const details = document.createElement('p');
     details.className = 'cart-item__details';
-    details.textContent = `${formatMoBucks(item.price, { absolute: true })} · ${quantity} ${quantity === 1 ? 'unit' : 'units'}`;
+    const priceIcon = document.createElement('span');
+    priceIcon.className = 'mobucks-icon';
+    details.append(priceIcon, document.createTextNode(`${item.price} · ${quantity} ${quantity === 1 ? 'unit' : 'units'}`));
     itemInfo.append(name, details);
 
     const actions = document.createElement('div');
@@ -567,7 +569,10 @@ function saveCartToSession() {
 function loadCartFromSession() {
   try {
     const cartData = sessionStorage.getItem('__mobank_cart');
-    if (!cartData) return;
+    if (!cartData) {
+      renderCart();
+      return;
+    }
     
     const items = JSON.parse(cartData);
     state.cart.clear();
@@ -856,16 +861,21 @@ function showConfirmModal(title, message, onConfirm, confirmText = 'Confirm', co
   modal.className = 'confirmation-modal-overlay';
   modal.innerHTML = `
     <div class="confirmation-modal">
-      <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--color-text);">${title}</h3>
-      <p class="confirmation-modal-message">${message}</p>
+      <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--color-text);"></h3>
+      <p class="confirmation-modal-message"></p>
       <div class="confirmation-modal-buttons">
         <button type="button" class="secondary-button" id="modal-cancel">Cancel</button>
-        <button type="button" class="${confirmStyle}-button" id="modal-confirm">${confirmText}</button>
+        <button type="button" class="primary-button" id="modal-confirm"></button>
       </div>
     </div>
   `;
   
   document.body.appendChild(modal);
+  modal.querySelector('h3').textContent = title;
+  modal.querySelector('.confirmation-modal-message').textContent = message;
+  const safeConfirmStyle = confirmStyle === 'danger' ? 'danger' : 'primary';
+  modal.querySelector('#modal-confirm').className = `${safeConfirmStyle}-button`;
+  modal.querySelector('#modal-confirm').textContent = confirmText;
   
   const confirmBtn = modal.querySelector('#modal-confirm');
   const cancelBtn = modal.querySelector('#modal-cancel');
@@ -1402,10 +1412,10 @@ function renderAdminCatalog() {
     
     card.innerHTML = `
       <div class="admin-card-header">
-        <h5>${item.name}</h5>
+        <h5 class="admin-item-name"></h5>
         <span class="status-badge ${item.enabled ? 'enabled' : 'disabled'}">${item.enabled ? 'Enabled' : 'Disabled'}</span>
       </div>
-      <p class="admin-card-description">${item.description}</p>
+      <p class="admin-card-description"></p>
       <div class="admin-card-meta">
         <span>${priceHTML}</span>
         <span>${item.stock === null ? 'Unlimited' : `${item.stock} in stock`}</span>
@@ -1416,10 +1426,13 @@ function renderAdminCatalog() {
           : 'All periods'}
       </div>
       <div class="admin-card-actions">
-        <button class="secondary-button" data-action="edit" data-item-id="${item.id}">Edit</button>
-        <button class="danger-button" data-action="delete" data-item-id="${item.id}">Delete</button>
+        <button class="secondary-button" data-action="edit">Edit</button>
+        <button class="danger-button" data-action="delete">Delete</button>
       </div>
     `;
+    card.querySelector('.admin-item-name').textContent = item.name;
+    card.querySelector('.admin-card-description').textContent = item.description || '';
+    card.querySelectorAll('[data-action]').forEach(button => { button.dataset.itemId = item.id; });
     container.appendChild(card);
   });
   
@@ -1777,19 +1790,26 @@ function renderPendingOrders() {
     
     card.innerHTML = `
       <div class="order-header">
-        <span class="order-id">Order #${order.id.slice(-8)}</span>
+        <span class="order-id"></span>
         <span class="order-date">${date}</span>
       </div>
-      <div class="order-customer">Customer: ${customerInfo}</div>
-      <div class="order-items">${itemsList}</div>
+      <div class="order-customer"></div>
+      <div class="order-items"></div>
       <div class="order-footer">
         <span class="order-total">Total: ${formatMoBucks(order.total, { absolute: true })}</span>
         <div class="order-actions">
-          <button class="danger-button" data-action="decline" data-order-id="${order.id}" data-user-id="${order.userId}">Decline & refund</button>
-          <button class="primary-button" data-action="fulfill" data-order-id="${order.id}" data-user-id="${order.userId}">Mark as fulfilled</button>
+          <button class="danger-button" data-action="decline">Decline & refund</button>
+          <button class="primary-button" data-action="fulfill">Mark as fulfilled</button>
         </div>
       </div>
     `;
+    card.querySelector('.order-id').textContent = `Order #${order.id.slice(-8)}`;
+    card.querySelector('.order-customer').textContent = `Customer: ${customerInfo}`;
+    card.querySelector('.order-items').textContent = itemsList;
+    card.querySelectorAll('[data-action]').forEach(button => {
+      button.dataset.orderId = order.id;
+      button.dataset.userId = order.userId;
+    });
     container.appendChild(card);
   });
   
@@ -1852,28 +1872,32 @@ function renderFulfilledOrders() {
     const statusIcon = isFulfilled ? '✓' : '✕';
     const statusClass = isFulfilled ? 'fulfilled' : 'cancelled';
     
-    let extraInfo = '';
-    if (isCancelled && order.cancelReason) {
-      extraInfo = `<span class="order-reason">Reason: ${order.cancelReason}</span>`;
-    }
-    
     card.innerHTML = `
       <div class="order-header">
-        <span class="order-id">Order #${order.id.slice(-8)}</span>
+        <span class="order-id"></span>
         <span class="order-status ${statusClass}">${statusIcon} ${actionLabel}</span>
       </div>
-      <div class="order-customer">Customer: ${customerInfo}</div>
-      <div class="order-items">${itemsList}</div>
+      <div class="order-customer"></div>
+      <div class="order-items"></div>
       <div class="order-footer">
         <div class="order-details">
           <span class="order-total">Total: ${formatMoBucks(order.total, { absolute: true })}</span>
-          <span class="order-meta">${actionInfo}</span>
+          <span class="order-meta"></span>
           <span class="order-date">Ordered: ${createdDate}</span>
           <span class="order-date">${actionLabel}: ${actionDate}</span>
-          ${extraInfo}
         </div>
       </div>
     `;
+    card.querySelector('.order-id').textContent = `Order #${order.id.slice(-8)}`;
+    card.querySelector('.order-customer').textContent = `Customer: ${customerInfo}`;
+    card.querySelector('.order-items').textContent = itemsList;
+    card.querySelector('.order-meta').textContent = actionInfo;
+    if (isCancelled && order.cancelReason) {
+      const reason = document.createElement('span');
+      reason.className = 'order-reason';
+      reason.textContent = `Reason: ${order.cancelReason}`;
+      card.querySelector('.order-details').appendChild(reason);
+    }
     container.appendChild(card);
   });
   
@@ -2124,15 +2148,17 @@ function renderMyOrders(orders) {
     
     card.innerHTML = `
       <div class="order-card-header">
-        <span class="order-card-id">#${order.id.slice(-8)}</span>
+        <span class="order-card-id"></span>
         <span class="order-card-status ${statusClass}">${statusText}</span>
       </div>
-      <div class="order-card-items">${itemsText}</div>
+      <div class="order-card-items"></div>
       <div class="order-card-footer">
         <span class="order-card-total">${formatMoBucks(order.total, { absolute: true })}</span>
         <span class="order-card-date">${date}</span>
       </div>
     `;
+    card.querySelector('.order-card-id').textContent = `#${order.id.slice(-8)}`;
+    card.querySelector('.order-card-items').textContent = itemsText;
     
     container.appendChild(card);
   });

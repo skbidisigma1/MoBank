@@ -622,6 +622,8 @@ html[data-theme="dark"] .catalog-controls::after {
   display: grid;
   gap: 12px;
   background: var(--color-white);
+  border-radius: 12px;
+  padding: 1rem;
 }
 
 html[data-theme="dark"] .cart-footer {

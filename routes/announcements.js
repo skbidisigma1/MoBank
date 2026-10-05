@@ -1,5 +1,50 @@
 const { admin, db } = require('../firebase');
 const { verifyToken, getTokenFromHeader } = require('../auth-helper');
+const sanitizeHtml = require('sanitize-html');
+
+const textOnly = value => sanitizeHtml(String(value ?? ''), { allowedTags: [], allowedAttributes: {} }).trim();
+const richText = value => sanitizeHtml(String(value ?? ''), {
+  allowedTags: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'a', 'code', 'pre', 'img'],
+  allowedAttributes: { a: ['href'], img: ['src', 'alt'] },
+  allowedSchemes: ['https', 'http', 'mailto'],
+  allowedSchemesByTag: { img: ['https'] }
+});
+
+function cleanFields(input, partial = false) {
+  const allowed = ['title', 'description', 'body', 'pinned', 'patchnote'];
+  if (!input || typeof input !== 'object' || Array.isArray(input) ||
+      Object.keys(input).some(key => !allowed.includes(key))) {
+    throw new Error('Invalid announcement fields');
+  }
+  const out = {};
+  for (const field of ['title', 'description', 'body']) {
+    if (input[field] === undefined) continue;
+    if (typeof input[field] !== 'string' || input[field].length > (field === 'body' ? 20000 : field === 'description' ? 500 : 200)) {
+      throw new Error(`Invalid ${field}`);
+    }
+    out[field] = field === 'body' ? richText(input[field]) : textOnly(input[field]);
+  }
+  for (const field of ['pinned', 'patchnote']) {
+    if (input[field] !== undefined) {
+      if (typeof input[field] !== 'boolean') throw new Error(`Invalid ${field}`);
+      out[field] = input[field];
+    }
+  }
+  if (!partial && (!out.title || !out.body)) throw new Error('Title and body are required');
+  if (partial && Object.keys(out).length === 0) throw new Error('No announcement fields supplied');
+  return out;
+}
+
+function safeAnnouncement(data) {
+  return {
+    ...data,
+    title: textOnly(data.title || ''),
+    description: textOnly(data.description || ''),
+    body: richText(data.body || ''),
+    createdBy: textOnly(data.createdBy || ''),
+    editedBy: textOnly(data.editedBy || '')
+  };
+}
 
 async function notifyAllUsers(announcement) {
   try {
@@ -64,7 +109,7 @@ module.exports = async (req, res) => {
   if (req.method === 'GET') {
     try {
       const snapshot = await db.collection('announcements').orderBy('date', 'desc').get();
-      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const items = snapshot.docs.map(doc => safeAnnouncement({ id: doc.id, ...doc.data() }));
       return res.status(200).json(items);
     } catch (error) {
       return res.status(500).json({ message: 'Failed to load announcements', error: error.toString() });
@@ -114,15 +159,15 @@ module.exports = async (req, res) => {
       name = decoded.email.split('@')[0];
     }
     
-    return name || 'Admin';
+    return textOnly(name || 'Admin').slice(0, 100);
   };
 
   const id = req.query.id;  
     if (req.method === 'POST') {
-    const { title, description, body, pinned, patchnote } = req.body;
-    if (!title || !body) {
-      return res.status(400).json({ message: 'Missing required fields' });
-    }
+    let fields;
+    try { fields = cleanFields(req.body); }
+    catch (error) { return res.status(400).json({ message: error.message }); }
+    const { title, description, body, pinned, patchnote } = fields;
 
     const teacherId = process.env.TEACHER_ID;
     if (!patchnote && decoded.sub !== teacherId) {
@@ -160,7 +205,7 @@ module.exports = async (req, res) => {
       }
 
       const doc = await ref.get();
-      const finalData = { id: ref.id, ...doc.data() };
+      const finalData = safeAnnouncement({ id: ref.id, ...doc.data() });
 
       return res.status(201).json(finalData);
     } catch (error) {
@@ -170,16 +215,9 @@ module.exports = async (req, res) => {
   }
   
   if (req.method === 'PUT') {
-    if (!id) return res.status(400).json({ message: 'Missing announcement id' });
+    if (typeof id !== 'string' || !id || id.length > 128) return res.status(400).json({ message: 'Invalid announcement id' });
     try {
-      const updates = { ...req.body };
-      
-      if ('pinned' in updates) {
-        updates.pinned = Boolean(updates.pinned);
-      }
-      if ('patchnote' in updates) {
-        updates.patchnote = Boolean(updates.patchnote);
-      }
+      const updates = cleanFields(req.body, true);
       
       if (updates.body || updates.title || updates.description) {
         updates.lastModified = admin.firestore.FieldValue.serverTimestamp();
@@ -190,14 +228,17 @@ module.exports = async (req, res) => {
       
       await db.collection('announcements').doc(id).update(updates);
       const updated = await db.collection('announcements').doc(id).get();
-      return res.status(200).json({ id, ...updated.data() });
+      return res.status(200).json(safeAnnouncement({ id, ...updated.data() }));
     } catch (error) {
+      if (error.message.startsWith('Invalid ') || error.message === 'No announcement fields supplied') {
+        return res.status(400).json({ message: error.message });
+      }
       return res.status(500).json({ message: 'Failed to update announcement', error: error.toString() });
     }
   }
   
   if (req.method === 'DELETE') {
-    if (!id) return res.status(400).json({ message: 'Missing announcement id' });
+    if (typeof id !== 'string' || !id || id.length > 128) return res.status(400).json({ message: 'Invalid announcement id' });
     try {
       await db.collection('announcements').doc(id).delete();
       return res.status(200).json({ message: 'Deleted' });
@@ -209,4 +250,3 @@ module.exports = async (req, res) => {
   res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
   return res.status(405).json({ message: 'Method Not Allowed' });
 };
-  
