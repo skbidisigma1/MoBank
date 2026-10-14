@@ -7,7 +7,7 @@ const { SignJWT, jwtVerify } = require('jose');
 const DEFAULT_MAX_AGE_SECONDS = 7 * 24 * 60 * 60; // 7 days (604,800 seconds)
 
 function getSecretKey() {
-  const secret = process.env.SHARED_SESSION_SECRET || process.env.SESSION_SECRET;
+  const secret = process.env.SESSION_SECRET || process.env.SESSION_SECRET;
   if (!secret) {
     return null;
   }
@@ -23,7 +23,7 @@ function getSecretKey() {
 async function createSessionToken(user, maxAgeSeconds = DEFAULT_MAX_AGE_SECONDS) {
   const secret = getSecretKey();
   if (!secret) {
-    throw new Error('SHARED_SESSION_SECRET is not configured');
+    throw new Error('SESSION_SECRET is not configured');
   }
 
   if (!user || !user.email) {
@@ -50,7 +50,7 @@ async function createSessionToken(user, maxAgeSeconds = DEFAULT_MAX_AGE_SECONDS)
 async function verifySessionToken(token) {
   const secret = getSecretKey();
   if (!secret) {
-    throw new Error('SHARED_SESSION_SECRET is not configured');
+    throw new Error('SESSION_SECRET is not configured');
   }
 
   const { payload } = await jwtVerify(token, secret);
