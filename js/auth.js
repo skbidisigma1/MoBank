@@ -18,20 +18,26 @@ const auth0Promise = (async () => {
 
   const currentPage = window.location.pathname.split('/').pop();
   const isProtected = protectedPages.includes(currentPage);
+  const token = await getToken();
+
   if (isProtected) {
-    const token = await getToken();
     if (token) {
-      // Check if user has been initialized in this session
       const sessionKey = 'user_initialized_session_v2';
       const currentSession = sessionStorage.getItem(sessionKey);
       
       if (!currentSession) {
         await initializeUser(token);
-        // Mark as initialized for this session
         sessionStorage.setItem(sessionKey, 'true');
       }
     } else {
       window.location.href = 'login';
+    }
+  } else if (token) {
+    const sessionKey = 'user_initialized_session_v2';
+    const currentSession = sessionStorage.getItem(sessionKey);
+    if (!currentSession) {
+      await initializeUser(token);
+      sessionStorage.setItem(sessionKey, 'true');
     }
   }
 })();
@@ -132,6 +138,7 @@ async function handleAuthRedirect() {
     try {
       await auth0Client.handleRedirectCallback();
       sessionStorage.removeItem('user_initialized_session');
+      sessionStorage.removeItem('user_initialized_session_v2');
       window.history.replaceState({}, document.title, '/dashboard');
     } catch (e) {
       console.error('callback error:', e);
