@@ -1,4 +1,5 @@
 const { db } = require('../firebase')
+const { createSessionToken, createSessionCookie, setCookieHeader } = require('../session')
 
 const profiler = {
   startTime: {},
@@ -59,6 +60,22 @@ module.exports = async (req, res) => {
         theme: '',
       })
       profiler.end('firestore-create');
+    }
+
+    // Issue wildcard cross-subdomain session cookie for *.mo-classroom.us
+    try {
+      const email = userInfo.email || '';
+      if (email) {
+        const sessionToken = await createSessionToken({ email, sub: uid });
+        const host = req.headers.host || '';
+        const isSecure = req.headers['x-forwarded-proto'] === 'https' || Boolean(req.secure);
+        const cookieHeader = createSessionCookie(sessionToken, { host, isSecure });
+        setCookieHeader(res, cookieHeader);
+      } else {
+        console.warn('Auth0 userinfo did not contain email; skipping mo_session cookie');
+      }
+    } catch (sessionErr) {
+      console.error('Failed to issue cross-subdomain session cookie:', sessionErr);
     }
     
     const totalTime = profiler.end('login-total');

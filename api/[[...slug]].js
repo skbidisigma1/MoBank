@@ -24,6 +24,7 @@ const routeLoaders = Object.freeze({
   getUserNames: () => require('../routes/getUserNames'),
   logPracticeSession: () => require('../routes/logPracticeSession'),
   login: () => require('../routes/login'),
+  logout: () => require('../routes/logout'),
   manageCatalogItem: () => require('../routes/manageCatalogItem'),
   metronomePresets: () => require('../routes/metronomePresets'),
   notifications: () => require('../routes/notifications'),

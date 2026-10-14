@@ -124,6 +124,7 @@ async function handleAuthRedirect() {
   if (q.includes('code=') && q.includes('state=')) {
     try {
       await auth0Client.handleRedirectCallback();
+      sessionStorage.removeItem('user_initialized_session');
       window.history.replaceState({}, document.title, '/dashboard');
     } catch (e) {
       console.error('callback error:', e);
@@ -138,6 +139,11 @@ async function handleAuthRedirect() {
 
 async function logoutUser() {
   try {
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+    } catch (logoutApiErr) {
+      console.warn('Failed to call /api/logout:', logoutApiErr);
+    }
     await auth0Client.logout({
       logoutParams: { returnTo: window.location.origin },
       federated: false

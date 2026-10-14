@@ -5,6 +5,8 @@
   "description": "online **mobuck** tracker",
   "main": "index.js",
   "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "build:song-creator": "tsc",
     "watch:song-creator": "tsc --watch",
     "postinstall": "node -e \"const fs=require('fs'); const path=require('path'); const srcJS='node_modules/cropperjs/dist/cropper.min.js'; const destJS='js/cropper.min.js'; const srcCSS='node_modules/cropperjs/dist/cropper.min.css'; const destCSS='css/cropper.min.css'; if(fs.existsSync(srcJS)){fs.copyFileSync(srcJS, destJS); console.log('Copied cropper.min.js');} if(fs.existsSync(srcCSS)){fs.copyFileSync(srcCSS, destCSS); console.log('Copied cropper.min.css');}\"",
@@ -22,6 +24,7 @@
     "dotenv": "^17.2.2",
     "express-rate-limit": "^8.1.0",
     "firebase-admin": "^13.5.0",
+    "jose": "^6.2.12",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.2.0",
     "pitchy": "4.1.0",
