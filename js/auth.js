@@ -22,7 +22,7 @@ const auth0Promise = (async () => {
     const token = await getToken();
     if (token) {
       // Check if user has been initialized in this session
-      const sessionKey = 'user_initialized_session';
+      const sessionKey = 'user_initialized_session_v2';
       const currentSession = sessionStorage.getItem(sessionKey);
       
       if (!currentSession) {
@@ -73,9 +73,16 @@ async function getUser() {
 
 async function initializeUser(token) {
   try {
+    let email = '';
+    try {
+      const user = await getUser();
+      email = user?.email || '';
+    } catch (_) {}
+
     const res = await fetch('/api/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ email })
     });
     if (!res.ok) {
       const msg = await res.text();
@@ -206,4 +213,5 @@ window.logoutUser     = logoutUser;
 window.isAuthenticated = isAuthenticated;
 window.getUser        = getUser;
 window.getToken       = getToken;
+window.initializeUser = initializeUser;
 window.auth0Promise   = auth0Promise;

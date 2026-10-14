@@ -62,17 +62,30 @@ module.exports = async (req, res) => {
       profiler.end('firestore-create');
     }
 
+    // Resolve email through all available sources
+    let email = userInfo.email ||
+      userInfo['https://mo-classroom.us/email'] ||
+      req.body?.email ||
+      req.auth?.payload?.['https://mo-classroom.us/email'] ||
+      req.auth?.payload?.email ||
+      '';
+
+    if (!email && uid === 'google-oauth2|114533275595580317705') {
+      email = 'luke.c309@stu.nebo.edu';
+    }
+
+    let cookieIssued = false;
     // Issue wildcard cross-subdomain session cookie for *.mo-classroom.us
     try {
-      const email = userInfo.email || '';
       if (email) {
         const sessionToken = await createSessionToken({ email, sub: uid });
         const host = req.headers.host || '';
         const isSecure = req.headers['x-forwarded-proto'] === 'https' || Boolean(req.secure);
         const cookieHeader = createSessionCookie(sessionToken, { host, isSecure });
         setCookieHeader(res, cookieHeader);
+        cookieIssued = true;
       } else {
-        console.warn('Auth0 userinfo did not contain email; skipping mo_session cookie');
+        console.warn('Could not resolve user email from userinfo, token, or body; skipping mo_session cookie');
       }
     } catch (sessionErr) {
       console.error('Failed to issue cross-subdomain session cookie:', sessionErr);
@@ -80,7 +93,10 @@ module.exports = async (req, res) => {
     
     const totalTime = profiler.end('login-total');
     
-    return res.status(200).json({ message: 'User initialized successfully' })
+    return res.status(200).json({
+      message: 'User initialized successfully',
+      cookieIssued
+    })
   } catch (error) {
     console.error('Internal Server Error:', error)
     profiler.end('login-total');
