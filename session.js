@@ -1,4 +1,4 @@
-const { SignJWT, jwtVerify } = require('jose');
+const jwt = require('jsonwebtoken');
 
 /**
  * Cross-subdomain session management for *.mo-classroom.us
@@ -11,18 +11,19 @@ function getSecretKey() {
   if (!secret) {
     return null;
   }
-  return new TextEncoder().encode(secret);
+  return secret;
 }
 
 /**
- * Signs a cross-subdomain JWT session token using jose.
+ * Signs a cross-subdomain JWT session token using HS256.
+ * Uses dynamic import('jose') with fallback to jsonwebtoken for maximum CommonJS compatibility.
  * @param {{ email: string, sub: string }} user
  * @param {number} [maxAgeSeconds]
  * @returns {Promise<string>}
  */
 async function createSessionToken(user, maxAgeSeconds = DEFAULT_MAX_AGE_SECONDS) {
-  const secret = getSecretKey();
-  if (!secret) {
+  const secretKey = getSecretKey();
+  if (!secretKey) {
     throw new Error('SESSION_SECRET is not configured');
   }
 
@@ -30,16 +31,25 @@ async function createSessionToken(user, maxAgeSeconds = DEFAULT_MAX_AGE_SECONDS)
     throw new Error('User email is required to issue session token');
   }
 
-  const jwt = await new SignJWT({
+  const payload = {
     email: user.email.toLowerCase().trim(),
     sub: user.sub || ''
-  })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime(`${maxAgeSeconds}s`)
-    .sign(secret);
+  };
 
-  return jwt;
+  try {
+    const { SignJWT } = await import('jose');
+    const secret = new TextEncoder().encode(secretKey);
+    return await new SignJWT(payload)
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime(`${maxAgeSeconds}s`)
+      .sign(secret);
+  } catch (_) {
+    return jwt.sign(payload, secretKey, {
+      algorithm: 'HS256',
+      expiresIn: maxAgeSeconds
+    });
+  }
 }
 
 /**
@@ -48,13 +58,24 @@ async function createSessionToken(user, maxAgeSeconds = DEFAULT_MAX_AGE_SECONDS)
  * @returns {Promise<any>}
  */
 async function verifySessionToken(token) {
-  const secret = getSecretKey();
-  if (!secret) {
+  const secretKey = getSecretKey();
+  if (!secretKey) {
     throw new Error('SESSION_SECRET is not configured');
   }
 
-  const { payload } = await jwtVerify(token, secret);
-  return payload;
+  try {
+    const { jwtVerify } = await import('jose');
+    const secret = new TextEncoder().encode(secretKey);
+    const { payload } = await jwtVerify(token, secret);
+    return payload;
+  } catch (_) {
+    return new Promise((resolve, reject) => {
+      jwt.verify(token, secretKey, { algorithms: ['HS256'] }, (err, decoded) => {
+        if (err) reject(err);
+        else resolve(decoded);
+      });
+    });
+  }
 }
 
 /**
@@ -163,4 +184,3 @@ module.exports = {
   setCookieHeader,
   DEFAULT_MAX_AGE_SECONDS
 };
-
